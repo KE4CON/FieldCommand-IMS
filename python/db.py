@@ -101,6 +101,8 @@ CREATE TABLE IF NOT EXISTS nets (
     freq        TEXT DEFAULT '',
     ncs         TEXT DEFAULT '',              -- net control station callsign
     created     TEXT NOT NULL,
+    net_opened  TEXT,                         -- timestamp when net control opens net
+    net_closed  TEXT,                         -- timestamp when net control closes net
     closed      TEXT,
     roster_chips TEXT DEFAULT '[]'           -- JSON array of callsigns
 );
@@ -125,7 +127,9 @@ CREATE TABLE IF NOT EXISTS net_entries (
     walk_in     INTEGER NOT NULL DEFAULT 0,  -- 1 = not in roster at check-in
     visitor     INTEGER NOT NULL DEFAULT 0,  -- 1 = mutual aid / outside org
     promoted    INTEGER NOT NULL DEFAULT 0,  -- 1 = promoted to roster
-    timestamp   TEXT NOT NULL
+    timestamp   TEXT NOT NULL,
+    checkout_time TEXT,                       -- NULL = still on net; set when checked out
+    ema_id      TEXT DEFAULT ''              -- EMA/ESV member ID if found in roster
 );
 CREATE INDEX IF NOT EXISTS idx_ne_net    ON net_entries(net_id);
 CREATE INDEX IF NOT EXISTS idx_ne_call   ON net_entries(callsign);
@@ -439,8 +443,21 @@ def init_db():
     """Create all tables and indexes. Safe to call multiple times."""
     conn = db()
     conn.executescript(SCHEMA)
+    # Migration: add new columns to existing databases (idempotent)
+    migrations = [
+        "ALTER TABLE nets ADD COLUMN net_opened TEXT",
+        "ALTER TABLE nets ADD COLUMN net_closed TEXT",
+        "ALTER TABLE net_entries ADD COLUMN checkout_time TEXT",
+        "ALTER TABLE net_entries ADD COLUMN ema_id TEXT DEFAULT ''",
+    ]
+    for sql in migrations:
+        try:
+            conn.execute(sql)
+        except Exception:
+            pass  # column already exists
     conn.commit()
     log.info(f"Database initialised: {DB_PATH}")
+
 
 
 # ── JSON migration ─────────────────────────────────────────────────────────────

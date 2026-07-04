@@ -113,16 +113,32 @@
 <div>
 
 <!-- Current Net Header -->
-<div id="netHeader" class="panel" style="margin-bottom:14px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between">
-  <div>
-    <div id="netName" style="font-family:var(--font-hd);font-size:18px;letter-spacing:1px">No Net Selected</div>
-    <div id="netType" style="font-size:11px;color:var(--muted)">Select or create a net to begin</div>
-  </div>
-  <div style="display:flex;gap:8px;align-items:center">
-    <label style="font-size:11px;display:flex;align-items:center;gap:6px;cursor:pointer">
-      <input type="checkbox" id="drillToggle" onchange="toggleDrill()"> Drill Mode
-    </label>
-    <button onclick="closeNet()" id="closeNetBtn" style="display:none;background:var(--red);border-color:var(--red)">Close Net</button>
+<div id="netHeader" class="panel" style="margin-bottom:14px;padding:12px 16px;border-left:4px solid var(--green)">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px">
+    <div>
+      <div id="netName" style="font-family:var(--font-hd);font-size:18px;letter-spacing:1px">No Net Selected</div>
+      <div id="netType" style="font-size:11px;color:var(--muted)">Select or create a net to begin</div>
+      <div style="display:flex;gap:20px;flex-wrap:wrap;margin-top:4px;font-size:11px">
+        <div style="display:flex;gap:5px;align-items:center">
+          <span style="color:var(--muted)">Opened:</span>
+          <span id="netOpenedDisplay" style="font-family:var(--font-hd)">—</span>
+        </div>
+        <div style="display:flex;gap:5px;align-items:center">
+          <span style="color:var(--muted)">Closed:</span>
+          <span id="netClosedDisplay" style="font-family:var(--font-hd)">—</span>
+        </div>
+        <div style="display:flex;gap:5px;align-items:center">
+          <span style="color:var(--muted)">Duration:</span>
+          <span id="netDurationDisplay" style="font-family:var(--font-hd)">—</span>
+        </div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <label style="font-size:11px;display:flex;align-items:center;gap:6px;cursor:pointer">
+        <input type="checkbox" id="drillToggle" onchange="toggleDrill()"> Drill Mode
+      </label>
+      <button onclick="closeNet()" id="closeNetBtn" style="display:none;background:var(--red);border-color:var(--red)">Close Net</button>
+    </div>
   </div>
 </div>
 
@@ -317,8 +333,35 @@ async function selectNet(netId) {
   }
 }
 
+// ── Time helpers (shared with starcom) ───────────────────────────────────────
+function roundUpQH(minutes) {
+  if (minutes <= 0) return "0:15";
+  const qh = Math.ceil(minutes / 15) * 15;
+  const h = Math.floor(qh / 60), m = qh % 60;
+  return h > 0 ? `${h}h ${m.toString().padStart(2,"0")}m` : `${m}m`;
+}
+function fmtTime(iso) {
+  if (!iso) return "—";
+  return new Date(iso).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit",second:"2-digit"}) + " local";
+}
+function netDuration(openIso, closeIso) {
+  if (!openIso) return "—";
+  const end = closeIso ? new Date(closeIso) : new Date();
+  const mins = Math.floor((end - new Date(openIso)) / 60000);
+  return mins < 60 ? `${mins}m` : `${Math.floor(mins/60)}h ${mins%60}m`;
+}
+function entryDuration(checkinIso, checkoutIso, netCloseIso) {
+  if (!checkinIso) return "—";
+  const end = checkoutIso ? new Date(checkoutIso) : (netCloseIso ? new Date(netCloseIso) : new Date());
+  const mins = Math.floor((end - new Date(checkinIso)) / 60000);
+  return roundUpQH(mins);
+}
+
 function renderNet() {
   if (!currentNet) return;
+  const opened = currentNet.net_opened;
+  const closed = currentNet.net_closed;
+
   document.getElementById("netName").textContent = currentNet.name;
   document.getElementById("netType").textContent = `${currentNet.type} · ${currentNet.id}`;
   document.getElementById("entryForm").style.display = "";
@@ -326,6 +369,11 @@ function renderNet() {
   document.getElementById("sumName").textContent = currentNet.name;
   document.getElementById("drillToggle").checked = currentNet.drill || false;
   updateDrillUI();
+
+  // Net open/close/duration
+  document.getElementById("netOpenedDisplay").textContent = fmtTime(opened);
+  document.getElementById("netClosedDisplay").textContent = closed ? fmtTime(closed) : (currentNet.active ? "Net open" : "—");
+  document.getElementById("netDurationDisplay").textContent = netDuration(opened, closed);
 
   const entries = currentNet.entries || [];
   const traffic = currentNet.traffic || [];
@@ -343,26 +391,39 @@ function renderNet() {
   } else {
     entryList.innerHTML = [...entries].reverse().map((e,i) => {
       const prec = e.precedence || "ROUTINE";
-      // Walk-in = not in FCC DB (name was manually entered or not found)
       const isWalkIn = e.walk_in || (!e.fcc_verified && e.name && !e.callsign);
       const isInRoster = currentNet?.roster_chips?.some(c =>
         c.callsign && e.callsign && c.callsign.toUpperCase() === e.callsign.toUpperCase());
       const canPromote = e.callsign && !isInRoster;
+      const checkedOut = !!e.checkout_time;
+      const dur = entryDuration(e.timestamp, e.checkout_time, closed);
       return `<div class="panel2 prec-${prec}" style="padding:10px 14px;display:flex;gap:12px;align-items:flex-start">
         <div style="font-size:11px;color:var(--muted);min-width:55px">${(e.timestamp||"").slice(11,19)}</div>
         <div style="flex:1">
-          <strong style="font-size:14px">${e.callsign || "?"}</strong>
-          ${e.name ? `<span style="color:var(--muted);font-size:12px"> / ${e.name}</span>` : ""}
-          <span class="badge badge-${prec==='EMERGENCY'?'red':prec==='PRIORITY'?'amber':prec==='WELFARE'?'green':'gray'}" style="margin-left:8px;font-size:10px">${e.status||""}</span>
-          ${isWalkIn ? `<span style="font-size:9px;background:rgba(200,118,10,0.15);color:var(--amber);border:1px solid var(--amber);border-radius:3px;padding:1px 5px;margin-left:6px;letter-spacing:0.05em">WALK-IN</span>` : ""}
-          ${e.remarks ? `<div style="font-size:12px;color:var(--muted);margin-top:4px">${e.remarks}</div>` : ""}
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <strong style="font-size:14px">${e.callsign || "?"}</strong>
+            ${e.name ? `<span style="color:var(--muted);font-size:12px"> / ${e.name}</span>` : ""}
+            <span class="badge badge-${prec==='EMERGENCY'?'red':prec==='PRIORITY'?'amber':prec==='WELFARE'?'green':'gray'}" style="margin-left:8px;font-size:10px">${e.status||""}</span>
+            ${isWalkIn ? `<span style="font-size:9px;background:rgba(200,118,10,0.15);color:var(--amber);border:1px solid var(--amber);border-radius:3px;padding:1px 5px">WALK-IN</span>` : ""}
+            ${e.ema_id ? `<span style="font-size:10px;padding:1px 6px;background:#1a3a6b22;border:1px solid var(--blue);color:var(--blue);border-radius:3px">ESV ${e.ema_id}</span>` : ""}
+          </div>
+          ${e.remarks ? `<div style="font-size:12px;color:var(--muted);margin-top:3px">${e.remarks}</div>` : ""}
           ${e.location ? `<div style="font-size:11px;color:var(--dim)">📍 ${e.location}</div>` : ""}
+          <div style="font-size:11px;color:var(--muted);margin-top:3px">
+            Duration: <strong>${dur}</strong>
+            ${checkedOut ? `<span style="color:var(--green)"> · Out ${(e.checkout_time||"").slice(11,19)}</span>` : "<span style='color:var(--amber)'> · On net</span>"}
+          </div>
         </div>
         <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end">
+          <button onclick="checkoutEntry('${e.id}')"
+            style="font-size:10px;padding:2px 8px;background:${checkedOut?'var(--line)':'var(--amber)'};border-color:${checkedOut?'var(--line)':'var(--amber)'};color:${checkedOut?'var(--muted)':'#fff'};border-radius:3px;white-space:nowrap"
+            ${checkedOut?"disabled":""} class="no-print">
+            ${checkedOut?"✓ Out":"Check Out"}
+          </button>
           ${canPromote ? `<button onclick="promoteToRoster('${e.id}')" title="Add to permanent roster"
             style="font-size:9px;padding:3px 7px;background:var(--green);border-color:var(--green);
-                   color:#fff;white-space:nowrap">+ Roster</button>` : ""}
-          <button onclick="removeEntry('${e.id}')" style="font-size:10px;padding:2px 6px;background:var(--panel)">✕</button>
+                   color:#fff;white-space:nowrap" class="no-print">+ Roster</button>` : ""}
+          <button onclick="removeEntry('${e.id}')" style="font-size:10px;padding:2px 6px;background:var(--panel)" class="no-print">✕</button>
         </div>
       </div>`;
     }).join("");
@@ -579,9 +640,21 @@ async function createNet() {
   } catch(e) { alert("Failed to create net: " + e); }
 }
 
+async function checkoutEntry(entryId) {
+  if (!currentNetId) return;
+  try {
+    await fetch(`${API}/api/nets/${currentNetId}/checkout`, {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({entry_id:entryId})
+    });
+    await selectNet(currentNetId);
+  } catch(e) { alert("Checkout failed: "+e); }
+}
+
 async function closeNet() {
-  if (!currentNetId || !confirm("Close this net?")) return;
+  if (!currentNetId || !confirm("Close this net? All remaining stations will be automatically checked out.")) return;
   await fetch(`${API}/api/nets/${currentNetId}/close`, {method:"POST"});
+  await selectNet(currentNetId);
   await loadNets();
   document.getElementById("closeNetBtn").style.display = "none";
 }
@@ -633,37 +706,64 @@ function shareObserverLink() {
 function exportICS309() {
   if (!currentNet) { alert("Select a net first"); return; }
   const entries = currentNet.entries || [];
+  const opened  = currentNet.net_opened;
+  const closed  = currentNet.net_closed;
+  const dur     = netDuration(opened, closed);
   const drillWatermark = currentNet.drill ?
     '<div class="drill-watermark">DRILL EXERCISE</div>' : "";
 
-  const rows = entries.map((e,i) =>
-    `<tr>
+  const rows = entries.map((e,i) => {
+    const edur = entryDuration(e.timestamp, e.checkout_time, closed);
+    return `<tr>
       <td>${i+1}</td>
       <td>${(e.timestamp||"").slice(11,19)}</td>
-      <td>${e.callsign}</td>
+      <td>${e.callsign||""}</td>
       <td>${e.name||""}</td>
       <td>${e.status||""}</td>
       <td>${e.location||""}</td>
       <td>${e.remarks||""}</td>
-    </tr>`
-  ).join("");
+      <td style="text-align:center"><strong>${edur}</strong></td>
+      <td style="text-align:center">${e.ema_id||""}</td>
+    </tr>`;
+  }).join("");
 
   const html = `<!DOCTYPE html><html><head><title>ICS-309 — ${currentNet.name}</title>
-  <style>body{font-family:Arial,sans-serif;font-size:11px;margin:20px}
-  table{border-collapse:collapse;width:100%}th,td{border:1px solid #ccc;padding:5px 8px}
-  .drill-watermark{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);
-  font-size:100px;opacity:0.1;color:orange;font-weight:bold;pointer-events:none}
-  @media print{.no-print{display:none}}</style>
-  </head><body>${drillWatermark}
-  <div style="text-align:center;border-bottom:2px solid black;padding-bottom:10px;margin-bottom:16px">
-    <div style="font-size:18px;font-weight:bold">ICS-309 COMMUNICATIONS LOG${currentNet.drill?" — DRILL":""}</div>
-    <div>Net: ${currentNet.name} | Type: ${currentNet.type} | Date: ${new Date().toISOString().slice(0,10)}</div>
+  <style>
+    body{font-family:Arial,sans-serif;font-size:10px;margin:20px}
+    table{border-collapse:collapse;width:100%}
+    th,td{border:1px solid #888;padding:4px 6px;vertical-align:top}
+    th{background:#1a3a6b;color:#fff;font-size:10px}
+    .drill-watermark{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) rotate(-30deg);
+      font-size:100px;opacity:0.1;color:orange;font-weight:bold;pointer-events:none}
+    .meta{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;font-size:10px}
+    .meta-box{border:1px solid #888;padding:6px 10px}
+    .meta-label{color:#555;font-size:9px;text-transform:uppercase}
+    @media print{.no-print{display:none}}
+  </style></head><body>${drillWatermark}
+  <div style="text-align:center;border-bottom:2px solid black;padding-bottom:10px;margin-bottom:12px">
+    <div style="font-size:16px;font-weight:bold">ICS-309 COMMUNICATIONS LOG${currentNet.drill?" — DRILL / EXERCISE":""}</div>
+    <div style="font-size:12px;margin-top:4px">Amateur Net · ${currentNet.name} · McHenry County ESV / K9ESV</div>
   </div>
-  <table><thead><tr><th>#</th><th>Time (UTC)</th><th>Callsign</th><th>Name</th><th>Status</th><th>Location</th><th>Remarks</th></tr></thead>
+  <div class="meta">
+    <div class="meta-box"><div class="meta-label">Net Type</div>${currentNet.type||"—"}</div>
+    <div class="meta-box"><div class="meta-label">Net Opened</div>${fmtTime(opened)}</div>
+    <div class="meta-box"><div class="meta-label">Net Closed</div>${closed?fmtTime(closed):"Still Open"}</div>
+    <div class="meta-box"><div class="meta-label">Net Duration</div>${dur}</div>
+    <div class="meta-box"><div class="meta-label">Total Check-Ins</div>${entries.length}</div>
+    <div class="meta-box"><div class="meta-label">Date</div>${new Date().toLocaleDateString()}</div>
+  </div>
+  <table><thead><tr>
+    <th>#</th><th>Time (UTC)</th><th>Callsign</th><th>Name</th>
+    <th>Status</th><th>Location</th><th>Remarks</th>
+    <th>Duration<br>(↑ ¼ hr)</th><th>EMA ID</th>
+  </tr></thead>
   <tbody>${rows}</tbody></table>
-  <div style="margin-top:10px;font-size:10px">Total entries: ${entries.length} | Exported: ${new Date().toUTCString()}</div>
+  <div style="margin-top:10px;font-size:9px;color:#555">
+    Duration rounded up to nearest quarter hour · EMA ID populated from MCESV roster ·
+    Exported ${new Date().toISOString()} · FieldComms IMS v1.0 · © 2026 KE4CON / MCESV K9ESV · CC BY-SA 4.0
+  </div>
   <script>window.print()<\/script>
-<script src="/lib/identity.js"></script>
+  <script src="/lib/identity.js"><\/script>
 </body></html>`;
 
   const win = window.open("","_blank");

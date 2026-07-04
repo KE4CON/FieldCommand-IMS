@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Starcom Net Logger — Incident Management</title>
+<title>Starcom Net Logger — FieldComms IMS</title>
 <link rel="stylesheet" href="theme.css">
 <style>
 .sc-header { background: linear-gradient(135deg,#001428,#002858); border-bottom: 2px solid var(--blue); padding: 10px 16px; display: flex; align-items: center; gap: 12px; }
@@ -20,6 +20,13 @@
 .prec-PRIORITY  { background:#3a1500; border-left:4px solid var(--amber); }
 .prec-WELFARE   { background: #d4f0de; border-left:4px solid var(--green); }
 .prec-ROUTINE   { border-left:4px solid var(--line); }
+.net-times { display:flex; gap:20px; flex-wrap:wrap; margin-top:4px; font-size:11px; }
+.net-time-item { display:flex; gap:5px; align-items:center; }
+.net-time-label { color:var(--muted); }
+.net-time-val { color:var(--txt); font-family:var(--font-hd); }
+.checkout-btn { font-size:10px; padding:2px 8px; background:var(--amber); border-color:var(--amber); color:#fff; border-radius:3px; cursor:pointer; white-space:nowrap; }
+.checkout-btn:disabled { background:var(--line); border-color:var(--line); color:var(--muted); cursor:default; }
+.esv-badge { font-size:10px; padding:1px 6px; background:#1a3a6b22; border:1px solid var(--blue); color:var(--blue); border-radius:3px; }
 @media print {
   .no-print { display: none !important; }
   body { background: white; color: black; font-family: Arial; }
@@ -57,21 +64,37 @@
 <div>
 
 <!-- Net header -->
-<div id="netHeader" class="panel" style="margin-bottom:14px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;border-left:4px solid var(--blue)">
-  <div>
-    <div id="netName" style="font-family:var(--font-hd);font-size:18px">No Net Selected</div>
-    <div style="display:flex;align-items:center;gap:12px;margin-top:3px;flex-wrap:wrap">
-      <div id="netType" style="font-size:11px;color:var(--muted)">Select or create a Starcom net</div>
-      <div id="netDispatch" style="font-size:11px;color:var(--blue,#2d6ab4);display:none">
-        📡 Dispatch: <span id="netDispatchName"></span>
+<div id="netHeader" class="panel" style="margin-bottom:14px;padding:12px 16px;border-left:4px solid var(--blue)">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px">
+    <div>
+      <div id="netName" style="font-family:var(--font-hd);font-size:18px">No Net Selected</div>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:3px;flex-wrap:wrap">
+        <div id="netType" style="font-size:11px;color:var(--muted)">Select or create a Starcom net</div>
+        <div id="netDispatch" style="font-size:11px;color:var(--blue);display:none">
+          📡 Dispatch: <span id="netDispatchName"></span>
+        </div>
+      </div>
+      <div class="net-times" id="netTimes">
+        <div class="net-time-item">
+          <span class="net-time-label">Opened:</span>
+          <span class="net-time-val" id="netOpenedDisplay">—</span>
+        </div>
+        <div class="net-time-item">
+          <span class="net-time-label">Closed:</span>
+          <span class="net-time-val" id="netClosedDisplay">—</span>
+        </div>
+        <div class="net-time-item">
+          <span class="net-time-label">Duration:</span>
+          <span class="net-time-val" id="netDurationDisplay">—</span>
+        </div>
       </div>
     </div>
-  </div>
-  <div style="display:flex;gap:8px;align-items:center">
-    <label style="font-size:11px;display:flex;align-items:center;gap:6px;cursor:pointer">
-      <input type="checkbox" id="drillToggle" onchange="toggleDrill()"> Drill Mode
-    </label>
-    <button onclick="closeNet()" id="closeNetBtn" style="display:none;background:var(--red);border-color:var(--red)">Close Net</button>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+      <label style="font-size:11px;display:flex;align-items:center;gap:6px;cursor:pointer">
+        <input type="checkbox" id="drillToggle" onchange="toggleDrill()"> Drill Mode
+      </label>
+      <button onclick="closeNet()" id="closeNetBtn" style="display:none;background:var(--red);border-color:var(--red)">Close Net</button>
+    </div>
   </div>
 </div>
 
@@ -155,6 +178,8 @@
     <div class="stat-row" style="margin-bottom:6px"><span class="label">Type</span><span class="value" id="sumType">—</span></div>
     <div class="stat-row" style="margin-bottom:6px"><span class="label">Units</span><span class="value" id="sumCheckins">0</span></div>
     <div class="stat-row" style="margin-bottom:6px"><span class="label">Traffic</span><span class="value" id="sumTraffic">0</span></div>
+    <div class="stat-row" style="margin-bottom:6px"><span class="label">Opened</span><span class="value" id="sumOpened">—</span></div>
+    <div class="stat-row" style="margin-bottom:6px"><span class="label">Closed</span><span class="value" id="sumClosed">—</span></div>
     <div class="stat-row"><span class="label">Duration</span><span class="value" id="sumDuration">—</span></div>
   </div>
   <div class="panel">
@@ -165,7 +190,7 @@
 </div>
 
 <!-- New Net Modal -->
-<div id="newNetModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.2);z-index:100;align-items:center;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
+<div id="newNetModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:100;align-items:center;justify-content:center" onclick="if(event.target===this)this.style.display='none'">
 <div style="background:var(--panel);border:1px solid var(--blue);border-radius:10px;padding:24px;width:400px;max-width:95vw">
   <div style="font-family:var(--font-hd);font-size:16px;margin-bottom:16px;color:var(--blue)">Create Starcom Net</div>
   <div style="display:flex;flex-direction:column;gap:10px">
@@ -194,6 +219,35 @@ const API = "http://192.168.50.1:5050";
 let currentNetId = null;
 let currentNet   = null;
 
+// ── Quarter-hour rounding (always round UP) ────────────────────────────────
+function roundUpQH(minutes) {
+  if (minutes <= 0) return "0:15";
+  const qh = Math.ceil(minutes / 15) * 15;
+  const h = Math.floor(qh / 60), m = qh % 60;
+  return h > 0 ? `${h}h ${m.toString().padStart(2,"0")}m` : `${m}m`;
+}
+
+function fmtTime(iso) {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  return d.toLocaleTimeString([], {hour:"2-digit",minute:"2-digit",second:"2-digit"}) + " local";
+}
+
+function netDuration(openIso, closeIso) {
+  if (!openIso) return "—";
+  const end = closeIso ? new Date(closeIso) : new Date();
+  const mins = Math.floor((end - new Date(openIso)) / 60000);
+  if (mins < 60) return `${mins}m`;
+  return `${Math.floor(mins/60)}h ${mins%60}m`;
+}
+
+function entryDuration(checkinIso, checkoutIso, netCloseIso) {
+  if (!checkinIso) return "—";
+  const end = checkoutIso ? new Date(checkoutIso) : (netCloseIso ? new Date(netCloseIso) : new Date());
+  const mins = Math.floor((end - new Date(checkinIso)) / 60000);
+  return roundUpQH(mins);
+}
+
 function showTab(name) {
   ["checkins","traffic"].forEach(t => {
     document.querySelector(`.tab:nth-child(${t==="checkins"?1:2})`).classList.toggle("active", t===name);
@@ -208,7 +262,7 @@ async function loadNets() {
     const bar = document.getElementById("netBadges");
     bar.innerHTML = nets.filter(n=>n.active).map(n =>
       `<div class="net-badge ${n.id===currentNetId?'active':''}" onclick="selectNet('${n.id}')">
-        <span class="dot ${n.active?'dot-blue':'dot-gray'}" style="background:var(--blue)"></span>
+        <span style="width:7px;height:7px;border-radius:50%;background:var(--blue);display:inline-block"></span>
         ${n.name}
       </div>`
     ).join("") || '<span style="color:var(--muted);font-size:12px">No nets — create one</span>';
@@ -232,14 +286,25 @@ async function selectNet(netId) {
 
 function renderNet() {
   if (!currentNet) return;
+  const opened = currentNet.net_opened;
+  const closed = currentNet.net_closed;
+
   document.getElementById("netName").textContent = currentNet.name;
-  document.getElementById("netType").textContent = `${currentNet.type} · sc-prefix`;
+  document.getElementById("netType").textContent = `${currentNet.type}`;
   document.getElementById("entryForm").style.display = "";
   document.getElementById("closeNetBtn").style.display = currentNet.active?"":"none";
   document.getElementById("sumName").textContent = currentNet.name;
   document.getElementById("sumType").textContent = currentNet.type || "—";
   document.getElementById("drillToggle").checked = currentNet.drill || false;
   updateDrillUI();
+
+  // Net open/close times
+  document.getElementById("netOpenedDisplay").textContent = fmtTime(opened);
+  document.getElementById("netClosedDisplay").textContent = closed ? fmtTime(closed) : (currentNet.active ? "Net open" : "—");
+  document.getElementById("netDurationDisplay").textContent = netDuration(opened, closed);
+  document.getElementById("sumOpened").textContent = fmtTime(opened);
+  document.getElementById("sumClosed").textContent = closed ? fmtTime(closed) : (currentNet.active ? "Open" : "—");
+  document.getElementById("sumDuration").textContent = netDuration(opened, closed);
 
   const entries = currentNet.entries || [];
   const traffic = currentNet.traffic || [];
@@ -253,16 +318,28 @@ function renderNet() {
     '<div style="color:var(--muted);text-align:center;padding:20px">No entries yet</div>' :
     [...entries].reverse().map(e => {
       const prec = e.precedence || "ROUTINE";
+      const checkedOut = !!e.checkout_time;
+      const dur = entryDuration(e.timestamp, e.checkout_time, closed);
       return `<div class="panel2 prec-${prec}" style="padding:10px 14px;display:flex;gap:12px;align-items:flex-start">
         <div style="font-size:11px;color:var(--muted);min-width:55px">${(e.timestamp||"").slice(11,19)}</div>
         <div style="flex:1">
-          <strong style="font-size:15px;color:var(--blue)">${e.callsign||"?"}</strong>
-          ${e.name?`<span style="color:var(--muted);font-size:12px"> / ${e.name}</span>`:""}
-          <span class="badge badge-${prec==="EMERGENCY"?"red":prec==="PRIORITY"?"amber":prec==="WELFARE"?"green":"gray"}" style="margin-left:8px;font-size:10px">${e.status||""}</span>
-          ${e.remarks?`<div style="font-size:12px;color:var(--muted);margin-top:4px">${e.remarks}</div>`:""}
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <strong style="font-size:15px;color:var(--blue)">${e.callsign||"?"}</strong>
+            ${e.name?`<span style="color:var(--muted);font-size:12px">${e.name}</span>`:""}
+            <span class="badge badge-${prec==="EMERGENCY"?"red":prec==="PRIORITY"?"amber":prec==="WELFARE"?"green":"gray"}" style="font-size:10px">${e.status||e.precedence||""}</span>
+            ${e.ema_id?`<span class="esv-badge">ESV ${e.ema_id}</span>`:""}
+          </div>
+          ${e.remarks?`<div style="font-size:12px;color:var(--muted);margin-top:3px">${e.remarks}</div>`:""}
           ${e.location?`<div style="font-size:11px;color:var(--dim)">📍 ${e.location}</div>`:""}
-          ${e.channel?`<div style="font-size:11px;color:var(--dim)">📻 ${e.channel}</div>`:""}
+          <div style="font-size:11px;color:var(--muted);margin-top:3px">
+            Duration: <strong>${dur}</strong>
+            ${checkedOut?`<span style="color:var(--green)"> · Checked out ${(e.checkout_time||"").slice(11,19)}</span>`:"<span style='color:var(--amber)'> · On net</span>"}
+          </div>
         </div>
+        <button class="checkout-btn no-print" onclick="checkoutEntry('${e.id}')"
+          ${checkedOut?"disabled":""}>
+          ${checkedOut?"✓ Out":"Check Out"}
+        </button>
       </div>`;
     }).join("");
 
@@ -276,11 +353,17 @@ function renderNet() {
         <div style="font-size:12px;color:var(--muted)">${t.type||""} · ${t.note||""}</div>
       </div>`
     ).join("");
+}
 
-  if (currentNet.created) {
-    const mins = Math.floor((new Date()-new Date(currentNet.created))/60000);
-    document.getElementById("sumDuration").textContent = mins<60?`${mins}m`:`${Math.floor(mins/60)}h ${mins%60}m`;
-  }
+async function checkoutEntry(entryId) {
+  if (!currentNetId) return;
+  try {
+    await fetch(`${API}/api/nets/${currentNetId}/checkout`, {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({entry_id:entryId})
+    });
+    await selectNet(currentNetId);
+  } catch(e) { alert("Checkout failed: "+e); }
 }
 
 async function logEntry() {
@@ -288,7 +371,7 @@ async function logEntry() {
   const radioId = document.getElementById("radioId").value.trim();
   if (!radioId) { alert("Enter a Radio ID"); return; }
   const entry = {
-    callsign:   radioId,  // using callsign field to store Radio ID
+    callsign:   radioId,
     name:       document.getElementById("unitName").value.trim(),
     status:     document.getElementById("statusSel").value,
     location:   document.getElementById("locationInput").value.trim(),
@@ -298,6 +381,7 @@ async function logEntry() {
     dispatch_center: document.getElementById("dispatchCenter").value.trim(),
     talkgroup:  document.getElementById("talkgroupSel").value,
     type:       "starcom",
+    radio_id:   radioId,
   };
   try {
     await fetch(`${API}/api/nets/${currentNetId}/entry`, {
@@ -336,7 +420,6 @@ function updateDispatchHeader() {
 
 function clearEntryForm() {
   ["radioId","unitName","channelInput","locationInput","remarksInput"].forEach(id=>document.getElementById(id).value="");
-  // Keep dispatch center across entries — it stays constant per net session
   document.getElementById("statusSel").value="Check-In";
   document.getElementById("precSel").value="ROUTINE";
 }
@@ -379,10 +462,10 @@ async function createNet() {
 }
 
 async function closeNet() {
-  if (!currentNetId||!confirm("Close this net?")) return;
+  if (!currentNetId||!confirm("Close this net? All remaining units will be automatically checked out.")) return;
   await fetch(`${API}/api/nets/${currentNetId}/close`,{method:"POST"});
+  await selectNet(currentNetId);
   await loadNets();
-  document.getElementById("closeNetBtn").style.display="none";
 }
 
 function shareObserverLink() {
@@ -395,23 +478,63 @@ function shareObserverLink() {
 function exportICS309() {
   if (!currentNet) { alert("Select a net first"); return; }
   const entries = currentNet.entries || [];
-  const rows = entries.map((e,i) =>
-    `<tr><td>${i+1}</td><td>${(e.timestamp||"").slice(11,19)}</td>
-    <td>${e.callsign}</td><td>${e.name||""}</td><td>${e.status||""}</td>
-    <td>${e.location||""}</td><td>${e.remarks||""}</td></tr>`
-  ).join("");
+  const opened  = currentNet.net_opened;
+  const closed  = currentNet.net_closed;
+  const dur     = netDuration(opened, closed);
+
+  const rows = entries.map((e,i) => {
+    const edur = entryDuration(e.timestamp, e.checkout_time, closed);
+    return `<tr>
+      <td>${i+1}</td>
+      <td>${(e.timestamp||"").slice(11,19)}</td>
+      <td>${e.callsign||""}</td>
+      <td>${e.name||""}</td>
+      <td>${e.status||e.precedence||""}</td>
+      <td>${e.location||""}</td>
+      <td>${e.remarks||""}</td>
+      <td style="text-align:center"><strong>${edur}</strong></td>
+      <td style="text-align:center">${e.ema_id||""}</td>
+    </tr>`;
+  }).join("");
+
   const html = `<!DOCTYPE html><html><head><title>STARCOM ICS-309</title>
-  <style>body{font-family:Arial;font-size:11px;margin:20px}table{border-collapse:collapse;width:100%}
-  th,td{border:1px solid #ccc;padding:5px 8px}</style></head><body>
-  <div style="text-align:center;border-bottom:2px solid black;padding-bottom:10px;margin-bottom:16px">
-    <div style="font-size:18px;font-weight:bold">STARCOM COMMUNICATIONS LOG${currentNet.drill?" — DRILL":""}</div>
-    <div>Net: ${currentNet.name} | Type: ${currentNet.type} | ${new Date().toISOString().slice(0,10)}</div>
+  <style>
+    body{font-family:Arial;font-size:10px;margin:20px}
+    table{border-collapse:collapse;width:100%}
+    th,td{border:1px solid #888;padding:4px 6px;vertical-align:top}
+    th{background:#1a3a6b;color:#fff;font-size:10px}
+    .hdr{text-align:center;margin-bottom:12px}
+    .meta{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;font-size:10px}
+    .meta-box{border:1px solid #888;padding:6px 10px}
+    .meta-label{color:#555;font-size:9px;text-transform:uppercase}
+  </style></head><body>
+  <div class="hdr">
+    <div style="font-size:16px;font-weight:bold">ICS-309 COMMUNICATIONS LOG${currentNet.drill?" — DRILL / EXERCISE":""}</div>
+    <div style="font-size:12px;margin-top:4px">STARCOM NET · ${currentNet.name} · McHenry County ESV / K9ESV</div>
   </div>
-  <table><thead><tr><th>#</th><th>Time UTC</th><th>Radio ID</th><th>Unit Name</th><th>Status</th><th>Location</th><th>Remarks</th></tr></thead>
-  <tbody>${rows}</tbody></table>
+  <div class="meta">
+    <div class="meta-box"><div class="meta-label">Net Type</div>${currentNet.type||"—"}</div>
+    <div class="meta-box"><div class="meta-label">Net Opened</div>${fmtTime(opened)}</div>
+    <div class="meta-box"><div class="meta-label">Net Closed</div>${closed?fmtTime(closed):"Still Open"}</div>
+    <div class="meta-box"><div class="meta-label">Net Duration</div>${dur}</div>
+    <div class="meta-box"><div class="meta-label">Total Units</div>${entries.length}</div>
+    <div class="meta-box"><div class="meta-label">Date</div>${new Date().toLocaleDateString()}</div>
+  </div>
+  <table>
+    <thead><tr>
+      <th>#</th><th>Check-In Time</th><th>Radio ID</th><th>Unit Name</th>
+      <th>Status</th><th>Location</th><th>Remarks</th>
+      <th>Duration<br>(↑ ¼ hr)</th><th>EMA ID</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>
+  <div style="margin-top:12px;font-size:9px;color:#555">
+    Duration rounded up to nearest quarter hour · EMA ID populated from MCESV roster · 
+    Generated ${new Date().toISOString()} · FieldComms IMS v1.0 · © 2026 KE4CON / MCESV K9ESV · CC BY-SA 4.0
+  </div>
   <script>window.print()<\/script>
-<script src="/lib/identity.js"></script>
-</body></html>`;
+  <script src="/lib/identity.js"><\/script>
+  </body></html>`;
   const win=window.open("","_blank"); win.document.write(html); win.document.close();
 }
 
@@ -423,7 +546,7 @@ function exportJSON() {
 }
 
 loadNets();
-setInterval(loadNets,30000);
+setInterval(() => { if(currentNetId) selectNet(currentNetId); }, 30000);
 const urlNet=new URLSearchParams(location.search).get("net");
 if(urlNet) selectNet(urlNet);
 </script>

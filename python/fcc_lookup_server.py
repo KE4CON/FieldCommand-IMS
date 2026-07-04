@@ -375,15 +375,15 @@ class Handler(BaseHTTPRequestHandler):
             net_id = body.get("id") or f"net-{int(time.time())}"
             sc = 1 if (body.get("starcom") or net_id.startswith("sc-")) else 0
             c.execute("""
-                INSERT INTO nets(id,name,type,starcom,drill,active,freq,ncs,created,roster_chips)
-                VALUES(?,?,?,?,?,?,?,?,?,?)
+                INSERT INTO nets(id,name,type,starcom,drill,active,freq,ncs,created,net_opened,roster_chips)
+                VALUES(?,?,?,?,?,?,?,?,?,?,?)
                 ON CONFLICT(id) DO UPDATE SET name=excluded.name,type=excluded.type,
                 drill=excluded.drill,active=excluded.active,freq=excluded.freq,
                 ncs=excluded.ncs,roster_chips=excluded.roster_chips
             """,(net_id,body.get("name",f"Net {net_id}"),
                  body.get("type","SC Dispatch" if sc else "Amateur"),sc,
                  1 if body.get("drill") else 0,1 if body.get("active",True) else 0,
-                 body.get("freq",""),body.get("ncs",""),now,
+                 body.get("freq",""),body.get("ncs",""),now,now,
                  jdump(body.get("roster_chips",[]))))
             c.commit()
             return self.send_json({"ok":True,"id":net_id})
@@ -394,15 +394,29 @@ class Handler(BaseHTTPRequestHandler):
 
             if sub == "entry":
                 eid = body.get("id") or f"e-{int(time.time()*1000)}"
+                # Look up EMA ID from roster by callsign (ham net) or radio_id (Starcom)
+                ema_id = ""
+                callsign = body.get("callsign","").strip().upper()
+                radio_id = body.get("radio_id","").strip()
+                if callsign:
+                    row = c.execute(
+                        "SELECT member_id FROM roster WHERE UPPER(callsign)=? AND member_type='member'",
+                        (callsign,)).fetchone()
+                    if row: ema_id = row[0]
+                if not ema_id and radio_id:
+                    row = c.execute(
+                        "SELECT member_id FROM roster WHERE radio_id=? AND member_type='member'",
+                        (radio_id,)).fetchone()
+                    if row: ema_id = row[0]
                 c.execute("""INSERT OR REPLACE INTO net_entries
                     (id,net_id,callsign,member_id,radio_id,visitor_agency,
                      name,city,state,precedence,traffic,remarks,
-                     walk_in,visitor,timestamp)
-                    VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                     walk_in,visitor,timestamp,ema_id)
+                    VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                     (eid,net_id,
                      body.get("callsign",""),
                      body.get("member_id",""),
-                     body.get("radio_id",""),
+                     radio_id,
                      body.get("visitor_agency",""),
                      body.get("name",""),
                      body.get("city",""),body.get("state",""),
@@ -410,10 +424,10 @@ class Handler(BaseHTTPRequestHandler):
                      body.get("traffic",""),body.get("remarks",""),
                      1 if body.get("walk_in") else 0,
                      1 if body.get("visitor") else 0,
-                     now))
+                     now,ema_id))
                 c.execute("UPDATE dms_state SET last_activity=? WHERE id=1",(now,))
                 c.commit()
-                return self.send_json({"ok":True,"entry":{**body,"id":eid,"timestamp":now}})
+                return self.send_json({"ok":True,"entry":{**body,"id":eid,"timestamp":now,"ema_id":ema_id}})
 
             elif sub == "traffic":
                 tid = body.get("id") or f"t-{int(time.time()*1000)}"
@@ -435,10 +449,30 @@ class Handler(BaseHTTPRequestHandler):
                     c.commit()
                 return self.send_json({"ok":True})
 
-            elif sub == "close":
-                c.execute("UPDATE nets SET active=0,closed=? WHERE id=?",(now,net_id))
+            elif sub == "checkout":
+                # Check out a single entry before net closes
+                entry_id = body.get("entry_id","")
+                if not entry_id:
+                    return self.send_json({"error":"entry_id required"},400)
+                c.execute("UPDATE net_entries SET checkout_time=? WHERE id=? AND net_id=?",
+                          (now,entry_id,net_id))
                 c.commit()
-                return self.send_json({"ok":True})
+                return self.send_json({"ok":True,"checkout_time":now})
+
+            elif sub == "open":
+                # Explicitly open net (record net_opened timestamp)
+                c.execute("UPDATE nets SET net_opened=?,active=1 WHERE id=?",(now,net_id))
+                c.commit()
+                return self.send_json({"ok":True,"net_opened":now})
+
+            elif sub == "close":
+                # Auto-checkout any entries that haven't checked out
+                c.execute("""UPDATE net_entries SET checkout_time=?
+                             WHERE net_id=? AND checkout_time IS NULL""",(now,net_id))
+                c.execute("UPDATE nets SET active=0,net_closed=?,closed=? WHERE id=?",
+                          (now,now,net_id))
+                c.commit()
+                return self.send_json({"ok":True,"net_closed":now})
 
         elif path == "/api/roster/members":
             mid = body.get("id") or f"m-{int(time.time()*1000)}"

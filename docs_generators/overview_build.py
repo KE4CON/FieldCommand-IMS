@@ -91,9 +91,9 @@ class NC(canvas.Canvas):
             self.setFillColor(white)
             self.setFont('Helvetica', 7)
             self.drawString(M, 0.115*inch,
-                f'{ORG}  ·  For Authorized Personnel Only')
+                f'© 2026 KE4CON / MCESV K9ESV  ·  CC BY-SA 4.0  ·  creativecommons.org/licenses/by-sa/4.0')
             self.drawRightString(PAGE_W - M, 0.115*inch,
-                'EMCOMM-NET  ·  http://192.168.50.1')
+                f'{ORG}  ·  EMCOMM-NET  ·  http://192.168.50.1')
 
             super().showPage()
         super().save()

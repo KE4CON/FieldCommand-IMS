@@ -277,12 +277,12 @@ class ManualCanvas(canvas.Canvas):
         self.setFillColor(white)
         self.setFont('Helvetica', 6.5)
         if n > 1:
-            self.drawString(M, 0.12*inch, ORG)
+            self.drawString(M, 0.12*inch, f'{ORG}  ·  © 2026 KE4CON / MCESV K9ESV  ·  CC BY-SA 4.0')
             self.drawRightString(PAGE_W-M, 0.12*inch,
                 f'Page {n} of {self.TOTAL}  ·  {TODAY}')
         else:
             self.drawCentredString(PAGE_W/2, 0.12*inch,
-                f'FieldComms IMS v1.0  ·  {ORG}  ·  {TODAY}')
+                f'FieldComms IMS v1.0  ·  {ORG}  ·  {TODAY}  ·  CC BY-SA 4.0')
 
 
 # Track sections for TOC

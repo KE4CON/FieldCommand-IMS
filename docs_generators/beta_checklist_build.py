@@ -67,7 +67,7 @@ class NC(canvas.Canvas):
             self.setFillColor(white)
             self.setFont('Helvetica', 6.5)
             if n > 1:
-                self.drawString(M, 0.10*inch, f'For Authorized Personnel  ·  {ORG}')
+                self.drawString(M, 0.10*inch, f'© 2026 KE4CON / MCESV K9ESV  ·  CC BY-SA 4.0  ·  creativecommons.org/licenses/by-sa/4.0')
                 self.drawRightString(PAGE_W-M, 0.10*inch, f'Page {n} of {total}  ·  {TODAY}')
             super().showPage()
         super().save()

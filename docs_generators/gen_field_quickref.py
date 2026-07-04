@@ -138,7 +138,8 @@ class NC(canvas.Canvas):
         self.setFont('Helvetica', 6.5)
         if n > 1:
             self.drawString(M, 0.10*inch,
-                'EMCOMM-NET  ·  http://192.168.50.1  ·  For Authorized Personnel Only')
+                'EMCOMM-NET  ·  http://192.168.50.1  ·  For Authorized Personnel Only  ·  '
+                '© 2026 KE4CON / MCESV K9ESV  ·  CC BY-SA 4.0  ·  creativecommons.org/licenses/by-sa/4.0')
             self.drawRightString(PAGE_W-M, 0.10*inch,
                 f'Page {n} of {total}  ·  {TODAY}')
         else:

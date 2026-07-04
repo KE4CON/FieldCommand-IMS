@@ -147,7 +147,7 @@ class NC(canvas.Canvas):
         self.setFillColor(white)
         self.setFont('Helvetica', 6.5)
         self.drawString(M, 0.11*inch,
-            'For Amateur Radio Emergency Communications (EmComm) Use')
+            f'© 2026 KE4CON / MCESV K9ESV  ·  CC BY-SA 4.0  ·  creativecommons.org/licenses/by-sa/4.0')
         self.drawRightString(PAGE_W-M, 0.11*inch, f'Page {n} of {total}')
 
 # ── Style helpers ─────────────────────────────────────────────────────────────
@@ -537,13 +537,13 @@ def cat_row(title):
 
 bom_rows = [
     cat_row('FieldComms Server  (Pi 5 — 16 GB)'),
-    ['Raspberry Pi 5  —  16 GB RAM', 'Raspberry Pi 5 Model B  (16 GB)', 'raspberrypi.com · Adafruit · PiShop.us'],
+    ['Raspberry Pi 5  —  16 GB RAM', 'Raspberry Pi 5 Model B  (16 GB)  —  note: DRAM shortage pricing, ~$305 as of mid-2026 (was $120)', 'raspberrypi.com · Adafruit · PiShop.us  (~$305)'],
     ['Pironman MAX 5 enclosure', 'Pironman MAX 5  (tower, dual M.2 NVMe, OLED display, active cooling fans)', '52pi.com · Amazon'],
-    ['NVMe SSD × 2  (RAID 1)', '1 TB M.2 2280 PCIe Gen 3/4 NVMe  (e.g. WD Blue SN580 or Samsung 980)', 'Amazon · B&H · Newegg'],
+    ['NVMe SSD × 2  (RAID 1)', '1 TB M.2 2280 PCIe Gen 3/4 NVMe  (e.g. WD Blue SN580 or Samsung 980)  —  NAND shortage pricing ~$180 each as of mid-2026 (was ~$75)', 'Amazon · B&H · Newegg  (~$180 each)'],
     ['Pi 5 USB-C power supply', 'Official Raspberry Pi 27W USB-C PD power supply', 'raspberrypi.com · Adafruit · Amazon'],
     ['MicroSD card  (boot / initial RAID setup)', '32 GB Class 10 / A1 microSD  (removed after RAID is built)', 'Amazon'],
     cat_row('44Net Gateway  (Pi 5 — 8 GB)'),
-    ['Raspberry Pi 5  —  16 GB RAM', 'Raspberry Pi 5 Model B  (16 GB)  —  dedicated AMPRNet gateway  (matches FieldComms Pi for spare-parts commonality)', 'raspberrypi.com · Adafruit · PiShop.us'],
+    ['Raspberry Pi 5  —  16 GB RAM', 'Raspberry Pi 5 Model B  (16 GB)  —  dedicated AMPRNet gateway  (matches FieldComms Pi for spare-parts commonality)  —  8 GB variant (~$130) acceptable for gateway-only role', 'raspberrypi.com · Adafruit · PiShop.us  (~$305)'],
     ['Argon NEO 5 M.2 BRED case', 'Argon NEO 5 M.2 BRED  (compact, passive-cooled, M.2 SATA slot, aluminum)  —  fits Pi 5', 'argon40.com · Amazon  (~$35)'],
     ['M.2 SATA SSD  (gateway OS + config)', '256 GB M.2 2242 or 2280 SATA SSD  —  OS, WireGuard config, routing tables', 'Amazon · Newegg  (~$25)'],
     ['Pi 5 USB-C power supply', 'Official Raspberry Pi 27W USB-C PD power supply  —  one per Pi', 'raspberrypi.com · Adafruit · Amazon'],
@@ -552,7 +552,13 @@ bom_rows = [
     ['UniFi Switch Lite 16 PoE', 'Ubiquiti USW-Lite-16-PoE  (16-port GbE, 8× PoE, 2× SFP uplink, 45W)  —  replaces Flex 2.5G-5', 'ui.com · Amazon · B&H  (~$200)'],
     ['CAT 6 Ethernet cables × 10', '1 ft – 6 ft CAT 6 patch cables  —  router to switch, both Pis, laptop, printer, 4× workstations', 'Amazon · Monoprice'],
     cat_row('Radio & Comms'),
-    ['Icom IC-7300 HF transceiver', 'Icom IC-7300 (HF/50 MHz, built-in USB sound card)', 'Ham Radio Outlet · DX Engineering · Amazon'],
+    ['Icom IC-7300MK2 HF transceiver', 'Icom IC-7300MK2 (HF/50 MHz)  —  next-generation IC-7300: HDMI output for external monitor, USB-C with dual COM ports + audio, LAN port for RS-BA1 remote, built-in CW decoder, improved RMDR (~105 dB), RX antenna IN/OUT  —  check current Icom coupons before purchase', 'Ham Radio Outlet · DX Engineering · R&L · GigaParts  (~$1,500)'],
+    ['13.8 V DC power supply', 'Astron RS-35M  —  13.8 VDC linear regulated, 25 A continuous / 35 A peak, dual meters  —  powers IC-7300 with headroom  —  RS-35M-AP variant adds Anderson Powerpole outputs', 'Ham Radio Outlet · DX Engineering · GigaParts  (~$320-345)'],
+    ['LDG IT-100 automatic antenna tuner', 'LDG IT-100  —  125 W desktop autotuner made for Icom  —  matches up to 10:1 SWR  —  powered and controlled directly from the transceiver TUNER button via included interface cable  —  2,000 tuning memories  —  station-side tuner for coax-fed antennas', 'DX Engineering · GigaParts · Ham Radio Outlet  (~$170-190)'],
+    ['Chameleon CHA MPAS 2.0 antenna system', 'Modular Portable Antenna System 2.0  —  1.8-54 MHz (160m-6m)  —  deploys as vertical, sloper, inverted-V, inverted-L, NVIS, or man-pack in under 2 minutes  —  includes HYBRID matching unit, MIL 2.0 + MIL EXT 2.0 whips, spike mount, 73 ft + 25 ft Kevlar PTFE wire, 50 ft coax with RFI choke, sling bag  —  the primary field HF antenna for all deployments', 'chameleonantenna.com · DX Engineering · GigaParts  (~$600)'],
+    ['Chameleon CHA URT1 remote tuner', 'Universal Remote Tuner 1  —  1.8-54 MHz  —  weatherproof tuner unit mounts at the antenna feedpoint (eliminates feedline SWR loss)  —  matches 5-1,500 ohm loads  —  125 W SSB/CW  —  16,000 memories  —  power and control sent over the coax via bias-T coupler, works with any transceiver, no radio-specific cable', 'chameleonantenna.com · DX Engineering · R&L  (~$390)'],
+    ['Chameleon antenna wire  —  300 ft', '300 ft Chameleon tinned-copper Kevlar PTFE antenna wire (12× 25 ft spools or equivalent bulk)  —  field-expedient long wires, NVIS, dipoles, counterpoises, and radial systems for the MPAS 2.0 and URT1', 'chameleonantenna.com  (~$300)'],
+    ['Wire winders', '4× heavy-duty wire winders sized for 75-100 ft each  —  tangle-free storage and rapid deployment/recovery of antenna wire in the field', 'chameleonantenna.com · DX Engineering  (~$60)'],
     ['USB-A to USB-B cable (IC-7300 to laptop)', 'USB-A to USB-B, shielded, 6 ft', 'Amazon · Monoprice'],
     ['Windows laptop (Winlink Express + JS8Call)', 'Any Windows 10/11 laptop with USB-A port and Wi-Fi', 'Best Buy · Amazon'],
     cat_row('WAN Connectivity — InstyConnect Cellular  (Primary WAN)'),
@@ -612,12 +618,12 @@ bom_rows = [
     ['Canon PIXMA TR150', 'Compact inkjet — built-in rechargeable battery — ~200 pages per charge — USB + Wi-Fi — letter size', 'Best Buy · Amazon  (~$200)'],
     ['HP OfficeJet 200', 'Portable inkjet — larger paper tray — optional battery accessory — USB + Wi-Fi — good for shelter stations', 'Best Buy · Amazon  (~$180)'],
     cat_row('Operator Workstations — Raspberry Pi 500 / 500+  (qty: 4 recommended)'),
-    ['Raspberry Pi 500 keyboard computer  ×4', 'Pi 500 standalone — Pi 5 chip, 8 GB RAM, 32 GB A2 microSD, integrated keyboard — one per operator station', 'raspberrypi.com · Adafruit · Amazon  (~$90 each)'],
-    ['Raspberry Pi 500+  ×4  (alternative)', 'Pi 500+ — same as Pi 500 but with Pi 5 latest revision chip and 2× USB3 — specify if 501(c)(3) funding allows premium spec', 'raspberrypi.com · Adafruit  (~$110 each)'],
+    ['Raspberry Pi 500 keyboard computer  ×4', 'Pi 500 standalone — Pi 5 chip, 8 GB RAM, 32 GB A2 microSD, integrated keyboard — one per operator station', 'raspberrypi.com · Adafruit · Amazon  (~$130 each — DRAM shortage pricing)'],
+    ['Raspberry Pi 500+  ×4  (alternative)', 'Pi 500+ — same as Pi 500 but with Pi 5 latest revision chip and 2× USB3 — specify if 501(c)(3) funding allows premium spec', 'raspberrypi.com · Adafruit  (~$410 each — significantly increased by DRAM shortage; standard Pi 500 recommended)'],
     ['Raspberry Pi Monitor 15.6"  ×4', '15.6" Full HD IPS touchscreen — built-in speakers — kickstand — VESA mount — USB-C powered from Pi 500 — one per station', 'raspberrypi.com · GigaParts · Amazon  (~$100 each)'],
     ['micro-HDMI to HDMI cable  ×4', '1m micro-HDMI to standard HDMI — Pi 500 to Monitor video connection — one per station', 'Included in Pi 500 Desktop Kit · Amazon  (~$8 each)'],
     ['USB-C power supply for Pi 500  ×4', 'Official Raspberry Pi 27W USB-C PD supply — one per station — Pi 500 can also be powered from Monitor USB-C port', 'raspberrypi.com · Adafruit  (~$12 each)'],
-    ['Raspberry Pi 500 Desktop Kit  ×4  (bundle option)', 'Pi 500 + official mouse + micro-HDMI cable bundled — add Monitor separately — simpler ordering than individual parts', 'raspberrypi.com · Amazon  (~$120 each)'],
+    ['Raspberry Pi 500 Desktop Kit  ×4  (bundle option)', 'Pi 500 + official mouse + micro-HDMI cable bundled — add Monitor separately — simpler ordering than individual parts', 'raspberrypi.com · Amazon  (~$160 each — DRAM shortage pricing)'],
 ]
 all_bom = [bom_data[0]] + [[r[0], r[1], r[2]] if len(r)==3 else r for r in bom_rows]
 

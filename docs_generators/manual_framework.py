@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 manual_framework.py — Shared styles, helpers, and canvas for the
-FieldComms Complete User Manual.
+FieldCommand Complete User Manual.
 Import with: from manual_framework import *
 """
 import datetime
@@ -208,10 +208,10 @@ class ManualCanvas(canvas.Canvas):
         self.setFont('Helvetica', 9)
         self.drawCentredString(PAGE_W/2, PAGE_H - 0.88*inch,
             'and McHenry County Emergency Management Agency')
-        # FIELDCOMMS title
+        # FIELDCOMMAND title
         self.setFillColor(white)
         self.setFont('Helvetica-Bold', 58)
-        self.drawCentredString(PAGE_W/2, PAGE_H*0.60, 'FIELDCOMMS')
+        self.drawCentredString(PAGE_W/2, PAGE_H*0.60, 'FIELDCOMMAND')
         # Subtitle
         self.setFillColor(GOLD)
         self.setFont('Helvetica-Bold', 15)
@@ -242,7 +242,7 @@ class ManualCanvas(canvas.Canvas):
         self.setFillColor(EOC)
         self.setFont('Helvetica', 7)
         self.drawCentredString(PAGE_W/2, 0.05*inch,
-            f'FieldComms IMS v1.0  ·  For Authorized Operator Use  ·  MCESV/MCEMA')
+            f'FieldCommand IMS v1.0  ·  For Authorized Operator Use  ·  MCESV/MCEMA')
 
     def _draw_chrome(self):
         n = self._pageNumber
@@ -277,12 +277,12 @@ class ManualCanvas(canvas.Canvas):
         self.setFillColor(white)
         self.setFont('Helvetica', 6.5)
         if n > 1:
-            self.drawString(M, 0.12*inch, f'{ORG}  ·  © 2026 KE4CON / MCESV K9ESV  ·  CC BY-SA 4.0')
+            self.drawString(M, 0.12*inch, f'{ORG}  ·  © 2026 James Rospopo KE4CON  ·  CC BY-SA 4.0')
             self.drawRightString(PAGE_W-M, 0.12*inch,
                 f'Page {n} of {self.TOTAL}  ·  {TODAY}')
         else:
             self.drawCentredString(PAGE_W/2, 0.12*inch,
-                f'FieldComms IMS v1.0  ·  {ORG}  ·  {TODAY}  ·  CC BY-SA 4.0')
+                f'FieldCommand IMS v1.0  ·  {ORG}  ·  {TODAY}  ·  CC BY-SA 4.0')
 
 
 # Track sections for TOC

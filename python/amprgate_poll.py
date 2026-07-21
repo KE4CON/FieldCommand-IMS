@@ -1,9 +1,16 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# FieldCommand IMS — Copyright (C) 2026 James Rospopo KE4CON
+# Developed for McHenry County Emergency Services Volunteers (K9ESV)
+# Licensed under the GNU Affero General Public License v3.0 or later.
+# See LICENSE in the project root for full license text.
+# https://github.com/KE4CON/FieldCommand-IMS
+
 #!/usr/bin/env python3
 """
 amprgate_poll.py — AMPRNet Gateway Status Poller
-Runs on the FieldComms Pi (192.168.50.1)
+Runs on the FieldCommand Pi (192.168.50.1)
 Polls the gateway Pi (192.168.50.2:9000) every 30 seconds
-and writes the result to /opt/fieldcomms/data/amprgate_status.json
+and writes the result to /opt/fieldcommand/data/amprgate_status.json
 so the health monitor and dashboard can display 44Net status.
 """
 
@@ -15,7 +22,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 GATEWAY_URL = "http://192.168.50.2:9000/api/status"
-OUTPUT_FILE = Path("/opt/fieldcomms/data/amprgate_status.json")
+OUTPUT_FILE = Path("/opt/fieldcommand/data/amprgate_status.json")
 POLL_INTERVAL = 30  # seconds
 TIMEOUT = 5         # seconds per request
 

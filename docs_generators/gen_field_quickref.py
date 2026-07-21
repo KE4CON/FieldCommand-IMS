@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-FieldComms Field Quick-Reference — PDF Generator
+FieldCommand Field Quick-Reference — PDF Generator
 K9ESV · MCESV/MCEMA
 8-page lean field guide. Print double-sided and hand out at check-in.
-Output: /mnt/user-data/outputs/FieldComms_Field_Quick_Reference.pdf
+Output: /mnt/user-data/outputs/FieldCommand_Field_Quick_Reference.pdf
 """
 import datetime
 from pathlib import Path
@@ -33,8 +33,8 @@ PURPLE = HexColor('#5b2d8c')
 RED_BG = HexColor('#fde8e8')
 RED    = HexColor('#b82020')
 
-ORG   = 'McHenry County ESV and EMA  ·  MCESV/MCEMA  ·  K9ESV'
-PROD  = 'FieldComms IMS v1.0 — Field Quick-Reference'
+ORG   = 'Developed by James Rospopo KE4CON for McHenry County ESV / MCESV / K9ESV'
+PROD  = 'FieldCommand IMS v1.0 — Field Quick-Reference'
 TODAY = datetime.date.today().strftime('%B %Y')
 PAGE_W, PAGE_H = letter
 M  = 0.60 * inch
@@ -83,7 +83,7 @@ class NC(canvas.Canvas):
             'and McHenry County Emergency Management Agency')
         self.setFillColor(HexColor('#ffffff'))
         self.setFont('Helvetica-Bold', 58)
-        self.drawCentredString(PAGE_W/2, PAGE_H*0.60, 'FIELDCOMMS')
+        self.drawCentredString(PAGE_W/2, PAGE_H*0.60, 'FIELDCOMMAND')
         self.setFillColor(HexColor('#f0c040'))
         self.setFont('Helvetica-Bold', 15)
         self.drawCentredString(PAGE_W/2, PAGE_H*0.545,
@@ -107,7 +107,7 @@ class NC(canvas.Canvas):
         self.setFillColor(HexColor('#1a3a6b'))
         self.setFont('Helvetica', 7)
         self.drawCentredString(PAGE_W/2, 0.05*inch,
-            f'FieldComms IMS v1.0  ·  MCESV/MCEMA  ·  {TODAY}')
+            f'FieldCommand IMS v1.0  ·  MCESV/MCEMA  ·  {TODAY}')
 
 
     def _chrome(self, total):
@@ -139,12 +139,12 @@ class NC(canvas.Canvas):
         if n > 1:
             self.drawString(M, 0.10*inch,
                 'EMCOMM-NET  ·  http://192.168.50.1  ·  For Authorized Personnel Only  ·  '
-                '© 2026 KE4CON / MCESV K9ESV  ·  CC BY-SA 4.0  ·  creativecommons.org/licenses/by-sa/4.0')
+                '© 2026 James Rospopo KE4CON  ·  CC BY-SA 4.0  ·  creativecommons.org/licenses/by-sa/4.0')
             self.drawRightString(PAGE_W-M, 0.10*inch,
                 f'Page {n} of {total}  ·  {TODAY}')
         else:
             self.drawCentredString(PAGE_W/2, 0.10*inch,
-                f'FieldComms IMS v1.0  ·  {ORG}  ·  {TODAY}')
+                f'FieldCommand IMS v1.0  ·  {ORG}  ·  {TODAY}')
 
 # ── Style helpers ─────────────────────────────────────────────────────────────
 def S(name, **kw):
@@ -257,7 +257,7 @@ cover = Table([[Table([[
       S('co', fontName='Helvetica', fontSize=10, textColor=GOLD,
         alignment=TA_CENTER, leading=13)),
     SP(6),
-    P('FieldComms IMS v1.0',
+    P('FieldCommand IMS v1.0',
       S('ct', fontName='Helvetica-Bold', fontSize=30, textColor=white,
         alignment=TA_CENTER, leading=35)),
     SP(4),
@@ -613,7 +613,7 @@ story.append(SP(6))
 story.append(ref_tbl(
     ['DEVICE / SERVICE', 'ADDRESS', 'NOTES'],
     [
-        ['FieldComms dashboard', 'http://192.168.50.1', 'Main entry point — all 32 tools'],
+        ['FieldCommand dashboard', 'http://192.168.50.1', 'Main entry point — all 32 tools'],
         ['WAN Status dashboard', '/wan-status.html',
          'InstyConnect + Starlink + WAN event log'],
         ['AMPRNet gateway status', 'http://192.168.50.2:9000',
@@ -718,7 +718,7 @@ story.append(ref_tbl(
          'USB adapter not seated or ASUS Dual WAN not enabled',
          'Check ASUS admin → WAN → Dual WAN → must be ON with USB as secondary.'],
         ['AMPRNet login fails',
-         'Callsign not in FCC DB or FieldComms Pi unreachable',
+         'Callsign not in FCC DB or FieldCommand Pi unreachable',
          'Verify callsign is valid at http://192.168.50.1/callsign.html. '
          'If FCC DB offline, format-only validation is used as fallback.'],
         ['Cannot reach 192.168.50.2:9000',
@@ -743,7 +743,7 @@ bm = Table([[
     P('RACES · ARES · Starcom\nhttp://192.168.50.1',
       S('bm', fontName='Helvetica-Bold', fontSize=9, textColor=EOC,
         leading=13, alignment=TA_CENTER)),
-    P(f'FieldComms IMS v1.0\n{TODAY}',
+    P(f'FieldCommand IMS v1.0\n{TODAY}',
       S('bm', fontName='Helvetica', fontSize=8, textColor=MUTED,
         leading=12, alignment=TA_LEFT)),
 ]], colWidths=[CW*0.45, CW*0.30, CW*0.25])
@@ -756,12 +756,12 @@ bm.setStyle(TableStyle([
 story.append(bm)
 
 # ── Build ─────────────────────────────────────────────────────────────────────
-out = '/mnt/user-data/outputs/FieldComms_Field_Quick_Reference.pdf'
+out = '/mnt/user-data/outputs/FieldCommand_Field_Quick_Reference.pdf'
 doc = SimpleDocTemplate(
     out, pagesize=letter,
     leftMargin=M, rightMargin=M,
     topMargin=0.58*inch, bottomMargin=0.40*inch,
-    title='FieldComms IMS v1.0 — Field Quick-Reference',
+    title='FieldCommand IMS v1.0 — Field Quick-Reference',
     author='McHenry County Emergency Services Volunteers and McHenry County Emergency Management Agency')
 doc.build(story, canvasmaker=NC)
 

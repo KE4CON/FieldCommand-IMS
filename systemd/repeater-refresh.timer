@@ -1,5 +1,5 @@
 [Unit]
-Description=Monthly FieldComms Repeater Database Refresh (1st of month, 04:00)
+Description=Monthly FieldCommand Repeater Database Refresh (1st of month, 04:00)
 Requires=repeater-refresh.service
 
 [Timer]

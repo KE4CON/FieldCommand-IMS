@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""FieldComms IMS — Component Price Verification with Sources, July 3 2026"""
+"""FieldCommand IMS — Component Price Verification with Sources, July 3 2026"""
 
 from reportlab.lib.pagesizes import letter, landscape
 from reportlab.lib.colors import HexColor, white
@@ -52,11 +52,11 @@ class VCanvas(pdfcanvas.Canvas):
             self.setFillColor(white)
             self.setFont('Helvetica-Bold', 13)
             self.drawString(M, PAGE_H-0.30*inch,
-                'FIELDCOMMS IMS — COMPONENT PRICE VERIFICATION WITH SOURCES')
+                'FIELDCOMMAND IMS — COMPONENT PRICE VERIFICATION WITH SOURCES')
             self.setFillColor(GOLD)
             self.setFont('Helvetica', 8)
             self.drawString(M, PAGE_H-0.44*inch,
-                f'Every item researched {TODAY}  ·  For ARDC grant proposal budget justification  ·  MCESV / MCEMA  ·  K9ESV')
+                f'Every item researched {TODAY}  ·  For ARDC grant proposal budget justification  ·  Developed by KE4CON for MCESV / MCEMA')
             self.setFillColor(white)
             self.setFont('Helvetica-Bold', 9)
             self.drawRightString(PAGE_W-M, PAGE_H-0.30*inch, f'Page {n} of {total}')
@@ -76,7 +76,7 @@ CAT = S('cat', fontName='Helvetica-Bold', fontSize=8.5, textColor=EOC, leading=1
 # (item, price, status, source_url, verified_price_detail, notes)
 # status: V verified, E estimate, O owner purchase
 ROWS = [
-  ('CAT','FIELDCOMMS SERVER (192.168.50.1)'),
+  ('CAT','FIELDCOMMAND SERVER (192.168.50.1)'),
   ('Raspberry Pi 5 — 16 GB',
    '$305.00', 'V',
    'raspberrypi.com/products/raspberry-pi-5',
@@ -278,7 +278,7 @@ ROWS = [
    '$149.95', 'V',
    'store.mobilinkd.com/products/mobilinkd-tnc4',
    '$149.95 — verified directly at Mobilinkd store page',
-   '1200/9600 baud KISS TNC — Bluetooth 4.2 dual-mode (iOS + Android compatible) + USB-C serial — AFSK/GFSK/4-FSK modulation — high dynamic range ADC/DAC — TCXO precision oscillator — 900mAh battery (48 hr continuous) — enables APRS in KISS mode for YAAC and Direwolf directly on FieldComms Pi — configured via Bluetooth app (iOS/Android). Cable sold separately at store.mobilinkd.com — order the Yaesu FTM mobile cable for FTM-510DR.'),
+   '1200/9600 baud KISS TNC — Bluetooth 4.2 dual-mode (iOS + Android compatible) + USB-C serial — AFSK/GFSK/4-FSK modulation — high dynamic range ADC/DAC — TCXO precision oscillator — 900mAh battery (48 hr continuous) — enables APRS in KISS mode for YAAC and Direwolf directly on FieldCommand Pi — configured via Bluetooth app (iOS/Android). Cable sold separately at store.mobilinkd.com — order the Yaesu FTM mobile cable for FTM-510DR.'),
   ('Digirig Yaesu FTM MiniDin10 cable',
    '$19.95', 'V',
    'digirig.net/product/yaesu-ftm-cable (SKU: YAESU10MOBILE)',
@@ -288,7 +288,7 @@ ROWS = [
    '$24.95', 'V',
    'store.mobilinkd.com/products/modem-cable-for-yaesu-ftm-mobile-radio',
    '$24.95 — verified directly at Mobilinkd store product page',
-   '10-pin MiniDIN connector, 1.5m length. Fits FTM-510DR (same MiniDIN-10 data connector as FTM-100/200/300/400/500 series). Connects TNC4 to radio for APRS KISS mode via Bluetooth or USB to FieldComms Pi.'),
+   '10-pin MiniDIN connector, 1.5m length. Fits FTM-510DR (same MiniDIN-10 data connector as FTM-100/200/300/400/500 series). Connects TNC4 to radio for APRS KISS mode via Bluetooth or USB to FieldCommand Pi.'),
   ('USB-C data cable for Digirig',
    '$10.00', 'E',
    'amazon.com',
@@ -379,7 +379,7 @@ story.append(P('VERIFIED SYSTEM TOTALS — July 3, 2026',
     S('h', fontName='Helvetica-Bold', fontSize=9, textColor=EOC, leading=12, spaceAfter=4)))
 
 tot = [
-    ('FieldComms Server (Pi 5 16GB, Pironman MAX, 2× 1TB NVMe RAID, PSU, SD)', '$784'),
+    ('FieldCommand Server (Pi 5 16GB, Pironman MAX, 2× 1TB NVMe RAID, PSU, SD)', '$784'),
     ('44Net Gateway (Pi 5 16GB, Argon NEO 5, 256GB SATA SSD, PSU)', '$399'),
     ('Networking (3× ASUS RT-BE58 Go @ $119, UniFi Lite 16 PoE @ $199, cables)', '$586'),
     ('Cellular WAN (InstyConnect Drum @ $375, Switchblade @ $425, cable @ $20)', '$820'),
@@ -423,13 +423,13 @@ story.append(P(
     '<b>Recurring costs:</b> InstyConnect $5/mo standby / $79–99/mo active  ·  Starlink ~$120/mo (or Roam plan, pausable).',
     S('gn', fontSize=8, leading=11, textColor=DGRAY, spaceBefore=2)))
 
-doc = SimpleDocTemplate('/mnt/user-data/outputs/FieldComms_Price_Verification.pdf',
+doc = SimpleDocTemplate('/mnt/user-data/outputs/FieldCommand_Price_Verification.pdf',
     pagesize=landscape(letter), leftMargin=M, rightMargin=M,
     topMargin=0.72*inch, bottomMargin=0.40*inch,
-    title='FieldComms IMS Component Price Verification July 2026',
-    author='KE4CON / MCESV')
+    title='FieldCommand IMS Component Price Verification July 2026',
+    author='James Rospopo KE4CON')
 doc.build(story, canvasmaker=VCanvas)
 
 from pypdf import PdfReader
-r2 = PdfReader('/mnt/user-data/outputs/FieldComms_Price_Verification.pdf')
+r2 = PdfReader('/mnt/user-data/outputs/FieldCommand_Price_Verification.pdf')
 print(f"BUILT: {len(r2.pages)} pages")

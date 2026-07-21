@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AMPRNet Gateway — FieldComms</title>
+<title>AMPRNet Gateway — FieldCommand</title>
 <link rel="stylesheet" href="theme.css">
 <style>
 .page-header {
@@ -111,7 +111,7 @@ tr:nth-child(even) td { background: var(--bg); }
 <div class="page-header">
   <div>
     <h1>🛰 AMPRNet / 44Net Gateway</h1>
-    <div class="sub">FieldComms EMCOMM-NET  ·  K9ESV  ·  Routes 44.0.0.0/8</div>
+    <div class="sub">FieldCommand EMCOMM-NET  ·  K9ESV  ·  Routes 44.0.0.0/8</div>
   </div>
   <a href="/" class="back-btn">← Dashboard</a>
 </div>
@@ -230,7 +230,7 @@ tr:nth-child(even) td { background: var(--bg); }
 </div>
 
 <script>
-// ── Status data from FieldComms Pi's local poll cache ──────────
+// ── Status data from FieldCommand Pi's local poll cache ──────────
 // The amprgate-poll service writes /data/amprgate_status.json every 30s.
 // We read it via the fcc-lookup API's data endpoint.
 const API_BASE = 'http://192.168.50.1:5050';

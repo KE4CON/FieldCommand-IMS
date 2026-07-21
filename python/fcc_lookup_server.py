@@ -1,7 +1,14 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# FieldCommand IMS — Copyright (C) 2026 James Rospopo KE4CON
+# Developed for McHenry County Emergency Services Volunteers (K9ESV)
+# Licensed under the GNU Affero General Public License v3.0 or later.
+# See LICENSE in the project root for full license text.
+# https://github.com/KE4CON/FieldCommand-IMS
+
 #!/usr/bin/env python3
 """
-FieldComms EmComm Main API Server  —  Port 5050
-All runtime data stored in /opt/fieldcomms/data/fieldcomms.db via db.py
+FieldCommand EmComm Main API Server  —  Port 5050
+All runtime data stored in /opt/fieldcommand/data/fieldcommand.db via db.py
 FCC callsign lookup uses the separate fcc.db (read-only).
 """
 
@@ -18,10 +25,10 @@ from db import get_conn, utcnow, jdump, jload, row_to_dict, rows_to_list
 logging.basicConfig(level=logging.INFO,
     format='%(asctime)s [fcc-lookup] %(message)s',
     handlers=[logging.StreamHandler(sys.stdout),
-              logging.FileHandler('/var/log/fieldcomms-api.log', mode='a')])
+              logging.FileHandler('/var/log/fieldcommand-api.log', mode='a')])
 log = logging.getLogger('fcc-lookup')
 
-BASE    = Path("/opt/fieldcomms")
+BASE    = Path("/opt/fieldcommand")
 DATA    = BASE / "data"
 FCC_DB  = DATA / "fcc.db"
 
@@ -335,7 +342,7 @@ class Handler(BaseHTTPRequestHandler):
 
         elif path == "/wan/status" or path == "/api/wan/status":
             # Serve WAN status written by wan_monitor.py
-            wan_file = Path("/opt/fieldcomms/data/wan_status.json")
+            wan_file = Path("/opt/fieldcommand/data/wan_status.json")
             try:
                 if wan_file.exists():
                     return self.send_json(json.loads(wan_file.read_text()))
@@ -347,7 +354,7 @@ class Handler(BaseHTTPRequestHandler):
 
         elif path == "/amprgate/status" or path == "/api/amprgate/status":
             # Serve AMPRNet gateway status written by amprgate_poll.py
-            ampr_file = Path("/opt/fieldcomms/data/amprgate_status.json")
+            ampr_file = Path("/opt/fieldcommand/data/amprgate_status.json")
             try:
                 if ampr_file.exists():
                     return self.send_json(json.loads(ampr_file.read_text()))

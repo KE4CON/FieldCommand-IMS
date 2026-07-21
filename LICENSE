@@ -1,0 +1,27 @@
+                    GNU AFFERO GENERAL PUBLIC LICENSE
+                       Version 3, 19 November 2007
+
+ Copyright (C) 2026 James Rospopo KE4CON
+ FieldComms IMS — conceived and developed by James Rospopo KE4CON
+ Developed for McHenry County Emergency Services Volunteers (K9ESV)
+ Woodstock, Illinois 60098
+ https://github.com/KE4CON/FieldComms-IMS
+
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Affero General Public License as
+ published by the Free Software Foundation, either version 3 of the
+ License, or (at your option) any later version.
+
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU Affero General Public License for more details.
+
+ You should have received a copy of the GNU Affero General Public
+ License along with this program. If not, see
+ <https://www.gnu.org/licenses/agpl-3.0.html>.
+
+ ADDITIONAL NOTE: This license applies to all software source code
+ in this repository (Python, HTML, JavaScript, shell scripts, systemd
+ units). Documentation (PDF files, docs_generators/) is licensed
+ separately under CC BY-SA 4.0. See LICENSE-DOCS for details.

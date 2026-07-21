@@ -363,7 +363,7 @@
 // ── Constants ──────────────────────────────────────────────────────
 const STATION_LAT = 42.3153;
 const STATION_LON = -88.4473;
-const STORE_KEY   = 'fieldcomms_repeaters_offline';
+const STORE_KEY   = 'fieldcommand_repeaters_offline';
 
 // ── State ──────────────────────────────────────────────────────────
 let allRepeaters   = [];   // current active dataset
@@ -940,7 +940,7 @@ function exportCSV() {
   filtered.forEach(r => rows.push(cols.map(c => `"${(r[c]??'').toString().replace(/"/g,'""')}"`).join(',')));
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([rows.join('\n')], {type:'text/csv'}));
-  a.download = 'repeaters_fieldcomms.csv'; a.click();
+  a.download = 'repeaters_fieldcommand.csv'; a.click();
 }
 
 // ── DEMO DATA ──────────────────────────────────────────────────────

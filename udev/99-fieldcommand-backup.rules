@@ -1,0 +1,6 @@
+# FieldCommand USB Backup Trigger
+# Triggers automatic backup when a USB drive labeled "FIELDCOMMAND" is inserted
+# Install to: /etc/udev/rules.d/99-fieldcommand-backup.rules
+
+ACTION=="add", SUBSYSTEM=="block", ENV{ID_FS_LABEL}=="FIELDCOMMAND", \
+    RUN+="/bin/systemctl start fieldcommand-backup@%k.service"

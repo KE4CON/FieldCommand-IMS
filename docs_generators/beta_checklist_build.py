@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-FieldComms IMS v1.0 — Beta Test Checklist Generator
+FieldCommand IMS v1.0 — Beta Test Checklist Generator
 K9ESV · MCESV/MCEMA
 Output: /mnt/user-data/outputs/ESV_Beta_Test_Checklist.pdf
 """
@@ -59,7 +59,7 @@ class NC(canvas.Canvas):
                 self.drawString(M, PAGE_H-0.25*inch, SHORT)
                 self.setFont('Helvetica', 8)
                 self.drawRightString(PAGE_W-M, PAGE_H-0.25*inch,
-                    'FieldComms IMS v1.0 — Beta Test Checklist')
+                    'FieldCommand IMS v1.0 — Beta Test Checklist')
             self.setFillColor(EOC)
             self.rect(0, 0, PAGE_W, 0.30*inch, fill=1, stroke=0)
             self.setFillColor(GOLD)
@@ -67,7 +67,7 @@ class NC(canvas.Canvas):
             self.setFillColor(white)
             self.setFont('Helvetica', 6.5)
             if n > 1:
-                self.drawString(M, 0.10*inch, f'© 2026 KE4CON / MCESV K9ESV  ·  CC BY-SA 4.0  ·  creativecommons.org/licenses/by-sa/4.0')
+                self.drawString(M, 0.10*inch, f'© 2026 James Rospopo KE4CON  ·  CC BY-SA 4.0  ·  creativecommons.org/licenses/by-sa/4.0')
                 self.drawRightString(PAGE_W-M, 0.10*inch, f'Page {n} of {total}  ·  {TODAY}')
             super().showPage()
         super().save()
@@ -91,7 +91,7 @@ class NC(canvas.Canvas):
             'and McHenry County Emergency Management Agency')
         self.setFillColor(HexColor('#ffffff'))
         self.setFont('Helvetica-Bold', 58)
-        self.drawCentredString(PAGE_W/2, PAGE_H*0.60, 'FIELDCOMMS')
+        self.drawCentredString(PAGE_W/2, PAGE_H*0.60, 'FIELDCOMMAND')
         self.setFillColor(HexColor('#f0c040'))
         self.setFont('Helvetica-Bold', 15)
         self.drawCentredString(PAGE_W/2, PAGE_H*0.545,
@@ -115,7 +115,7 @@ class NC(canvas.Canvas):
         self.setFillColor(HexColor('#1a3a6b'))
         self.setFont('Helvetica', 7)
         self.drawCentredString(PAGE_W/2, 0.05*inch,
-            f'FieldComms IMS v1.0  ·  MCESV/MCEMA  ·  {TODAY}')
+            f'FieldCommand IMS v1.0  ·  MCESV/MCEMA  ·  {TODAY}')
 
 
 # ── Style helpers ─────────────────────────────────────────────────────────────
@@ -268,7 +268,7 @@ story.append(KeepTogether([subsection('1.1  Access & Network'), SP(2), rows_tabl
     ('Dashboard loads at http://192.168.50.1 on a device connected to EMCOMM-NET',
      'Try phone, tablet, laptop'),
     ('SSID "EMCOMM-NET" visible and password accepted', 'WPA2'),
-    ('Dashboard loads at http://fieldcomms.local (mDNS alias)', ''),
+    ('Dashboard loads at http://fieldcommand.local (mDNS alias)', ''),
     ('Dashboard loads at http://emcomm.local (mDNS alias)', ''),
     ('Single router coverage verified — EMCOMM-NET reachable throughout the deployment area', ''),
     ('All dashboard cards load without 404 errors', 'Click each card'),
@@ -316,7 +316,7 @@ story.append(KeepTogether([subsection('1.1c  WAN Connectivity  (InstyConnect + S
 story.append(KeepTogether([subsection('1.1d  AMPRNet / 44Net Gateway'), SP(2), rows_table([
     ('Gateway Pi powered on at 192.168.50.2 (check green power LED)',
      'Must be on same UniFi switch'),
-    ('AMPRNet Gateway card on FieldComms dashboard shows green  (tunnel UP)',
+    ('AMPRNet Gateway card on FieldCommand dashboard shows green  (tunnel UP)',
      'Dashboard bottom — amprgate card = green'),
     ('Gateway status page loads at http://192.168.50.2:9000',
      'Must show callsign login page'),
@@ -591,7 +591,7 @@ story.append(KeepTogether([section('7 · Winlink', ''), SP(6)]))
 
 story.append(KeepTogether([subsection('7.1  Pat Winlink Backup (http://192.168.50.1:8090)'), SP(2), rows_table([
     ('Pat Winlink loads at port 8090', ''),
-    ('Pat dashboard card on FieldComms opens the correct URL', ''),
+    ('Pat dashboard card on FieldCommand opens the correct URL', ''),
     ('Can compose and send a message (requires TNC/radio or internet)', 'Optional'),
     ('Pat service shows as running in Health Monitor', ''),
 ])])); story.append(SP(6))
@@ -724,8 +724,8 @@ story.append(KeepTogether([subsection('12.1  Service Status'), SP(2), rows_table
     ('wan-monitor.service — WAN status monitor polling InstyConnect and Starlink', ''),
     ('amprgate-poll.service — polls gateway Pi every 30s for 44Net status', ''),
     ('ics-platform.service — ICS API running on port 5055', ''),
-    ('fieldcomms-refs.service — reference library API running on port 5056', ''),
-    ('fieldcomms-tiles.service — tile server running on port 8083', ''),
+    ('fieldcommand-refs.service — reference library API running on port 5056', ''),
+    ('fieldcommand-tiles.service — tile server running on port 8083', ''),
     ('deadmans.service — Dead Man\'s Switch service running', ''),
     ('nginx.service — web server running on port 80', ''),
     ('kiwix.service — Kiwix library running on port 8081', ''),
@@ -825,7 +825,7 @@ doc = SimpleDocTemplate(
     out, pagesize=letter,
     leftMargin=M, rightMargin=M,
     topMargin=0.55*inch, bottomMargin=0.42*inch,
-    title='FieldComms IMS v1.0 — Beta Test Checklist',
+    title='FieldCommand IMS v1.0 — Beta Test Checklist',
     author='McHenry County Emergency Services Volunteers and McHenry County Emergency Management Agency')
 doc.build(story, canvasmaker=NC)
 

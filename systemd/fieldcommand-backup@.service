@@ -1,0 +1,12 @@
+[Unit]
+Description=FieldCommand USB Backup — %i
+After=media-fieldcommand.mount
+Requires=media-fieldcommand.mount
+
+[Service]
+Type=oneshot
+User=root
+ExecStart=/bin/bash -c 'DEST=/media/fieldcommand/backup/$(date +%%Y%%m%%d_%%H%%M%%S) && mkdir -p "$DEST" && rsync -a /opt/fieldcommand/data/ "$DEST/data/" && rsync -a /opt/fieldcommand/html/ "$DEST/html/" && echo "Backup complete: $DEST"'
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=fieldcommand-backup

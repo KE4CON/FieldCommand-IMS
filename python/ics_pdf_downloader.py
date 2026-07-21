@@ -1,9 +1,16 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# FieldCommand IMS — Copyright (C) 2026 James Rospopo KE4CON
+# Developed for McHenry County Emergency Services Volunteers (K9ESV)
+# Licensed under the GNU Affero General Public License v3.0 or later.
+# See LICENSE in the project root for full license text.
+# https://github.com/KE4CON/FieldCommand-IMS
+
 #!/usr/bin/env python3
 """
-ics_pdf_downloader.py — FieldComms ICS Forms PDF Downloader
+ics_pdf_downloader.py — FieldCommand ICS Forms PDF Downloader
 =============================================================
 Downloads the official FEMA ICS forms as PDFs from the FEMA website
-and stores them in /opt/fieldcomms/data/ics_forms/ for offline use
+and stores them in /opt/fieldcommand/data/ics_forms/ for offline use
 via the Print Center.
 
 Usage
@@ -28,7 +35,7 @@ Usage
 
 K9ESV · McHenry County Emergency Services Volunteers
      and McHenry County Emergency Management Agency (MCESV/MCEMA)
-FieldComms Incident Management System v1.0
+FieldCommand Incident Management System v1.0
 """
 
 import sys
@@ -142,9 +149,9 @@ ICS_FORMS = [
      'ICS-309_Communications_Log.pdf'),
 ]
 
-DEFAULT_OUTPUT = Path('/opt/fieldcomms/data/ics_forms')
+DEFAULT_OUTPUT = Path('/opt/fieldcommand/data/ics_forms')
 MANIFEST_FILE  = 'download_manifest.json'
-USER_AGENT     = ('Mozilla/5.0 (compatible; FieldComms/1.0; '
+USER_AGENT     = ('Mozilla/5.0 (compatible; FieldCommand/1.0; '
                   'MCESV/MCEMA K9ESV EmComm)')
 
 # ── Helpers ──────────────────────────────────────────────────────────────────

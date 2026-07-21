@@ -1,6 +1,13 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# FieldCommand IMS — Copyright (C) 2026 James Rospopo KE4CON
+# Developed for McHenry County Emergency Services Volunteers (K9ESV)
+# Licensed under the GNU Affero General Public License v3.0 or later.
+# See LICENSE in the project root for full license text.
+# https://github.com/KE4CON/FieldCommand-IMS
+
 #!/usr/bin/env python3
 """
-health_monitor.py — FieldComms Health Monitor Service (port 5051)
+health_monitor.py — FieldCommand Health Monitor Service (port 5051)
 Reports CPU temp, memory, disk, service status, internet connectivity,
 GPS status, Dead Man's Switch state, preflight results.
 """
@@ -12,7 +19,7 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 import urllib.request
 
-DATA = Path("/opt/fieldcomms/data")
+DATA = Path("/opt/fieldcommand/data")
 DMS_STATE_F = DATA / "dms_state.json"
 
 SERVICES = [

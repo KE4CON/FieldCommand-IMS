@@ -10,7 +10,7 @@ Group=kiwix
 WorkingDirectory=/opt/kiwix
 
 # Serves all ZIMs registered in library.xml
-# Add ZIMs with: sudo bash /opt/fieldcomms/scripts/kiwix_setup.sh --tier N
+# Add ZIMs with: sudo bash /opt/fieldcommand/scripts/kiwix_setup.sh --tier N
 ExecStart=/usr/bin/kiwix-serve \
     --port=8081 \
     --library /opt/kiwix/library.xml

@@ -491,7 +491,7 @@ After=network.target
 
 [Service]
 Type=simple
-User=fieldcomms
+User=fieldcommand
 WorkingDirectory=/opt/yaac
 ExecStart=/usr/bin/java -jar /opt/yaac/YAAC.jar -nogui
 Restart=always
@@ -1398,7 +1398,7 @@ function exportKML() {
   const kml = `<?xml version="1.0"?><kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>Incident Management Tactical ${new Date().toISOString()}</name>${placemarks}${ovPlacemarks}</Document></kml>`;
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([kml],{type:'application/vnd.google-earth.kml+xml'}));
-  a.download = `fieldcomms-tactical-${new Date().toISOString().slice(0,10)}.kml`;
+  a.download = `fieldcommand-tactical-${new Date().toISOString().slice(0,10)}.kml`;
   a.click();
 }
 

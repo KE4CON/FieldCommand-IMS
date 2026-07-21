@@ -1,18 +1,18 @@
 #!/usr/bin/env bash
 # =========================================================
-# FieldComms EmComm Field Server — Interactive Installer
+# FieldCommand EmComm Field Server — Interactive Installer
 # Version 1.0  |  For Raspberry Pi 5 (16 GB) / Ubuntu 24
 # =========================================================
 set -euo pipefail
 
 FC_VERSION="1.0"
-FC_USER="fieldcomms"
-FC_HOME="/opt/fieldcomms"
+FC_USER="fieldcommand"
+FC_HOME="/opt/fieldcommand"
 FC_DATA="$FC_HOME/data"
 FC_PYTHON="$FC_HOME/python"
 FC_VENV="$FC_HOME/venv"
 FC_WEB="/var/www/html"
-FC_LOG="/var/log/fieldcomms-install.log"
+FC_LOG="/var/log/fieldcommand-install.log"
 
 AMBER='\033[0;33m'
 GREEN='\033[0;32m'
@@ -112,8 +112,8 @@ STATION_LON=${STATION_LON:-88.4473}
 read -rp "WiFi AP SSID [EMCOMM-NET]: " AP_SSID
 AP_SSID=${AP_SSID:-EMCOMM-NET}
 
-read -rp "WiFi AP password [fieldcomms2026]: " AP_PASS
-AP_PASS=${AP_PASS:-fieldcomms2026}
+read -rp "WiFi AP password [fieldcommand2026]: " AP_PASS
+AP_PASS=${AP_PASS:-fieldcommand2026}
 
 read -rp "Server IP address [192.168.50.1]: " SERVER_IP
 SERVER_IP=${SERVER_IP:-192.168.50.1}
@@ -306,8 +306,8 @@ if [[ "$PROFILE" != "3" ]]; then
         fcc-refresh.timer
         repeater-refresh.service
         repeater-refresh.timer
-        fieldcomms-backup@.service
-        fieldcomms-refs.service
+        fieldcommand-backup@.service
+        fieldcommand-refs.service
         pat.service
         amprgate-poll.service
         wan-monitor.service
@@ -353,9 +353,9 @@ fi
 
 step "Configuring nginx"
 
-if [[ -f "$SCRIPT_DIR/udev/nginx-fieldcomms.conf" ]]; then
-    cp "$SCRIPT_DIR/udev/nginx-fieldcomms.conf" /etc/nginx/sites-available/fieldcomms
-    ln -sf /etc/nginx/sites-available/fieldcomms /etc/nginx/sites-enabled/fieldcomms
+if [[ -f "$SCRIPT_DIR/udev/nginx-fieldcommand.conf" ]]; then
+    cp "$SCRIPT_DIR/udev/nginx-fieldcommand.conf" /etc/nginx/sites-available/fieldcommand
+    ln -sf /etc/nginx/sites-available/fieldcommand /etc/nginx/sites-enabled/fieldcommand
     rm -f /etc/nginx/sites-enabled/default
     nginx -t 2>>"$FC_LOG" && success "nginx config valid" || warn "nginx config test failed — check manually"
     systemctl enable nginx 2>>"$FC_LOG"
@@ -382,7 +382,7 @@ if [[ "$PROFILE" == "1" ]]; then
     
     # Also install the NetworkManager config file for reference
     if [[ -f "$SCRIPT_DIR/udev/NetworkManager-static-ip.conf" ]]; then
-        cp "$SCRIPT_DIR/udev/NetworkManager-static-ip.conf"            /opt/fieldcomms/docs/NetworkManager-static-ip.conf
+        cp "$SCRIPT_DIR/udev/NetworkManager-static-ip.conf"            /opt/fieldcommand/docs/NetworkManager-static-ip.conf
     fi
 fi
 
@@ -390,14 +390,14 @@ fi
 if [[ "$PROFILE" == "1" || "$PROFILE" == "2" ]]; then
     step "Installing USB Backup Trigger"
     
-    if [[ -f "$SCRIPT_DIR/udev/99-fieldcomms-backup.rules" ]]; then
-        cp "$SCRIPT_DIR/udev/99-fieldcomms-backup.rules" /etc/udev/rules.d/
+    if [[ -f "$SCRIPT_DIR/udev/99-fieldcommand-backup.rules" ]]; then
+        cp "$SCRIPT_DIR/udev/99-fieldcommand-backup.rules" /etc/udev/rules.d/
         udevadm control --reload-rules 2>>"$FC_LOG" && success "udev USB backup rule installed"
     fi
 
     # Install TNC udev rules (Digirig, SignaLink, etc.)
-    if [[ -f "$SCRIPT_DIR/udev/99-fieldcomms-tnc.rules" ]]; then
-        cp "$SCRIPT_DIR/udev/99-fieldcomms-tnc.rules" /etc/udev/rules.d/
+    if [[ -f "$SCRIPT_DIR/udev/99-fieldcommand-tnc.rules" ]]; then
+        cp "$SCRIPT_DIR/udev/99-fieldcommand-tnc.rules" /etc/udev/rules.d/
         udevadm control --reload-rules 2>>"$FC_LOG" && success "udev TNC rules installed — /dev/tnc0 symlink will auto-create on plug-in"
     fi
 fi
@@ -416,33 +416,33 @@ if [[ "$PROFILE" == "1" || "$PROFILE" == "2" ]]; then
 
     # Copy the kiwix_setup script to the Pi
     if [[ -f "$SCRIPT_DIR/kiwix_setup.sh" ]]; then
-        cp "$SCRIPT_DIR/kiwix_setup.sh" /opt/fieldcomms/scripts/kiwix_setup.sh
-        chmod +x /opt/fieldcomms/scripts/kiwix_setup.sh
-        success "Installed kiwix_setup.sh → /opt/fieldcomms/scripts/"
+        cp "$SCRIPT_DIR/kiwix_setup.sh" /opt/fieldcommand/scripts/kiwix_setup.sh
+        chmod +x /opt/fieldcommand/scripts/kiwix_setup.sh
+        success "Installed kiwix_setup.sh → /opt/fieldcommand/scripts/"
     fi
 
     # Run kiwix setup (install packages, create user/dirs, write service)
     # Pass --tier with --no-prompt so it handles everything non-interactively
-    if [[ -f "/opt/fieldcomms/scripts/kiwix_setup.sh" ]]; then
+    if [[ -f "/opt/fieldcommand/scripts/kiwix_setup.sh" ]]; then
         if [[ "$KIWIX_TIER" != "0" ]]; then
             info "Running Kiwix setup with Tier ${KIWIX_TIER} content…"
             info "This will download up to $([ "$KIWIX_TIER" -eq 1 ] && echo "~2.5 GB" || [ "$KIWIX_TIER" -eq 2 ] && echo "~10 GB" || echo "~25 GB") of ZIM files."
             info "Large downloads may take 30–120 minutes depending on your connection."
-            info "If interrupted, re-run: sudo bash /opt/fieldcomms/scripts/kiwix_setup.sh --tier ${KIWIX_TIER}"
+            info "If interrupted, re-run: sudo bash /opt/fieldcommand/scripts/kiwix_setup.sh --tier ${KIWIX_TIER}"
             echo ""
-            bash /opt/fieldcomms/scripts/kiwix_setup.sh --tier "$KIWIX_TIER" --no-prompt \
+            bash /opt/fieldcommand/scripts/kiwix_setup.sh --tier "$KIWIX_TIER" --no-prompt \
                 2>>"$FC_LOG" && success "Kiwix setup complete" || \
                 warn "Kiwix setup had errors — check $FC_LOG and re-run kiwix_setup.sh"
         else
             # Install service and packages only, no downloads
             info "Installing Kiwix service (no ZIM downloads — run kiwix_setup.sh later)"
-            bash /opt/fieldcomms/scripts/kiwix_setup.sh --tier 0 --no-prompt \
+            bash /opt/fieldcommand/scripts/kiwix_setup.sh --tier 0 --no-prompt \
                 2>>"$FC_LOG" && success "Kiwix service installed" || \
                 warn "Kiwix service install had issues — check $FC_LOG"
         fi
     else
         warn "kiwix_setup.sh not found — install Kiwix manually"
-        info "Download ZIMs later: sudo bash /opt/fieldcomms/scripts/kiwix_setup.sh"
+        info "Download ZIMs later: sudo bash /opt/fieldcommand/scripts/kiwix_setup.sh"
     fi
 fi
 
@@ -451,9 +451,9 @@ if [[ "$PROFILE" == "1" || "$PROFILE" == "2" ]]; then
     step "Configuring GPS (gpsd)"
 
     # Install gpsd udev rules for common GPS devices
-    if [[ -f "$SCRIPT_DIR/../udev/99-fieldcomms-gps.rules" ]]; then
-        cp "$SCRIPT_DIR/../udev/99-fieldcomms-gps.rules" \
-           /etc/udev/rules.d/99-fieldcomms-gps.rules
+    if [[ -f "$SCRIPT_DIR/../udev/99-fieldcommand-gps.rules" ]]; then
+        cp "$SCRIPT_DIR/../udev/99-fieldcommand-gps.rules" \
+           /etc/udev/rules.d/99-fieldcommand-gps.rules
         udevadm control --reload-rules 2>>"$FC_LOG"
         success "GPS udev rules installed — /dev/gps0 symlink will auto-create on plug-in"
     fi
@@ -552,12 +552,12 @@ if [[ "$PROFILE" == "1" || "$PROFILE" == "2" ]]; then
     success "Created: $FC_HOME/tiles/"
 
     # Install systemd service
-    if [[ -f "$SCRIPT_DIR/../systemd/fieldcomms-tiles.service" ]]; then
-        cp "$SCRIPT_DIR/../systemd/fieldcomms-tiles.service" \
-           /etc/systemd/system/fieldcomms-tiles.service
+    if [[ -f "$SCRIPT_DIR/../systemd/fieldcommand-tiles.service" ]]; then
+        cp "$SCRIPT_DIR/../systemd/fieldcommand-tiles.service" \
+           /etc/systemd/system/fieldcommand-tiles.service
         systemctl daemon-reload
-        systemctl enable fieldcomms-tiles 2>>"$FC_LOG"
-        success "Installed: fieldcomms-tiles.service (port 8083)"
+        systemctl enable fieldcommand-tiles 2>>"$FC_LOG"
+        success "Installed: fieldcommand-tiles.service (port 8083)"
     fi
 
     # Download tiles if requested
@@ -571,7 +571,7 @@ if [[ "$PROFILE" == "1" || "$PROFILE" == "2" ]]; then
         info "Downloading McHenry County map tiles (Preset ${TILE_PRESET})…"
         info "If interrupted, re-run: sudo bash $FC_HOME/scripts/download_tiles.sh"
 
-        # Run as fieldcomms user can't write to tile dir yet — run as root
+        # Run as fieldcommand user can't write to tile dir yet — run as root
         bash "$FC_HOME/scripts/download_tiles.sh" $TILE_FLAGS --no-prompt \
             2>>"$FC_LOG" && success "Map tiles downloaded" || \
             warn "Tile download had issues — re-run download_tiles.sh to retry"
@@ -604,7 +604,7 @@ if wget -q --show-progress -O "$PAT_TMP" "$PAT_URL" 2>>"$FC_LOG"; then
         success "Pat installed: $(pat --version 2>/dev/null | head -1)"
         rm -f "$PAT_TMP"
 
-        # Write Pat config — fieldcomms user's home is /opt/fieldcomms (not /home/fieldcomms)
+        # Write Pat config — fieldcommand user's home is /opt/fieldcommand (not /home/fieldcommand)
         PAT_CFG_DIR="$FC_HOME/.config/pat"
         mkdir -p "$PAT_CFG_DIR"
         if [[ ! -f "$PAT_CFG_DIR/config.json" ]]; then
@@ -655,7 +655,7 @@ if [[ "${SKIP_CUPS:-0}" != "1" ]]; then
         printer-driver-gutenprint avahi-daemon 2>>"$FC_LOG"; then
         success "CUPS and printer drivers installed"
 
-        # Add fieldcomms user and www-data to lpadmin group
+        # Add fieldcommand user and www-data to lpadmin group
         usermod -aG lpadmin "$FC_USER" 2>>"$FC_LOG" || true
         usermod -aG lpadmin www-data 2>>"$FC_LOG" || true
 
@@ -795,8 +795,8 @@ After=network.target
 
 [Service]
 Type=simple
-User=fieldcomms
-Group=fieldcomms
+User=fieldcommand
+Group=fieldcommand
 WorkingDirectory=/opt/graywolf
 ExecStart=/usr/bin/java -jar /opt/graywolf/graywolf.jar --port 8080 --nogui
 Restart=always
@@ -824,8 +824,8 @@ After=network.target
 
 [Service]
 Type=simple
-User=fieldcomms
-Group=fieldcomms
+User=fieldcommand
+Group=fieldcommand
 WorkingDirectory=/opt/graywolf
 ExecStart=/usr/bin/java -jar /opt/graywolf/graywolf.jar --port 8080 --nogui
 Restart=always
@@ -899,7 +899,7 @@ if [[ "${DO_FCC:-N}" =~ ^[Yy] ]]; then
     if sudo -u "$FC_USER" "$FC_VENV/bin/python" "$FC_PYTHON/build_fcc_db.py" 2>>"$FC_LOG"; then
         success "FCC database built: $FC_DATA/fcc.db"
     else
-        warn "FCC database build failed. Run manually: sudo -u fieldcomms $FC_VENV/bin/python $FC_PYTHON/build_fcc_db.py"
+        warn "FCC database build failed. Run manually: sudo -u fieldcommand $FC_VENV/bin/python $FC_PYTHON/build_fcc_db.py"
     fi
 fi
 
@@ -907,7 +907,7 @@ fi
 if [[ "$PROFILE" != "3" ]]; then
     step "Starting Services"
     
-    for svc in fcc-lookup health-monitor deadmans ics-platform fieldcomms-tiles fieldcomms-refs amprgate-poll wan-monitor; do
+    for svc in fcc-lookup health-monitor deadmans ics-platform fieldcommand-tiles fieldcommand-refs amprgate-poll wan-monitor; do
         if systemctl start "$svc.service" 2>>"$FC_LOG"; then
             success "Started: $svc"
         else
@@ -922,7 +922,7 @@ fi
 # ── Done ───────────────────────────────────────────────────────────
 echo ""
 echo -e "${GREEN}${BOLD}╔══════════════════════════════════════════════════════════╗${NC}"
-echo -e "${GREEN}${BOLD}║           FieldComms Installation Complete!              ║${NC}"
+echo -e "${GREEN}${BOLD}║           FieldCommand Installation Complete!              ║${NC}"
 echo -e "${GREEN}${BOLD}╚══════════════════════════════════════════════════════════╝${NC}"
 echo ""
 echo -e "${BOLD}Access the dashboard:${NC}"
@@ -948,7 +948,7 @@ echo -e "  Setup guide:  ${CYAN}sudo bash scripts/setup_44net.sh${NC}  (run on g
 echo -e "  See Installation Guide Step 11 for complete setup instructions."
 echo ""
 echo -e "${BOLD}FCC Database (if not downloaded):${NC}"
-echo -e "  ${CYAN}sudo -u fieldcomms $FC_VENV/bin/python $FC_PYTHON/build_fcc_db.py${NC}"
+echo -e "  ${CYAN}sudo -u fieldcommand $FC_VENV/bin/python $FC_PYTHON/build_fcc_db.py${NC}"
 echo ""
 echo -e "${BOLD}Offline Map Tiles (port 8083):${NC}"
 if [[ "${TILE_PRESET:-0}" != "0" ]]; then
@@ -956,16 +956,16 @@ if [[ "${TILE_PRESET:-0}" != "0" ]]; then
 else
     echo -e "  ${AMBER}No tiles downloaded. Maps use online tiles when available.${NC}"
 fi
-echo -e "  Download tiles: ${CYAN}sudo bash /opt/fieldcomms/scripts/download_tiles.sh${NC}"
-echo -e "  List options:   ${CYAN}sudo bash /opt/fieldcomms/scripts/download_tiles.sh --list${NC}"
+echo -e "  Download tiles: ${CYAN}sudo bash /opt/fieldcommand/scripts/download_tiles.sh${NC}"
+echo -e "  List options:   ${CYAN}sudo bash /opt/fieldcommand/scripts/download_tiles.sh --list${NC}"
 echo ""
 if [[ "${KIWIX_TIER:-0}" != "0" ]]; then
     echo -e "  ${GREEN}✓${NC} Tier ${KIWIX_TIER} ZIMs installed — ${CYAN}http://$SERVER_IP:8081${NC}"
 else
     echo -e "  ${AMBER}Service installed, no ZIMs downloaded yet.${NC}"
 fi
-echo -e "  Add/update ZIMs: ${CYAN}sudo bash /opt/fieldcomms/scripts/kiwix_setup.sh${NC}"
-echo -e "  List available:  ${CYAN}sudo bash /opt/fieldcomms/scripts/kiwix_setup.sh --list${NC}"
+echo -e "  Add/update ZIMs: ${CYAN}sudo bash /opt/fieldcommand/scripts/kiwix_setup.sh${NC}"
+echo -e "  List available:  ${CYAN}sudo bash /opt/fieldcommand/scripts/kiwix_setup.sh --list${NC}"
 echo ""
 if [[ "$PROFILE" == "1" ]]; then
     echo -e "${AMBER}Reboot recommended to activate WiFi AP and all services.${NC}"

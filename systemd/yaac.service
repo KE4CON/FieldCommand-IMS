@@ -4,8 +4,8 @@ After=network.target
 
 [Service]
 Type=simple
-User=fieldcomms
-Group=fieldcomms
+User=fieldcommand
+Group=fieldcommand
 WorkingDirectory=/opt/yaac
 # Run headless; YAAC web server must be configured to port 8082
 ExecStart=/usr/bin/java -jar /opt/yaac/YAAC.jar -nogui

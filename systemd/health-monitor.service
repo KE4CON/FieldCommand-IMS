@@ -1,14 +1,14 @@
 [Unit]
-Description=FieldComms Health Monitor (Port 5051)
+Description=FieldCommand Health Monitor (Port 5051)
 After=network.target
 Wants=network.target
 
 [Service]
 Type=simple
-User=fieldcomms
-Group=fieldcomms
-WorkingDirectory=/opt/fieldcomms
-ExecStart=/opt/fieldcomms/venv/bin/python /opt/fieldcomms/python/health_monitor.py
+User=fieldcommand
+Group=fieldcommand
+WorkingDirectory=/opt/fieldcommand
+ExecStart=/opt/fieldcommand/venv/bin/python /opt/fieldcommand/python/health_monitor.py
 Restart=always
 RestartSec=5
 StandardOutput=journal

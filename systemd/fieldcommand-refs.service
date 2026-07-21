@@ -1,0 +1,18 @@
+[Unit]
+Description=FieldCommand Reference Library Server (Port 5056)
+After=network.target
+
+[Service]
+Type=simple
+User=fieldcommand
+Group=fieldcommand
+WorkingDirectory=/opt/fieldcommand
+ExecStart=/opt/fieldcommand/venv/bin/python /opt/fieldcommand/python/reference_server.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=fieldcommand-refs
+
+[Install]
+WantedBy=multi-user.target

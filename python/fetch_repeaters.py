@@ -1,3 +1,10 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# FieldCommand IMS — Copyright (C) 2026 James Rospopo KE4CON
+# Developed for McHenry County Emergency Services Volunteers (K9ESV)
+# Licensed under the GNU Affero General Public License v3.0 or later.
+# See LICENSE in the project root for full license text.
+# https://github.com/KE4CON/FieldCommand-IMS
+
 #!/usr/bin/env python3
 """
 fetch_repeaters.py — Download repeater data from the RepeaterBook API.
@@ -11,7 +18,7 @@ IMPORTANT — API access changed in 2026:
     3. Once approved, set your token in the environment before running:
          export REPEATERBOOK_TOKEN="your-issued-token"
        (or pass --token on the command line, or put it in
-        /opt/fieldcomms/data/repeaterbook_token.txt)
+        /opt/fieldcommand/data/repeaterbook_token.txt)
 
 If you do not have a token, use the OFFLINE FILE method instead:
   repeaterbook.com -> search your area -> Export -> CSV, then load the CSV
@@ -23,9 +30,9 @@ Usage: python3 fetch_repeaters.py [--states IL,WI,IN,IA] [--bands 2m,70cm] [--to
 import json, time, urllib.request, urllib.parse, urllib.error, argparse, sys, os
 from pathlib import Path
 
-DB_PATH = Path("/opt/fieldcomms/data/fieldcomms.db")
-JSON_SNAPSHOT = Path("/opt/fieldcomms/data/repeaters.json")
-TOKEN_FILE  = Path("/opt/fieldcomms/data/repeaterbook_token.txt")
+DB_PATH = Path("/opt/fieldcommand/data/fieldcommand.db")
+JSON_SNAPSHOT = Path("/opt/fieldcommand/data/repeaters.json")
+TOKEN_FILE  = Path("/opt/fieldcommand/data/repeaterbook_token.txt")
 REPEATERBOOK_URL = "https://www.repeaterbook.com/api/export.php"
 
 # RepeaterBook band codes
@@ -69,7 +76,7 @@ def fetch_repeaters(state, band_code, token):
     url = REPEATERBOOK_URL + "?" + urllib.parse.urlencode(params)
     headers = {
         # A descriptive, contactable user-agent is required by RepeaterBook.
-        "User-Agent": "FieldComms-EmComm/1.0 (+https://www.anthropic.com; MCESV/MCEMA K9ESV)",
+        "User-Agent": "FieldCommand-EmComm/1.0 (+https://www.anthropic.com; MCESV/MCEMA K9ESV)",
         "Accept": "application/json",
     }
     # New (2026+) token authentication. Without this, expect HTTP 403.
@@ -81,7 +88,7 @@ def fetch_repeaters(state, band_code, token):
     return data.get("results", [])
 
 def normalize_repeater(r):
-    """Normalize a RepeaterBook result into the FieldComms 'repeaters' table schema."""
+    """Normalize a RepeaterBook result into the FieldCommand 'repeaters' table schema."""
     def yn(v): return 1 if str(v).strip().lower() in ("yes", "1", "true") else 0
     digital = r.get("Digital", "") or ""
     mode = digital if digital and digital.lower() not in ("", "no", "none") else "FM"
@@ -144,7 +151,7 @@ def main():
     parser.add_argument("--bands",  default=",".join(DEFAULT_BANDS),
                         help=f"Comma-separated bands (default: {','.join(DEFAULT_BANDS)})")
     parser.add_argument("--db", default=str(DB_PATH),
-                        help=f"FieldComms SQLite database (default: {DB_PATH})")
+                        help=f"FieldCommand SQLite database (default: {DB_PATH})")
     parser.add_argument("--json", default=str(JSON_SNAPSHOT),
                         help=f"Optional JSON snapshot path (default: {JSON_SNAPSHOT}); "
                              f"pass empty string to skip")
@@ -219,7 +226,7 @@ def main():
     # Sort by state, then callsign
     all_repeaters.sort(key=lambda r: (r["state"], r["callsign"]))
 
-    # Write into the FieldComms database (the source the web UI reads).
+    # Write into the FieldCommand database (the source the web UI reads).
     try:
         total = write_to_db(all_repeaters, args.db)
         print(f"\nWrote {len(all_repeaters)} repeaters to database: {args.db}")

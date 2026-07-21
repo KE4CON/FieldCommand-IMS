@@ -6,10 +6,10 @@ Wants=network.target
 
 [Service]
 Type=simple
-User=fieldcomms
-Group=fieldcomms
-WorkingDirectory=/opt/fieldcomms
-ExecStart=/opt/fieldcomms/venv/bin/python /opt/fieldcomms/python/wan_monitor.py
+User=fieldcommand
+Group=fieldcommand
+WorkingDirectory=/opt/fieldcommand
+ExecStart=/opt/fieldcommand/venv/bin/python /opt/fieldcommand/python/wan_monitor.py
 Restart=always
 RestartSec=15
 StandardOutput=journal

@@ -1,5 +1,5 @@
 /**
- * FieldComms — Operator Identity  (identity.js  v3)
+ * FieldCommand — Operator Identity  (identity.js  v3)
  *
  * Handles ALL person types that appear in MCESV/MCEMA activations:
  *

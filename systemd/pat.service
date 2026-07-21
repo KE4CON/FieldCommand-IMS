@@ -6,15 +6,15 @@ Wants=network.target
 
 [Service]
 Type=simple
-# Pat runs as the fieldcomms user so it can access its config at
-# /home/fieldcomms/.config/pat/config.json
-User=fieldcomms
-Group=fieldcomms
+# Pat runs as the fieldcommand user so it can access its config at
+# /home/fieldcommand/.config/pat/config.json
+User=fieldcommand
+Group=fieldcommand
 ExecStart=/usr/bin/pat http
 Restart=on-failure
 RestartSec=10
 # Give Pat a clean environment
-Environment=HOME=/opt/fieldcomms
+Environment=HOME=/opt/fieldcommand
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=pat

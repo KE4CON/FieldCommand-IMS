@@ -1,12 +1,19 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# FieldCommand IMS — Copyright (C) 2026 James Rospopo KE4CON
+# Developed for McHenry County Emergency Services Volunteers (K9ESV)
+# Licensed under the GNU Affero General Public License v3.0 or later.
+# See LICENSE in the project root for full license text.
+# https://github.com/KE4CON/FieldCommand-IMS
+
 #!/usr/bin/env python3
 """
-FieldComms — Operator WiFi Access Cards Generator
+FieldCommand — Operator WiFi Access Cards Generator
 Generates Avery 5371-compatible business card sheets (10 cards/sheet, 3.5"x2")
 One card per roster member. Cards contain:
   - ESV logo + org name
   - Operator name + callsign
   - WiFi network name + password
-  - FieldComms URL
+  - FieldCommand URL
   - QR-code-friendly short URL reminder
 
 Usage:
@@ -16,7 +23,7 @@ Usage:
   python3 gen_operator_cards.py --demo                  # 10 demo cards
 
 Input can be:
-  - SQLite DB (auto-detected if /opt/fieldcomms/data/fieldcomms.db exists)
+  - SQLite DB (auto-detected if /opt/fieldcommand/data/fieldcommand.db exists)
   - CSV file  (--csv path/to/roster.csv)
   - Demo mode (--demo)
 """
@@ -309,9 +316,9 @@ def generate_cards(members: list, output: str, ssid: str, password: str):
 
 # ── CLI ───────────────────────────────────────────────────────────────────────
 def main():
-    p = argparse.ArgumentParser(description='Generate FieldComms operator access cards')
+    p = argparse.ArgumentParser(description='Generate FieldCommand operator access cards')
     p.add_argument('--ssid',     default='EMCOMM-NET',    help='WiFi network name')
-    p.add_argument('--password', default='fieldcomms2026', help='WiFi password')
+    p.add_argument('--password', default='fieldcommand2026', help='WiFi password')
     p.add_argument('--csv',      default=None,             help='CSV roster file')
     p.add_argument('--db',       default=None,             help='SQLite DB path')
     p.add_argument('--out',      default='operator_cards.pdf', help='Output PDF path')
@@ -330,13 +337,13 @@ def main():
         print(f'Loaded {len(members)} members from {args.db}')
     else:
         # Auto-detect DB
-        default_db = '/opt/fieldcomms/data/fieldcomms.db'
+        default_db = '/opt/fieldcommand/data/fieldcommand.db'
         if Path(default_db).exists():
             members = load_from_db(default_db)
             print(f'Loaded {len(members)} members from {default_db}')
         else:
             print('No data source found. Using demo data.')
-            print('Options: --csv roster.csv  OR  --db fieldcomms.db  OR  --demo')
+            print('Options: --csv roster.csv  OR  --db fieldcommand.db  OR  --demo')
             members = DEMO_MEMBERS
 
     if not members:

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>WAN Status — FieldComms</title>
+<title>WAN Status — FieldCommand</title>
 <link rel="stylesheet" href="theme.css">
 <style>
 .page-header {
@@ -413,7 +413,7 @@ function load() {
       } else if (active === 'satellite') {
         setHero('satellite', 'Latency: ' + (sl.latency_ms ? sl.latency_ms + ' ms' : '—'));
       } else {
-        setHero('none', 'All WAN sources down — local FieldComms features remain active');
+        setHero('none', 'All WAN sources down — local FieldCommand features remain active');
       }
 
       // InstyConnect card
@@ -454,7 +454,7 @@ function load() {
         'Last updated: ' + utc() + ' — auto-refreshes every 30s';
     })
     .catch(() => {
-      setHero('unknown', 'Cannot reach FieldComms health API');
+      setHero('unknown', 'Cannot reach FieldCommand health API');
       document.getElementById('last-poll').textContent = 'API unreachable — retrying...';
     });
 
@@ -465,7 +465,7 @@ function load() {
 function runConnectivityTests() {
   const tests = [
     { service: 'NWS Weather Alerts', url: 'https://api.weather.gov/', addr: 'api.weather.gov' },
-    { service: 'APRS-IS', url: 'http://192.168.50.1:5050/aprs/status', addr: 'APRS-IS via FieldComms' },
+    { service: 'APRS-IS', url: 'http://192.168.50.1:5050/aprs/status', addr: 'APRS-IS via FieldCommand' },
     { service: 'Cloudflare DNS', url: 'https://1.1.1.1/', addr: '1.1.1.1' },
     { service: 'AMPRNet Gateway', url: 'http://192.168.50.2:9000/health', addr: '192.168.50.2:9000' },
   ];

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""FieldComms IMS v1.0 — Document Generator
+"""FieldCommand IMS v1.0 — Document Generator
 Rebuilt from session transcript.
 """
 import datetime

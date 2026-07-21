@@ -1,10 +1,17 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# FieldCommand IMS — Copyright (C) 2026 James Rospopo KE4CON
+# Developed for McHenry County Emergency Services Volunteers (K9ESV)
+# Licensed under the GNU Affero General Public License v3.0 or later.
+# See LICENSE in the project root for full license text.
+# https://github.com/KE4CON/FieldCommand-IMS
+
 #!/usr/bin/env python3
 """
 wan_monitor.py — WAN Status Monitor Service
-Runs on the FieldComms Pi (192.168.50.1)
+Runs on the FieldCommand Pi (192.168.50.1)
 Polls the ASUS RT-BE58 Go router API and InstyConnect modem
 every 30 seconds to determine active WAN source and connection quality.
-Writes results to /opt/fieldcomms/data/wan_status.json
+Writes results to /opt/fieldcommand/data/wan_status.json
 for the health monitor and wan-status.html dashboard page.
 
 ASUS RT-BE58 Go exposes a basic HTTP API at its admin interface.
@@ -21,7 +28,7 @@ import urllib.error
 from datetime import datetime, timezone
 from pathlib import Path
 
-OUTPUT_FILE  = Path("/opt/fieldcomms/data/wan_status.json")
+OUTPUT_FILE  = Path("/opt/fieldcommand/data/wan_status.json")
 POLL_INTERVAL = 30   # seconds
 
 # Known WAN check targets
@@ -115,7 +122,7 @@ def get_insty_status():
     try:
         req = urllib.request.Request(
             INSTY_ADMIN + "/",
-            headers={"User-Agent": "FieldComms/1.0"}
+            headers={"User-Agent": "FieldCommand/1.0"}
         )
         with urllib.request.urlopen(req, timeout=4) as resp:
             body = resp.read(8192).decode(errors="ignore")

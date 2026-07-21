@@ -1,3 +1,10 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# FieldCommand IMS — Copyright (C) 2026 James Rospopo KE4CON
+# Developed for McHenry County Emergency Services Volunteers (K9ESV)
+# Licensed under the GNU Affero General Public License v3.0 or later.
+# See LICENSE in the project root for full license text.
+# https://github.com/KE4CON/FieldCommand-IMS
+
 #!/usr/bin/env python3
 """
 build_fcc_db.py — Build SQLite FCC callsign database from ULS l_amat.zip
@@ -9,8 +16,8 @@ import sys, os, sqlite3, zipfile, csv, io, shutil, argparse, urllib.request
 from pathlib import Path
 
 FCC_URL = "https://data.fcc.gov/download/pub/uls/complete/l_amat.zip"
-DEFAULT_ZIP = "/opt/fieldcomms/data/l_amat.zip"
-DEFAULT_DB  = "/opt/fieldcomms/data/fcc.db"
+DEFAULT_ZIP = "/opt/fieldcommand/data/l_amat.zip"
+DEFAULT_DB  = "/opt/fieldcommand/data/fcc.db"
 
 def download_fcc(zip_path):
     print(f"Downloading FCC ULS database from {FCC_URL}")

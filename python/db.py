@@ -1,7 +1,14 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# FieldCommand IMS — Copyright (C) 2026 James Rospopo KE4CON
+# Developed for McHenry County Emergency Services Volunteers (K9ESV)
+# Licensed under the GNU Affero General Public License v3.0 or later.
+# See LICENSE in the project root for full license text.
+# https://github.com/KE4CON/FieldCommand-IMS
+
 #!/usr/bin/env python3
 """
-FieldComms — Unified SQLite Database Layer
-/opt/fieldcomms/data/fieldcomms.db
+FieldCommand — Unified SQLite Database Layer
+/opt/fieldcommand/data/fieldcommand.db
 
 Provides:
   - Schema creation and migration
@@ -22,12 +29,12 @@ import logging
 from datetime import datetime, timezone
 from pathlib import Path
 
-log = logging.getLogger("fieldcomms.db")
+log = logging.getLogger("fieldcommand.db")
 
 # ── Paths ──────────────────────────────────────────────────────────────────────
-BASE      = Path("/opt/fieldcomms")
+BASE      = Path("/opt/fieldcommand")
 DATA      = BASE / "data"
-DB_PATH   = DATA / "fieldcomms.db"
+DB_PATH   = DATA / "fieldcommand.db"
 REFS_DIR  = DATA / "refs"
 FILES_DIR = REFS_DIR / "files"
 THUMB_DIR = REFS_DIR / "thumbs"
@@ -41,7 +48,7 @@ _local = threading.local()
 
 
 def get_conn() -> sqlite3.Connection:
-    """Return a thread-local connection to fieldcomms.db."""
+    """Return a thread-local connection to fieldcommand.db."""
     if not hasattr(_local, "conn") or _local.conn is None:
         conn = sqlite3.connect(str(DB_PATH), check_same_thread=False)
         conn.row_factory = sqlite3.Row

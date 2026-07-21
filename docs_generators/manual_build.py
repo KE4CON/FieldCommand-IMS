@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-manual_build.py — Assembles the FieldComms Complete User Manual v1.0
+manual_build.py — Assembles the FieldCommand Complete User Manual v1.0
 Imports all chapter modules, builds TOC, and produces the final PDF.
-Output: /mnt/user-data/outputs/FieldComms_Complete_User_Manual_v1.0.pdf
+Output: /mnt/user-data/outputs/FieldCommand_Complete_User_Manual_v1.0.pdf
 """
 import sys, os, io
 sys.path.insert(0, os.path.dirname(__file__))
@@ -82,7 +82,7 @@ def toc_page(chapters):
 # ── Chapter registry ──────────────────────────────────────────────────────────
 CHAPTERS = [
     (1,  'Introduction & System Overview',                    ''),
-    (2,  'Getting Started — Connecting to FieldComms',        'http://192.168.50.1/'),
+    (2,  'Getting Started — Connecting to FieldCommand',        'http://192.168.50.1/'),
     (3,  'The Main Dashboard',                                'http://192.168.50.1/'),
     (4,  'Member Roster',                                     'http://192.168.50.1/roster.html'),
     (5,  'Operator Identity System',                          ''),
@@ -128,7 +128,7 @@ CHAPTER_FUNCS = [
 ]
 
 # ── Build ─────────────────────────────────────────────────────────────────────
-out = '/mnt/user-data/outputs/FieldComms_Complete_User_Manual_v1.0.pdf'
+out = '/mnt/user-data/outputs/FieldCommand_Complete_User_Manual_v1.0.pdf'
 
 story = []
 story += cover()
@@ -140,7 +140,7 @@ doc = SimpleDocTemplate(
     out, pagesize=letter,
     leftMargin=M, rightMargin=M,
     topMargin=0.60*inch, bottomMargin=0.48*inch,
-    title='FieldComms IMS v1.0 — Complete User Manual',
+    title='FieldCommand IMS v1.0 — Complete User Manual',
     author='McHenry County Emergency Services Volunteers and McHenry County Emergency Management Agency')
 doc.build(story, canvasmaker=ManualCanvas)
 

@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-gen_user_guide.py — McHenry County RACES/ARES/Starcom FieldComms User Guide
+gen_user_guide.py — McHenry County RACES/ARES/Starcom FieldCommand User Guide
 A section-per-tool reference guide covering all 35 tool pages.
-Output: /mnt/user-data/outputs/McHenry_County_RACES_ARES_Starcom_FieldComms_User_Guide.pdf
+Output: /mnt/user-data/outputs/McHenry_County_RACES_ARES_Starcom_FieldCommand_User_Guide.pdf
 """
 import datetime, io, os
 from reportlab.lib.pagesizes import letter
@@ -63,7 +63,7 @@ class NC(canvas.Canvas):
                     'McHenry County RACES/ARES/Starcom')
                 self.setFont('Helvetica', 7.5)
                 self.drawRightString(PAGE_W-M, PAGE_H-0.22*inch,
-                    'FieldComms EmComm Field Server v1.0 — User Guide')
+                    'FieldCommand EmComm Field Server v1.0 — User Guide')
             self.setFillColor(EOC)
             self.rect(0, 0, PAGE_W, 0.32*inch, fill=1, stroke=0)
             self.setFillColor(GOLD)
@@ -72,7 +72,7 @@ class NC(canvas.Canvas):
             self.setFont('Helvetica', 6.5)
             if n > 1:
                 self.drawString(M, 0.11*inch,
-                    f'Amateur Radio Emergency Communications  ·  © 2026 KE4CON / MCESV K9ESV  ·  CC BY-SA 4.0')
+                    f'Amateur Radio Emergency Communications  ·  © 2026 James Rospopo KE4CON  ·  CC BY-SA 4.0')
                 self.drawRightString(PAGE_W-M, 0.11*inch,
                     f'Page {n} of {total}')
             super().showPage()
@@ -97,7 +97,7 @@ class NC(canvas.Canvas):
             'and McHenry County Emergency Management Agency')
         self.setFillColor(HexColor('#ffffff'))
         self.setFont('Helvetica-Bold', 58)
-        self.drawCentredString(PAGE_W/2, PAGE_H*0.60, 'FIELDCOMMS')
+        self.drawCentredString(PAGE_W/2, PAGE_H*0.60, 'FIELDCOMMAND')
         self.setFillColor(HexColor('#f0c040'))
         self.setFont('Helvetica-Bold', 15)
         self.drawCentredString(PAGE_W/2, PAGE_H*0.545,
@@ -121,7 +121,7 @@ class NC(canvas.Canvas):
         self.setFillColor(HexColor('#1a3a6b'))
         self.setFont('Helvetica', 7)
         self.drawCentredString(PAGE_W/2, 0.05*inch,
-            f'FieldComms IMS v1.0  ·  MCESV/MCEMA  ·  {TODAY}')
+            f'FieldCommand IMS v1.0  ·  MCESV/MCEMA  ·  {TODAY}')
 
 
 # ── Style helpers ─────────────────────────────────────────────────────────────
@@ -218,7 +218,7 @@ cov = Table([[Table([[
     P('RACES / ARES / Starcom', S('c2', fontName='Helvetica', fontSize=12,
                                    textColor=HexColor('#c0d4f0'), alignment=TA_CENTER, leading=16)),
     SP(10),
-    P('FieldComms IMS v1.0', S('c3', fontName='Helvetica-Bold', fontSize=26,
+    P('FieldCommand IMS v1.0', S('c3', fontName='Helvetica-Bold', fontSize=26,
                                  textColor=white, alignment=TA_CENTER, leading=30)),
     SP(4),
     P('User Guide', S('c4', fontName='Helvetica-Bold', fontSize=20,
@@ -300,9 +300,9 @@ story.append(PB())
 # ── SECTIONS ──────────────────────────────────────────────────────────────────
 
 # Section 1 — Getting Started
-story += [SB(1,'Getting Started — Connecting to FieldComms','http://192.168.50.1/'), SP(8)]
+story += [SB(1,'Getting Started — Connecting to FieldCommand','http://192.168.50.1/'), SP(8)]
 story.append(P(
-    'FieldComms is a self-contained emergency communications server running on two Raspberry Pi 5 units. '
+    'FieldCommand is a self-contained emergency communications server running on two Raspberry Pi 5 units. '
     'The primary Pi runs all 32 web tools and 15 background services. '
     'A second Pi at 192.168.50.2 serves as the dedicated AMPRNet / 44Net WireGuard gateway. '
     'Three ASUS RT-BE58 Go Wi-Fi 7 routers form the EMCOMM-NET access point: '
@@ -363,7 +363,7 @@ story.append(PB())
 story += [SB(3,'Amateur Net Control Logger','http://192.168.50.1/netcontrol.html'), SP(8)]
 story.append(P(
     'The Amateur Net Control Logger is the primary tool for running ARES/RACES nets. '
-    'Type a callsign and press Enter — FieldComms looks it up in the local FCC database instantly '
+    'Type a callsign and press Enter — FieldCommand looks it up in the local FCC database instantly '
     'and fills the operator name and license class automatically. '
     'Every check-in is timestamped in UTC and saved to the server. '
     'Served-agency staff and EOC observers can watch the live log in Observer Mode '
@@ -502,7 +502,7 @@ story.append(SP(6))
 story.append(tbl([['SECTION','ITEMS CHECKED'],
     ['Power Systems','Shore/generator power, battery backup, UPS, fuel supply, runtime estimate'],
     ['Communications Equipment','HF radio, VHF/UHF radio, TNC, antennas, coax, SWR check'],
-    ['Computing & Software','Pi boot, all FieldComms services green, Kiwix, FCC DB, browser access'],
+    ['Computing & Software','Pi boot, all FieldCommand services green, Kiwix, FCC DB, browser access'],
     ['Personnel & Staffing','NCS identified, EC notified, backup NCS available'],
     ['Field Supplies','Operator cards, printed forms, batteries, cables, tools, PPE'],
     ], [1.8*inch, CW-1.8*inch]))
@@ -513,7 +513,7 @@ story += [SB(13,'ICS Platform — Overview','http://192.168.50.1/ics/'), SP(8)]
 story.append(P(
     'The ICS Platform provides a complete Incident Command System management interface '
     'organized into the five standard ICS sections. '
-    'All data is saved to the FieldComms server and synchronized in real time across '
+    'All data is saved to the FieldCommand server and synchronized in real time across '
     'every device on EMCOMM-NET — section chiefs at different workstations all see '
     'the same incident state simultaneously without refreshing their browsers. '
     'The Planning P tab walks you through all 15 phases of the ICS planning cycle '
@@ -624,7 +624,7 @@ story.append(PB())
 story += [SB(23,'Repeater Database','http://192.168.50.1/repeaters.html'), SP(8)]
 story.append(tbl([['SOURCE TAB','HOW TO USE'],
     ['Offline File (recommended)','Load a RepeaterBook CSV or JSON export. Drag-and-drop or Browse. Data persists in the browser after first load.'],
-    ['Server API','Pulls from FieldComms server if fetch_repeaters.py has been run. Requires RepeaterBook API token.'],
+    ['Server API','Pulls from FieldCommand server if fetch_repeaters.py has been run. Requires RepeaterBook API token.'],
     ['Sample Data','Demo repeaters for testing the interface. Not real — do not use for operations.'],
     ], [1.5*inch, CW-1.5*inch]))
 story.append(SP(4))
@@ -716,7 +716,7 @@ story.append(TipBox(
     'GPS fix quality, and internet connectivity. '
     'If a service dot is red, SSH to the Pi and run:  sudo systemctl restart <service-name>. '
     'Common service names: fcc-lookup, health-monitor, ics-platform, kiwix, deadmans, nginx.  '
-    'The install log is at /var/log/fieldcomms-install.log.',
+    'The install log is at /var/log/fieldcommand-install.log.',
     'note'))
 story.append(PB())
 
@@ -736,7 +736,7 @@ story.append(PB())
 
 # Section 32 — Winlink Form Import
 story += [SB(32,'Winlink Form Import & Incident Archiving','http://192.168.50.1/winlink-import.html'), SP(8)]
-story.append(P('Brings ICS form data from Winlink Express into the FieldComms incident record. '
+story.append(P('Brings ICS form data from Winlink Express into the FieldCommand incident record. '
                'When Winlink Express sends or receives an ICS form, it attaches an XML data file. '
                'This page parses that XML, maps the fields, and archives the form to the active incident.'))
 story.append(SP(6))
@@ -763,7 +763,7 @@ for step in [
     'Enable the API: File → Settings → API — enable, set port to <b>2442</b>.',
     'Set hostname to <b>0.0.0.0</b> to allow EMCOMM-NET devices to connect.',
     'Note the Windows laptop IP address on EMCOMM-NET (e.g. 192.168.50.105).',
-    'On FieldComms dashboard, tap the JS8Call card → enter the laptop IP → tap OK.',
+    'On FieldCommand dashboard, tap the JS8Call card → enter the laptop IP → tap OK.',
 ]:
     story.append(B(step))
 story.append(PB())
@@ -851,19 +851,19 @@ story.append(tbl([['ACCESS LEVEL','HOW','WHAT YOU CAN DO'],
     ], [1.2*inch, 2.4*inch, CW-3.6*inch]))
 story.append(SP(4))
 story.append(TipBox(
-    'The AMPRNet dashboard card on the FieldComms main dashboard shows live tunnel state '
+    'The AMPRNet dashboard card on the FieldCommand main dashboard shows live tunnel state '
     '(green = UP, red = DOWN) updated every 30 seconds. Click it to open the full gateway status page. '
     'Access requires a valid FCC amateur radio callsign — all access is logged for Part 97 compliance.'))
 story.append(PB())
 
 # Section 37 — Printer Setup
 story += [SB(37,'Printer Setup','http://192.168.50.1:631'), SP(8)]
-story.append(P('FieldComms has print buttons on 17 pages — all using the browser standard print function. '
+story.append(P('FieldCommand has print buttons on 17 pages — all using the browser standard print function. '
                'Three connection options are available:'))
 story.append(SP(6))
 story.append(tbl([['OPTION','HOW IT WORKS','BEST FOR'],
     ['A — Own printer','Each operator prints to their own locally connected printer. No Pi setup needed — works immediately.','Single operator or when every device already has a printer'],
-    ['B — USB printer via Pi (CUPS)','USB printer plugged into the Pi. CUPS shares it across EMCOMM-NET. Admin at http://192.168.50.1:631. Installed automatically by the FieldComms installer.','Field activations — one shared printer for all operators. Supports Windows, Mac, iOS AirPrint, Android, Chromebook.'],
+    ['B — USB printer via Pi (CUPS)','USB printer plugged into the Pi. CUPS shares it across EMCOMM-NET. Admin at http://192.168.50.1:631. Installed automatically by the FieldCommand installer.','Field activations — one shared printer for all operators. Supports Windows, Mac, iOS AirPrint, Android, Chromebook.'],
     ['C — Network printer','Wi-Fi or Ethernet printer connected directly to EMCOMM-NET. Devices discover it via Bonjour/mDNS automatically.','Sites with an existing Wi-Fi capable printer'],
     ], [1.2*inch, 2.8*inch, CW-4.0*inch]))
 story.append(SP(4))
@@ -880,12 +880,12 @@ story.append(TipBox('Recommended field printers: Brother HL-L2350DW (laser, exce
                     'Canon PIXMA TR150 or HP OfficeJet 200 (battery-powered portable options).'))
 
 # ── Build ─────────────────────────────────────────────────────────────────────
-out = '/mnt/user-data/outputs/McHenry_County_RACES_ARES_Starcom_FieldComms_User_Guide.pdf'
+out = '/mnt/user-data/outputs/McHenry_County_RACES_ARES_Starcom_FieldCommand_User_Guide.pdf'
 doc = SimpleDocTemplate(
     out, pagesize=letter,
     leftMargin=M, rightMargin=M,
     topMargin=0.55*inch, bottomMargin=0.42*inch,
-    title='McHenry County RACES/ARES/Starcom FieldComms User Guide',
+    title='McHenry County RACES/ARES/Starcom FieldCommand User Guide',
     author='McHenry County Emergency Services Volunteers and McHenry County Emergency Management Agency')
 doc.build(story, canvasmaker=NC)
 

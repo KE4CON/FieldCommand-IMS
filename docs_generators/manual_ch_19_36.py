@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""manual_ch_19_36.py — Chapters 19–36 + Appendix of the FieldComms User Manual."""
+"""manual_ch_19_36.py — Chapters 19–36 + Appendix of the FieldCommand User Manual."""
 import sys, os
 sys.path.insert(0, os.path.dirname(__file__))
 from manual_framework import *
@@ -162,7 +162,7 @@ def ch24():
                 'http://192.168.50.1/winlink-import.html')
     s.append(P(
         'Winlink Express has its own built-in ICS forms. This chapter explains how to '
-        'bring that form data into the FieldComms server so the whole incident is '
+        'bring that form data into the FieldCommand server so the whole incident is '
         'documented and archived in one place — and how to re-print a received '
         'ICS-213, ICS-214, or ICS-309 on the Pi.'))
     s.append(SP(6))
@@ -233,7 +233,7 @@ def ch26():
          'or click Browse. Data persists in your browser after the first load. '
          'This needs no API token and is the most dependable method.'],
         ['Server API',
-         'Pulls from the FieldComms server if the net manager has run fetch_repeaters.py '
+         'Pulls from the FieldCommand server if the net manager has run fetch_repeaters.py '
          'to download RepeaterBook data. Requires a RepeaterBook API token.'],
         ['Sample Data',
          'Three placeholder entries (SAMPLE-1/2/3) for testing the interface. '
@@ -268,7 +268,7 @@ def ch27():
     s.append(SP(6))
     s.append(P('Default Facilities', H2))
     s.append(P(
-        'On first startup, FieldComms seeds four McHenry County facilities: '
+        'On first startup, FieldCommand seeds four McHenry County facilities: '
         'the McHenry County EOC (Woodstock), Centegra Hospital Woodstock, '
         'the McHenry County Fairgrounds staging area, and Centegra Hospital McHenry. '
         'Edit these with your actual operational details.'))
@@ -351,7 +351,7 @@ def ch30():
     s.append(SP(6))
     s.append(P('Connecting a Printer to EMCOMM-NET', H2))
     s.append(P(
-        'FieldComms has print buttons on 17 pages. All printing uses the browser '
+        'FieldCommand has print buttons on 17 pages. All printing uses the browser '
         'standard print function — it sends the job to whatever printer the '
         'operator\'s browser can reach. Three options are supported:'))
     s.append(SP(4))
@@ -378,7 +378,7 @@ def ch30():
         'Select the printer from Local Printers. Check <b>Share This Printer</b>. Click Continue.',
         'Select the driver, click Add Printer, then print a test page.',
         'Windows: Settings → Printers → Add a printer — it appears automatically on EMCOMM-NET.',
-        'iOS/iPad: tap Share → Print in any FieldComms page — AirPrint finds it automatically.',
+        'iOS/iPad: tap Share → Print in any FieldCommand page — AirPrint finds it automatically.',
         'Android: install CUPS Print app → add printer at 192.168.50.1 port 631.',
     ])
     s.append(note(
@@ -401,7 +401,7 @@ def ch30():
          'Click the Default tab — shared printer appears via Bonjour. Select and click Add.'],
         ['iPad / iPhone  (AirPrint)',
          'No setup required. CUPS + Avahi advertises as AirPrint-compatible. '
-         'Tap Share → Print in any FieldComms page and select the printer.'],
+         'Tap Share → Print in any FieldCommand page and select the printer.'],
         ['Android',
          'Install the free CUPS Print app from Google Play. '
          'Add printer at IP 192.168.50.1, Port 631, Protocol IPP.'],
@@ -485,7 +485,7 @@ def ch32():
     s.append(P('Adding a Custom ZIM', H2))
     s += steps([
         'Download a ZIM from kiwix.org to a device with internet.',
-        'Copy it to the Pi: <font face="Courier" size="9">scp mybook.zim fieldcomms@192.168.50.1:/opt/kiwix/zim/</font>',
+        'Copy it to the Pi: <font face="Courier" size="9">scp mybook.zim fieldcommand@192.168.50.1:/opt/kiwix/zim/</font>',
         'Register it: <font face="Courier" size="9">sudo kiwix-manage /opt/kiwix/library.xml add /opt/kiwix/zim/mybook.zim</font>',
         'Restart: <font face="Courier" size="9">sudo systemctl restart kiwix</font>',
         'Open http://192.168.50.1:8081 — the new content appears.',
@@ -498,7 +498,7 @@ def ch33():
     s = chapter(33, 'Offline Maps, GPS & Health Monitor')
     s.append(P(
         'This chapter covers three infrastructure features that operate in the background '
-        'to support the rest of FieldComms: the offline map tile system that powers both '
+        'to support the rest of FieldCommand: the offline map tile system that powers both '
         'the Tactical APRS Map and the Starcom Resource Map, the GPS live position feed '
         'that provides accurate coordinates across all tools, and the Health Monitor '
         'that tracks system vitals and service status in real time.'))
@@ -514,10 +514,10 @@ def ch33():
     s.append(SP(4))
     s.append(P('Downloading Tiles', H3))
     s += steps([
-        'Run <font face="Courier" size="9">sudo bash /opt/fieldcomms/scripts/download_tiles.sh</font> for the interactive menu (106 presets: all Illinois counties, WI/IN/IA border counties, all 50 states).',
+        'Run <font face="Courier" size="9">sudo bash /opt/fieldcommand/scripts/download_tiles.sh</font> for the interactive menu (106 presets: all Illinois counties, WI/IN/IA border counties, all 50 states).',
         'Search presets: <font face="Courier" size="9">download_tiles.sh --search "mchenry"</font>',
         'Download a preset: <font face="Courier" size="9">download_tiles.sh --area "McHenry County IL" --zoom 8-16</font>',
-        'Tiles are stored in /opt/fieldcomms/data/tiles/ and served by the tile server on port 8083.',
+        'Tiles are stored in /opt/fieldcommand/data/tiles/ and served by the tile server on port 8083.',
     ])
     s.append(SP(8))
 
@@ -553,7 +553,7 @@ def ch33():
     s.append(SP(4))
     s.append(P('Restarting a Stopped Service', H3))
     s.append(P('<font face="Courier" size="8.5">sudo systemctl restart fcc-lookup  '
-               '# or: health-monitor, ics-platform, fieldcomms-refs, kiwix, deadmans</font>', Body))
+               '# or: health-monitor, ics-platform, fieldcommand-refs, kiwix, deadmans</font>', Body))
     s.append(PB())
     return s
 
@@ -561,7 +561,7 @@ def ch33():
 def ch34():
     s = chapter(34, 'Network Hardware — ASUS RT-BE58 Go & UniFi Switch Lite 16')
     s.append(P(
-        'FieldComms v1.0 uses a three-router mesh network rather than a single access point. '
+        'FieldCommand v1.0 uses a three-router mesh network rather than a single access point. '
         'The primary ASUS RT-BE58 Go travel router manages WAN connectivity, DHCP, and the '
         'EMCOMM-NET Wi-Fi access point. Two additional RT-BE58 Go routers operate as AiMesh '
         'nodes extending EMCOMM-NET to secondary rooms, outdoor staging areas, and upper floors '
@@ -626,7 +626,7 @@ def ch34():
 
     s.append(P('33.3  InstyConnect Antennas', H2))
     s.append(P(
-        'FieldComms carries two InstyConnect antennas to handle different deployment sites. '
+        'FieldCommand carries two InstyConnect antennas to handle different deployment sites. '
         'Both connect via a single outdoor-rated PoE Ethernet cable to the ASUS WAN port. '
         'The modem is integrated into the outdoor antenna enclosure — '
         'no separate modem box is needed. Power travels up the same cable that carries data.'))
@@ -671,7 +671,7 @@ def ch34():
         'It maintains a permanent WireGuard encrypted tunnel to amprgw.ampr.org and '
         'routes the entire 44.0.0.0/8 AMPRNet address block for all EMCOMM-NET devices. '
         'This means any device on EMCOMM-NET — phones, tablets, operator workstations, '
-        'and the FieldComms Pi itself — can reach other AMPRNet stations globally '
+        'and the FieldCommand Pi itself — can reach other AMPRNet stations globally '
         'without routing traffic through the commercial internet.'))
     s.append(SP(4))
     s.append(tbl(['AMPRNET USE CASE', 'HOW IT WORKS'], [
@@ -681,8 +681,8 @@ def ch34():
         ['APRS-IS via AMPRNet',
          'Graywolf and YAAC connect to APRS-IS servers on 44.x.x.x — '
          'keeping APRS traffic within the amateur radio network.'],
-        ['Inter-node FieldComms',
-         'If a second MCESV FieldComms system with its own 44Net gateway is deployed, '
+        ['Inter-node FieldCommand',
+         'If a second MCESV FieldCommand system with its own 44Net gateway is deployed, '
          'the two systems can share data over AMPRNet without commercial internet routing.'],
         ['Direct station connectivity',
          'Any amateur station worldwide with a 44.x.x.x address is directly reachable '
@@ -694,7 +694,7 @@ def ch34():
         'last handshake time, AMPRNet address, bytes transferred, and system health '
         'of the gateway Pi. '
         'Access requires a valid FCC amateur radio callsign. '
-        'The FieldComms dashboard health monitor also shows a 44Net status indicator '
+        'The FieldCommand dashboard health monitor also shows a 44Net status indicator '
         'updated every 30 seconds by the amprgate-poll background service.'))
     s.append(SP(6))
 
@@ -708,7 +708,7 @@ def ch34():
         ['Status Dashboard  (any EMCOMM-NET device)  —  '
          'Open http://192.168.50.2:9000.  '
          'Enter your FCC callsign at the login prompt.  '
-         'Validated against the local FCC database on the FieldComms Pi.',
+         'Validated against the local FCC database on the FieldCommand Pi.',
          'View tunnel state, AMPRNet address, last handshake, '
          'traffic stats, routes, and gateway health.  Read-only — no tunnel control.'],
         ['Tunnel Control  (gateway Pi keyboard only)  —  '
@@ -721,7 +721,7 @@ def ch34():
     s.append(SP(4))
     s.append(note(
         'The /api/status endpoint on port 9000 does not require authentication. '
-        'This is intentional — the FieldComms Pi poll service reads it every 30 seconds '
+        'This is intentional — the FieldCommand Pi poll service reads it every 30 seconds '
         'as a machine-to-machine call to update the dashboard WAN indicator. '
         'This endpoint is read-only and returns no sensitive data. '
         'All web UI access and all tunnel control actions are logged to '
@@ -731,7 +731,7 @@ def ch34():
 
     s.append(P('33.7  Network IP Reference', H2))
     s.append(tbl(['DEVICE', 'IP ADDRESS', 'ADMIN URL'], [
-        ['FieldComms Pi 5',  '192.168.50.1',   'http://192.168.50.1'],
+        ['FieldCommand Pi 5',  '192.168.50.1',   'http://192.168.50.1'],
         ['44Net Gateway Pi 5',                     '192.168.50.2',   'http://192.168.50.2:9000'],
         ['ASUS RT-BE58 Go  (primary router)',       '192.168.50.254', 'http://192.168.50.254'],
         ['Windows Laptop  (recommended)',           '192.168.50.3',   'DHCP reservation in router'],
@@ -756,7 +756,7 @@ def ch34():
         'JS8Call is a weak-signal HF digital mode designed for keyboard-to-keyboard '
         'messaging, store-and-forward relay, and group nets — all without an internet '
         'connection. It runs on the Windows laptop alongside Winlink Express, connected '
-        'to the IC-7300 via USB. The FieldComms dashboard provides a quick-launch card '
+        'to the IC-7300 via USB. The FieldCommand dashboard provides a quick-launch card '
         'that opens JS8Call\'s built-in web interface from any device on EMCOMM-NET.'))
     s.append(SP(6))
     s.append(P('What JS8Call Does', H2))
@@ -782,10 +782,10 @@ def ch34():
     ])
     s.append(SP(6))
 
-    s.append(P('Using JS8Call from FieldComms', H2))
+    s.append(P('Using JS8Call from FieldCommand', H2))
     s += steps([
         'Note the Windows laptop\'s IP address on EMCOMM-NET: run <font face="Courier" size="9">ipconfig</font> in Command Prompt and look for the 192.168.50.x address.',
-        'On any EMCOMM-NET device, open FieldComms and tap the <b>JS8Call</b> card.',
+        'On any EMCOMM-NET device, open FieldCommand and tap the <b>JS8Call</b> card.',
         'A prompt appears asking for the Windows laptop\'s IP address.',
         'Enter the IP address (e.g. 192.168.50.105). Click OK.',
         'The card opens JS8Call\'s web interface at http://192.168.50.105:2442.',
@@ -819,7 +819,7 @@ def ch35():
     s.append(SP(4))
     s.append(P(
         'JS8Call runs on the Windows laptop alongside Winlink Express, both connected '
-        'to the IC-7300 via the single USB cable. The FieldComms dashboard provides a '
+        'to the IC-7300 via the single USB cable. The FieldCommand dashboard provides a '
         'purple JS8Call quick-launch card that opens JS8Call built-in web interface '
         'from any device on EMCOMM-NET — operators at the EOC table can monitor JS8Call '
         'traffic from their phones or tablets without being at the Windows laptop.'))
@@ -934,7 +934,7 @@ def ch_appendix():
     s.append(P('A1  Installation & Updates', H2))
     s.append(tbl(['COMMAND', 'WHAT IT DOES'], [
         ['sudo bash install.sh',          'Interactive installer — sets callsign, coordinates, Wi-Fi, services'],
-        ['sudo bash update.sh',           'Updates FieldComms code and restarts services'],
+        ['sudo bash update.sh',           'Updates FieldCommand code and restarts services'],
         ['sudo bash kiwix_setup.sh',      'Install/manage Kiwix offline content'],
         ['sudo bash download_tiles.sh',   'Download offline map tiles'],
     ], widths=[2.8*inch, CW-2.8*inch]))
@@ -953,9 +953,9 @@ def ch_appendix():
     s.append(P('A3  Database Backup', H2))
     s.append(P(
         'The main database is a single SQLite file. Back it up by copying '
-        '<b>fieldcomms.db</b> to a USB drive. Export the roster CSV monthly '
-        'and keep a copy on a USB drive labeled FIELDCOMMS as a secondary backup. '
-        'Plugging in a drive labeled FIELDCOMMS automatically triggers a full '
+        '<b>fieldcommand.db</b> to a USB drive. Export the roster CSV monthly '
+        'and keep a copy on a USB drive labeled FIELDCOMMAND as a secondary backup. '
+        'Plugging in a drive labeled FIELDCOMMAND automatically triggers a full '
         'rsync backup of the application data via the udev backup rule.'))
     s.append(SP(8))
 
@@ -973,7 +973,7 @@ def ch_appendix():
         ['fcc-lookup.service', '5050', 'FCC callsign API, net log, forms, DMS, roster, resources'],
         ['health-monitor.service','5051','System health API'],
         ['ics-platform.service','5055','ICS incident platform API'],
-        ['fieldcomms-refs.service','5056','Reference library API'],
+        ['fieldcommand-refs.service','5056','Reference library API'],
         ['Graywolf APRS',      '8080', 'APRS client with REST API and WebSocket'],
         ['Kiwix',              '8081', 'Offline library — WikiMed, Wikipedia, iFixit'],
         ['YAAC APRS',          '8082', 'Secondary APRS client'],

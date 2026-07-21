@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""manual_ch_01_07.py — Chapters 1–7 of the FieldComms User Manual."""
+"""manual_ch_01_07.py — Chapters 1–7 of the FieldCommand User Manual."""
 import sys, os
 sys.path.insert(0, os.path.dirname(__file__))
 from manual_framework import *
@@ -8,7 +8,7 @@ from manual_framework import *
 def ch1():
     s = chapter(1, 'Introduction & System Overview')
     s.append(P(
-        'FieldComms Incident Management System is a self-contained emergency communications '
+        'FieldCommand Incident Management System is a self-contained emergency communications '
         'server built on a Raspberry Pi 5 for McHenry County RACES, ARES, and Starcom operations. '
         'It provides 32 web-based EmComm tools accessible from any smartphone, tablet, or laptop '
         'connected to the EMCOMM-NET Wi-Fi access point — no internet, no app installation, '
@@ -18,7 +18,7 @@ def ch1():
         'live features such as NWS weather alerts, APRS-IS, and HF propagation data activate automatically.'))
     s.append(SP(4))
     s.append(P(
-        'Version 1.0 uses two Raspberry Pi 5 units: the FieldComms application server at '
+        'Version 1.0 uses two Raspberry Pi 5 units: the FieldCommand application server at '
         '192.168.50.1 running all 32 web tools and 15 background services, and a dedicated '
         'AMPRNet gateway Pi at 192.168.50.2 maintaining a permanent WireGuard tunnel into '
         'the 44.0.0.0/8 amateur radio IP network. '
@@ -31,7 +31,7 @@ def ch1():
 
     s.append(P('1.1  System Architecture', H2))
     s.append(tbl(['COMPONENT', 'DESCRIPTION', 'ADMIN IP'], [
-        ['FieldComms Pi 5',
+        ['FieldCommand Pi 5',
          'Pironman MAX 5  ·  2× 1 TB NVMe RAID 1  ·  32 pages  ·  15 services  ·  16 GB RAM',
          '192.168.50.1'],
         ['44Net Gateway Pi 5',
@@ -66,7 +66,7 @@ def ch1():
 
     s.append(P('1.2  Dashboard Modes', H2))
     s.append(P(
-        'The FieldComms dashboard reorganizes its tool cards into three modes '
+        'The FieldCommand dashboard reorganizes its tool cards into three modes '
         'selected from the mode bar at the top of the page. '
         'The mode changes the layout and highlights the tools most relevant '
         'to the current type of operation. All tools remain accessible regardless of mode.'))
@@ -101,10 +101,10 @@ def ch1():
     return s
 
 def ch2():
-    s = chapter(2, 'Getting Started — Connecting to FieldComms',
+    s = chapter(2, 'Getting Started — Connecting to FieldCommand',
                 'http://192.168.50.1/')
     s.append(P(
-        'Getting on FieldComms takes three steps: connect to the Wi-Fi, open '
+        'Getting on FieldCommand takes three steps: connect to the Wi-Fi, open '
         'the dashboard, and identify yourself. The whole process takes under a minute.'))
     s.append(SP(6))
     s.append(P('Step 1 — Connect to the EMCOMM-NET Wi-Fi', H2))
@@ -112,14 +112,14 @@ def ch2():
     s.append(SP(4))
     s.append(tbl(['SETTING', 'VALUE'], [
         ['Network Name (SSID)', 'EMCOMM-NET'],
-        ['Password', 'Provided by your net manager (default: fieldcomms2026)'],
+        ['Password', 'Provided by your net manager (default: fieldcommand2026)'],
         ['Security', 'WPA2-PSK'],
         ['Wi-Fi Channel', '6 (2.4 GHz)'],
         ['Your device receives IP', '192.168.50.100 – 192.168.50.200 (automatic)'],
     ], widths=[2.0*inch, CW-2.0*inch]))
     s.append(SP(4))
     s.append(note(
-        'The Wi-Fi password is the only access control on FieldComms. Anyone with '
+        'The Wi-Fi password is the only access control on FieldCommand. Anyone with '
         'the password can use every tool — there is no separate login screen. Keep '
         'the password posted at the EOC for arriving operators and treat it as an '
         'operational credential.', 'note'))
@@ -129,7 +129,7 @@ def ch2():
     s += steps([
         'Open any web browser (Chrome, Safari, Firefox, Edge — all work).',
         'Type <b>http://192.168.50.1</b> in the address bar and press Enter.',
-        'The FieldComms dashboard loads. You do not need to install anything.',
+        'The FieldCommand dashboard loads. You do not need to install anything.',
     ])
     s.append(SP(8))
 
@@ -286,7 +286,7 @@ def ch4():
         'The net manager can print wallet-sized access cards for every member, '
         'generated from the roster. Each card shows the Wi-Fi network and password, '
         'the dashboard URL, and the member\'s identifiers. Run: '
-        '<font face="Courier" size="9">python3 /opt/fieldcomms/scripts/gen_operator_cards.py '
+        '<font face="Courier" size="9">python3 /opt/fieldcommand/scripts/gen_operator_cards.py '
         '--ssid EMCOMM-NET --password YOUR-PASSWORD</font>. '
         'Output is a print-ready PDF, 10 cards per Avery 5371 sheet.', 'tip'))
     s.append(SP(6))
@@ -320,7 +320,7 @@ def ch4():
 def ch5():
     s = chapter(5, 'Operator Identity System')
     s.append(P(
-        'Every FieldComms page tracks who is operating at each device so your '
+        'Every FieldCommand page tracks who is operating at each device so your '
         'check-ins, log entries, and form signatures are attributed correctly. '
         'There is no password — your identity is stored in your device\'s browser '
         'and remembered between sessions. The system handles all four kinds of '
@@ -363,7 +363,7 @@ def ch6():
     s.append(P(
         'The Amateur Net Control Logger is the primary tool for running ARES/RACES '
         'amateur radio nets. When a station checks in, you type their callsign and '
-        'press Enter — FieldComms looks up the operator in the local FCC database '
+        'press Enter — FieldCommand looks up the operator in the local FCC database '
         'and fills their name and license class automatically. '
         'The check-in is timestamped in UTC and saved to the server immediately, '
         'making it visible to all connected devices including served-agency staff '

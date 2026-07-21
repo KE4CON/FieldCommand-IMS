@@ -1,7 +1,7 @@
 Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)
 
 Copyright (c) 2026 James Rospopo KE4CON
-McHenry County Emergency Services Volunteers — K9ESV / MCESV / MCEMA
+Developed for McHenry County Emergency Services Volunteers (K9ESV)
 Woodstock, Illinois 60098
 
 This license applies to all documentation in the FieldComms IMS project,
@@ -45,7 +45,7 @@ Under the following terms:
   endorses you or your use.
 
   Appropriate credit means:
-    - Name/callsign: James Rospopo KE4CON / K9ESV / MCESV
+    - Name/callsign: James Rospopo KE4CON
     - Project: FieldComms IMS
     - Source: https://github.com/KE4CON/FieldComms-IMS
     - License: CC BY-SA 4.0
@@ -84,7 +84,7 @@ How to apply this license to your adaptation:
   If you adapt any FieldComms IMS documentation for your own EMCOMM
   deployment, add the following notice to your adapted work:
 
-    "Based on FieldComms IMS by James Rospopo KE4CON / K9ESV / MCESV
+    "Based on FieldComms IMS by James Rospopo KE4CON
      (https://github.com/KE4CON/FieldComms-IMS), licensed under
      CC BY-SA 4.0 (https://creativecommons.org/licenses/by-sa/4.0).
      Adapted by [Your Name / Callsign] for [Your Organization], [Year].

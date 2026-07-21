@@ -1,9 +1,16 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# FieldCommand IMS — Copyright (C) 2026 James Rospopo KE4CON
+# Developed for McHenry County Emergency Services Volunteers (K9ESV)
+# Licensed under the GNU Affero General Public License v3.0 or later.
+# See LICENSE in the project root for full license text.
+# https://github.com/KE4CON/FieldCommand-IMS
+
 #!/usr/bin/env python3
 """
-apply_theme.py — FieldComms Theme Consistency Tool
+apply_theme.py — FieldCommand Theme Consistency Tool
 ====================================================
 Scans all HTML files in the web frontend and verifies / applies the
-standard FieldComms dark theme CSS variables.  Can also patch a single
+standard FieldCommand dark theme CSS variables.  Can also patch a single
 file or a directory of files.
 
 Usage
@@ -15,17 +22,17 @@ Usage
   python3 apply_theme.py --apply
 
   # Apply to a single file
-  python3 apply_theme.py --apply --file /opt/fieldcomms/html/mypage.html
+  python3 apply_theme.py --apply --file /opt/fieldcommand/html/mypage.html
 
   # Show diff without writing
-  python3 apply_theme.py --diff --file /opt/fieldcomms/html/mypage.html
+  python3 apply_theme.py --diff --file /opt/fieldcommand/html/mypage.html
 
   # List all files that are missing at least one required variable
   python3 apply_theme.py --missing
 
 K9ESV · McHenry County Emergency Services Volunteers
      and McHenry County Emergency Management Agency (MCESV/MCEMA)
-FieldComms Incident Management System v1.0
+FieldCommand Incident Management System v1.0
 """
 
 import sys
@@ -65,7 +72,7 @@ STYLE_OPEN  = re.compile(r'<style[^>]*>', re.IGNORECASE)
 ROOT_BLOCK  = re.compile(r':root\s*\{[^}]*\}', re.DOTALL)
 
 # Default search path
-DEFAULT_HTML_DIR = Path('/opt/fieldcomms/html')
+DEFAULT_HTML_DIR = Path('/opt/fieldcommand/html')
 
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
@@ -191,12 +198,12 @@ def action_diff(files: list[Path]) -> None:
 
 def main():
     parser = argparse.ArgumentParser(
-        description='FieldComms theme consistency tool',
+        description='FieldCommand theme consistency tool',
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
     parser.add_argument('--dir', default=str(DEFAULT_HTML_DIR),
-                        help='HTML directory to scan (default: /opt/fieldcomms/html)')
+                        help='HTML directory to scan (default: /opt/fieldcommand/html)')
     parser.add_argument('--file', help='Process a single HTML file instead of a directory')
     parser.add_argument('--check',   action='store_true', help='Check all files and report')
     parser.add_argument('--missing', action='store_true', help='List files with missing variables')

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-FieldComms IMS v1.0 — One-Page System Overview
+FieldCommand IMS v1.0 — One-Page System Overview
 Presentation-quality single page for grant applications,
 briefings, and stakeholder presentations.
 Output: /mnt/user-data/outputs/IncidentManagement_Overview.pdf
@@ -73,7 +73,7 @@ class NC(canvas.Canvas):
             self.setFillColor(white)
             self.setFont('Helvetica-Bold', 11)
             self.drawString(M + 1.15*inch, PAGE_H - 0.24*inch,
-                'FieldComms  Incident Management System  v1.0')
+                'FieldCommand  Incident Management System  v1.0')
             self.setFont('Helvetica', 8)
             self.setFillColor(HexColor('#c0d4f0'))
             self.drawString(M + 1.15*inch, PAGE_H - 0.38*inch, SHORT)
@@ -91,7 +91,7 @@ class NC(canvas.Canvas):
             self.setFillColor(white)
             self.setFont('Helvetica', 7)
             self.drawString(M, 0.115*inch,
-                f'© 2026 KE4CON / MCESV K9ESV  ·  CC BY-SA 4.0  ·  creativecommons.org/licenses/by-sa/4.0')
+                f'© 2026 James Rospopo KE4CON  ·  CC BY-SA 4.0  ·  creativecommons.org/licenses/by-sa/4.0')
             self.drawRightString(PAGE_W - M, 0.115*inch,
                 f'{ORG}  ·  EMCOMM-NET  ·  http://192.168.50.1')
 
@@ -168,7 +168,7 @@ story = []
 # ── INTRODUCTION ───────────────────────────────────────────────────────────────
 story.append(SP(2))
 story.append(P(
-    '<b>FieldComms</b> is a self-contained emergency communications server '
+    '<b>FieldCommand</b> is a self-contained emergency communications server '
     'built on a Raspberry Pi 5 for McHenry County RACES, ARES, and Starcom operations. '
     'Any smartphone, tablet, or laptop connects to the <b>EMCOMM-NET</b> Wi-Fi access point '
     'and reaches the full dashboard at <b>http://192.168.50.1</b> — '
@@ -299,7 +299,7 @@ wan_desc = Table([[
       S('wd', fontSize=7, leading=9.5)),
     P('Automatic failover when cellular drops. '
       'ASUS RT-BE58 Go manages failover with no operator action required. '
-      'All FieldComms features remain active during satellite operation.',
+      'All FieldCommand features remain active during satellite operation.',
       S('wd', fontSize=7, leading=9.5)),
     P('Dedicated Raspberry Pi 5 gateway. '
       'WireGuard tunnel to amprgw.ampr.org. '
@@ -326,7 +326,7 @@ story.append(SP(1))
 
 hw_data = [
     ['COMPONENT', 'SPECIFICATION', 'ROLE'],
-    ['FieldComms Server',
+    ['FieldCommand Server',
      'Pi 5  16 GB  ·  Pironman MAX 5  ·  2× 1 TB NVMe RAID 1',
      '32 pages  ·  15 services  ·  FCC DB  ·  Kiwix  ·  maps  ·  Pat'],
     ['44Net Gateway',
@@ -373,7 +373,7 @@ story.append(SP(1))
 # ── BOTTOM SECTION — 2 columns: Reference (left) | Access + Why (right) ──────
 
 CL = CW * 0.44   # left column  — Reference & Administration
-CR = CW - CL     # right column — How to Access + Why FieldComms
+CR = CW - CL     # right column — How to Access + Why FieldCommand
 
 # ── LEFT: Reference & Administration ─────────────────────────────────────────
 ref_items = [
@@ -468,7 +468,7 @@ access_tbl.setStyle(TableStyle([
     ('LINEBELOW',     (0,-1), (-1,-1), 2, GOLD),
 ]))
 
-# ── RIGHT BOTTOM: Why FieldComms ─────────────────────────────────────────────
+# ── RIGHT BOTTOM: Why FieldCommand ─────────────────────────────────────────────
 why_items = [
     ('Fully Offline',    'All 32 tools work with zero internet'),
     ('Multi-User',       'Every operator sees live data simultaneously'),
@@ -484,7 +484,7 @@ WD = S('wd', fontSize=7, leading=9, textColor=HexColor('#2a3a4a'))
 WA = 0.95*inch
 
 why_rows = [[
-    P('WHY FIELDCOMMS',
+    P('WHY FIELDCOMMAND',
       S('wh', fontName='Helvetica-Bold', fontSize=8.5,
         textColor=EOC_LT, leading=10)),
     P('', S('x')),
@@ -559,7 +559,7 @@ doc = SimpleDocTemplate(
     out, pagesize=letter,
     leftMargin=M, rightMargin=M,
     topMargin=0.54*inch, bottomMargin=0.36*inch,
-    title='FieldComms IMS v1.0 — System Overview',
+    title='FieldCommand IMS v1.0 — System Overview',
     author='McHenry County Emergency Services Volunteers and McHenry County Emergency Management Agency')
 doc.build(story, canvasmaker=NC)
 

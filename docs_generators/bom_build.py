@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""FieldComms IMS — Bill of Materials with verified June 2026 pricing"""
+"""FieldCommand IMS — Bill of Materials with verified June 2026 pricing"""
 
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.colors import HexColor, white
@@ -50,18 +50,18 @@ class BomCanvas(pdfcanvas.Canvas):
             self.rect(0, PAGE_H-0.53*inch, PAGE_W, 0.03*inch, fill=1, stroke=0)
             self.setFillColor(white)
             self.setFont('Helvetica-Bold', 12)
-            self.drawString(M, PAGE_H-0.32*inch, 'FIELDCOMMS IMS — BILL OF MATERIALS')
+            self.drawString(M, PAGE_H-0.32*inch, 'FIELDCOMMAND IMS — BILL OF MATERIALS')
             self.setFillColor(GOLD)
             self.setFont('Helvetica', 8)
             self.drawString(M, PAGE_H-0.44*inch,
-                'Verified pricing — June 2026  ·  MCESV / MCEMA  ·  K9ESV')
+                'Verified pricing — June 2026  ·  Developed by KE4CON for MCESV / MCEMA')
             self.setFillColor(white)
             self.setFont('Helvetica-Bold', 9)
             self.drawRightString(PAGE_W-M, PAGE_H-0.32*inch, 'v1.0')
             self.setFillColor(DGRAY)
             self.setFont('Helvetica', 7)
             self.drawCentredString(PAGE_W/2, 0.22*inch,
-                f'FieldComms IMS Bill of Materials  ·  {TODAY}  ·  Page {n} of {total}  ·  '
+                f'FieldCommand IMS Bill of Materials  ·  {TODAY}  ·  Page {n} of {total}  ·  '
                 'Raspberry Pi pricing reflects 2026 industry memory shortage')
             super().showPage()
         super().save()
@@ -115,7 +115,7 @@ story.append(P('All prices verified against vendor listings and actual purchases
     S('note', fontSize=8, textColor=DGRAY, leading=11, spaceAfter=6)))
 
 sections = [
-    ('FieldComms Server  (192.168.50.1)', [
+    ('FieldCommand Server  (192.168.50.1)', [
         ('Raspberry Pi 5 — 16 GB', 'Model B, 16 GB RAM — main application server', 1, '$305', '$305'),
         ('Pironman 5-MAX tower', 'SunFounder — dual NVMe RAID 0/1, OLED, tower cooler, RGB', 1, '$95', '$95'),
         ('1 TB NVMe SSD', '2× M.2 2280 PCIe — RAID 1 mirror  (NAND shortage pricing — was ~$75 in 2025)', 2, '$180', '$360'),
@@ -163,7 +163,7 @@ sections = [
         ('Comet CM-5NMO mag mount', '3.25" heavy-duty magnetic base, NMO connector, RG-58 coax tail — vehicle roof or equipment case lid mount', 1, '$35', '$35'),
         ('RG-8X coax jumper', 'Short jumper: CM-5NMO coax tail to FTM-510DR SO-239 antenna port', 1, '$15', '$15'),
         ('Digirig Mobile', 'Rev 1.11 — USB digital modes interface — combines audio codec, serial CAT and PTT — single USB-C connection — works with Windows/Mac/Linux — enables FT8, JS8Call, SSTV, VARA FM, packet on VHF/UHF via the FTM-510DR', 1, '$50', '$50'),
-        ('Mobilinkd TNC4', '1200/9600 baud KISS TNC — Bluetooth 4.2 (iOS + Android) + USB-C — AFSK/GFSK/4-FSK — DSP modem — TCXO precision timing — 900mAh battery (48 hr) — enables APRS KISS mode for YAAC/Direwolf on FieldComms', 1, '$150', '$150'),
+        ('Mobilinkd TNC4', '1200/9600 baud KISS TNC — Bluetooth 4.2 (iOS + Android) + USB-C — AFSK/GFSK/4-FSK — DSP modem — TCXO precision timing — 900mAh battery (48 hr) — enables APRS KISS mode for YAAC/Direwolf on FieldCommand', 1, '$150', '$150'),
         ('Digirig Yaesu FTM MiniDin10 cable', 'digirig.net SKU YAESU10MOBILE — 10-pin MiniDin to Digirig audio socket — explicitly listed for FTM-510DR — audio + PTT — enables VARA FM, Winlink, JS8Call, SSTV, APRS via laptop', 1, '$20', '$20'),
         ('Mobilinkd Yaesu FTM modem cable', 'store.mobilinkd.com — 10-pin MiniDIN, 1.5m — fits FTM-510DR (same connector as FTM-100/200/300/400/500 series) — connects TNC4 to radio for APRS KISS mode', 1, '$25', '$25'),
         ('USB-C data cable for Digirig', 'Standard USB-C cable supporting both power and data — NOT included with Digirig — required to connect Digirig to laptop', 1, '$10', '$10'),
@@ -226,12 +226,12 @@ story.append(P(
     'Ham Radio Outlet · chameleonantenna.com · instyconnect.com · starlink.com — verified June 2026.',
     S('src', fontSize=8, leading=11, textColor=DGRAY)))
 
-doc = SimpleDocTemplate('/mnt/user-data/outputs/FieldComms_BOM.pdf',
+doc = SimpleDocTemplate('/mnt/user-data/outputs/FieldCommand_BOM.pdf',
     pagesize=letter, leftMargin=M, rightMargin=M,
     topMargin=0.72*inch, bottomMargin=0.45*inch,
-    title='FieldComms IMS Bill of Materials', author='KE4CON / MCESV')
+    title='FieldCommand IMS Bill of Materials', author='James Rospopo KE4CON')
 doc.build(story, canvasmaker=BomCanvas)
 
 from pypdf import PdfReader
-r = PdfReader('/mnt/user-data/outputs/FieldComms_BOM.pdf')
+r = PdfReader('/mnt/user-data/outputs/FieldCommand_BOM.pdf')
 print(f"BUILT: {len(r.pages)} pages")

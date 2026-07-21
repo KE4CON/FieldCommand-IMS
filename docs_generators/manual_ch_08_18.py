@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""manual_ch_08_18.py — Chapters 8–18 of the FieldComms User Manual."""
+"""manual_ch_08_18.py — Chapters 8–18 of the FieldCommand User Manual."""
 import sys, os
 sys.path.insert(0, os.path.dirname(__file__))
 from manual_framework import *
@@ -89,7 +89,7 @@ def ch10():
         'The default map layer is USGS Imagery+Topo Hybrid — public-domain satellite '
         'imagery with roads, contours, and place names overlaid. Additional tile sets '
         '(OpenStreetMap, Esri World Imagery) are available in the layer selector. '
-        'McHenry County map tiles are included with the FieldComms installation. '
+        'McHenry County map tiles are included with the FieldCommand installation. '
         'Additional county and state tile sets are downloaded using the '
         'download_tiles.sh script.'))
     s.append(SP(6))
@@ -162,7 +162,7 @@ def ch10():
         'Offline map tiles for McHenry County and surrounding counties are '
         'pre-loaded during installation. '
         'To download tiles for additional counties or states, run: '
-        'sudo bash /opt/fieldcomms/scripts/download_tiles.sh --region [region-name]. '
+        'sudo bash /opt/fieldcommand/scripts/download_tiles.sh --region [region-name]. '
         'Each county tile set uses approximately 200-500 MB of storage.',
         'tip'))
     s.append(PB())
@@ -273,7 +273,7 @@ def ch13():
         "a dropped connection, or an unattended console during a long activation."))
     s.append(SP(4))
     s.append(P(
-        "The DMS can be armed independently for each active net running in FieldComms. "
+        "The DMS can be armed independently for each active net running in FieldCommand. "
         "A major activation running a Starcom General Net, a Weather Net, and a SAR Net "
         "simultaneously can have each net on its own DMS with its own threshold. "
         "The DMS page runs in the browser tab where it was opened — "
@@ -284,7 +284,7 @@ def ch13():
     s.extend(steps([
         'Open http://192.168.50.1/deadmans.html in a browser on any EMCOMM-NET device.',
         'Select the net you want to monitor from the dropdown. '
-        'All active nets in FieldComms appear here automatically.',
+        'All active nets in FieldCommand appear here automatically.',
         'Set the threshold — how many minutes of inactivity before the alarm fires. '
         'Typical settings: 10 minutes for a busy net, 15 minutes for a weather or traffic net, '
         '5 minutes for a SAR net where frequent check-ins are expected.',
@@ -319,7 +319,7 @@ def ch13():
 
     s.append(P('12.3  Multiple Nets', H2))
     s.append(P(
-        "Each net in FieldComms can have its own independent DMS instance. "
+        "Each net in FieldCommand can have its own independent DMS instance. "
         "Open http://192.168.50.1/deadmans.html in separate browser tabs, "
         "one per net, and set different thresholds for each. "
         "For example: the Starcom General Net at 10 minutes, "
@@ -380,7 +380,7 @@ def ch15():
     s = chapter(15, 'ICS Platform — Overview', 'http://192.168.50.1/ics/')
     s.append(P(
         'The ICS Platform is the full incident command and documentation system '
-        'built into FieldComms. It covers all five standard ICS sections — '
+        'built into FieldCommand. It covers all five standard ICS sections — '
         'Command, Operations, Planning, Logistics, and Finance/Admin — '
         'plus an interactive Planning P cycle guide. '
         'All five sections share a single active incident record, '

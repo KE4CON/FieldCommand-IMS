@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# FieldComms — Offline Map Tile Downloader
+# FieldCommand — Offline Map Tile Downloader
 # Downloads USGS/Esri map tiles into MBTiles SQLite databases for offline use.
 #
 # Usage:
@@ -28,11 +28,11 @@
 # =============================================================================
 set -euo pipefail
 
-TILE_DIR="/opt/fieldcomms/tiles"
-TILE_LOG="/var/log/fieldcomms-tiles.log"
-SAVED_AREAS_F="/opt/fieldcomms/data/saved_tile_areas.json"
-TILE_USER="fieldcomms"
-UA="Mozilla/5.0 (compatible; FieldComms/1.0 EmComm)"
+TILE_DIR="/opt/fieldcommand/tiles"
+TILE_LOG="/var/log/fieldcommand-tiles.log"
+SAVED_AREAS_F="/opt/fieldcommand/data/saved_tile_areas.json"
+TILE_USER="fieldcommand"
+UA="Mozilla/5.0 (compatible; FieldCommand/1.0 EmComm)"
 DELAY_USGS="0.10"
 DELAY_ESRI="0.15"
 
@@ -613,7 +613,7 @@ db.close()
     [[ -z "$saved_out" ]] && echo -e "  ${DIM}None saved.${NC}" || echo "$saved_out"
     echo ""
     local svc
-    svc=$(systemctl is-active fieldcomms-tiles 2>/dev/null || echo "not installed")
+    svc=$(systemctl is-active fieldcommand-tiles 2>/dev/null || echo "not installed")
     local col; [[ "$svc" == "active" ]] && col="${GREEN}" || col="${AMBER}"
     echo -e "  Tile server: ${col}${svc}${NC}  (port 8083)"
 }
@@ -674,7 +674,7 @@ delete_tileset() {
     [[ "$C" =~ ^[Yy] ]] || { echo "Cancelled."; return; }
     rm -f "$db"
     success "Deleted: $db"
-    systemctl restart fieldcomms-tiles 2>/dev/null || true
+    systemctl restart fieldcommand-tiles 2>/dev/null || true
 }
 
 # =============================================================================
@@ -717,7 +717,7 @@ interactive_menu() {
     echo -e "${BOLD}${BLUE}"
     cat << 'BANNER'
   ╔═══════════════════════════════════════════════════════════════╗
-  ║        FieldComms — Offline Map Tile Downloader               ║
+  ║        FieldCommand — Offline Map Tile Downloader               ║
   ║          McHenry County RACES/ARES/Starcom                    ║
   ╚═══════════════════════════════════════════════════════════════╝
 BANNER
@@ -963,7 +963,7 @@ confirm_and_run() {
     show_status
     echo ""
     success "Restart tile server to serve new tilesets:"
-    echo -e "  ${CYAN}sudo systemctl restart fieldcomms-tiles${NC}"
+    echo -e "  ${CYAN}sudo systemctl restart fieldcommand-tiles${NC}"
 }
 
 # =============================================================================

@@ -1,6 +1,13 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# FieldCommand IMS — Copyright (C) 2026 James Rospopo KE4CON
+# Developed for McHenry County Emergency Services Volunteers (K9ESV)
+# Licensed under the GNU Affero General Public License v3.0 or later.
+# See LICENSE in the project root for full license text.
+# https://github.com/KE4CON/FieldCommand-IMS
+
 #!/usr/bin/env python3
 """
-FieldComms — Offline Map Tile Server
+FieldCommand — Offline Map Tile Server
 Serves MBTiles databases as XYZ tile endpoints for Leaflet.js
 Port 8083  —  http://localhost:8083/tiles/{tileset}/{z}/{x}/{y}.png
 
@@ -28,7 +35,7 @@ from flask import Flask, Response, jsonify, abort, request
 from flask_cors import CORS
 
 # ── Configuration ─────────────────────────────────────────────────────────────
-TILE_DIR  = os.environ.get('FC_TILE_DIR',  '/opt/fieldcomms/tiles')
+TILE_DIR  = os.environ.get('FC_TILE_DIR',  '/opt/fieldcommand/tiles')
 PORT      = int(os.environ.get('FC_TILE_PORT', 8083))
 HOST      = os.environ.get('FC_TILE_HOST', '0.0.0.0')
 CACHE_TTL = int(os.environ.get('FC_TILE_CACHE', 3600))   # seconds
@@ -46,7 +53,7 @@ logging.basicConfig(
     format='%(asctime)s [%(levelname)s] %(message)s',
     handlers=[
         logging.StreamHandler(sys.stdout),
-        logging.FileHandler('/var/log/fieldcomms-tiles.log', mode='a'),
+        logging.FileHandler('/var/log/fieldcommand-tiles.log', mode='a'),
     ]
 )
 log = logging.getLogger('tile-server')
@@ -273,7 +280,7 @@ if __name__ == '__main__':
     else:
         log.warning(f'No MBTiles files found in {TILE_DIR}')
         log.warning('Maps will show blank until tiles are downloaded.')
-        log.warning('Run: sudo bash /opt/fieldcomms/scripts/download_tiles.sh')
+        log.warning('Run: sudo bash /opt/fieldcommand/scripts/download_tiles.sh')
 
     log.info(f'Starting tile server on {HOST}:{PORT}')
     app.run(host=HOST, port=PORT, threaded=True, debug=False)

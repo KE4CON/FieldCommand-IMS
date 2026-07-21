@@ -1,3 +1,10 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# FieldCommand IMS — Copyright (C) 2026 James Rospopo KE4CON
+# Developed for McHenry County Emergency Services Volunteers (K9ESV)
+# Licensed under the GNU Affero General Public License v3.0 or later.
+# See LICENSE in the project root for full license text.
+# https://github.com/KE4CON/FieldCommand-IMS
+
 #!/usr/bin/env python3
 """
 amprgate_status.py — AMPRNet Gateway Status Service
@@ -5,12 +12,12 @@ Runs on the dedicated 44Net gateway Pi (192.168.50.2)
 
 SECURITY MODEL:
   - Status API (/api/status, /health): bound to ALL interfaces (0.0.0.0:9000)
-    so the FieldComms Pi poll service can read it server-to-server.
+    so the FieldCommand Pi poll service can read it server-to-server.
     These endpoints are READ-ONLY — no tunnel control.
 
   - Tunnel control (/api/tunnel/up|down|restart): bound to LOCALHOST ONLY
     (127.0.0.1:9001). Requires physical access to the gateway Pi keyboard.
-    Callsign validation via FCC database on FieldComms Pi (192.168.50.1).
+    Callsign validation via FCC database on FieldCommand Pi (192.168.50.1).
 
   - Web UI (/): served on 0.0.0.0:9000. Requires callsign login before
     showing tunnel controls. Callsign validated against FCC database.
@@ -49,7 +56,7 @@ import threading
 PUBLIC_PORT    = 9000          # Status + UI — accessible from EMCOMM-NET
 CONTROL_PORT   = 9001          # Tunnel control — localhost only
 WG_INTERFACE   = "ampr0"
-FIELDCOMMS_API = "http://192.168.50.1:5050"  # FCC lookup on FieldComms Pi
+FIELDCOMMAND_API = "http://192.168.50.1:5050"  # FCC lookup on FieldCommand Pi
 SESSION_TTL    = 8 * 3600      # 8 hours in seconds
 LOG_FILE       = Path("/var/log/amprgate-access.log")
 TEMPLATES      = Path("/opt/amprgate/templates")
@@ -81,9 +88,9 @@ def access_log(action: str, callsign: str, ip: str, detail: str = ""):
 
 def validate_callsign(callsign: str) -> dict:
     """
-    Validate callsign against the FCC database on the FieldComms Pi.
+    Validate callsign against the FCC database on the FieldCommand Pi.
     Returns {"valid": bool, "name": str|None, "license_class": str|None}
-    Falls back to format-only validation if FieldComms Pi is unreachable.
+    Falls back to format-only validation if FieldCommand Pi is unreachable.
     """
     cs = callsign.strip().upper()
 
@@ -92,9 +99,9 @@ def validate_callsign(callsign: str) -> dict:
         return {"valid": False, "name": None, "license_class": None,
                 "error": "Invalid callsign format"}
 
-    # Try FCC database lookup on FieldComms Pi
+    # Try FCC database lookup on FieldCommand Pi
     try:
-        url = f"{FIELDCOMMS_API}/callsign/{cs}"
+        url = f"{FIELDCOMMAND_API}/callsign/{cs}"
         req = urllib.request.Request(url, headers={"User-Agent": "amprgate/1.0"})
         with urllib.request.urlopen(req, timeout=5) as resp:
             data = json.loads(resp.read().decode())
@@ -109,10 +116,10 @@ def validate_callsign(callsign: str) -> dict:
                 return {"valid": False, "name": None, "license_class": None,
                         "error": "Callsign not found in FCC database"}
     except urllib.error.URLError:
-        # FieldComms Pi unreachable — fall back to format-only validation
-        # This allows access even if FieldComms Pi is down, but logs the fallback
+        # FieldCommand Pi unreachable — fall back to format-only validation
+        # This allows access even if FieldCommand Pi is down, but logs the fallback
         access_log("FCC-FALLBACK", cs, "localhost",
-                   "FieldComms Pi unreachable — format-only validation used")
+                   "FieldCommand Pi unreachable — format-only validation used")
         return {
             "valid": True,
             "name": None,
@@ -402,7 +409,7 @@ class PublicHandler(BaseHTTPRequestHandler):
                                else "<h1>Template not found</h1>", 200)
 
         elif path == "/api/status":
-            # READ-ONLY — no auth required (FieldComms Pi polls this)
+            # READ-ONLY — no auth required (FieldCommand Pi polls this)
             self.send_json(build_status())
 
         elif path == "/api/validate":
@@ -516,7 +523,7 @@ button:hover{background:#22a04e}
 .note{color:#6080a0;font-size:11px;margin-top:20px;line-height:1.6}
 </style></head><body>
 <div class="box">
-  <div class="logo">🛰 FIELDCOMMS</div>
+  <div class="logo">🛰 FIELDCOMMAND</div>
   <div class="sub">Incident Management System v1.0</div>
   <div class="rule"></div>
   <h2>AMPRNet Gateway Access</h2>

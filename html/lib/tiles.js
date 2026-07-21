@@ -1,5 +1,5 @@
 /**
- * FieldComms — Shared Map Tile Layer Configuration
+ * FieldCommand — Shared Map Tile Layer Configuration
  * Handles online tile sources, local offline tile server fallback,
  * and automatic detection of what's available.
  *

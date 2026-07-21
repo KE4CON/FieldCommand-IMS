@@ -1,8 +1,15 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# FieldCommand IMS — Copyright (C) 2026 James Rospopo KE4CON
+# Developed for McHenry County Emergency Services Volunteers (K9ESV)
+# Licensed under the GNU Affero General Public License v3.0 or later.
+# See LICENSE in the project root for full license text.
+# https://github.com/KE4CON/FieldCommand-IMS
+
 #!/usr/bin/env python3
 """
-deadmans.py — Dead Man's Switch service for FieldComms
+deadmans.py — Dead Man's Switch service for FieldCommand
 Monitors active nets for inactivity and triggers alerts.
-State is persisted to /opt/fieldcomms/data/dms_state.json
+State is persisted to /opt/fieldcommand/data/dms_state.json
 The main API server (port 5050) also handles /api/dms/* endpoints.
 This service provides the background monitoring loop and UI API.
 """
@@ -14,7 +21,7 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse
 import urllib.request
 
-DATA = Path("/opt/fieldcomms/data")
+DATA = Path("/opt/fieldcommand/data")
 DMS_STATE_F = DATA / "dms_state.json"
 NETS_DIR    = DATA / "nets"
 

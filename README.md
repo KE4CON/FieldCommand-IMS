@@ -1,82 +1,35 @@
-# FieldComms EmComm Field Server v1.0
+# FieldCommand IMS
 
-Off-grid emergency communications server for Raspberry Pi.
+**Full ICS/NIMS all-hazards incident management that works when everything else fails.**
 
-## Quick Start
+FieldCommand IMS is a complete offline incident management platform built on a Raspberry Pi. It runs its own Wi-Fi network, requires no internet connection, and provides a full suite of ICS/NIMS tools accessible from any browser on the network.
 
-```bash
-sudo bash scripts/install.sh
-```
+> *The cell towers are down, the internet is gone, and you're running on a generator in a parking lot. That's exactly when you need incident management software most — and that's exactly when everything else fails.*
 
-Then browse to: http://192.168.50.1/ (on EMCOMM-NET WiFi)
-Or: http://localhost/ (locally)
+## What it does
 
-## What's Included
+- **Complete ICS/NIMS all-hazards incident management** — full IAP form set (ICS-201 through ICS-221), FEMA / USCG / NWCG form variants selectable per form
+- **Amateur radio EMCOMM** — net logging with FCC callsign validation, APRS tactical map, Winlink integration
+- **Public safety communications** — Starcom net logging with EMA ID lookup, ICS-309 communications log
+- **Tactical operations** — Leaflet.js offline map, resource tracking, facilities management
+- **Offline-first** — runs on EMCOMM-NET Wi-Fi (192.168.50.1), no internet required, full functionality on battery or generator power
+- **44Net / AMPRNet gateway** — optional internet-connected node for AMPRNet reachability
 
-### Web Frontend (26 pages)
-| Page | Description |
-|------|-------------|
-| index.html | Main dashboard — clock, weather alerts, APRS table |
-| netcontrol.html | Amateur net control logger with FCC autofill |
-| starcom.html | Starcom net control (Radio IDs, sc- prefix) |
-| observer.html | Read-only net viewer (?net= URL param) |
-| roster.html | Member directory — 11 certs, 13 equipment fields |
-| resources.html | Resource board with status cycling |
-| tactical.html | APRS tactical map (Leaflet + Graywolf) |
-| resmap.html | Starcom resource map with zone drawing |
-| callsign.html | FCC callsign lookup |
-| deadmans.html | Dead Man's Switch monitor with countdown |
-| preflight.html | GO/CAUTION/NO-GO pre-deployment checklist |
-| nts.html | NTS Radiogram generator |
-| ics213.html | ICS-213 General Message form |
-| ics214.html | ICS-214 Activity Log |
-| grid.html | Grid square / Maidenhead calculator |
-| repeaters.html | Repeater database browser |
-| facilities.html | EOC/hospital/shelter directory |
-| cheatsheets.html | Phonetic, Q-codes, prowords, band plan, ICS |
-| printcenter.html | Unified print hub + incident cover sheet |
-| propagation.html | HF propagation — solar indices, band conditions |
-| ics/index.html | ICS Platform overview |
-| ics/command.html | ICS Command section (ICS-201, 202, 203) |
-| ics/operations.html | ICS Operations — T-cards, resources, ICS-204 |
-| ics/planning.html | ICS Planning — situation status, IAP forms |
-| ics/logistics.html | ICS Logistics — ICS-205, supply, meals, check-in |
-| ics/finance.html | ICS Finance/Admin — cost accounting, time tracking |
+## Hardware
 
-### Python Services
-| File | Port | Description |
-|------|------|-------------|
-| fcc_lookup_server.py | 5050 | Main API — FCC, nets, roster, APRS, forms, DMS |
-| health_monitor.py | 5051 | System health — CPU, disk, GPS, services |
-| deadmans.py | — | Background DMS state machine |
-| ics_platform_server.py | 5055 | ICS incident management API |
-| build_fcc_db.py | — | Downloads FCC amateur DB, builds SQLite |
-| fetch_repeaters.py | — | Downloads RepeaterBook data |
+- Raspberry Pi 5 16GB + Pironman MAX 5 (dual NVMe RAID 1)
+- ASUS RT-BE58 Go Wi-Fi 7 router (primary + 2× AiMesh nodes)
+- UniFi Switch Lite 16 PoE
+- InstyConnect Drum (5G cellular WAN) + Starlink (satellite failover)
+- Yaesu FTM-510DR + Icom IC-7300MK2 + SCS PXdragon DR-9400 PACTOR modem
 
-## Port Map
-- 80: nginx (web frontend)
-- 5050: FCC Lookup / Main API
-- 5051: Health Monitor
-- 5055: ICS Platform
-- 8080: Graywolf APRS
-- 8081: Kiwix offline library
-- 8090: Pat Winlink
-- 2442: JS8Call
-- 8300/8310: VARA HF/FM
+## License
 
-## Default Credentials
-- WiFi SSID: EMCOMM-NET
-- WiFi Password: fieldcomms2026
-- Server IP: 192.168.50.1
+- Software: GNU Affero General Public License v3.0 (AGPLv3) — see [LICENSE](LICENSE)
+- Documentation: Creative Commons Attribution-ShareAlike 4.0 (CC BY-SA 4.0) — see [LICENSE-DOCS](LICENSE-DOCS)
 
-## Data Paths
-- /opt/fieldcomms/data/ — runtime data
-- /opt/fieldcomms/data/fcc.db — FCC database
-- /var/www/html/ — web frontend
+## Author
 
-## Station Default (Columbus OH)
-- Lat: 39.9612
-- Lon: -82.9988
-- Grid: EN90aa
-
-Configured for your station during install.sh.
+Copyright (C) 2026 James Rospopo KE4CON  
+Developed for McHenry County Emergency Services Volunteers (K9ESV)  
+https://github.com/KE4CON/FieldCommand-IMS

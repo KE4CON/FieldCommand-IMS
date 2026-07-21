@@ -1,5 +1,12 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# FieldCommand IMS — Copyright (C) 2026 James Rospopo KE4CON
+# Developed for McHenry County Emergency Services Volunteers (K9ESV)
+# Licensed under the GNU Affero General Public License v3.0 or later.
+# See LICENSE in the project root for full license text.
+# https://github.com/KE4CON/FieldCommand-IMS
+
 #!/usr/bin/env python3
-"""FieldComms Reference Library Server — Port 5056 (SQLite via db.py)"""
+"""FieldCommand Reference Library Server — Port 5056 (SQLite via db.py)"""
 
 import json, re, time, shutil, mimetypes, hashlib, threading, sys, logging
 from pathlib import Path
@@ -13,7 +20,7 @@ from db import get_conn, utcnow, jdump, jload, rows_to_list, row_to_dict
 logging.basicConfig(level=logging.INFO,
     format='%(asctime)s [refs] %(message)s',
     handlers=[logging.StreamHandler(sys.stdout),
-              logging.FileHandler('/var/log/fieldcomms-refs.log', mode='a')])
+              logging.FileHandler('/var/log/fieldcommand-refs.log', mode='a')])
 log = logging.getLogger('refs')
 
 FILES_DIR = db.FILES_DIR

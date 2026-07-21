@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # =============================================================================
-# FieldComms — Kiwix Offline Library Setup
+# FieldCommand — Kiwix Offline Library Setup
 # Downloads EmComm-relevant ZIM files and configures kiwix-serve
 #
 # Usage:
@@ -23,7 +23,7 @@ KIWIX_LOG_DIR="/var/log/kiwix"
 KIWIX_PORT=8081
 KIWIX_USER="kiwix"
 KIWIX_SVC="/etc/systemd/system/kiwix.service"
-DL_LOG="/var/log/fieldcomms-kiwix.log"
+DL_LOG="/var/log/fieldcommand-kiwix.log"
 
 # Kiwix download mirror base
 KIWIX_BASE="https://download.kiwix.org/zim"
@@ -690,7 +690,7 @@ interactive_menu() {
     echo -e "${BOLD}${BLUE}"
     cat << 'BANNER'
   ╔═══════════════════════════════════════════════════════╗
-  ║         FieldComms — Kiwix Offline Library            ║
+  ║         FieldCommand — Kiwix Offline Library            ║
   ║              EmComm ZIM File Installer                ║
   ╚═══════════════════════════════════════════════════════╝
 BANNER

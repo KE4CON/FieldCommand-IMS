@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""FieldComms IMS — Tax & Shipping Summary, Woodstock IL 60098"""
+"""FieldCommand IMS — Tax & Shipping Summary, Woodstock IL 60098"""
 
 from reportlab.lib.pagesizes import letter, landscape
 from reportlab.lib.colors import HexColor, white
@@ -48,11 +48,11 @@ class TCanvas(pdfcanvas.Canvas):
             self.setFillColor(white)
             self.setFont('Helvetica-Bold', 13)
             self.drawString(M, PAGE_H-0.30*inch,
-                'FIELDCOMMS IMS — COMPLETE COST WITH TAX & SHIPPING')
+                'FIELDCOMMAND IMS — COMPLETE COST WITH TAX & SHIPPING')
             self.setFillColor(GOLD)
             self.setFont('Helvetica', 8)
             self.drawString(M, PAGE_H-0.44*inch,
-                f'Delivery to Woodstock IL 60098  ·  Sales tax 8.25%  ·  Estimated {TODAY}  ·  MCESV / MCEMA  ·  K9ESV')
+                f'Delivery to Woodstock IL 60098  ·  Sales tax 8.25%  ·  Estimated {TODAY}  ·  Developed by KE4CON for MCESV / MCEMA')
             self.setFillColor(white)
             self.setFont('Helvetica-Bold', 9)
             self.drawRightString(PAGE_W-M, PAGE_H-0.30*inch, f'Page {n} of {total}')
@@ -72,7 +72,7 @@ CAT= S('cat', fontName='Helvetica-Bold', fontSize=8.5, textColor=EOC, leading=11
 TAX_RATE = 0.0825
 
 SECTIONS = [
-  ('FIELDCOMMS SERVER (192.168.50.1)', [
+  ('FIELDCOMMAND SERVER (192.168.50.1)', [
     ('Raspberry Pi 5 16GB', 305.00, 1, 'raspberrypi.com / PiShop.us', 12.00),
     ('SunFounder Pironman 5-MAX', 94.99, 1, 'amazon.com', 0.00),
     ('1TB NVMe SSD ×2', 180.00, 2, 'amazon.com', 0.00),
@@ -240,14 +240,14 @@ story.append(P(
     f'(7) Chameleon USA250 25%-off sale through ~July 14, 2026 could reduce MPAS 2.0 to ~$495, saving ~$137 + tax.',
     S('gn', fontSize=7.5, leading=11, textColor=DGRAY)))
 
-doc = SimpleDocTemplate('/mnt/user-data/outputs/FieldComms_Tax_Shipping.pdf',
+doc = SimpleDocTemplate('/mnt/user-data/outputs/FieldCommand_Tax_Shipping.pdf',
     pagesize=landscape(letter), leftMargin=M, rightMargin=M,
     topMargin=0.72*inch, bottomMargin=0.40*inch,
-    title='FieldComms IMS Tax and Shipping — Woodstock IL 60098',
-    author='KE4CON / MCESV')
+    title='FieldCommand IMS Tax and Shipping — Woodstock IL 60098',
+    author='James Rospopo KE4CON')
 doc.build(story, canvasmaker=TCanvas)
 
 from pypdf import PdfReader
-pages = len(PdfReader('/mnt/user-data/outputs/FieldComms_Tax_Shipping.pdf').pages)
+pages = len(PdfReader('/mnt/user-data/outputs/FieldCommand_Tax_Shipping.pdf').pages)
 print(f"BUILT: {pages} pages")
 print(f"Subtotal: ${grand_sub:,.2f} | Tax: ${grand_tax:,.2f} | Ship: ${grand_ship:,.2f} | TOTAL: ${grand_total:,.2f}")

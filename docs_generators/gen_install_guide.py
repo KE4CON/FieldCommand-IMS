@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-gen_install_guide.py — FieldComms Installation Guide Generator
+gen_install_guide.py — FieldCommand Installation Guide Generator
 Complete installation guide covering hardware, software, configuration, and reference.
-Output: /mnt/user-data/outputs/FieldComms_Installation_Guide.pdf
+Output: /mnt/user-data/outputs/FieldCommand_Installation_Guide.pdf
 """
 import datetime, io, os
 from reportlab.lib.pagesizes import letter
@@ -88,10 +88,10 @@ class NC(canvas.Canvas):
         self.drawCentredString(PAGE_W/2, PAGE_H - 0.88*inch,
             'and McHenry County Emergency Management Agency')
 
-        # ── FIELDCOMMS main title ──────────────────────────────────────────────
+        # ── FIELDCOMMAND main title ──────────────────────────────────────────────
         self.setFillColor(white)
         self.setFont('Helvetica-Bold', 58)
-        self.drawCentredString(PAGE_W/2, PAGE_H*0.60, 'FIELDCOMMS')
+        self.drawCentredString(PAGE_W/2, PAGE_H*0.60, 'FIELDCOMMAND')
 
         # ── Subtitle ──────────────────────────────────────────────────────────
         self.setFillColor(GOLD)
@@ -125,7 +125,7 @@ class NC(canvas.Canvas):
         self.setFillColor(EOC)
         self.setFont('Helvetica', 7)
         self.drawCentredString(PAGE_W/2, 0.05*inch,
-            f'FieldComms IMS v1.0  ·  {ORG}  ·  {TODAY}')
+            f'FieldCommand IMS v1.0  ·  {ORG}  ·  {TODAY}')
 
     def _draw_chrome(self, n, total):
         """Header and footer for pages 2+."""
@@ -136,7 +136,7 @@ class NC(canvas.Canvas):
         self.rect(0, PAGE_H-0.42*inch, PAGE_W, 0.02*inch, fill=1, stroke=0)
         self.setFillColor(white)
         self.setFont('Helvetica-Bold', 8)
-        self.drawString(M, PAGE_H-0.22*inch, 'FieldComms IMS v1.0')
+        self.drawString(M, PAGE_H-0.22*inch, 'FieldCommand IMS v1.0')
         self.setFont('Helvetica', 7.5)
         self.drawRightString(PAGE_W-M, PAGE_H-0.22*inch, 'Installation Guide')
         # Footer
@@ -147,7 +147,7 @@ class NC(canvas.Canvas):
         self.setFillColor(white)
         self.setFont('Helvetica', 6.5)
         self.drawString(M, 0.11*inch,
-            f'© 2026 KE4CON / MCESV K9ESV  ·  CC BY-SA 4.0  ·  creativecommons.org/licenses/by-sa/4.0')
+            f'© 2026 James Rospopo KE4CON  ·  CC BY-SA 4.0  ·  creativecommons.org/licenses/by-sa/4.0')
         self.drawRightString(PAGE_W-M, 0.11*inch, f'Page {n} of {total}')
 
 # ── Style helpers ─────────────────────────────────────────────────────────────
@@ -366,7 +366,7 @@ story.append(H1('1. Overview & What\'s Included'))
 story.append(HR(EOC_LT, 0.5))
 story.append(SP(6))
 story.append(P(
-    'FieldComms is a complete off-grid emergency communications server built on two Raspberry Pi 5 units '
+    'FieldCommand is a complete off-grid emergency communications server built on two Raspberry Pi 5 units '
     '— one running all 32 EmComm tools, one dedicated to the AMPRNet / 44Net gateway. '
     'InstyConnect cellular (T-Mobile + Verizon) is the primary WAN source with Starlink satellite '
     'as automatic failover, both managed by the ASUS RT-BE58 Go Wi-Fi 7 router. '
@@ -381,7 +381,7 @@ story.append(NoteBox(
     '(Search & Rescue) accessible directly from the Starcom / Public Safety dashboard. '
     'It provides a SAR-specific check-in log with unit type tracking, zone assignments, '
     'and resource status.  The Starcom Resource Map provides the tactical overlay for SAR unit positions.  '
-    'These features are integrated into the main FieldComms platform — no separate module is required.',
+    'These features are integrated into the main FieldCommand platform — no separate module is required.',
     'note'))
 story.append(SP(6))
 story.append(tbl(['COMPONENT', 'DESCRIPTION', 'COMPONENT', 'DESCRIPTION'], [
@@ -413,23 +413,23 @@ story.append(HR(EOC_LT, 0.5))
 story.append(SP(6))
 story.append(H2('Supported Hardware — Raspberry Pi Servers'))
 story.append(P(
-    'FieldComms v1.0 uses two Raspberry Pi 5 units: one as the FieldComms application server '
+    'FieldCommand v1.0 uses two Raspberry Pi 5 units: one as the FieldCommand application server '
     'and one as the dedicated AMPRNet / 44Net gateway. '
     'Keeping them separate means the gateway can be rebooted, reconfigured, or upgraded '
-    'without affecting the FieldComms server, net logs, or active incidents.'))
+    'without affecting the FieldCommand server, net logs, or active incidents.'))
 story.append(SP(4))
 story.append(tbl(['UNIT', 'HARDWARE', 'STORAGE', 'ROLE'], [
-    ['FieldComms Server',
+    ['FieldCommand Server',
      'Raspberry Pi 5  —  16 GB RAM  /  Pironman MAX 5 tower enclosure  (dual M.2 NVMe, OLED, active cooling)',
      '2× 1 TB NVMe SSD  /  configured as RAID 1',
-     'Runs all FieldComms services: web server, FCC database, net logging, ICS platform, '
+     'Runs all FieldCommand services: web server, FCC database, net logging, ICS platform, '
      'APRS, Kiwix, Winlink, maps, and health monitor.  Static IP: 192.168.50.1'],
     ['44Net Gateway',
      'Raspberry Pi 5  —  16 GB RAM  /  Argon NEO 5 M.2 BRED case  (compact, passive-cooled, M.2 SATA slot)  /  Pi OS Desktop (64-bit)',
      '256 GB M.2 SATA SSD  (OS + WireGuard + routing + status service)',
      'Dedicated AMPRNet / 44Net gateway.  Runs WireGuard tunnel to amprgw.ampr.org, '
      'ip routing between EMCOMM-NET and 44.0.0.0/8, and a status page at 192.168.50.2.  '
-     'Completely independent from the FieldComms server.'],
+     'Completely independent from the FieldCommand server.'],
 ], [1.0*inch, 1.8*inch, 1.2*inch, CW-4.0*inch]))
 story.append(SP(6))
 story.append(H2('Network Hardware'))
@@ -447,7 +447,7 @@ story.append(tbl(['DEVICE', 'ROLE', 'NOTES'], [
     ['UniFi Switch Lite 16 PoE',
      '16-port gigabit managed switch  /  8x PoE + 8x non-PoE  /  2x 1G SFP uplink',
      'Replaces the 5-port Flex 2.5G.  Port layout: 1=ASUS router uplink, '
-     '2=FieldComms Pi, 3=44Net Gateway Pi, 4=Windows laptop, '
+     '2=FieldCommand Pi, 3=44Net Gateway Pi, 4=Windows laptop, '
      '5=color MFP printer, 6-9=Pi 500 workstations, 10=Starlink (optional), 11-16=spare.  '
      '~$200.  PoE powers future UniFi APs without a separate injector.'],
 ], [1.6*inch, 1.6*inch, CW-3.2*inch]))
@@ -455,16 +455,16 @@ story.append(SP(8))
 story.append(H2('Accessories & Cables'))
 acc_data = [
     ['ITEM', 'REQUIRED?', 'PURPOSE'],
-    ['USB-A drive (32 GB+, labeled FIELDCOMMS)', 'Recommended',
+    ['USB-A drive (32 GB+, labeled FIELDCOMMAND)', 'Recommended',
      'Auto-backup trigger — insert to back up all runtime data instantly'],
     ['External USB hard drive 1 TB+ (e.g. LaCie Rugged or LaCie Mobile Drive)', 'Recommended',
      'Incident archive and full system backup. LaCie Rugged is shock/drop/crush resistant. '
-     'Label FIELDCOMMS for auto-backup compatibility.'],
+     'Label FIELDCOMMAND for auto-backup compatibility.'],
     ['USB GPS receiver (u-blox or GlobalSat)', 'Optional',
      'Live position for tactical map and NWS alerts'],
     ['USB TNC — Digirig Mobile or SignaLink USB', 'Optional',
      'Required for APRS transmit/receive via Graywolf or YAAC. '
-     'FieldComms assigns a stable /dev/tnc0 device name via udev.'],
+     'FieldCommand assigns a stable /dev/tnc0 device name via udev.'],
     ['Powered USB hub (4- or 7-port, with power supply)', 'Optional',
      'Recommended if connecting GPS + TNC + backup drive simultaneously. '
      'Must be powered — unpowered hubs can cause instability.'],
@@ -484,7 +484,7 @@ story.append(SP(8))
 # USB Hub section
 story.append(H2('USB Hub & Multi-Device Setup'))
 story.append(P('The Pi 5 has four USB ports. A powered USB hub lets you connect GPS, TNC, backup drive, '
-               'and other peripherals simultaneously. FieldComms uses udev rules to assign stable device '
+               'and other peripherals simultaneously. FieldCommand uses udev rules to assign stable device '
                'names regardless of hub port or plug order.'))
 story.append(SP(4))
 hub_data = [['DEVICE', 'STABLE NAME', 'HOW ASSIGNED', 'SERVICE'],
@@ -495,9 +495,9 @@ hub_data = [['DEVICE', 'STABLE NAME', 'HOW ASSIGNED', 'SERVICE'],
     ['SignaLink USB TNC', '/dev/tnc0\n/dev/signalink',
      'udev rule matches by Texas Instruments PCM2904 chip. No conflict with GPS.',
      'YAAC / Graywolf APRS'],
-    ['LaCie / USB backup drive (labeled FIELDCOMMS)', '/dev/sdX (auto-mounted)',
-     'udev backup rule triggers on label FIELDCOMMS. Drive letter assigned dynamically.',
-     'fieldcomms-backup@.service'],
+    ['LaCie / USB backup drive (labeled FIELDCOMMAND)', '/dev/sdX (auto-mounted)',
+     'udev backup rule triggers on label FIELDCOMMAND. Drive letter assigned dynamically.',
+     'fieldcommand-backup@.service'],
 ]
 hub_t = Table([[P(c, S('TH' if i==0 else 'TC',
                         fontName='Helvetica-Bold' if i==0 else 'Helvetica',
@@ -509,7 +509,7 @@ story.append(hub_t)
 story.append(SP(6))
 story.append(NoteBox(
     'Both the Digirig Mobile TNC and GlobalSat BU-353-S4 GPS use the same USB chip '
-    '(Silicon Labs CP2102, vendor 10c4:ea60). FieldComms distinguishes them by USB product '
+    '(Silicon Labs CP2102, vendor 10c4:ea60). FieldCommand distinguishes them by USB product '
     'description string. The GPS rule excludes Digirig; the TNC rule requires the Digirig '
     'product string. Verify with: udevadm info -a -n /dev/ttyUSB0 | grep -E "idVendor|idProduct|product"',
     'note'))
@@ -536,14 +536,14 @@ def cat_row(title):
             P('', S('TC')), P('', S('TC'))]
 
 bom_rows = [
-    cat_row('FieldComms Server  (Pi 5 — 16 GB)'),
+    cat_row('FieldCommand Server  (Pi 5 — 16 GB)'),
     ['Raspberry Pi 5  —  16 GB RAM', 'Raspberry Pi 5 Model B  (16 GB)  —  note: DRAM shortage pricing, ~$305 as of mid-2026 (was $120)', 'raspberrypi.com · Adafruit · PiShop.us  (~$305)'],
     ['Pironman MAX 5 enclosure', 'Pironman MAX 5  (tower, dual M.2 NVMe, OLED display, active cooling fans)', '52pi.com · Amazon'],
     ['NVMe SSD × 2  (RAID 1)', '1 TB M.2 2280 PCIe Gen 3/4 NVMe  (e.g. WD Blue SN580 or Samsung 980)  —  NAND shortage pricing ~$180 each as of mid-2026 (was ~$75)', 'Amazon · B&H · Newegg  (~$180 each)'],
     ['Pi 5 USB-C power supply', 'Official Raspberry Pi 27W USB-C PD power supply', 'raspberrypi.com · Adafruit · Amazon'],
     ['MicroSD card  (boot / initial RAID setup)', '32 GB Class 10 / A1 microSD  (removed after RAID is built)', 'Amazon'],
     cat_row('44Net Gateway  (Pi 5 — 8 GB)'),
-    ['Raspberry Pi 5  —  16 GB RAM', 'Raspberry Pi 5 Model B  (16 GB)  —  dedicated AMPRNet gateway  (matches FieldComms Pi for spare-parts commonality)  —  8 GB variant (~$130) acceptable for gateway-only role', 'raspberrypi.com · Adafruit · PiShop.us  (~$305)'],
+    ['Raspberry Pi 5  —  16 GB RAM', 'Raspberry Pi 5 Model B  (16 GB)  —  dedicated AMPRNet gateway  (matches FieldCommand Pi for spare-parts commonality)  —  8 GB variant (~$130) acceptable for gateway-only role', 'raspberrypi.com · Adafruit · PiShop.us  (~$305)'],
     ['Argon NEO 5 M.2 BRED case', 'Argon NEO 5 M.2 BRED  (compact, passive-cooled, M.2 SATA slot, aluminum)  —  fits Pi 5', 'argon40.com · Amazon  (~$35)'],
     ['M.2 SATA SSD  (gateway OS + config)', '256 GB M.2 2242 or 2280 SATA SSD  —  OS, WireGuard config, routing tables', 'Amazon · Newegg  (~$25)'],
     ['Pi 5 USB-C power supply', 'Official Raspberry Pi 27W USB-C PD power supply  —  one per Pi', 'raspberrypi.com · Adafruit · Amazon'],
@@ -600,8 +600,8 @@ bom_rows = [
      'ASIX AX88179 chipset recommended for best ASUS router compatibility',
      'Amazon  (~$15-20)'],
     cat_row('Accessories — Backup & Connectivity'),
-    ['USB-A drive (32 GB+, labeled FIELDCOMMS)', '32 GB+ USB 3.0 drive — auto-backup trigger when inserted', 'Amazon'],
-    ['External USB hard drive 1 TB+  (e.g. LaCie Rugged)', '1 TB+ USB 3.0/USB-C portable drive — label FIELDCOMMS for auto-backup', 'B&H · Amazon · Best Buy'],
+    ['USB-A drive (32 GB+, labeled FIELDCOMMAND)', '32 GB+ USB 3.0 drive — auto-backup trigger when inserted', 'Amazon'],
+    ['External USB hard drive 1 TB+  (e.g. LaCie Rugged)', '1 TB+ USB 3.0/USB-C portable drive — label FIELDCOMMAND for auto-backup', 'B&H · Amazon · Best Buy'],
     ['USB GPS receiver  (optional)', 'GlobalSat BU-353-S4 or u-blox USB GPS puck — provides live position to tactical map and NWS alerts', 'Amazon'],
     ['USB TNC — Digirig Mobile  (optional)', 'Digirig Mobile v1.x — USB soundcard + serial CAT in one compact unit', 'digirig.net · Amazon'],
     ['USB TNC — SignaLink USB  (optional)', 'Tigertronics SignaLink USB — requires rig-specific interface cable', 'tigertronics.com · Ham Radio Outlet · Amazon'],
@@ -658,7 +658,7 @@ story.append(SP(8))
 # Mesh BOM
 story.append(H2('EMCOMM-NET Coverage Extension — 2× ASUS RT-BE58 Go Mesh Nodes'))
 story.append(P(
-    'FieldComms uses two additional ASUS RT-BE58 Go routers as AiMesh nodes to extend '
+    'FieldCommand uses two additional ASUS RT-BE58 Go routers as AiMesh nodes to extend '
     'EMCOMM-NET coverage across large EOC buildings, shelters, and outdoor staging areas. '
     'Using identical hardware for all three routers (primary + 2 nodes) simplifies deployment, '
     'eliminates compatibility issues, and means any unit can serve as the primary router if needed. '
@@ -711,7 +711,7 @@ story.append(SP(8))
 # SD card sizing
 story.append(H2('SD Card / Storage Sizing Guide'))
 story.append(ref_tbl_2col(['TIER', 'WHAT FITS / REQUIREMENT'], [
-    ['Minimum (boot only)', '8 GB — OS only, RAID boot loader. FieldComms runs from NVMe RAID.'],
+    ['Minimum (boot only)', '8 GB — OS only, RAID boot loader. FieldCommand runs from NVMe RAID.'],
     ['Recommended', '32 GB — OS + swap + logs + temp files during initial RAID setup.'],
     ['Kiwix Tier 1', '~3 GB additional on RAID — WikiMed + Wikipedia Mini + Wikivoyage.'],
     ['Kiwix Tier 2', '~10 GB additional on RAID — adds iFixit, Wikibooks, Wikiversity.'],
@@ -728,14 +728,14 @@ story.append(SP(4))
 story.append(P(
     'These two tasks must be completed before anything else. '
     'The Raspberry Pi OS must be installed and the RAID 1 array assembled '
-    'before the FieldComms installer runs. '
+    'before the FieldCommand installer runs. '
     'If you are using a single NVMe drive (no RAID), flash the OS to it directly '
     'and skip the RAID build section.'))
 story.append(SP(6))
 story.append(H2('1A  Flash the Operating System'))
 story.append(tbl(['OS EDITION', 'PROS', 'CONS'], [
     ['Raspberry Pi OS Lite (64-bit)  —  Recommended for production',
-     'Minimal overhead.  All RAM available to FieldComms.  Fast boot.  Smaller attack surface.',
+     'Minimal overhead.  All RAM available to FieldCommand.  Fast boot.  Smaller attack surface.',
      'No local browser or GUI.  All interaction via SSH or via EMCOMM-NET browser on another device.'],
     ['Raspberry Pi OS Desktop (64-bit)  —  Good for setup and troubleshooting',
      'Local browser for testing.  GUI for initial Wi-Fi setup and configuration.  Easier for new users.',
@@ -750,8 +750,8 @@ story.append(P('Use <b>Raspberry Pi Imager</b> (download from raspberrypi.com/so
                '(if not using RAID). During the Imager advanced options, set:'))
 story.append(SP(4))
 story.append(tbl(['IMAGER OPTION', 'VALUE  /  REASON'], [
-    ['Hostname',          'fieldcomms.local  — makes the Pi discoverable as fieldcomms.local on the network'],
-    ['Username',          'fieldcomms  — the FieldComms installer expects this username'],
+    ['Hostname',          'fieldcommand.local  — makes the Pi discoverable as fieldcommand.local on the network'],
+    ['Username',          'fieldcommand  — the FieldCommand installer expects this username'],
     ['Password',          'Choose a strong password and record it  —  required for SSH and CUPS admin'],
     ['Enable SSH',        'Yes  —  required for remote access from your laptop during setup'],
     ['Wi-Fi',             'Set your home or lab Wi-Fi during initial OS setup.  EMCOMM-NET comes later.'],
@@ -768,7 +768,7 @@ story.append(P(
     'Skip this section entirely if you are using a single NVMe drive.'))
 story.append(SP(4))
 story.append(NoteBox(
-    'Complete the RAID build BEFORE running the FieldComms installer. '
+    'Complete the RAID build BEFORE running the FieldCommand installer. '
     'The installer must be run on the final storage configuration. '
     'If your OS is already running from a single drive, back it up before proceeding.',
     'warn'))
@@ -796,7 +796,7 @@ story.append(CodeBlock([
     'cat /proc/mdstat',
     '',
     '# Create a filesystem on the array',
-    'sudo mkfs.ext4 -L fieldcomms-raid /dev/md0',
+    'sudo mkfs.ext4 -L fieldcommand-raid /dev/md0',
     '',
     '# Mount and copy the running OS to the RAID array',
     'sudo mkdir -p /mnt/raid',
@@ -831,7 +831,7 @@ story.append(SP(4))
 story.append(NoteBox(
     'RAID 1 protects against drive failure — it is NOT a backup. '
     'Both drives contain identical data, so accidental deletion affects both drives simultaneously. '
-    'Continue to use the FIELDCOMMS USB auto-backup for regular data backups.',
+    'Continue to use the FIELDCOMMAND USB auto-backup for regular data backups.',
     'warn'))
 story.append(PB())
 
@@ -845,7 +845,7 @@ story.append(SP(8))
 story.append(H2('3.1  Flash the Operating System'))
 story.append(tbl(['OS EDITION', 'PROS', 'CONS'], [
     ['Raspberry Pi OS Lite (64-bit) — Recommended for production',
-     'Minimal overhead, faster boot, all RAM available to FieldComms services, smaller attack surface',
+     'Minimal overhead, faster boot, all RAM available to FieldCommand services, smaller attack surface',
      'No local browser or GUI — all interaction via SSH or EMCOMM-NET browser'],
     ['Raspberry Pi OS Desktop (64-bit) — Good for setup and troubleshooting',
      'GUI for initial setup, Raspberry Pi Configuration tool, local browser for testing',
@@ -857,12 +857,12 @@ story.append(tbl(['OS EDITION', 'PROS', 'CONS'], [
 story.append(SP(6))
 story.append(H2('3.2  First Boot — Initial Setup'))
 story.append(steps([
-    'On first boot, complete the initial setup wizard: set username to <b>fieldcomms</b>, set a strong password, configure locale and keyboard, expand filesystem.',
+    'On first boot, complete the initial setup wizard: set username to <b>fieldcommand</b>, set a strong password, configure locale and keyboard, expand filesystem.',
     'If using Desktop edition: complete the initial desktop setup wizard.',
     'Enable SSH (Lite only): run <font face="Courier">sudo raspi-config → Interface Options → SSH → Enable</font>',
 ]))
 story.append(SP(6))
-story.append(P('Run a full system update before installing FieldComms (works the same on both editions — Terminal or SSH):'))
+story.append(P('Run a full system update before installing FieldCommand (works the same on both editions — Terminal or SSH):'))
 story.append(SP(4))
 story.append(CodeBlock([
     '# Update all packages to latest versions',
@@ -889,19 +889,19 @@ story.append(SP(8))
 
 story.append(H2('3.5  Operator Workstation — Browser Options'))
 story.append(P(
-    'FieldComms runs entirely in a web browser. '
+    'FieldCommand runs entirely in a web browser. '
     'Any modern browser on any device connected to EMCOMM-NET works. '
     'For the Raspberry Pi 500 / 500+ used as an operator workstation, '
     'three browsers are available:'))
 story.append(SP(6))
-story.append(tbl(['BROWSER', 'HOW TO INSTALL', 'NOTES FOR FIELDCOMMS'], [
+story.append(tbl(['BROWSER', 'HOW TO INSTALL', 'NOTES FOR FIELDCOMMAND'], [
     ['Chromium  (default)',
      'Pre-installed on Raspberry Pi OS.  No action needed.',
-     'Best performance for FieldComms. Discovers CUPS printers automatically via Bonjour. '
+     'Best performance for FieldCommand. Discovers CUPS printers automatically via Bonjour. '
      'Set http://192.168.50.1 as the startup page under Settings → On startup.'],
     ['Firefox ESR',
      'sudo apt install firefox-esr',
-     'Excellent compatibility with all FieldComms pages. '
+     'Excellent compatibility with all FieldCommand pages. '
      'Good fallback if Chromium behaves unexpectedly. '
      'Also discovers network printers. Slightly lower memory footprint on the Pi 500.'],
     ['GNOME Web  (Epiphany)',
@@ -911,7 +911,7 @@ story.append(tbl(['BROWSER', 'HOW TO INSTALL', 'NOTES FOR FIELDCOMMS'], [
 ], [1.4*inch, 1.8*inch, CW-3.2*inch]))
 story.append(SP(6))
 story.append(NoteBox(
-    'For dedicated FieldComms operator stations running Pi 500:  '
+    'For dedicated FieldCommand operator stations running Pi 500:  '
     'set Chromium to open http://192.168.50.1 on startup. '
     'In Chromium: Settings → On startup → Open a specific page → enter http://192.168.50.1. '
     'The dashboard loads automatically every time the Pi 500 boots.',
@@ -929,8 +929,8 @@ story.append(SP(8))
 story.append(H1('Step 2:  Network Hardware Setup — ASUS Router + UniFi Switch'))
 story.append(HR(EOC_LT, 0.5))
 story.append(SP(4))
-story.append(P('Complete this step before running the FieldComms installer. The ASUS router must be configured '
-               'with the correct LAN subnet (192.168.50.x) before FieldComms is reachable at http://192.168.50.1.'))
+story.append(P('Complete this step before running the FieldCommand installer. The ASUS router must be configured '
+               'with the correct LAN subnet (192.168.50.x) before FieldCommand is reachable at http://192.168.50.1.'))
 story.append(SP(6))
 story.append(H2('1.1  Physical Wiring'))
 story.append(P(
@@ -955,7 +955,7 @@ story.append(tbl(['CONNECTION', 'DEVICE', 'IP / NOTES'], [
      'ASUS RT-BE58 Go  —  LAN 2.5G port',
      'Uplink from router to switch.  Router is DHCP server for 192.168.50.0/24.'],
     ['Port 2',
-     'FieldComms Pi 5  (Pironman MAX 5)', '192.168.50.1  —  FieldComms application server.  All browser tools live here.'],
+     'FieldCommand Pi 5  (Pironman MAX 5)', '192.168.50.1  —  FieldCommand application server.  All browser tools live here.'],
     ['Port 3',
      '44Net Gateway Pi 5  (Argon NEO 5)', '192.168.50.2  —  AMPRNet WireGuard gateway.  Routes 44.0.0.0/8 for all EMCOMM-NET devices.'],
     ['Port 4',
@@ -980,7 +980,7 @@ story.append(SP(6))
 story.append(tbl(['DEVICE', 'POWER SOURCE'], [
     ['ASUS RT-BE58 Go router',  'USB-C 18W PD adapter  —  or USB-C power bank for field use'],
     ['UniFi Switch Lite 16 PoE', 'Included 45W AC power supply'],
-    ['FieldComms Pi 5  (Pironman MAX 5)', 'Official Raspberry Pi 27W USB-C PD supply via Pironman MAX 5 power inlet'],
+    ['FieldCommand Pi 5  (Pironman MAX 5)', 'Official Raspberry Pi 27W USB-C PD supply via Pironman MAX 5 power inlet'],
     ['44Net Gateway Pi 5  (Argon NEO 5)', 'Official Raspberry Pi 27W USB-C PD supply directly to Pi USB-C port'],
 ], [2.4*inch, CW-2.4*inch]))
 story.append(SP(6))
@@ -1071,7 +1071,7 @@ story.append(steps([
     'Complete the router setup wizard. When it asks for WAN, choose Automatic IP (DHCP) or skip if no internet is connected.',
     'Go to <b>LAN → LAN IP</b>. Set the LAN IP to <b>192.168.50.1</b>, subnet <b>255.255.255.0</b>. Apply.',
     'Go to <b>LAN → DHCP Server</b>. Set IP pool: <b>192.168.50.100 – 192.168.50.200</b>. Apply.',
-    'Change the ASUS router admin password to something strong. Record it on a piece of paper stored on the FIELDCOMMS USB drive.',
+    'Change the ASUS router admin password to something strong. Record it on a piece of paper stored on the FIELDCOMMAND USB drive.',
     'Set Manually Assigned IP for the Pi: go to <b>LAN → DHCP Server → Manually Assigned IP</b>. Enter the Pi\'s MAC address → assign IP <b>192.168.50.1</b>. (Or set the Pi\'s static IP manually in Step 4.)',
     'Set the Wi-Fi SSID: go to <b>Wireless → General</b>. Set both the 2.4 GHz and 5 GHz SSIDs to <b>EMCOMM-NET</b>. Set a strong WPA3/WPA2 password. Apply.',
 ]))
@@ -1080,7 +1080,7 @@ story.append(P(
     'The ASUS RT-BE58 Go supports dual WAN with automatic failover. '
     'InstyConnect cellular is the primary WAN source. '
     'Starlink is the secondary — the ASUS switches automatically if cellular drops. '
-    'When both are unavailable, FieldComms continues operating on all local features '
+    'When both are unavailable, FieldCommand continues operating on all local features '
     'without interruption — net logging, ICS platform, APRS, and all tools remain fully functional.'))
 story.append(SP(6))
 story.append(tbl(['PRIORITY', 'WAN SOURCE', 'ASUS CONNECTION', 'SETUP', 'ACTIVATES'], [
@@ -1121,7 +1121,7 @@ story.append(H2('1.3  Configure Dual WAN Failover  (InstyConnect Primary  +  Sta
 story.append(P(
     'With InstyConnect connected to the WAN port and Starlink connected via USB, '
     'configure the ASUS router to switch automatically between them. '
-    'This takes about 3 minutes and requires no changes to FieldComms software.'))
+    'This takes about 3 minutes and requires no changes to FieldCommand software.'))
 story.append(SP(6))
 story.append(steps([
     'Open the ASUS router admin: <b>http://192.168.50.254</b>',
@@ -1141,7 +1141,7 @@ story.append(steps([
     'Reconnect InstyConnect — the router should failback to WAN port within 60 seconds.',
 ]))
 story.append(SP(4))
-story.append(tbl(['WAN STATE', 'WHAT EMCOMM-NET DEVICES SEE', 'FIELDCOMMS IMPACT'], [
+story.append(tbl(['WAN STATE', 'WHAT EMCOMM-NET DEVICES SEE', 'FIELDCOMMAND IMPACT'], [
     ['InstyConnect  UP  (primary)',
      'Full internet — cellular 5G/LTE via T-Mobile or Verizon',
      'NWS weather alerts live, APRS-IS active, FCC DB refresh available, Pat Winlink via internet'],
@@ -1150,13 +1150,13 @@ story.append(tbl(['WAN STATE', 'WHAT EMCOMM-NET DEVICES SEE', 'FIELDCOMMS IMPACT
      'All internet features remain active.  CGNAT on Starlink means no inbound connections possible.'],
     ['Both WAN sources  DOWN',
      'No internet  —  EMCOMM-NET still fully operational',
-     'All local FieldComms features work normally.  NWS alerts, APRS-IS, FCC refresh paused until WAN returns.'],
+     'All local FieldCommand features work normally.  NWS alerts, APRS-IS, FCC refresh paused until WAN returns.'],
 ], [1.4*inch, 2.2*inch, CW-3.6*inch]))
 story.append(SP(8))
 
 story.append(H2('1.4  AiMesh Mesh Node Setup — Extending EMCOMM-NET Coverage'))
 story.append(P(
-    'The standard FieldComms deployment includes three ASUS RT-BE58 Go routers: '
+    'The standard FieldCommand deployment includes three ASUS RT-BE58 Go routers: '
     'one primary (connected to InstyConnect WAN and the UniFi switch) '
     'and two mesh nodes that extend EMCOMM-NET to additional rooms, floors, or outdoor areas. '
     'All three use the same hardware, the same SSID, and the same password. '
@@ -1207,9 +1207,9 @@ story.append(ref_tbl_2col(['NODE', 'SWITCH PORT', 'RECOMMENDED PLACEMENT'], [
 story.append(PB())
 
 # ── STEP 2 — DOWNLOAD & INSTALL ──────────────────────────────────────────────
-story.append(StepBox(3, 'Download & Run the FieldComms Installer'))
+story.append(StepBox(3, 'Download & Run the FieldCommand Installer'))
 story.append(SP(8))
-story.append(H1('Step 3:  Download & Run the FieldComms Installer'))
+story.append(H1('Step 3:  Download & Run the FieldCommand Installer'))
 story.append(HR(EOC_LT, 0.5))
 story.append(SP(4))
 story.append(H2('Method A — Direct download to the Pi (requires internet on Pi)'))
@@ -1218,43 +1218,43 @@ story.append(P('<b>Lite:</b> SSH into the Pi and run these commands. '
 story.append(SP(4))
 story.append(CodeBlock([
     '# Create working directory',
-    'mkdir -p ~/fieldcomms-install && cd ~/fieldcomms-install',
-    '# Download the FieldComms package from GitHub or your storage location',
-    'wget -O fieldcomms-v1.zip https://github.com/KE4CON/CrossPlatformAPRS/releases/latest/download/fieldcomms-v1.zip',
+    'mkdir -p ~/fieldcommand-install && cd ~/fieldcommand-install',
+    '# Download the FieldCommand package from GitHub or your storage location',
+    'wget -O fieldcommand-v1.zip https://github.com/KE4CON/CrossPlatformAPRS/releases/latest/download/fieldcommand-v1.zip',
     '# Unzip the package',
-    'unzip fieldcomms-v1.zip',
-    'cd fieldcomms',
+    'unzip fieldcommand-v1.zip',
+    'cd fieldcommand',
 ]))
 story.append(SP(8))
 story.append(H2('Method B — Copy from your computer using SCP (Lite/headless)'))
 story.append(CodeBlock([
     '# Run this on YOUR COMPUTER, not the Pi',
-    'scp fieldcomms-v1.zip fieldcomms@[pi-ip-address]:~/',
+    'scp fieldcommand-v1.zip fieldcommand@[pi-ip-address]:~/',
     '# Then SSH into the Pi and unzip',
-    'ssh fieldcomms@[pi-ip-address]',
-    'mkdir -p ~/fieldcomms-install',
-    'mv fieldcomms-v1.zip ~/fieldcomms-install/',
-    'cd ~/fieldcomms-install && unzip fieldcomms-v1.zip',
-    'cd fieldcomms',
+    'ssh fieldcommand@[pi-ip-address]',
+    'mkdir -p ~/fieldcommand-install',
+    'mv fieldcommand-v1.zip ~/fieldcommand-install/',
+    'cd ~/fieldcommand-install && unzip fieldcommand-v1.zip',
+    'cd fieldcommand',
 ]))
 story.append(SP(8))
 story.append(H2('Method B2 — Download directly on the Pi Desktop (Desktop edition)'))
 story.append(tbl(['OPTION', 'HOW'], [
     ['Browser download',
      'Open Chromium on the Pi. Go to the GitHub releases page or download URL. '
-     'Download fieldcomms-v1.zip — it saves to ~/Downloads/ automatically.'],
+     'Download fieldcommand-v1.zip — it saves to ~/Downloads/ automatically.'],
     ['USB drive',
-     'Copy fieldcomms-v1.zip to a USB drive. Insert the USB into the Pi. '
+     'Copy fieldcommand-v1.zip to a USB drive. Insert the USB into the Pi. '
      'Open File Manager, drag the zip to your home folder.'],
 ], [1.3*inch, CW-1.3*inch]))
 story.append(SP(4))
 story.append(CodeBlock([
     '# If downloaded to ~/Downloads/:',
-    'mkdir -p ~/fieldcomms-install',
-    'cp ~/Downloads/fieldcomms-v1.zip ~/fieldcomms-install/',
+    'mkdir -p ~/fieldcommand-install',
+    'cp ~/Downloads/fieldcommand-v1.zip ~/fieldcommand-install/',
     '# Unzip (same for all methods):',
-    'cd ~/fieldcomms-install && unzip fieldcomms-v1.zip',
-    'cd fieldcomms',
+    'cd ~/fieldcommand-install && unzip fieldcommand-v1.zip',
+    'cd fieldcommand',
 ]))
 story.append(SP(8))
 story.append(H2('Method C — USB drive transfer (fully offline)'))
@@ -1263,12 +1263,12 @@ story.append(P('<b>Lite:</b> commands below via SSH. '
                'then open a Terminal for the unzip step.'))
 story.append(SP(4))
 story.append(CodeBlock([
-    '# Copy fieldcomms-v1.zip to a USB drive on your computer',
+    '# Copy fieldcommand-v1.zip to a USB drive on your computer',
     '# Insert USB drive into the Pi, then:',
     'sudo mount /dev/sda1 /mnt   # or check lsblk for your device',
-    'cp /mnt/fieldcomms-v1.zip ~/fieldcomms-install/',
-    'cd ~/fieldcomms-install && unzip fieldcomms-v1.zip',
-    'cd fieldcomms',
+    'cp /mnt/fieldcommand-v1.zip ~/fieldcommand-install/',
+    'cd ~/fieldcommand-install && unzip fieldcommand-v1.zip',
+    'cd fieldcommand',
 ]))
 story.append(SP(6))
 story.append(H2('Launch the Installer'))
@@ -1277,7 +1277,7 @@ story.append(P('<b>Lite:</b> run via SSH. '
                'The installer runs identically on both.'))
 story.append(SP(4))
 story.append(CodeBlock([
-    'cd ~/fieldcomms-install/fieldcomms',
+    'cd ~/fieldcommand-install/fieldcommand',
     'sudo bash scripts/install.sh',
 ]))
 story.append(PB())
@@ -1293,7 +1293,7 @@ story.append(tbl(['PROMPT', 'DEFAULT', 'DESCRIPTION'], [
     ['Station latitude', '42.3153', 'Decimal degrees. Used for APRS station marker, NWS alerts, propagation, distance calc.'],
     ['Station longitude', '-88.4473', 'Decimal degrees (negative = West). Default: Woodstock IL (McHenry County seat).'],
     ['Wi-Fi AP SSID', 'EMCOMM-NET', 'The Wi-Fi network name that field devices connect to.'],
-    ['Wi-Fi AP password', 'fieldcomms2026', 'WPA2 password for EMCOMM-NET. Change this for operational security.'],
+    ['Wi-Fi AP password', 'fieldcommand2026', 'WPA2 password for EMCOMM-NET. Change this for operational security.'],
     ['Server IP address', '192.168.50.1', 'The Pi\'s static IP on EMCOMM-NET. Devices browse to http://192.168.50.1/'],
     ['Download FCC database', 'N', '~600 MB download of the FCC amateur license database. Recommended: Y'],
     ['Kiwix tier', '1', 'Tier 1: WikiMed + Wikipedia Mini + Wikivoyage (~2.5 GB). Tier 2 adds iFixit (~5 GB more).'],
@@ -1302,19 +1302,19 @@ story.append(SP(6))
 story.append(H2('What the Installer Does Automatically'))
 for item in [
     'Installs system packages: Python 3, nginx, kiwix-tools, rsync, gpsd, ufw, mdadm, java',
-    'Creates the <b>fieldcomms</b> system user and directory structure at /opt/fieldcomms/',
+    'Creates the <b>fieldcommand</b> system user and directory structure at /opt/fieldcommand/',
     'Creates a Python virtual environment and installs Flask, flask-cors, requests, gpsd-py3',
-    'Deploys all 30 HTML pages to /opt/fieldcomms/html/ and patches your callsign and coordinates into each file',
+    'Deploys all 30 HTML pages to /opt/fieldcommand/html/ and patches your callsign and coordinates into each file',
     'Installs all 14 systemd service and timer units and enables them at boot',
-    'Configures nginx with the correct web root (/opt/fieldcomms/html/) and proxy rules for all API ports',
+    'Configures nginx with the correct web root (/opt/fieldcommand/html/) and proxy rules for all API ports',
     '<b>Does NOT configure a Wi-Fi access point</b> — Wi-Fi is handled by the ASUS RT-BE58 Go router. The Pi connects as a wired client only.',
     'Configures the Pi static IP (192.168.50.1/24) on the Ethernet interface (eth0) via NetworkManager',
     'Configures the firewall (ufw) — opens all required ports',
     'Downloads and installs YAAC (Java APRS client) and Graywolf to /opt/yaac/ and /opt/graywolf/',
-    'Installs the USB backup udev rule (plug in a USB drive labeled FIELDCOMMS to trigger auto-backup)',
+    'Installs the USB backup udev rule (plug in a USB drive labeled FIELDCOMMAND to trigger auto-backup)',
     'Downloads and installs Pat Winlink (browser-based Winlink backup client, port 8090)',
     'Runs the Kiwix ZIM downloader for the selected content tier',
-    'Downloads the FEMA ICS forms PDFs to /opt/fieldcomms/data/ics_forms/ (22 forms)',
+    'Downloads the FEMA ICS forms PDFs to /opt/fieldcommand/data/ics_forms/ (22 forms)',
     'Optionally downloads and builds the FCC amateur license database (~600 MB)',
     'Starts all services and verifies they are running',
 ]:
@@ -1339,7 +1339,7 @@ story.append(SP(6))
 story.append(H2('Path A — Raspberry Pi OS Lite (SSH)'))
 story.append(CodeBlock([
     '# SSH into the Pi (use the IP shown in your router DHCP table)',
-    'ssh fieldcomms@[current-pi-ip]',
+    'ssh fieldcommand@[current-pi-ip]',
     '# Find the Ethernet connection name',
     'nmcli con show',
     '# Usually: "Wired connection 1" or "Preconfigured Connection 1"',
@@ -1363,7 +1363,7 @@ story.append(steps([
     'Click <b>Save</b>, then close the Network Connections window.',
     'Disconnect and reconnect the Ethernet cable, or reboot the Pi.',
     'Open the <b>Terminal</b> and verify: <font face="Courier">ip addr show eth0</font> — should show <b>inet 192.168.50.1/24</b>.',
-    'Open <b>Chromium</b> on the Pi and go to http://192.168.50.1 to confirm FieldComms loads locally.',
+    'Open <b>Chromium</b> on the Pi and go to http://192.168.50.1 to confirm FieldCommand loads locally.',
 ]))
 story.append(SP(4))
 story.append(NoteBox(
@@ -1390,8 +1390,8 @@ story.append(P('The Pironman MAX 5 enclosure has two M.2 NVMe slots. Configure t
                'both drives contain identical data. If one drive fails, the system continues running on the '
                'surviving drive with no data loss and no operator action required.'))
 story.append(SP(4))
-story.append(NoteBox('Complete this step before running the FieldComms installer. The RAID array must be '
-                     'assembled and the OS installed on it before FieldComms is deployed. If your Pi OS is '
+story.append(NoteBox('Complete this step before running the FieldCommand installer. The RAID array must be '
+                     'assembled and the OS installed on it before FieldCommand is deployed. If your Pi OS is '
                      'already on a single drive, back it up first.', 'warn'))
 story.append(SP(6))
 story.append(H2('Physical Installation'))
@@ -1410,7 +1410,7 @@ story.append(CodeBlock([
     '# Confirm array is building (will show [=>...............] resync progress)',
     'cat /proc/mdstat',
     '# Create a filesystem on the RAID array',
-    'sudo mkfs.ext4 -L fieldcomms-raid /dev/md0',
+    'sudo mkfs.ext4 -L fieldcommand-raid /dev/md0',
     '# Mount it',
     'sudo mkdir -p /mnt/raid',
     'sudo mount /dev/md0 /mnt/raid',
@@ -1432,7 +1432,7 @@ story.append(ref_tbl_2col(['SITUATION', 'WHAT TO DO'], [
 story.append(SP(4))
 story.append(NoteBox('RAID 1 protects against drive failure — it is NOT a backup. Both drives contain '
                      'identical data, so accidental deletion or corruption affects both drives simultaneously. '
-                     'Continue to use the USB auto-backup (insert FIELDCOMMS USB drive) for regular data backups.', 'warn'))
+                     'Continue to use the USB auto-backup (insert FIELDCOMMAND USB drive) for regular data backups.', 'warn'))
 story.append(PB())
 
 # ── STEP 5 — KIWIX ───────────────────────────────────────────────────────────
@@ -1461,10 +1461,10 @@ story.append(tbl(['TIER', 'NAME', 'SIZE', 'DESCRIPTION'], [
 story.append(SP(6))
 story.append(CodeBlock([
     '# Check what is installed and service status',
-    'sudo bash /opt/fieldcomms/scripts/kiwix_setup.sh --status',
+    'sudo bash /opt/fieldcommand/scripts/kiwix_setup.sh --status',
     '',
     '# Add Tier 2 content (resumes interrupted downloads automatically)',
-    'sudo bash /opt/fieldcomms/scripts/kiwix_setup.sh --tier 2',
+    'sudo bash /opt/fieldcommand/scripts/kiwix_setup.sh --tier 2',
     '',
     '# Service management',
     'sudo systemctl status kiwix',
@@ -1478,7 +1478,7 @@ story.append(SP(8))
 story.append(H2('Additional Kiwix Content — Install Any ZIM File'))
 story.append(P(
     'Kiwix.org (kiwix.org/en/content/) publishes hundreds of ZIM archives beyond the two built-in tiers. '
-    'Any ZIM file can be added to FieldComms. The following table lists the most useful '
+    'Any ZIM file can be added to FieldCommand. The following table lists the most useful '
     'additions for emergency communications and public safety operations:'))
 story.append(SP(6))
 story.append(tbl(['CONTENT', 'APPROX SIZE', 'BEST FOR'], [
@@ -1487,7 +1487,7 @@ story.append(tbl(['CONTENT', 'APPROX SIZE', 'BEST FOR'], [
      'Offline detailed maps for any region.  Download your county or state for SAR and shelter mapping.'],
     ['Stack Overflow  (programming Q&A)',
      '~3.5 GB',
-     'Technical troubleshooting reference.  Useful for net managers debugging FieldComms.'],
+     'Technical troubleshooting reference.  Useful for net managers debugging FieldCommand.'],
     ['Project Gutenberg  (public domain books)',
      '~65 GB (full) / ~1 GB (best-of)',
      'Field reference library.  Includes FCC regulations, ARRL handbook excerpts, first aid guides.'],
@@ -1518,7 +1518,7 @@ story.append(CodeBlock([
     'cp /mnt/my_content.zim /opt/kiwix/zim/',
     '',
     '#           Option B: SCP from your laptop over EMCOMM-NET',
-    'scp my_content.zim fieldcomms@192.168.50.1:/opt/kiwix/zim/',
+    'scp my_content.zim fieldcommand@192.168.50.1:/opt/kiwix/zim/',
     '',
     '# Step 3 — Register the new ZIM with the Kiwix library index',
     'sudo kiwix-manage /opt/kiwix/library.xml add /opt/kiwix/zim/my_content.zim',
@@ -1540,7 +1540,7 @@ story.append(SP(4))
 story.append(NoteBox(
     'ZIM files can be large.  Check available disk space before downloading: '
     'df -h /opt/kiwix/  '
-    'The RAID array provides 2× 1 TB = ~900 GB usable after OS and FieldComms.  '
+    'The RAID array provides 2× 1 TB = ~900 GB usable after OS and FieldCommand.  '
     'Tier 1 uses ~2.5 GB.  Tier 2 uses ~10 GB.  There is ample space for additional content.',
     'tip'))
 story.append(PB())
@@ -1552,10 +1552,10 @@ story.append(H1('9. Step 6: FCC Amateur Database'))
 story.append(HR(EOC_LT, 0.5))
 story.append(SP(4))
 story.append(P(
-    'The FCC database gives FieldComms instant offline access to the entire US amateur '
+    'The FCC database gives FieldCommand instant offline access to the entire US amateur '
     'radio license database — approximately 800,000 active licensees. '
     'When a net control operator types a callsign into the check-in field, '
-    'FieldComms looks up the licensee name, license class, and address automatically '
+    'FieldCommand looks up the licensee name, license class, and address automatically '
     'in under a millisecond, with no internet connection required. '
     'This is one of the most-used features during ARES/RACES net operations.'))
 story.append(SP(4))
@@ -1568,9 +1568,9 @@ story.append(SP(6))
 story.append(CodeBlock([
     '# If you selected "y" during install, it already ran.',
     '# To build or rebuild manually:',
-    'sudo -u fieldcomms \\',
-    '  /opt/fieldcomms/venv/bin/python \\',
-    '  /opt/fieldcomms/python/build_fcc_db.py',
+    'sudo -u fieldcommand \\',
+    '  /opt/fieldcommand/venv/bin/python \\',
+    '  /opt/fieldcommand/python/build_fcc_db.py',
     '# Automatic weekly refresh timer:',
     'sudo systemctl status fcc-refresh.timer',
     '# Force immediate refresh:',
@@ -1585,19 +1585,19 @@ story.append(H1('10. Step 7: APRS Setup (Graywolf + YAAC)'))
 story.append(HR(EOC_LT, 0.5))
 story.append(SP(4))
 story.append(P(
-    'FieldComms integrates two APRS client applications: '
+    'FieldCommand integrates two APRS client applications: '
     'Graywolf TNC (accessible on port 8080) and YAAC — Yet Another APRS Client (port 8082). '
     'Both run as background services and feed live station data to the Tactical APRS Map '
     'on the dashboard. The map merges data from both sources, deduplicates by callsign, '
     'and maintains a live WebSocket feed to all connected browsers simultaneously.'))
 story.append(SP(4))
 story.append(P(
-    'APRS is entirely optional. FieldComms runs fully without it — '
+    'APRS is entirely optional. FieldCommand runs fully without it — '
     'you simply will not see live APRS stations on the tactical map. '
     'If you are not planning to use a TNC or radio interface, skip this step entirely '
     'and proceed to Step 8 (Printer Setup).'))
 story.append(SP(4))
-story.append(NoteBox('The FieldComms installer attempts to download and install both YAAC and Graywolf automatically. '
+story.append(NoteBox('The FieldCommand installer attempts to download and install both YAAC and Graywolf automatically. '
                      'If internet was available during installation, they should already be present. '
                      'Skip to Section 9.3 (YAAC port configuration) if the installer succeeded.', 'info'))
 story.append(SP(6))
@@ -1623,12 +1623,12 @@ story.append(CodeBlock([
     'cd /tmp && wget http://www.ka2ddo.org/ka2ddo/YAAC.zip',
     'sudo unzip YAAC.zip "*.jar" -d /opt/yaac/',
     'sudo mv /opt/yaac/YAAC*.jar /opt/yaac/YAAC.jar 2>/dev/null || true',
-    'sudo chown -R fieldcomms:fieldcomms /opt/yaac',
+    'sudo chown -R fieldcommand:fieldcommand /opt/yaac',
     '# Step 3 — Install Graywolf',
     'sudo mkdir -p /opt/graywolf',
     'sudo wget -O /opt/graywolf/graywolf.jar \\',
     '  https://github.com/vk2tds/graywolf/releases/latest/download/graywolf.jar',
-    'sudo chown -R fieldcomms:fieldcomms /opt/graywolf',
+    'sudo chown -R fieldcommand:fieldcommand /opt/graywolf',
     '# Step 4 — Enable services',
     'sudo systemctl enable --now yaac',
     'sudo systemctl enable --now graywolf',
@@ -1668,7 +1668,7 @@ story.append(SP(8))
 story.append(H1('11. Step 8: Printer Setup'))
 story.append(HR(EOC_LT, 0.5))
 story.append(SP(4))
-story.append(P('FieldComms has print buttons on 17 pages. All printing uses the browser standard '
+story.append(P('FieldCommand has print buttons on 17 pages. All printing uses the browser standard '
                'window.print() function, which sends the job to whatever printer the operator\'s browser '
                'can reach. Three printer connection methods are supported:'))
 story.append(SP(6))
@@ -1681,16 +1681,16 @@ story.append(NoteBox('This is the simplest option and requires zero configuratio
 story.append(SP(8))
 story.append(H2('Option B — USB Printer Shared via Pi (CUPS)'))
 story.append(P('A USB printer is connected directly to the Pi. CUPS shares it across EMCOMM-NET. '
-               'Installed automatically by the FieldComms installer. CUPS admin UI at http://192.168.50.1:631.'))
+               'Installed automatically by the FieldCommand installer. CUPS admin UI at http://192.168.50.1:631.'))
 story.append(SP(4))
 story.append(H3('B.2  Add the USB Printer via CUPS Web Admin'))
 story.append(steps([
     'Plug the USB printer into one of the Pi\'s USB ports (or powered USB hub).',
     'On any device on EMCOMM-NET, open a browser and go to: <b>http://192.168.50.1:631</b>',
     'Click <b>Administration → Add Printer</b>.',
-    'If prompted for credentials, enter the Pi username and password (e.g. fieldcomms / your password).',
+    'If prompted for credentials, enter the Pi username and password (e.g. fieldcommand / your password).',
     'Your USB printer appears in the <b>Local Printers</b> list. Select it and click <b>Continue</b>.',
-    'Enter a Name (e.g. FieldComms-Printer), Description, and Location. Check <b>Share This Printer</b>. Click Continue.',
+    'Enter a Name (e.g. FieldCommand-Printer), Description, and Location. Check <b>Share This Printer</b>. Click Continue.',
     'Select the correct printer driver. Click <b>Add Printer</b>.',
     'Set default options (paper size: Letter) and click <b>Set Default Options</b>.',
     'Click <b>Print Test Page</b> to confirm the printer is working.',
@@ -1701,14 +1701,14 @@ story.append(tbl(['DEVICE TYPE', 'HOW TO ADD THE SHARED PRINTER'], [
     ['Windows laptop  (Winlink / JS8Call station)',
      'Settings → Bluetooth & devices → Printers & scanners → Add a printer or scanner.  '
      'Windows discovers the CUPS shared printer automatically on EMCOMM-NET via Bonjour.  '
-     'Select FieldComms-Printer when it appears and click Add device.'],
+     'Select FieldCommand-Printer when it appears and click Add device.'],
     ['Mac / macOS',
      'System Settings → Printers & Scanners → click + (Add Printer).  '
      'Click the Default tab — the shared printer appears via Bonjour discovery.  '
      'Select it and click Add.'],
     ['iPad / iPhone  (AirPrint)',
      'No setup required.  CUPS + Avahi advertises the printer as AirPrint-compatible.  '
-     'Open any FieldComms page → tap the Share icon → tap Print → select the printer.  '
+     'Open any FieldCommand page → tap the Share icon → tap Print → select the printer.  '
      'Works on any iOS device on EMCOMM-NET.'],
     ['Android tablet / phone',
      'Install the free CUPS Print app from Google Play.  '
@@ -1716,14 +1716,14 @@ story.append(tbl(['DEVICE TYPE', 'HOW TO ADD THE SHARED PRINTER'], [
      'The printer appears in the Android print dialog for all apps.'],
     ['Chromebook',
      'Settings → Advanced → Printing → Printers → Add Printer.  '
-     'Enter:  Name = FieldComms-Printer,  Address = 192.168.50.1,  Protocol = IPP,  '
-     'Queue = /printers/FieldComms-Printer.  Click Add.'],
+     'Enter:  Name = FieldCommand-Printer,  Address = 192.168.50.1,  Protocol = IPP,  '
+     'Queue = /printers/FieldCommand-Printer.  Click Add.'],
     ['Raspberry Pi 500 / 500+  (operator workstation)',
      'Chromium browser  (pre-installed): the CUPS printer appears automatically in the print dialog.  '
      'No additional setup needed — Chromium on Pi OS discovers CUPS printers via Bonjour.  '
      'For Firefox ESR on the Pi 500:  install via  sudo apt install firefox-esr  '
      'then open Print → More Settings → select the printer from the destination list.  '
-     'Alternatively, run:  sudo usermod -aG lpadmin fieldcomms  to give the Pi 500 user '
+     'Alternatively, run:  sudo usermod -aG lpadmin fieldcommand  to give the Pi 500 user '
      'full access to the CUPS admin at http://192.168.50.1:631.'],
 ], [1.6*inch, CW-1.6*inch]))
 story.append(SP(6))
@@ -1839,7 +1839,7 @@ story.append(SP(4))
 story.append(P(
     'Pat is an open-source Winlink client that runs directly on the Pi and is accessible '
     'from any browser on EMCOMM-NET at http://192.168.50.1:8090. '
-    'The FieldComms installer downloads and configures Pat automatically, so this step '
+    'The FieldCommand installer downloads and configures Pat automatically, so this step '
     'is primarily about verifying it is running and adding your Winlink account password.'))
 story.append(SP(4))
 story.append(P(
@@ -1856,7 +1856,7 @@ story.append(CodeBlock([
     '# Confirm port 8090 is listening',
     'ss -tlnp | grep 8090',
     '# Add your Winlink password:',
-    'sudo nano /opt/fieldcomms/.config/pat/config.json',
+    'sudo nano /opt/fieldcommand/.config/pat/config.json',
     '# Verify / update these fields:',
     '#   "mycall": "K9ESV"                 ← set by installer',
     '#   "secure_login_password": "xxxxx"   ← add your Winlink password',
@@ -1921,7 +1921,7 @@ story.append(CodeBlock([
     '# ASUS Web UI → LAN → DHCP Server → Manually Assigned IP',
     '# Enter laptop MAC address → assign 192.168.50.2',
     '',
-    '# Configure the FieldComms dashboard JS8Call card:',
+    '# Configure the FieldCommand dashboard JS8Call card:',
     '# 1. Connect to EMCOMM-NET, open http://192.168.50.1',
     '# 2. Find the JS8Call card (purple) in Amateur Radio section',
     '# 3. Tap/click the card',
@@ -2069,7 +2069,7 @@ story.append(H1('Step 11:  AMPRNet / 44Net Gateway Setup'))
 story.append(HR(EOC_LT, 0.5))
 story.append(SP(4))
 story.append(P(
-    'The following files are part of FieldComms and work together to provide '
+    'The following files are part of FieldCommand and work together to provide '
     'integrated 44Net gateway support across both Pis:'))
 story.append(SP(4))
 story.append(tbl(['FILE', 'RUNS ON', 'PURPOSE'], [
@@ -2086,15 +2086,15 @@ story.append(tbl(['FILE', 'RUNS ON', 'PURPOSE'], [
      'Systemd unit that keeps amprgate_status.py running.  '
      'Installed by setup_44net.sh.  Starts after wg-quick@ampr0.'],
     ['python/amprgate_poll.py',
-     'FieldComms Pi  (192.168.50.1)',
+     'FieldCommand Pi  (192.168.50.1)',
      'Polls the gateway Pi every 30 seconds and writes status to '
-     '/opt/fieldcomms/data/amprgate_status.json for the dashboard.'],
+     '/opt/fieldcommand/data/amprgate_status.json for the dashboard.'],
     ['systemd/amprgate-poll.service',
-     'FieldComms Pi  (192.168.50.1)',
+     'FieldCommand Pi  (192.168.50.1)',
      'Systemd unit for the poll service.  '
-     'Installed automatically by the FieldComms install.sh.'],
+     'Installed automatically by the FieldCommand install.sh.'],
     ['html/amprgate.html',
-     'FieldComms Pi  (192.168.50.1)',
+     'FieldCommand Pi  (192.168.50.1)',
      'Dashboard page at http://192.168.50.1/amprgate.html.  '
      'Shows tunnel state, AMPRNet address, traffic stats, and tunnel controls.'],
 ], [1.6*inch, 0.9*inch, CW-2.5*inch]))
@@ -2104,14 +2104,14 @@ story.append(P(
     'using the reserved 44.0.0.0/8 address block assigned by IANA to ARRL. '
     'It provides licensed amateur radio operators with globally routable IP addresses '
     'reachable over RF links or via encrypted internet tunnels to the AMPRNet gateway. '
-    'Adding a dedicated 44Net gateway Pi to FieldComms gives every device on EMCOMM-NET '
+    'Adding a dedicated 44Net gateway Pi to FieldCommand gives every device on EMCOMM-NET '
     'full access to the AMPRNet — Winlink gateways, APRS-IS servers, Mesh networking '
     'nodes, and other amateur stations worldwide that are reachable on 44.x.x.x addresses.'))
 story.append(SP(4))
 story.append(NoteBox(
-    'The 44Net Gateway Pi is completely separate from the FieldComms server Pi. '
+    'The 44Net Gateway Pi is completely separate from the FieldCommand server Pi. '
     'It runs WireGuard, ip routing, and a status page only. '
-    'If the gateway goes down or needs reconfiguring, FieldComms continues operating normally. '
+    'If the gateway goes down or needs reconfiguring, FieldCommand continues operating normally. '
     'This isolation was an intentional design choice — keep routing infrastructure '
     'separate from the communications server.',
     'note'))
@@ -2155,7 +2155,7 @@ story.append(P(
     'Once you have your AMPRNet allocation, the following steps configure the dedicated '
     'gateway Pi running in the Argon NEO 5 case. '
     'This Pi should be freshly flashed with Raspberry Pi OS Lite (64-bit). '
-    'It does not need the FieldComms installer — it runs WireGuard and routing only.'))
+    'It does not need the FieldCommand installer — it runs WireGuard and routing only.'))
 story.append(SP(6))
 
 story.append(H3('B.1  Initial OS Setup'))
@@ -2169,10 +2169,10 @@ story.append(SP(4))
 story.append(tbl(['OPTION', 'VALUE'], [
     ['Hostname',  'amprgate.local  —  discoverable as amprgate.local on EMCOMM-NET'],
     ['Username',  'amprgate  —  used by the gateway setup script'],
-    ['Password',  'Choose a strong password and record it with the FieldComms credentials'],
+    ['Password',  'Choose a strong password and record it with the FieldCommand credentials'],
     ['Enable SSH','Yes  —  useful for remote diagnostics if the monitor is not available'],
     ['Wi-Fi',     'Your home or lab Wi-Fi for initial package downloads  —  switched to wired EMCOMM-NET after setup'],
-    ['Locale',    'US/Central  —  matches the FieldComms Pi for consistent log timestamps'],
+    ['Locale',    'US/Central  —  matches the FieldCommand Pi for consistent log timestamps'],
 ], [1.6*inch, CW-1.6*inch]))
 story.append(SP(6))
 
@@ -2261,7 +2261,7 @@ story.append(SP(6))
 
 story.append(H3('B.5  Access Control — Who Can Reach What'))
 story.append(P(
-    'FieldComms restricts access to the 44Net gateway on two levels. '
+    'FieldCommand restricts access to the 44Net gateway on two levels. '
     'This is both a security measure and a Part 97 compliance measure — '
     'only licensed amateur radio operators should be able to view or control '
     'the AMPRNet gateway.'))
@@ -2282,7 +2282,7 @@ story.append(NoteBox(
     'An operator who wants to restart the WireGuard tunnel must sit at the gateway Pi keyboard, '
     'open Chromium, log in with their FCC callsign, and use the local control interface. '
     'This prevents accidental or unauthorized tunnel disruption from operator laptops or phones. '
-    'The FieldComms Pi polling service reads /api/status on port 9000 without authentication '
+    'The FieldCommand Pi polling service reads /api/status on port 9000 without authentication '
     '— this is a read-only machine-to-machine call and is intentional.',
     'note'))
 story.append(SP(6))
@@ -2309,9 +2309,9 @@ story.append(CodeBlock([
     'route print | find "44."',
     '# Expected: 44.0.0.0  0.0.0.0  192.168.50.2  ...',
     '',
-    '# Test from the FieldComms Pi',
+    '# Test from the FieldCommand Pi',
     'ping 44.0.0.1 -c 4',
-    '# If reachable, FieldComms can now connect to AMPRNet resources',
+    '# If reachable, FieldCommand can now connect to AMPRNet resources',
 ]))
 story.append(SP(6))
 
@@ -2382,7 +2382,7 @@ story.append(SP(6))
 story.append(tbl(['APPLICATION', 'HOW IT USES 44NET', 'ACCESS FROM EMCOMM-NET'], [
     ['Winlink via AMPRNet',
      'Some Winlink RMS gateways have 44.x.x.x addresses. '
-     'Pat Winlink on the FieldComms Pi can connect to them directly over the AMPRNet tunnel '
+     'Pat Winlink on the FieldCommand Pi can connect to them directly over the AMPRNet tunnel '
      'rather than the commercial internet — useful when only amateur radio paths are available.',
      'Pat Winlink at http://192.168.50.1:8090  Add AMPRNet RMS in Pat settings'],
     ['APRS-IS via AMPRNet',
@@ -2390,11 +2390,11 @@ story.append(tbl(['APPLICATION', 'HOW IT USES 44NET', 'ACCESS FROM EMCOMM-NET'],
      'Graywolf and YAAC can connect to APRS-IS via the AMPRNet path, '
      'keeping APRS traffic within the amateur radio network.',
      'Configure APRS-IS server address in Graywolf or YAAC settings'],
-    ['Inter-node FieldComms',
-     'If another MCESV station runs a second FieldComms system with its own 44Net gateway, '
+    ['Inter-node FieldCommand',
+     'If another MCESV station runs a second FieldCommand system with its own 44Net gateway, '
      'the two systems can share net data and resource boards over AMPRNet '
      'without routing traffic through the commercial internet.',
-     'Future capability — requires second FieldComms deployment'],
+     'Future capability — requires second FieldCommand deployment'],
     ['HamSphere / Echolink via AMPRNet',
      'Some VoIP amateur radio nodes are reachable on 44.x.x.x addresses, '
      'providing RF-to-AMPRNet linking without commercial internet dependency.',
@@ -2430,8 +2430,8 @@ story.append(tbl(['CHECK', 'COMMAND / METHOD', 'EXPECTED RESULT'], [
     ['EMCOMM-NET devices have 44 route',
      'ip route show | grep 44  (on any EMCOMM-NET device)',
      '44.0.0.0/8 via 192.168.50.2'],
-    ['AMPRNet reachable from FieldComms Pi',
-     'ping 44.0.0.1 -c 4  (on FieldComms Pi)',
+    ['AMPRNet reachable from FieldCommand Pi',
+     'ping 44.0.0.1 -c 4  (on FieldCommand Pi)',
      'Replies received'],
     ['Status page accessible',
      'Open http://192.168.50.2:9000 in any browser on EMCOMM-NET',
@@ -2464,7 +2464,7 @@ story.append(P(
     'covers the most common issues and their fixes.'))
 story.append(SP(6))
 story.append(CodeBlock([
-    '# Check all FieldComms services',
+    '# Check all FieldCommand services',
     'for svc in fcc-lookup health-monitor deadmans ics-platform kiwix nginx pat; do',
     '  echo "$svc: $(systemctl is-active $svc)"',
     'done',
@@ -2502,8 +2502,8 @@ story.append(tbl(['DEVICE', 'IP ADDRESS', 'ROLE', 'CONNECTION'], [
     ['UniFi Switch Lite 16 PoE', 'N/A  (Layer 2 switch)',
      'Wired distribution hub  —  16 ports',
      'Port 1 uplink to ASUS router.  Ports 2-16 to all wired devices.'],
-    ['FieldComms Pi 5  (Pironman MAX 5)', '192.168.50.1  (static)',
-     'FieldComms application server  All EmComm tools and services',
+    ['FieldCommand Pi 5  (Pironman MAX 5)', '192.168.50.1  (static)',
+     'FieldCommand application server  All EmComm tools and services',
      'Wired GbE via UniFi Switch Port 2.  Does not run Wi-Fi.'],
     ['44Net Gateway Pi 5  (Argon NEO 5)', '192.168.50.2  (static)',
      'AMPRNet / 44Net WireGuard gateway  Routes 44.0.0.0/8 for EMCOMM-NET',
@@ -2530,7 +2530,7 @@ story.append(tbl(['DEVICE', 'IP ADDRESS', 'ROLE', 'CONNECTION'], [
 story.append(SP(6))
 story.append(NoteBox(
     'Recommended: set the ASUS router LAN IP to 192.168.50.254 and the Pi static IP to 192.168.50.1. '
-    'This keeps the FieldComms URL clean and the router admin clearly separate at http://192.168.50.254.',
+    'This keeps the FieldCommand URL clean and the router admin clearly separate at http://192.168.50.254.',
     'tip'))
 story.append(PB())
 
@@ -2569,11 +2569,11 @@ story.append(tbl(['PORT', 'SERVICE', 'SYSTEMD UNIT', 'DESCRIPTION'], [
     ['5050', 'FCC Lookup Server', 'fcc-lookup.service',   'Main API: callsign lookup, net logs, roster, resources, DMS, ICS forms'],
     ['5051', 'Health Monitor',  'health-monitor.service', 'System health: CPU temp, memory, disk, GPS, all service status'],
     ['5055', 'ICS Platform',    'ics-platform.service',   'ICS incident management: incidents, objectives, resources, T-cards'],
-    ['5056', 'References API',  'fieldcomms-refs.service','Reference library API'],
+    ['5056', 'References API',  'fieldcommand-refs.service','Reference library API'],
     ['8080', 'Graywolf APRS',  '(graywolf.service)',     'APRS TNC client — REST API + WebSocket live stream'],
     ['8081', 'Kiwix Library',   'kiwix.service',          'Offline web library — WikiMed, Wikipedia, iFixit, etc.'],
     ['8082', 'YAAC APRS',      'yaac.service',            'YAAC Java APRS client — REST API + WebSocket'],
-    ['8083', 'Tile Server',     'fieldcomms-tiles.service','Offline map tile server (MBTiles)'],
+    ['8083', 'Tile Server',     'fieldcommand-tiles.service','Offline map tile server (MBTiles)'],
     ['8090', 'Pat Winlink',     'pat.service',             'Winlink email-over-radio — Packet, VARA HF, VARA FM'],
     ['631',  'CUPS Printer',    'cups.service',            'Print server — USB printer shared to EMCOMM-NET'],
     ['2442', 'JS8Call',         '(JS8Call app on laptop)', 'HF digital keyboard messaging — TCP API on Windows laptop'],
@@ -2585,7 +2585,7 @@ story.append(HR(EOC_LT, 0.5))
 story.append(SP(6))
 story.append(CodeBlock([
     '# Interactive maintenance menu:',
-    'sudo bash /opt/fieldcomms/scripts/update.sh',
+    'sudo bash /opt/fieldcommand/scripts/update.sh',
     '',
     '# Menu options:',
     '#  1) Restart all services',
@@ -2600,15 +2600,15 @@ story.append(CodeBlock([
 ]))
 story.append(SP(6))
 story.append(H2('USB Auto-Backup'))
-story.append(P('Insert a USB drive formatted with the label <b>FIELDCOMMS</b> to trigger an automatic backup '
-               'of all runtime data. The backup copies /opt/fieldcomms/data/ to a timestamped folder on the USB drive.'))
+story.append(P('Insert a USB drive formatted with the label <b>FIELDCOMMAND</b> to trigger an automatic backup '
+               'of all runtime data. The backup copies /opt/fieldcommand/data/ to a timestamped folder on the USB drive.'))
 story.append(SP(4))
 story.append(CodeBlock([
-    '# Format a USB drive with label FIELDCOMMS (Linux):',
-    'sudo mkfs.vfat -n FIELDCOMMS /dev/sda1',
-    '# Or on Windows: format as FAT32, set volume label to FIELDCOMMS',
+    '# Format a USB drive with label FIELDCOMMAND (Linux):',
+    'sudo mkfs.vfat -n FIELDCOMMAND /dev/sda1',
+    '# Or on Windows: format as FAT32, set volume label to FIELDCOMMAND',
     '# Backup destination on USB:',
-    '# /media/fieldcomms/backup/YYYYMMDD_HHMMSS',
+    '# /media/fieldcommand/backup/YYYYMMDD_HHMMSS',
 ]))
 story.append(PB())
 
@@ -2625,7 +2625,7 @@ story.append(ref_tbl_2col(['SYMPTOM', 'LIKELY CAUSE / FIX'], [
     ['Pat Winlink not accessible at port 8090', 'pat.service not running. Run: sudo systemctl start pat && sudo systemctl enable pat'],
     ['JS8Call card does not open', 'TCP Server API not enabled in JS8Call, or wrong IP entered. Verify: File → Settings → Reporting → Enable TCP Server API, port 2442, hostname 0.0.0.0.'],
     ['Printer not visible on EMCOMM-NET', 'avahi-daemon not running, or CUPS printer not shared. Check: sudo systemctl status avahi-daemon cups. Verify Share This Printer is checked in CUPS UI.'],
-    ['Issue: Services crash on startup', 'Low disk space or permission error. Check: df -h / and ls -la /opt/fieldcomms/. Verify fieldcomms user owns /opt/fieldcomms/.'],
+    ['Issue: Services crash on startup', 'Low disk space or permission error. Check: df -h / and ls -la /opt/fieldcommand/. Verify fieldcommand user owns /opt/fieldcommand/.'],
 ], [1.8*inch, CW-1.8*inch]))
 story.append(SP(4))
 story.append(NoteBox('For any issue not covered here — open the Health Monitor at http://192.168.50.1:5051/health '
@@ -2636,10 +2636,10 @@ story.append(H1('17. Quick Reference Card'))
 story.append(HR(EOC_LT, 0.5))
 story.append(SP(6))
 story.append(tbl(['ITEM', 'VALUE'], [
-    ['FieldComms dashboard',   'http://192.168.50.1'],
+    ['FieldCommand dashboard',   'http://192.168.50.1'],
     ['Wi-Fi network (SSID)',   'EMCOMM-NET'],
     ['WAN status dashboard',   'http://192.168.50.1/wan-status.html'],
-    ['FieldComms Pi static IP','192.168.50.1'],
+    ['FieldCommand Pi static IP','192.168.50.1'],
     ['InstyConnect modem admin','http://10.1.1.1  or  http://my.insty  (connect to InstyConnect Wi-Fi first)'],
     ['InstyConnect data plan', 'instyconnect.com  —  Multi-Network Unlimited  —  pause in portal between activations'],
     ['Starlink admin',         'http://192.168.10.1  (Starlink app or browser)'],
@@ -2655,19 +2655,19 @@ story.append(tbl(['ITEM', 'VALUE'], [
     ['Callsign K9ESV', 'McHenry County Emergency Services Volunteers and EMA'],
     ['McHenry County grid', 'EN52'],
     ['Default coordinates', '42.3153 N  /  88.4473 W  (Woodstock, IL)'],
-    ['Install log', '/var/log/fieldcomms-install.log'],
-    ['Application data', '/opt/fieldcomms/data/'],
-    ['HTML pages', '/opt/fieldcomms/html/'],
-    ['Update script', 'sudo bash /opt/fieldcomms/scripts/update.sh'],
+    ['Install log', '/var/log/fieldcommand-install.log'],
+    ['Application data', '/opt/fieldcommand/data/'],
+    ['HTML pages', '/opt/fieldcommand/html/'],
+    ['Update script', 'sudo bash /opt/fieldcommand/scripts/update.sh'],
 ], [2.0*inch, CW-2.0*inch]))
 
 # ── Build ─────────────────────────────────────────────────────────────────────
-out = '/mnt/user-data/outputs/FieldComms_Installation_Guide.pdf'
+out = '/mnt/user-data/outputs/FieldCommand_Installation_Guide.pdf'
 doc = SimpleDocTemplate(
     out, pagesize=letter,
     leftMargin=M, rightMargin=M,
     topMargin=0.55*inch, bottomMargin=0.42*inch,
-    title='FieldComms IMS v1.0 — Installation Guide',
+    title='FieldCommand IMS v1.0 — Installation Guide',
     author='McHenry County Emergency Services Volunteers and McHenry County Emergency Management Agency')
 doc.build(story, canvasmaker=NC)
 

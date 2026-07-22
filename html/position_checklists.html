@@ -1,0 +1,2238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ICS Position Checklists — FieldCommand IMS</title>
+<link rel="stylesheet" href="theme.css">
+<style>
+/* ── Layout ──────────────────────────────────────────────────── */
+.pc-layout {
+  display:grid;
+  grid-template-columns:280px 1fr;
+  height:calc(100vh - 52px);
+  overflow:hidden;
+}
+.pc-sidebar {
+  background:var(--panel);
+  border-right:1px solid var(--line);
+  overflow-y:auto;
+  padding:0;
+}
+.pc-main {
+  overflow-y:auto;
+  padding:20px 24px;
+  background:var(--bg);
+}
+
+/* ── Header ──────────────────────────────────────────────────── */
+.pc-header {
+  background:linear-gradient(135deg,#001428,#002858);
+  border-bottom:2px solid var(--eoc);
+  padding:10px 16px;
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+}
+.pc-badge {
+  background:var(--eoc);color:#fff;font-family:var(--font-hd);
+  font-size:11px;padding:3px 10px;border-radius:3px;letter-spacing:2px;
+}
+
+/* ── Sidebar ─────────────────────────────────────────────────── */
+.section-group {
+  border-bottom:1px solid var(--line);
+}
+.section-group-header {
+  padding:8px 14px;
+  font-family:var(--font-hd);font-size:10px;letter-spacing:2px;
+  text-transform:uppercase;cursor:pointer;
+  display:flex;align-items:center;justify-content:space-between;
+  user-select:none;
+}
+.section-group-header:hover { background:rgba(255,255,255,0.03); }
+.pos-btn {
+  display:block;width:100%;text-align:left;
+  padding:7px 14px 7px 22px;
+  font-size:12px;color:var(--muted);
+  background:transparent;border:none;cursor:pointer;
+  border-left:3px solid transparent;
+  transition:all 0.1s;
+}
+.pos-btn:hover { color:var(--txt);background:rgba(255,255,255,0.03); }
+.pos-btn.active {
+  color:var(--txt);font-weight:bold;
+  background:rgba(26,58,107,0.15);
+}
+.pos-abbr {
+  font-family:var(--font-hd);font-size:10px;
+  padding:1px 5px;border-radius:3px;margin-right:6px;
+  opacity:0.7;
+}
+
+/* ── Checklist cards ─────────────────────────────────────────── */
+.pos-header-card {
+  border-radius:10px;padding:18px 22px;margin-bottom:16px;
+  color:#fff;
+}
+.pos-title { font-family:var(--font-hd);font-size:22px;letter-spacing:2px; }
+.pos-subtitle { font-size:12px;opacity:0.7;margin-top:3px; }
+.reports-to {
+  margin-top:10px;font-size:12px;
+  background:rgba(0,0,0,0.2);border-radius:5px;padding:8px 12px;
+}
+
+.checklist-section {
+  background:var(--panel);border:1px solid var(--line);border-radius:8px;
+  margin-bottom:12px;overflow:hidden;
+}
+.checklist-section-header {
+  padding:10px 16px;
+  display:flex;align-items:center;gap:8px;
+  border-bottom:1px solid var(--line);
+  font-family:var(--font-hd);font-size:11px;letter-spacing:1px;
+}
+.checklist-body { padding:4px 0; }
+
+.chk-item {
+  display:flex;align-items:flex-start;gap:10px;
+  padding:7px 16px;
+  border-bottom:1px solid rgba(255,255,255,0.03);
+  cursor:pointer;
+  transition:background 0.1s;
+}
+.chk-item:last-child { border-bottom:none; }
+.chk-item:hover { background:rgba(255,255,255,0.02); }
+.chk-item.done { opacity:0.5; }
+.chk-item.done .chk-text { text-decoration:line-through; }
+.chk-box {
+  width:17px;height:17px;border:2px solid var(--line);
+  border-radius:3px;flex-shrink:0;margin-top:1px;
+  display:flex;align-items:center;justify-content:center;
+  transition:all 0.15s;font-size:11px;
+}
+.chk-item.done .chk-box {
+  background:var(--green);border-color:var(--green);color:#fff;
+}
+.chk-text { font-size:12px;line-height:1.5;color:var(--muted); }
+.chk-item.done .chk-text { color:var(--dim); }
+.chk-note {
+  font-size:10px;color:var(--dim);font-style:italic;margin-top:2px;
+}
+.chk-tag {
+  font-size:9px;padding:1px 6px;border-radius:8px;
+  margin-left:4px;flex-shrink:0;
+  font-family:var(--font-hd);letter-spacing:0.5px;
+}
+.tag-form   { background:rgba(26,58,107,0.3);color:#7eb4ea; }
+.tag-brief  { background:rgba(26,122,58,0.3);color:#6ecc8a; }
+.tag-coord  { background:rgba(200,118,10,0.3);color:#f0a040; }
+.tag-safety { background:rgba(192,32,32,0.3);color:#f07070; }
+.tag-doc    { background:rgba(100,50,150,0.3);color:#c0a0e0; }
+
+.fallback-box {
+  margin:0 16px 12px;
+  background:rgba(192,32,32,0.08);border:1px solid rgba(192,32,32,0.25);
+  border-radius:6px;padding:10px 14px;font-size:11px;color:var(--muted);line-height:1.6;
+}
+.fallback-box strong { color:var(--red); }
+
+.deliverable-item {
+  display:flex;align-items:center;gap:8px;
+  padding:6px 16px;
+  border-bottom:1px solid rgba(255,255,255,0.03);
+}
+.deliverable-item:last-child { border-bottom:none; }
+.del-form { font-family:var(--font-hd);font-size:11px;color:var(--amber);min-width:70px; }
+.del-desc { font-size:12px;color:var(--muted); }
+.del-when { font-size:10px;color:var(--dim);margin-left:auto; }
+
+/* ── Progress bar ────────────────────────────────────────────── */
+.progress-bar {
+  height:4px;background:var(--line);border-radius:2px;
+  margin:0 16px 12px;overflow:hidden;
+}
+.progress-fill {
+  height:100%;background:var(--green);border-radius:2px;
+  transition:width 0.3s;
+}
+
+/* ── Print styles ────────────────────────────────────────────── */
+@media print {
+  .pc-sidebar, .pc-header, .print-btn, #posSearch { display:none !important; }
+  .pc-layout { display:block;height:auto; }
+  .pc-main { padding:0;overflow:visible; }
+  .checklist-section { page-break-inside:avoid;border:1px solid #ccc; }
+  .pos-header-card { color:#000 !important;background:#1a3a6b !important;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact; }
+  .chk-box { border:2px solid #333 !important;background:transparent !important; }
+  .chk-item.done .chk-box { background:#1e8449 !important;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact; }
+  body { font-size:11px; }
+  .chk-text { color:#333 !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="pc-header">
+  <span class="pc-badge">ICS</span>
+  <span style="font-family:var(--font-hd);font-size:14px;letter-spacing:2px">POSITION CHECKLISTS</span>
+  <div style="font-size:11px;color:rgba(255,255,255,0.4)">
+    Job duties, deliverables, and responsibilities for every ICS position
+  </div>
+  <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+    <button onclick="window.print()" class="print-btn"
+      style="font-size:11px;padding:5px 14px;background:var(--eoc);border-color:var(--eoc);color:#fff">
+      🖨 Print This Position
+    </button>
+    <button onclick="resetAllChecks()"
+      style="font-size:11px;padding:5px 12px;background:var(--panel2)">
+      ↺ Reset Checks
+    </button>
+    <a href="index.html" style="color:rgba(255,255,255,0.4);font-size:12px">← Dashboard</a>
+  </div>
+</div>
+
+<div class="pc-layout">
+
+<!-- ── Sidebar ──────────────────────────────────────────────── -->
+<div class="pc-sidebar">
+  <div style="padding:10px 14px;border-bottom:1px solid var(--line)">
+    <input type="text" id="posSearch" placeholder="Search positions..."
+      oninput="filterPositions()"
+      style="width:100%;background:var(--input-bg);border:1px solid var(--line);
+             color:var(--txt);padding:6px 10px;border-radius:4px;font-size:12px;
+             box-sizing:border-box">
+  </div>
+  <div id="sidebarContent"></div>
+</div>
+
+<!-- ── Main content ──────────────────────────────────────────── -->
+<div class="pc-main" id="mainContent">
+  <div style="text-align:center;padding:60px 20px;color:var(--muted)">
+    <div style="font-size:48px;margin-bottom:16px">📋</div>
+    <div style="font-family:var(--font-hd);font-size:16px;letter-spacing:2px;margin-bottom:8px">
+      SELECT A POSITION
+    </div>
+    <div style="font-size:12px">
+      Choose an ICS position from the left sidebar to view its<br>
+      job duties, checklists, deliverables, and responsibilities.
+    </div>
+  </div>
+</div>
+
+</div><!-- end layout -->
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+// POSITION DATA
+// ══════════════════════════════════════════════════════════════════
+const POSITIONS = [
+
+// ── COMMAND ──────────────────────────────────────────────────────
+{
+  id:'IC', abbr:'IC', title:'Incident Commander',
+  section:'Command', color:'#c8760a',
+  reports_to:'Agency Administrator / Unified Command',
+  supervises:'All Section Chiefs, Command Staff (SO, PIO, LNO), Deputy IC',
+  description:'The Incident Commander has overall authority and responsibility for managing the incident. The IC sets objectives, approves the IAP, manages resource ordering, and is ultimately accountable for all actions taken at the incident.',
+  fallback:null,
+  activation:[
+    {text:'Receive briefing from outgoing IC or agency administrator',tag:'brief'},
+    {text:'Establish command — announce on all channels: "Command is established at [location] by [name/agency]"'},
+    {text:'Assess current situation — confirm incident type, scope, life safety threats'},
+    {text:'Confirm jurisdiction and legal authority to act'},
+    {text:'Identify immediate life safety issues and address first'},
+    {text:'Establish Incident Command Post (ICP) location'},
+    {text:'Determine if Unified Command is needed — activate if multi-jurisdiction'},
+    {text:'Identify activated and needed ICS positions — fill or assign as available'},
+    {text:'Establish communications plan — primary and alternate channels'},
+    {text:'Set initial incident objectives (to be formalized on ICS-202)'},
+    {text:'Brief initial Command Staff and Section Chiefs'},
+    {text:'Request resources needed to meet objectives',tag:'coord'},
+    {text:'Establish operational period length'},
+    {text:'Confirm Public Information plan — PIO or self?',tag:'coord'},
+  ],
+  operational:[
+    {text:'Chair Command and General Staff (C&GS) meeting each operational period',tag:'brief'},
+    {text:'Approve Incident Objectives (ICS-202) before distribution'},
+    {text:'Approve and sign Incident Action Plan (IAP)'},
+    {text:'Review and approve resource orders above threshold',tag:'coord'},
+    {text:'Receive situation briefing from Planning Section Chief'},
+    {text:'Meet with Safety Officer — review safety message',tag:'safety'},
+    {text:'Authorize media releases through PIO'},
+    {text:'Coordinate with agency administrator / executive'},
+    {text:'Monitor incident for scope change — adjust objectives if needed'},
+    {text:'Authorize demobilization when incident objectives are met'},
+    {text:'Ensure cost accountability — authorize expenditures'},
+    {text:'Maintain activity log (ICS-214)',tag:'doc'},
+  ],
+  deliverables:[
+    {form:'ICS-201',desc:'Incident Briefing — initial incident documentation',when:'First hour'},
+    {form:'ICS-202',desc:'Incident Objectives — approves and signs each period',when:'Each period'},
+    {form:'ICS-207',desc:'Organization Chart — approves org structure',when:'Each period'},
+    {form:'IAP',desc:'Incident Action Plan — final approval and signature',when:'Each period'},
+    {form:'ICS-214',desc:'Activity Log — IC personal activity record',when:'Continuous'},
+  ],
+  meetings:['Initial briefing','Command and General Staff meeting','Tactics meeting (optional)','Planning meeting','Operations briefing','All demobilization briefings'],
+  deactivation:[
+    {text:'Ensure all objectives are met or formally transferred'},
+    {text:'Conduct final briefing with agency administrator'},
+    {text:'Ensure all ICS forms are completed and submitted to Documentation Unit'},
+    {text:'Approve demobilization of all resources'},
+    {text:'Sign off on final cost summary with Finance/Admin'},
+    {text:'Conduct after-action review'},
+    {text:'Ensure all personnel performance issues are documented'},
+    {text:'Formally terminate command — announce on all channels'},
+  ],
+},
+
+{
+  id:'SO', abbr:'SO', title:'Safety Officer',
+  section:'Command', color:'#c0392b',
+  reports_to:'Incident Commander',
+  supervises:'Assistant Safety Officers (if assigned)',
+  description:'The Safety Officer monitors and assesses hazardous and unsafe situations, develops measures to ensure personnel safety, and has the authority to STOP any unsafe operation immediately. The SO is the only ICS position with authority to halt operations without IC approval.',
+  fallback:'If SO position is unfilled, the IC assumes all safety monitoring responsibilities. On any incident with significant life safety risk, SO should be filled as a priority.',
+  activation:[
+    {text:'Receive briefing from IC — confirm incident type and known hazards',tag:'brief'},
+    {text:'Conduct initial safety assessment of incident area'},
+    {text:'Identify hot zone, warm zone, and cold zone boundaries'},
+    {text:'Identify site-specific hazards — structural, chemical, terrain, traffic, weather'},
+    {text:'Establish entry/exit control points if applicable'},
+    {text:'Confirm personnel accountability system is in place'},
+    {text:'Verify all personnel have appropriate PPE for assignment'},
+    {text:'Establish emergency evacuation signal and procedures'},
+    {text:'Brief IC on initial safety assessment'},
+    {text:'Post safety hazard notices at ICP as needed'},
+  ],
+  operational:[
+    {text:'Conduct safety walkthrough of all operational areas each period',tag:'safety'},
+    {text:'Attend Tactics Meeting — review all planned operations for safety',tag:'brief'},
+    {text:'Complete ICS-215A IAP Safety Analysis before each IAP',tag:'form'},
+    {text:'Write safety message for ICS-208 Safety Message/Plan',tag:'form'},
+    {text:'Brief all incoming personnel on site safety during check-in'},
+    {text:'Monitor weather — advise IC of deteriorating conditions',tag:'safety'},
+    {text:'Investigate all accidents and near-misses — document immediately'},
+    {text:'Coordinate medical response with Medical Unit Leader'},
+    {text:'Exercise stop-work authority for any imminent danger situation',tag:'safety'},
+    {text:'Track personnel fatigue — advise IC on work/rest ratios'},
+    {text:'Ensure SDS sheets are on site for any hazardous materials'},
+    {text:'Maintain activity log (ICS-214)',tag:'doc'},
+  ],
+  deliverables:[
+    {form:'ICS-208',desc:'Safety Message/Plan — written safety message for IAP',when:'Each period'},
+    {form:'ICS-215A',desc:'IAP Safety Analysis — hazard/risk by division/group',when:'Each period'},
+    {form:'ICS-214',desc:'Activity Log',when:'Continuous'},
+  ],
+  meetings:['Command and General Staff meeting','Tactics meeting','Planning meeting','Operations briefing (presents safety message)'],
+  deactivation:[
+    {text:'Conduct final safety walkthrough of demobilization activities'},
+    {text:'Ensure all accidents/near-misses have been documented and reported'},
+    {text:'Brief outgoing SO or IC on outstanding safety issues'},
+    {text:'Complete final ICS-214 Activity Log'},
+    {text:'Submit all accident/injury reports to Documentation Unit'},
+  ],
+},
+
+{
+  id:'PIO', abbr:'PIO', title:'Public Information Officer',
+  section:'Command', color:'#8e44ad',
+  reports_to:'Incident Commander',
+  supervises:'Assistant PIOs (if assigned)',
+  description:'The PIO serves as the conduit for information to and from media, the public, and other agencies not involved in the response. All media contacts go through the PIO. The PIO coordinates with the IC before releasing any information.',
+  fallback:'If PIO is unfilled, the IC handles all media contact. This is common on Type III/IV incidents. The IC should designate a specific time and location for media briefings.',
+  activation:[
+    {text:'Receive briefing from IC on information release policy',tag:'brief'},
+    {text:'Establish Joint Information Center (JIC) if multi-agency — or designate media staging area'},
+    {text:'Identify all media representatives on scene — register and brief on ground rules'},
+    {text:'Prepare initial incident fact sheet — what is known, what is unknown'},
+    {text:'Confirm social media monitoring is in place'},
+    {text:'Identify sensitive information NOT for release — confirm with IC'},
+    {text:'Establish schedule for media briefings'},
+    {text:'Coordinate with other agency PIOs on unified messaging',tag:'coord'},
+    {text:'Draft initial press release for IC approval'},
+  ],
+  operational:[
+    {text:'Conduct scheduled media briefings — IC may attend key ones'},
+    {text:'Monitor media coverage and social media — report rumors to IC'},
+    {text:'Answer media inquiries within IC-approved parameters'},
+    {text:'Prepare and release incident status updates (approved by IC)'},
+    {text:'Coordinate VIP/elected official visits with IC and LNO'},
+    {text:'Maintain log of all media contacts and releases',tag:'doc'},
+    {text:'Brief IC on notable media coverage at each C&GS meeting'},
+    {text:'Coordinate fatality/injury notifications with agency administrator — NEVER release names without authorization'},
+    {text:'Maintain activity log (ICS-214)',tag:'doc'},
+  ],
+  deliverables:[
+    {form:'Press Releases',desc:'All public information releases — IC approved',when:'As needed'},
+    {form:'Fact Sheet',desc:'Incident fact sheet — updated each period',when:'Each period'},
+    {form:'ICS-214',desc:'Activity Log including all media contacts',when:'Continuous'},
+  ],
+  meetings:['Command and General Staff meeting','Media briefings (chairs)','Any public meetings'],
+  deactivation:[
+    {text:'Issue final incident press release — confirmation of incident close'},
+    {text:'Provide media contact list to agency PIO for follow-up inquiries'},
+    {text:'Document all information released during incident'},
+    {text:'Complete ICS-214'},
+  ],
+},
+
+{
+  id:'LNO', abbr:'LNO', title:'Liaison Officer',
+  section:'Command', color:'#16a085',
+  reports_to:'Incident Commander',
+  supervises:'Assistant Liaison Officers (if assigned)',
+  description:'The Liaison Officer is the point of contact for representatives of assisting and cooperating agencies. When multiple agencies are involved but not in Unified Command, their representatives check in with the LNO. The LNO keeps the IC informed of outside agency concerns.',
+  fallback:'If LNO is unfilled, the IC directly handles all assisting and cooperating agency coordination.',
+  activation:[
+    {text:'Receive briefing from IC on cooperating agencies and their roles',tag:'brief'},
+    {text:'Identify all assisting and cooperating agencies on scene'},
+    {text:'Establish agency representative check-in location'},
+    {text:'Contact each assisting agency rep — brief on ICS structure'},
+    {text:'Identify each agency\'s limitations (legal, geographic, resource)'},
+    {text:'Provide IC with overview of assisting agency capabilities'},
+  ],
+  operational:[
+    {text:'Maintain contact with all agency representatives each period',tag:'coord'},
+    {text:'Identify and resolve any inter-agency coordination issues'},
+    {text:'Brief IC on agency concerns and limitations at C&GS meeting'},
+    {text:'Coordinate with agency reps on resource needs and availability'},
+    {text:'Facilitate communication between IC and agency administrators'},
+    {text:'Maintain log of all inter-agency contacts',tag:'doc'},
+    {text:'Coordinate with PIO on joint information releases',tag:'coord'},
+    {text:'Maintain activity log (ICS-214)',tag:'doc'},
+  ],
+  deliverables:[
+    {form:'Agency Rep Log',desc:'Log of all assisting agency representatives and contacts',when:'Continuous'},
+    {form:'ICS-214',desc:'Activity Log',when:'Continuous'},
+  ],
+  meetings:['Command and General Staff meeting','Agency representative briefings'],
+  deactivation:[
+    {text:'Notify all agency representatives of demobilization plan'},
+    {text:'Coordinate assisting agency resource release with Logistics'},
+    {text:'Ensure all inter-agency agreements are documented'},
+    {text:'Complete ICS-214'},
+  ],
+},
+
+// ── OPERATIONS SECTION ────────────────────────────────────────────
+{
+  id:'OSC', abbr:'OSC', title:'Operations Section Chief',
+  section:'Operations', color:'#1a5276',
+  reports_to:'Incident Commander',
+  supervises:'Branch Directors, Division/Group Supervisors (direct if no Branches), Air Operations Branch Director, Staging Area Manager',
+  description:'The Operations Section Chief manages all tactical operations at the incident — everything that directly works toward achieving incident objectives. The OSC translates the IC\'s objectives into specific tactical assignments for each Division and Group, and manages all resources in the operational organization.',
+  fallback:'If OSC is unfilled, the IC directly manages all tactical operations. On any incident beyond initial attack complexity, OSC should be filled to separate tactical management from overall command.',
+  activation:[
+    {text:'Receive briefing from IC on incident objectives and current situation',tag:'brief'},
+    {text:'Confirm current resource status — what is assigned, available, en route'},
+    {text:'Assess tactical situation — identify Division and Group assignments needed'},
+    {text:'Confirm span of control — activate Branches if >7 Divisions/Groups'},
+    {text:'Brief Division and Group Supervisors on initial assignments'},
+    {text:'Establish operational communications plan with COML',tag:'coord'},
+    {text:'Confirm air operations coordination if aircraft assigned'},
+    {text:'Identify resource gaps — submit requests to Logistics',tag:'coord'},
+  ],
+  operational:[
+    {text:'Attend Tactics Meeting — develop tactical assignments for next period',tag:'brief'},
+    {text:'Complete ICS-215 Operational Planning Worksheet with PSC',tag:'form'},
+    {text:'Review ICS-204 Assignment Lists before distribution',tag:'form'},
+    {text:'Conduct Operations Briefing for all Division/Group Supervisors',tag:'brief'},
+    {text:'Monitor operational progress — adjust tactics as needed'},
+    {text:'Approve resource status changes — coordinate with RESL',tag:'coord'},
+    {text:'Review ICS-215A Safety Analysis with Safety Officer',tag:'safety'},
+    {text:'Maintain span of control — no more than 7 subordinates'},
+    {text:'Coordinate air-ground operations with AOBD',tag:'coord'},
+    {text:'Provide situation update to IC at C&GS meeting',tag:'brief'},
+    {text:'Approve resource demobilization from operational assignments'},
+    {text:'Maintain activity log (ICS-214)',tag:'doc'},
+  ],
+  deliverables:[
+    {form:'ICS-204',desc:'Assignment Lists — approves tactical assignments for all divisions',when:'Each period'},
+    {form:'ICS-215',desc:'Operational Planning Worksheet — completes at Tactics Meeting',when:'Each period'},
+    {form:'ICS-215A',desc:'IAP Safety Analysis — reviews and signs with SO',when:'Each period'},
+    {form:'ICS-214',desc:'Activity Log',when:'Continuous'},
+  ],
+  meetings:['Command and General Staff meeting','Tactics meeting (primary lead)','Operations briefing (chairs)','Planning meeting'],
+  deactivation:[
+    {text:'Confirm all tactical objectives are met or transferred'},
+    {text:'Authorize release of operational resources through Logistics'},
+    {text:'Ensure all Division/Group Supervisors have submitted ICS-214'},
+    {text:'Brief incoming OSC or IC on outstanding tactical issues'},
+    {text:'Complete final ICS-214'},
+  ],
+},
+
+{
+  id:'DIVS', abbr:'DIVS', title:'Division/Group Supervisor',
+  section:'Operations', color:'#1a5276',
+  reports_to:'Operations Section Chief (or Branch Director if Branches activated)',
+  supervises:'Strike Team Leaders, Task Force Leaders, Single Resource Bosses assigned to division/group',
+  description:'The Division Supervisor manages all tactical resources assigned to a geographic area (Division) or functional assignment (Group). They are the primary link between tactical resources on the ground and the Operations Section Chief. They implement the ICS-204 Assignment List for their area.',
+  fallback:'If a Division/Group Supervisor position is unfilled, the OSC directly supervises all resources in that area. This is common on smaller incidents where there are few enough resources to maintain span of control.',
+  activation:[
+    {text:'Receive assignment briefing from OSC — confirm Division/Group boundaries and objectives',tag:'brief'},
+    {text:'Receive ICS-204 Assignment List — review all assignments',tag:'form'},
+    {text:'Make contact with all resources assigned to your Division/Group'},
+    {text:'Confirm communications — primary and alternate channels with each resource'},
+    {text:'Conduct safety briefing with all assigned resources',tag:'safety'},
+    {text:'Assess current status of all resources — document on ICS-219',tag:'form'},
+    {text:'Identify any resource shortfalls — report to OSC'},
+    {text:'Establish check-in/check-out procedure for resources'},
+  ],
+  operational:[
+    {text:'Monitor tactical progress — report to OSC every [period] or as changed'},
+    {text:'Maintain accountability of all assigned resources at all times'},
+    {text:'Implement assignments per ICS-204 — adapt tactics within assignment'},
+    {text:'Report any significant changes to OSC immediately'},
+    {text:'Coordinate logistics needs (fuel, food, equipment) with OSC',tag:'coord'},
+    {text:'Document injuries, near-misses, and safety issues — report to SO',tag:'safety'},
+    {text:'Control access to Division/Group area'},
+    {text:'Participate in Operations Briefing each period',tag:'brief'},
+    {text:'Maintain activity log (ICS-214)',tag:'doc'},
+  ],
+  deliverables:[
+    {form:'ICS-204',desc:'Assignment List — receives and implements',when:'Each period'},
+    {form:'ICS-214',desc:'Activity Log — documents all division/group activities',when:'Continuous'},
+  ],
+  meetings:['Operations Briefing (each period)','Tactics Meeting (if requested by OSC)'],
+  deactivation:[
+    {text:'Account for all resources in Division/Group'},
+    {text:'Complete ICS-214 and submit to Documentation Unit'},
+    {text:'Brief OSC on outstanding issues in Division/Group'},
+    {text:'Coordinate resource demobilization with OSC'},
+  ],
+},
+
+{
+  id:'DIC', abbr:'DEP IC', title:'Deputy Incident Commander',
+  section:'Command', color:'#c8760a',
+  reports_to:'Incident Commander',
+  supervises:'Assigned by IC — may supervise specific functions or stand in for IC',
+  description:'The Deputy Incident Commander supports the IC and is fully qualified to assume command at any time. The Deputy typically handles a specific functional area, manages a geographic or functional portion of the incident, or serves as relief for the IC during extended operations. On Unified Command incidents, each agency IC may have a deputy. The Deputy must always be ready to assume full command immediately.',
+  fallback:'Deputy IC is an optional position — it exists when the IC needs an additional qualified manager. There is no fallback if unfilled because it is not a required position.',
+  activation:[
+    {text:'Receive briefing from IC on your specific assignment and authority limits',tag:'brief'},
+    {text:'Clarify when you are authorized to make decisions vs. when IC must be consulted'},
+    {text:'Ensure you have a complete current situational picture — same as IC'},
+    {text:'Establish communications with all Section Chiefs',tag:'coord'},
+    {text:'Confirm succession — if IC is unavailable, you assume command'},
+    {text:'Review all current objectives, resource assignments, and IAP',tag:'form'},
+  ],
+  operational:[
+    {text:'Fulfill specific assigned duties per IC direction'},
+    {text:'Maintain situational awareness equal to IC at all times'},
+    {text:'Attend all C&GS meetings with IC',tag:'brief'},
+    {text:'Stand in for IC at meetings and briefings when IC designates'},
+    {text:'Monitor incident for issues that require IC attention'},
+    {text:'Maintain activity log (ICS-214)',tag:'doc'},
+  ],
+  deliverables:[
+    {form:'ICS-214',desc:'Activity Log',when:'Continuous'},
+  ],
+  meetings:['All meetings IC attends — as directed'],
+  deactivation:[
+    {text:'Brief IC on any outstanding items from assigned duties'},
+    {text:'Complete final ICS-214'},
+  ],
+},
+
+{
+  id:'BRCH', abbr:'BRCH', title:'Branch Director',
+  section:'Operations', color:'#1a5276',
+  reports_to:'Operations Section Chief',
+  supervises:'Division/Group Supervisors (2-7) within the branch',
+  description:'The Branch Director manages a geographic or functional branch within the Operations Section when the number of Divisions and Groups exceeds the OSC\'s span of control (more than 7). Branches are the intermediate level between the OSC and Divisions/Groups. A Branch Director may manage a geographic area (Branch I = North, Branch II = South) or a functional area (Branch I = Fire Suppression, Branch II = Search). Branch Directors are activated when the OSC has more subordinates than can be effectively managed directly.',
+  fallback:'If Branch Director positions are unfilled, the OSC directly manages all Divisions and Groups. Fill Branch Directors when OSC span of control exceeds 7 subordinate supervisors.',
+  activation:[
+    {text:'Receive briefing from OSC on branch boundaries and assigned Divisions/Groups',tag:'brief'},
+    {text:'Make contact with all Division/Group Supervisors in your branch'},
+    {text:'Confirm communications — branch tactical channel if applicable'},
+    {text:'Review Division/Group assignments per ICS-204',tag:'form'},
+    {text:'Assess resource needs within branch — report gaps to OSC'},
+    {text:'Establish span of control within branch — no more than 7 Div/Group Supervisors'},
+  ],
+  operational:[
+    {text:'Monitor all Divisions/Groups within branch — status every period'},
+    {text:'Relay tactical assignments from OSC to Division/Group Supervisors'},
+    {text:'Coordinate resources between Divisions/Groups within branch'},
+    {text:'Report branch status to OSC at each C&GS or tactical meeting',tag:'brief'},
+    {text:'Approve minor tactical adjustments within branch — major changes to OSC'},
+    {text:'Attend Operations Briefing and relay to Division/Group Supervisors',tag:'brief'},
+    {text:'Maintain activity log (ICS-214)',tag:'doc'},
+  ],
+  deliverables:[
+    {form:'ICS-204',desc:'Assignment Lists — receives from OSC, distributes to Div/Group Sups',when:'Each period'},
+    {form:'ICS-214',desc:'Activity Log',when:'Continuous'},
+  ],
+  meetings:['Operations Briefing','Tactics Meeting (as directed by OSC)','C&GS meeting (if standing in for OSC)'],
+  deactivation:[
+    {text:'Account for all resources in branch'},
+    {text:'Brief OSC on outstanding issues in branch'},
+    {text:'Complete final ICS-214'},
+  ],
+},
+
+{
+  id:'STL', abbr:'STL', title:'Strike Team / Task Force Leader',
+  section:'Operations', color:'#1a5276',
+  reports_to:'Division/Group Supervisor (or OSC/Branch Director if no Div/Group assigned)',
+  supervises:'Single Resource Bosses and their resources (typically 5 resources)',
+  description:'A Strike Team is five resources of the SAME type (e.g., five Type III engines) plus a leader. A Task Force is up to five resources of DIFFERENT types combined for a specific tactical mission. The Strike Team/Task Force Leader manages this combined resource as a single tactical unit, taking assignments from and reporting to the Division Supervisor. The leader must be qualified in the resource type being supervised.',
+  fallback:'If STL is unfilled, the Division Supervisor directly manages each individual resource — this quickly creates span of control problems. Fill STL whenever 5 or more resources of similar type are assigned to a division.',
+  activation:[
+    {text:'Receive assignment from Division Supervisor — confirm assignment area and objectives',tag:'brief'},
+    {text:'Brief all Single Resource Bosses on assignment, communications, and safety',tag:'safety'},
+    {text:'Confirm strike team/task force communications — working channel',tag:'coord'},
+    {text:'Account for all assigned resources — personnel and equipment'},
+    {text:'Confirm each resource has received ICS-204 assignment',tag:'form'},
+  ],
+  operational:[
+    {text:'Implement Division assignment — direct all resources toward objective'},
+    {text:'Maintain accountability of all personnel in strike team/task force'},
+    {text:'Report status to Division Supervisor regularly'},
+    {text:'Coordinate resource needs (fuel, water, food) with Division Supervisor',tag:'coord'},
+    {text:'Document all significant activities and status changes',tag:'doc'},
+    {text:'Report injuries, safety issues immediately to Division Supervisor',tag:'safety'},
+    {text:'Maintain activity log (ICS-214)',tag:'doc'},
+  ],
+  deliverables:[
+    {form:'ICS-214',desc:'Activity Log — covers all resources in strike team/task force',when:'Continuous'},
+  ],
+  meetings:['Operations Briefing (represents entire strike team/task force)'],
+  deactivation:[
+    {text:'Account for all personnel and equipment'},
+    {text:'Brief Division Supervisor on status and any outstanding issues'},
+    {text:'Complete final ICS-214'},
+  ],
+},
+
+{
+  id:'ATGS', abbr:'ATGS', title:'Air Tactical Group Supervisor',
+  section:'Operations', color:'#2980b9',
+  reports_to:'Air Operations Branch Director (AOBD)',
+  supervises:'Fixed-wing airtankers, lead planes, reconnaissance aircraft (in the air)',
+  description:'The Air Tactical Group Supervisor is the airborne supervisor of all tactical fixed-wing aircraft. The ATGS typically flies in an observation aircraft (light fixed-wing or helicopter) above the incident and directs airtankers, lead planes, and other fixed-wing aircraft to their targets. The ATGS coordinates with ground forces to ensure aircraft drops are effective and safe. This is a highly specialized position requiring an FAA pilot certificate and NIMS qualification. The ATGS is the "traffic cop" of the incident airspace for tactical aircraft.',
+  fallback:'If ATGS is unfilled, the AOBD manages all air tactical coordination from the ground. Without an airborne ATGS, airtanker effectiveness is significantly reduced and airspace safety is harder to maintain.',
+  activation:[
+    {text:'Receive briefing from AOBD — all aircraft assigned, frequencies, missions, targets',tag:'brief'},
+    {text:'Obtain current incident situation from SITL or OSC',tag:'brief'},
+    {text:'Confirm air-to-air and air-to-ground frequencies with AOBD',tag:'coord'},
+    {text:'Brief all pilot-in-command of aircraft in your tactical group',tag:'safety'},
+    {text:'Confirm weather minimums — go/no-go criteria',tag:'safety'},
+    {text:'Establish orbit altitude and pattern with AOBD',tag:'safety'},
+    {text:'Confirm TFR boundaries if applicable',tag:'safety'},
+  ],
+  operational:[
+    {text:'Maintain airborne supervision of all tactical aircraft'},
+    {text:'Direct airtanker/helitanker drops to targets — ensure ground safety before each drop',tag:'safety'},
+    {text:'Coordinate with Division Supervisors on ground for drop targeting',tag:'coord'},
+    {text:'Enforce altitude separation between all aircraft',tag:'safety'},
+    {text:'Monitor fuel state of all aircraft — direct to reload base when needed'},
+    {text:'Report air operations status to AOBD each cycle'},
+    {text:'Call off drops if ground personnel cannot be confirmed clear',tag:'safety'},
+    {text:'Log all drops — location, time, gallons, aircraft',tag:'doc'},
+    {text:'Maintain activity log (ICS-214)',tag:'doc'},
+  ],
+  deliverables:[
+    {form:'Air Tanker Log',desc:'All drops — location, time, volume, aircraft ID',when:'Continuous'},
+    {form:'ICS-214',desc:'Activity Log',when:'Continuous'},
+  ],
+  meetings:['Air Operations briefing','Morning weather briefing'],
+  deactivation:[
+    {text:'Compile complete drop log for incident records'},
+    {text:'Brief AOBD on air operations effectiveness and any safety issues'},
+    {text:'Submit all air operations logs'},
+    {text:'Complete final ICS-214'},
+  ],
+},
+
+{
+  id:'ASGS', abbr:'ASGS', title:'Air Support Group Supervisor',
+  section:'Operations', color:'#2980b9',
+  reports_to:'Air Operations Branch Director (AOBD)',
+  supervises:'Helispot managers, fueling crews, retardant mixing crews, aircraft parking',
+  description:'The Air Support Group Supervisor manages all ground-based aviation support functions — helispots, helibases, fueling operations, retardant mixing, and aircraft parking and maintenance support. While the ATGS manages aircraft IN THE AIR, the ASGS manages everything that supports aircraft ON THE GROUND. The ASGS ensures that when an aircraft lands, it is refueled, reloaded, and back in the air as quickly as safely possible.',
+  fallback:'If ASGS is unfilled, the AOBD manages all ground aviation support directly. On incidents with multiple aircraft requiring ground support, this is unsustainable.',
+  activation:[
+    {text:'Receive briefing from AOBD — all helispots, helibases, fuel locations',tag:'brief'},
+    {text:'Inspect all helispot and helibase locations — safety, marking, hazards',tag:'safety'},
+    {text:'Confirm fuel supply and type for all aircraft assigned',tag:'safety'},
+    {text:'Establish retardant mixing if airtankers assigned'},
+    {text:'Brief all helispot managers and ground crews',tag:'brief'},
+    {text:'Confirm communications with AOBD and each helispot',tag:'coord'},
+    {text:'Establish aircraft parking/traffic pattern on ground',tag:'safety'},
+  ],
+  operational:[
+    {text:'Monitor all helispot and helibase operations'},
+    {text:'Ensure fueling operations are safe — no smoking, grounding cables',tag:'safety'},
+    {text:'Track aircraft turnaround times — report to AOBD'},
+    {text:'Coordinate with GSUL for fuel delivery to helispots',tag:'coord'},
+    {text:'Ensure ground crews are clear before aircraft land or depart',tag:'safety'},
+    {text:'Document all fueling — aircraft, quantity, time',tag:'doc'},
+    {text:'Manage any aircraft maintenance coordination'},
+    {text:'Maintain activity log (ICS-214)',tag:'doc'},
+  ],
+  deliverables:[
+    {form:'Fueling Log',desc:'All aircraft fueling — aircraft, quantity, time',when:'Continuous'},
+    {form:'ICS-220',desc:'Air Operations Summary — helispot/helibase section',when:'Each period'},
+    {form:'ICS-214',desc:'Activity Log',when:'Continuous'},
+  ],
+  meetings:['Air Operations briefing'],
+  deactivation:[
+    {text:'Account for all fuel dispensed — submit to Finance/Admin'},
+    {text:'Return helispots to landowner condition'},
+    {text:'Confirm all aircraft depart with full fuel load if returning home'},
+    {text:'Complete final ICS-214'},
+  ],
+},
+
+{
+  id:'THSP', abbr:'THSP', title:'Technical Specialist',
+  section:'Planning', color:'#1e8449',
+  reports_to:'Planning Section Chief (or Section Chief needing the specialty)',
+  supervises:'No supervisory responsibility — subject matter expert role',
+  description:'Technical Specialists are advisors with specific expertise needed for the incident — they can be assigned anywhere in the ICS structure based on where their expertise is needed. Common Technical Specialists include: Environmental/Resource Advisor (ENVR), Hazardous Materials Specialist, Structural Engineer, Meteorologist, Public Health Specialist, Animal Control Specialist, Legal Advisor, Translator/Interpreter, and many others. The NIMS framework intentionally does not prescribe the full list — the IC identifies what expertise the incident requires and brings those people in as Technical Specialists.',
+  fallback:'Technical Specialists are brought in for specific incident needs — there is no single fallback. If a needed Technical Specialist is unavailable, the Section Chief needing that expertise must work without it or seek the information through other means.',
+  activation:[
+    {text:'Receive briefing from Planning Section Chief or requesting supervisor on why you were brought in',tag:'brief'},
+    {text:'Assess the specific technical issue or question requiring your expertise'},
+    {text:'Clarify your authority — advisory only vs. decision authority in your domain'},
+    {text:'Identify information you need to provide effective advice'},
+    {text:'Brief the requesting supervisor on your initial assessment'},
+    {text:'Determine timeline for advice or deliverable needed'},
+  ],
+  operational:[
+    {text:'Provide technical advice and analysis as requested'},
+    {text:'Attend meetings where your expertise is relevant',tag:'brief'},
+    {text:'Review plans and operations for issues within your specialty',tag:'safety'},
+    {text:'Document advice and recommendations — verbal advice must be followed by written',tag:'doc'},
+    {text:'Coordinate with other Technical Specialists if needed',tag:'coord'},
+    {text:'Brief PSC or appropriate Section Chief on technical findings',tag:'brief'},
+    {text:'Maintain activity log (ICS-214)',tag:'doc'},
+  ],
+  deliverables:[
+    {form:'Technical Report/Memo',desc:'Written documentation of findings and recommendations',when:'As needed'},
+    {form:'ICS-214',desc:'Activity Log',when:'Continuous'},
+  ],
+  meetings:['Meetings where technical expertise is relevant — as directed by PSC'],
+  deactivation:[
+    {text:'Ensure all technical recommendations are in writing and submitted to DOCL'},
+    {text:'Brief PSC on any outstanding technical issues'},
+    {text:'Complete final ICS-214'},
+  ],
+},
+
+{
+  id:'STAM', abbr:'STAM', title:'Staging Area Manager',
+  section:'Operations', color:'#1a5276',
+  reports_to:'Operations Section Chief',
+  supervises:'All resources in staging area',
+  description:'The Staging Area Manager maintains the staging area where uncommitted resources await tactical assignment. The STAM tracks available resources, ensures they are ready for immediate deployment, and coordinates with the OSC for resource deployment.',
+  fallback:'If STAM is unfilled, the OSC directly manages the staging area. Resources report directly to OSC on arrival.',
+  activation:[
+    {text:'Identify staging area location — confirm with OSC',tag:'coord'},
+    {text:'Establish check-in procedure for incoming resources'},
+    {text:'Set up resource tracking system (T-cards or ICS-219)',tag:'form'},
+    {text:'Confirm utilities at staging — fuel, food, sanitation if extended'},
+    {text:'Establish communications with OSC'},
+    {text:'Brief arriving resources on staging procedures'},
+  ],
+  operational:[
+    {text:'Maintain accurate count of all resources in staging'},
+    {text:'Report resource availability to OSC at each period or on request'},
+    {text:'Coordinate resource deployment — release to Division/Group on OSC order'},
+    {text:'Ensure resources in staging maintain readiness for immediate deployment'},
+    {text:'Coordinate with Logistics for resource needs in staging',tag:'coord'},
+    {text:'Track resource check-in and check-out times',tag:'doc'},
+    {text:'Maintain activity log (ICS-214)',tag:'doc'},
+  ],
+  deliverables:[
+    {form:'ICS-219',desc:'Resource Status Cards — staging area status board',when:'Continuous'},
+    {form:'ICS-214',desc:'Activity Log',when:'Continuous'},
+  ],
+  meetings:['Operations Briefing'],
+  deactivation:[
+    {text:'Account for all resources that passed through staging'},
+    {text:'Coordinate remaining resource demobilization with OSC and Logistics'},
+    {text:'Submit ICS-214 to Documentation Unit'},
+  ],
+},
+
+// ── PLANNING SECTION ──────────────────────────────────────────────
+{
+  id:'PSC', abbr:'PSC', title:'Planning Section Chief',
+  section:'Planning', color:'#1e8449',
+  reports_to:'Incident Commander',
+  supervises:'Resources Unit Leader (RESL), Situation Unit Leader (SITL), Documentation Unit Leader (DOCL), Demobilization Unit Leader (DMOB), Technical Specialists',
+  description:'The Planning Section Chief collects, evaluates, and disseminates information about the incident and status of resources. The PSC manages the planning process — most importantly, driving the Planning-P and producing the Incident Action Plan (IAP) on time every operational period.',
+  fallback:'If PSC is unfilled, the IC manages all planning functions. In practice this means: the IC writes the ICS-202, the RESL and SITL report directly to the IC, and the IAP may be simplified. All planning unit leader positions also roll up to the IC.',
+  activation:[
+    {text:'Receive briefing from IC on incident status, objectives, and planning timeline',tag:'brief'},
+    {text:'Establish Planning Section workspace at ICP'},
+    {text:'Confirm Planning-P timeline — when is each meeting, when is IAP due'},
+    {text:'Activate and brief unit leaders: RESL, SITL, DOCL, DMOB as needed'},
+    {text:'Obtain initial resource status from RESL'},
+    {text:'Obtain initial situation status from SITL'},
+    {text:'Begin situation map if not already established'},
+      {text:'Confirm weather forecast — obtain from NWS or FBAN',tag:'coord'},
+    {text:'Identify information gaps — task SITL to fill'},
+  ],
+  operational:[
+    {text:'Drive the Planning-P — ensure each meeting happens on schedule',tag:'brief'},
+    {text:'Chair Planning Meeting — lead development of next period IAP',tag:'brief'},
+    {text:'Facilitate Tactics Meeting with OSC',tag:'brief'},
+    {text:'Draft ICS-202 Incident Objectives for IC approval',tag:'form'},
+    {text:'Compile and assemble IAP — all required forms in correct order',tag:'form'},
+    {text:'Distribute approved IAP to all personnel before Operations Briefing'},
+    {text:'Update situation map each operational period'},
+    {text:'Brief IC on situation, resource status, and planning at C&GS meeting',tag:'brief'},
+    {text:'Identify resource surpluses — initiate demobilization planning'},
+    {text:'Coordinate Technical Specialists as needed',tag:'coord'},
+    {text:'Maintain activity log (ICS-214)',tag:'doc'},
+  ],
+  deliverables:[
+    {form:'ICS-202',desc:'Incident Objectives — drafts for IC approval',when:'Each period'},
+    {form:'ICS-203',desc:'Organization Assignment List — compiled from RESL data',when:'Each period'},
+    {form:'IAP',desc:'Incident Action Plan — assembles and distributes complete package',when:'Each period'},
+    {form:'Situation Map',desc:'Updated incident map for IAP and briefings',when:'Each period'},
+    {form:'ICS-214',desc:'Activity Log',when:'Continuous'},
+  ],
+  meetings:['Command and General Staff meeting','Tactics meeting (co-facilitates with OSC)','Planning meeting (chairs)','All operational briefings'],
+  deactivation:[
+    {text:'Ensure complete IAP is on file for all operational periods'},
+    {text:'Initiate and manage demobilization planning with DMOB'},
+    {text:'Ensure all incident documentation is collected by DOCL'},
+    {text:'Brief IC on planning status and outstanding items'},
+    {text:'Complete final ICS-214'},
+  ],
+},
+
+{
+  id:'RESL', abbr:'RESL', title:'Resources Unit Leader',
+  section:'Planning', color:'#1e8449',
+  reports_to:'Planning Section Chief',
+  supervises:'Check-in Recorders, T-Card Technicians',
+  description:'The RESL maintains the status of all resources assigned to the incident — who is here, where they are, and what status they are in. The RESL is the single source of truth for resource accountability. The T-card board (ICS-219) is the RESL\'s primary tool. The RESL also compiles the ICS-203 Organization Assignment List.',
+  fallback:'If RESL is unfilled, the PSC maintains resource status. On small incidents the IC may maintain a simple resource list. Without a RESL, resource accountability degrades significantly — fill this position early on any incident with more than 10 resources.',
+  activation:[
+    {text:'Establish RESL work area at ICP — typically adjacent to situation map'},
+    {text:'Set up T-card board (ICS-219) — organize by resource type and status',tag:'form'},
+    {text:'Obtain resource status from outgoing RESL, Operations, or IC'},
+    {text:'Confirm check-in location — coordinate with check-in recorder'},
+    {text:'Brief check-in recorders on procedures'},
+    {text:'Contact all Divisions/Groups to verify resource location and status'},
+    {text:'Post T-card board in Planning Section — visible to PSC and OSC'},
+  ],
+  operational:[
+    {text:'Update T-card board continuously as resources change status',tag:'form'},
+    {text:'Process all resource status changes (ICS-210)',tag:'form'},
+    {text:'Track all resources from check-in to check-out'},
+    {text:'Compile ICS-203 Organization Assignment List for each IAP',tag:'form'},
+    {text:'Brief PSC on resource status at each planning cycle'},
+    {text:'Provide resource availability report to OSC for Tactics Meeting',tag:'brief'},
+    {text:'Track incoming resources — ETAs, order numbers, originating agencies'},
+    {text:'Identify duplicate resources and coordinate with Logistics to return excess'},
+    {text:'Coordinate check-in of all personnel with ICS-211',tag:'form'},
+    {text:'Maintain activity log (ICS-214)',tag:'doc'},
+  ],
+  deliverables:[
+    {form:'ICS-203',desc:'Organization Assignment List — resource assignments for IAP',when:'Each period'},
+    {form:'ICS-210',desc:'Resource Status Change — documents all status changes',when:'Continuous'},
+    {form:'ICS-211',desc:'Incident Check-In List — all personnel accounted for',when:'Continuous'},
+    {form:'ICS-219',desc:'Resource Status Cards (T-card board) — live resource status',when:'Continuous'},
+    {form:'ICS-214',desc:'Activity Log',when:'Continuous'},
+  ],
+  meetings:['Planning meeting','Tactics meeting (provides resource status)'],
+  deactivation:[
+    {text:'Account for ALL resources — no resource leaves without sign-out'},
+    {text:'Compile final resource summary for incident records'},
+    {text:'Submit all check-in/check-out records to DOCL'},
+    {text:'Complete final ICS-214'},
+  ],
+},
+
+{
+  id:'SITL', abbr:'SITL', title:'Situation Unit Leader',
+  section:'Planning', color:'#1e8449',
+  reports_to:'Planning Section Chief',
+  supervises:'Field Observers, Display Processor, Weather Observer',
+  description:'The SITL collects, processes, organizes, and displays information about the incident situation — what\'s happening, where, and how it\'s developing. The SITL maintains the situation map, compiles the ICS-209 Incident Status Summary, and is responsible for ensuring the PSC has accurate, timely situational awareness.',
+  fallback:'If SITL is unfilled, the PSC collects and maintains situation information. On small incidents the IC may serve this function. Without a SITL on a complex incident, the planning process loses its situational awareness foundation.',
+  activation:[
+    {text:'Establish situation display at ICP — map board or digital display'},
+    {text:'Receive initial incident information from IC or incoming SITL',tag:'brief'},
+    {text:'Plot known incident boundaries, hazards, and key features on map'},
+    {text:'Obtain initial weather forecast — NWS, FBAN, or weather observer'},
+    {text:'Identify information gaps — task field observers if available'},
+    {text:'Establish situation reporting schedule from Divisions/Groups'},
+  ],
+  operational:[
+    {text:'Update situation map continuously with new information'},
+    {text:'Compile situation report for each Planning Meeting',tag:'brief'},
+    {text:'Complete ICS-209 Incident Status Summary for each IAP period',tag:'form'},
+    {text:'Obtain weather forecast and plot on situation display'},
+    {text:'Receive and plot field observer reports'},
+    {text:'Track key milestones — containment percentages, structures threatened/saved, etc.'},
+    {text:'Maintain display of current incident statistics (injuries, evacuations, costs)'},
+    {text:'Brief PSC on situation at each planning cycle',tag:'brief'},
+    {text:'Coordinate aerial reconnaissance for situation updates if aircraft available',tag:'coord'},
+    {text:'Maintain activity log (ICS-214)',tag:'doc'},
+  ],
+  deliverables:[
+    {form:'ICS-209',desc:'Incident Status Summary — situation snapshot for each period',when:'Each period'},
+    {form:'Situation Map',desc:'Updated incident map — primary visual display',when:'Continuous'},
+    {form:'ICS-214',desc:'Activity Log',when:'Continuous'},
+  ],
+  meetings:['Planning meeting (presents situation)','Command and General Staff meeting (if requested)'],
+  deactivation:[
+    {text:'Compile final incident situation summary'},
+    {text:'Preserve all situation maps and display records for documentation'},
+    {text:'Submit all situation records to DOCL'},
+    {text:'Complete final ICS-214'},
+  ],
+},
+
+{
+  id:'DOCL', abbr:'DOCL', title:'Documentation Unit Leader',
+  section:'Planning', color:'#1e8449',
+  reports_to:'Planning Section Chief',
+  supervises:'Documentation staff (if assigned)',
+  description:'The DOCL maintains accurate and complete incident files — every form, every IAP, every message, every decision. The incident record is the legal and historical record of the event. The DOCL ensures nothing is lost and everything is organized. At incident close, the DOCL compiles the final incident package.',
+  fallback:'If DOCL is unfilled, the PSC maintains documentation. This is high-risk on complex incidents where the volume of forms can overwhelm the PSC. At minimum, designate someone to collect ICS forms even if they have no other documentation training.',
+  activation:[
+    {text:'Establish documentation work area — secure storage for all records'},
+    {text:'Set up filing system by form type and operational period'},
+    {text:'Collect and file all forms already generated'},
+    {text:'Establish form distribution system — how do completed forms reach DOCL'},
+    {text:'Brief all Section Chiefs on documentation requirements',tag:'brief'},
+    {text:'Ensure ICS-214 Activity Logs are distributed to all supervisors',tag:'form'},
+  ],
+  operational:[
+    {text:'Collect completed ICS forms from all sections each period',tag:'doc'},
+    {text:'File all IAPs — one complete copy of every operational period'},
+    {text:'Log all incoming and outgoing messages'},
+    {text:'Provide blank forms to personnel as needed'},
+    {text:'Maintain master incident log — chronological record of key events'},
+    {text:'Collect ICS-214 Activity Logs from all supervisors at period end'},
+    {text:'Protect sensitive documents — accident reports, personnel records'},
+    {text:'Provide copies of historical forms as requested',tag:'coord'},
+    {text:'Maintain activity log (ICS-214)',tag:'doc'},
+  ],
+  deliverables:[
+    {form:'Complete Incident File',desc:'All forms, IAPs, messages, and records organized by period',when:'Continuous'},
+    {form:'Master Incident Log',desc:'Chronological record of key events and decisions',when:'Continuous'},
+    {form:'ICS-214',desc:'Activity Log',when:'Continuous'},
+  ],
+  meetings:['Planning meeting'],
+  deactivation:[
+    {text:'Collect ALL ICS-214 Activity Logs from every supervisor'},
+    {text:'Compile complete incident file — all periods, all forms'},
+    {text:'Organize and deliver incident package to agency records per policy'},
+    {text:'Ensure no sensitive personnel documents (ICS-225) are in general file without authorization'},
+    {text:'Complete final ICS-214'},
+  ],
+},
+
+{
+  id:'DMOB', abbr:'DMOB', title:'Demobilization Unit Leader',
+  section:'Planning', color:'#1e8449',
+  reports_to:'Planning Section Chief',
+  supervises:'Demobilization staff (if assigned)',
+  description:'The DMOB develops and coordinates execution of the Demobilization Plan — the systematic, safe, and orderly release of incident resources as the incident winds down. The DMOB ensures resources are released in priority order, travel plans are arranged, and all checkout procedures are completed.',
+  fallback:'If DMOB is unfilled, the PSC manages demobilization. On small incidents the IC handles demobilization directly. Fill DMOB when the incident has more resources than can be informally released.',
+  activation:[
+    {text:'Receive briefing from PSC on incident status and anticipated demobilization timeline',tag:'brief'},
+    {text:'Obtain complete resource list from RESL'},
+    {text:'Identify resources eligible for early release (excess to current needs)'},
+    {text:'Begin Demobilization Plan development'},
+    {text:'Coordinate with Finance/Admin on reimbursable resource documentation',tag:'coord'},
+  ],
+  operational:[
+    {text:'Update Demobilization Plan each period',tag:'form'},
+    {text:'Coordinate demobilization priority with OSC and IC',tag:'coord'},
+    {text:'Process ICS-221 Demobilization Check-Out forms for releasing resources',tag:'form'},
+    {text:'Coordinate travel arrangements with Logistics',tag:'coord'},
+    {text:'Ensure each releasing resource completes all section check-outs'},
+    {text:'Brief releasing resources on travel plan and safe driving guidelines'},
+    {text:'Maintain activity log (ICS-214)',tag:'doc'},
+  ],
+  deliverables:[
+    {form:'Demob Plan',desc:'Incident Demobilization Plan — resource release schedule',when:'When demob begins'},
+    {form:'ICS-221',desc:'Demobilization Check-Out — completed for each releasing resource',when:'Per resource'},
+    {form:'ICS-214',desc:'Activity Log',when:'Continuous'},
+  ],
+  meetings:['Planning meeting','Demobilization briefings (chairs)'],
+  deactivation:[
+    {text:'Confirm all resources have completed check-out procedures'},
+    {text:'Submit all ICS-221 check-out forms to DOCL'},
+    {text:'Confirm with Finance/Admin all time records are captured for released resources'},
+    {text:'Complete final ICS-214'},
+  ],
+},
+
+// ── LOGISTICS SECTION ─────────────────────────────────────────────
+{
+  id:'LSC', abbr:'LSC', title:'Logistics Section Chief',
+  section:'Logistics', color:'#9b59b6',
+  reports_to:'Incident Commander',
+  supervises:'Service Branch Director, Support Branch Director (or directly: COML, MEDL, FDUL, SPUL, FACL, GSUL)',
+  description:'The Logistics Section Chief provides all support needs for the incident — communications, medical support for incident personnel, food and water, facilities, ground transportation, fueling, and supplies. While Operations fights the incident, Logistics keeps Operations running.',
+  fallback:'If LSC is unfilled, the IC directly manages all logistics functions. Each unit leader position (COML, MEDL, FDUL, SPUL, FACL, GSUL) reports directly to the IC. On incidents beyond initial attack, LSC should be filled to manage the complexity of sustained logistics.',
+  activation:[
+    {text:'Receive briefing from IC on incident scope and logistical needs',tag:'brief'},
+    {text:'Assess current logistical status — what is in place, what is needed'},
+    {text:'Activate and brief unit leaders as needed: COML, MEDL, FDUL, SPUL, FACL, GSUL'},
+    {text:'Confirm Incident Command Post location and facilities'},
+    {text:'Establish communications plan with COML',tag:'coord'},
+    {text:'Confirm medical plan with MEDL',tag:'safety'},
+    {text:'Identify critical resource shortfalls — communicate to IC'},
+    {text:'Establish ordering process — confirm ordering authority and cost coding'},
+  ],
+  operational:[
+    {text:'Attend Command and General Staff meeting — brief IC on logistics status',tag:'brief'},
+    {text:'Attend Planning meeting — identify logistics needs for next period',tag:'brief'},
+    {text:'Review and process resource orders from Operations',tag:'coord'},
+    {text:'Monitor ICP facilities — maintain standards for personnel'},
+    {text:'Ensure continuous communications capability',tag:'coord'},
+    {text:'Confirm medical plan is current and adequate',tag:'safety'},
+    {text:'Monitor food and water supply — never let field personnel run out'},
+    {text:'Coordinate transportation with GSUL',tag:'coord'},
+    {text:'Maintain activity log (ICS-214)',tag:'doc'},
+  ],
+  deliverables:[
+    {form:'ICS-205',desc:'Radio Communications Plan — approves comms plan',when:'Each period'},
+    {form:'ICS-206',desc:'Medical Plan — approves medical support plan',when:'Each period'},
+    {form:'ICS-214',desc:'Activity Log',when:'Continuous'},
+  ],
+  meetings:['Command and General Staff meeting','Planning meeting','Operations Briefing'],
+  deactivation:[
+    {text:'Confirm all ordered resources have arrived or orders are cancelled'},
+    {text:'Coordinate demobilization of logistics resources with DMOB'},
+    {text:'Ensure all expenditures are documented for Finance/Admin'},
+    {text:'Confirm ICP and all facilities are properly demobilized'},
+    {text:'Complete final ICS-214'},
+  ],
+},
+
+{
+  id:'COML', abbr:'COML', title:'Communications Unit Leader',
+  section:'Logistics', color:'#9b59b6',
+  reports_to:'Logistics Section Chief (Service Branch Director if activated)',
+  supervises:'Incident Dispatch, Communications Technicians',
+  description:'The COML develops the incident communications plan, manages all communications equipment, and ensures all personnel can communicate effectively. The COML produces the ICS-205 Radio Communications Plan that goes in every IAP. Every radio channel assignment for every Division and Group starts here.',
+  fallback:'If COML is unfilled, the LSC manages communications. The ICS-205 must still be produced — LSC or PSC takes responsibility. Without a COML, radio channel conflicts, dead zones, and communications failures are much more likely.',
+  activation:[
+    {text:'Inventory all available communications equipment'},
+    {text:'Assess incident communications needs — how many channels needed, for what functions'},
+    {text:'Complete ICS-216 Radio Requirements Worksheet',tag:'form'},
+    {text:'Complete ICS-217A Communication Resources Available Worksheet',tag:'form'},
+    {text:'Develop ICS-205 Radio Communications Plan',tag:'form'},
+    {text:'Coordinate with repeater owners if repeaters are being used',tag:'coord'},
+    {text:'Program and test all radios before issuing'},
+    {text:'Establish dispatch/communications center if needed'},
+    {text:'Brief all supervisors on communications plan'},
+  ],
+  operational:[
+    {text:'Update ICS-205 each operational period — submit for IAP',tag:'form'},
+    {text:'Monitor all radio channels for problems'},
+    {text:'Repair or replace failed communications equipment'},
+    {text:'Issue radios to incoming personnel — track all issued equipment'},
+    {text:'Test repeaters and backup communications each period',tag:'safety'},
+    {text:'Identify and resolve communications dead zones',tag:'safety'},
+    {text:'Maintain communications log',tag:'doc'},
+    {text:'Ensure emergency channel is monitored at all times',tag:'safety'},
+    {text:'Maintain activity log (ICS-214)',tag:'doc'},
+  ],
+  deliverables:[
+    {form:'ICS-205',desc:'Radio Communications Plan — channel assignments for all divisions',when:'Each period'},
+    {form:'ICS-205A',desc:'Communications List — personnel contact information',when:'Each period'},
+    {form:'ICS-216',desc:'Radio Requirements Worksheet — planning tool',when:'As needed'},
+    {form:'ICS-217A',desc:'Communication Resources Available — resource inventory',when:'Activation'},
+    {form:'ICS-214',desc:'Activity Log',when:'Continuous'},
+  ],
+  meetings:['Planning meeting (ICS-205 input)','Operations Briefing'],
+  deactivation:[
+    {text:'Collect all issued radios — account for every unit'},
+    {text:'Reprogram radios to base configuration if required'},
+    {text:'Document any lost/damaged equipment'},
+    {text:'Submit communications logs to DOCL'},
+    {text:'Complete final ICS-214'},
+  ],
+},
+
+{
+  id:'COMT', abbr:'COMT', title:'Communications Unit Technician',
+  section:'Logistics', color:'#9b59b6',
+  reports_to:'Communications Unit Leader (COML)',
+  supervises:'No supervisory responsibility — technical specialist role',
+  description:'The COMT provides technical communications support under the direction of the COML. The COMT installs, tests, repairs, and maintains all radio and communications equipment at the incident. While the COML manages the communications PLAN, the COMT makes the equipment work. On complex incidents with significant radio infrastructure, the COMT is essential — without one, every equipment failure falls on the COML to diagnose and fix.',
+  fallback:'If COMT is unfilled, the COML performs all technical equipment functions in addition to planning duties. On incidents with significant radio infrastructure (repeaters, mobile comm units, satellite links), this is a serious workload burden. Fill COMT whenever radio infrastructure is complex.',
+  activation:[
+    {text:'Report to COML — receive technical briefing on all communications equipment in use',tag:'brief'},
+    {text:'Inventory all radio equipment — portables, mobiles, base stations, repeaters'},
+    {text:'Test all radios on all incident frequencies — document any that fail'},
+    {text:'Program radios per ICS-205 channel plan — verify every radio before issue',tag:'form'},
+    {text:'Install and test any repeater equipment — verify coverage area'},
+    {text:'Establish mobile comm unit (if assigned) — confirm all systems operational'},
+    {text:'Test satellite link if equipped — confirm voice and data connectivity'},
+    {text:'Set up radio charging stations — ensure adequate power'},
+    {text:'Brief COML on technical status of all equipment'},
+    {text:'Identify any equipment requiring repair or replacement'},
+  ],
+  operational:[
+    {text:'Reprogram radios as channel plan changes each period',tag:'form'},
+    {text:'Respond to equipment failures — diagnose and repair or replace'},
+    {text:'Monitor repeater operation — check regularly for failure or interference'},
+    {text:'Manage radio charging rotation — ensure charged spares always available'},
+    {text:'Test backup communications each period',tag:'safety'},
+    {text:'Maintain equipment inventory — track all issued radios by serial number'},
+    {text:'Coordinate with COML on any frequency coordination issues',tag:'coord'},
+    {text:'Support installation of any additional communications infrastructure'},
+    {text:'Monitor satellite link performance — report degradation to COML'},
+    {text:'Maintain technical log of all repairs and equipment issues',tag:'doc'},
+    {text:'Maintain activity log (ICS-214)',tag:'doc'},
+  ],
+  deliverables:[
+    {form:'Equipment Inventory',desc:'All communications equipment — serial numbers, status, assigned to whom',when:'Activation and continuous'},
+    {form:'Technical Log',desc:'All equipment issues, repairs, and resolutions',when:'Continuous'},
+    {form:'ICS-214',desc:'Activity Log',when:'Continuous'},
+  ],
+  meetings:['Communications unit meetings as directed by COML'],
+  deactivation:[
+    {text:'Collect ALL issued radios — verify every serial number is returned'},
+    {text:'Document any damaged, lost, or malfunctioning equipment'},
+    {text:'Disassemble and properly package repeater equipment'},
+    {text:'Reprogram radios to home agency configuration if required'},
+    {text:'Remove incident programming from all radios before return'},
+    {text:'Submit equipment inventory and damage report to COML'},
+    {text:'Complete final ICS-214'},
+  ],
+},
+
+{
+  id:'INCM', abbr:'INCM', title:'Incident Communications Manager',
+  section:'Logistics', color:'#9b59b6',
+  reports_to:'Communications Unit Leader (COML)',
+  supervises:'Incident Dispatchers, Radio Operators',
+  description:'The Incident Communications Manager (INCM) supervises the Incident Communications Center (INCCC) — the dispatch hub for the incident. The INCM manages all radio traffic routing, ensures messages are relayed accurately, and maintains the communications log. On large incidents, the INCCC operates 24/7 and the INCM manages the dispatch staff who monitor all radio channels simultaneously. This position is distinct from the COML (who plans the system) and the COMT (who maintains the hardware) — the INCM runs the operational center.',
+  fallback:'If INCM is unfilled, the COML manages the communications center directly, or radio traffic is self-managed by field personnel. Self-managed radio traffic without an INCCC is common on Type III/IV incidents. Fill INCM when the volume of radio traffic exceeds what field personnel can manage without a dispatch function.',
+  activation:[
+    {text:'Report to COML — receive briefing on communications plan and incident radio channels',tag:'brief'},
+    {text:'Establish Incident Communications Center (INCCC) workspace'},
+    {text:'Set up monitoring capability for all incident radio channels'},
+    {text:'Review ICS-205 Radio Communications Plan — know every channel and its purpose',tag:'form'},
+    {text:'Brief dispatch staff on incident channels, call signs, and procedures'},
+    {text:'Establish message log — every significant radio message is documented'},
+    {text:'Confirm emergency channel monitoring — must be continuous',tag:'safety'},
+    {text:'Coordinate with field supervisors on check-in procedures'},
+  ],
+  operational:[
+    {text:'Supervise INCCC operations — 24/7 coverage on extended incidents'},
+    {text:'Monitor all incident radio channels continuously'},
+    {text:'Relay messages between channels and field units as needed'},
+    {text:'Log all significant radio traffic — time, from, to, content',tag:'doc'},
+    {text:'Manage any incoming mutual aid or agency radio traffic'},
+    {text:'Coordinate with COML on channel loading — recommend adjustments if overloaded',tag:'coord'},
+    {text:'Ensure emergency traffic always gets priority on all channels',tag:'safety'},
+    {text:'Brief COML on communications traffic status each period'},
+    {text:'Manage dispatcher shift changes — full briefing on status',tag:'brief'},
+    {text:'Maintain activity log (ICS-214)',tag:'doc'},
+  ],
+  deliverables:[
+    {form:'Communications Log',desc:'All significant radio traffic logged with time stamps',when:'Continuous'},
+    {form:'ICS-214',desc:'Activity Log',when:'Continuous'},
+  ],
+  meetings:['Communications unit meetings','Operations Briefing (if representing INCCC)'],
+  deactivation:[
+    {text:'Compile complete communications log for incident records'},
+    {text:'Brief COML on any unresolved communications issues'},
+    {text:'Submit all logs to DOCL'},
+    {text:'Complete final ICS-214'},
+  ],
+},
+
+{
+  id:'ITSL', abbr:'ITSL', title:'Information Technology Service Unit Leader',
+  section:'Logistics', color:'#2980b9',
+  reports_to:'ICT Branch Director (if activated), or Communications Unit Leader (COML), or Logistics Section Chief',
+  supervises:'Incident Technology Support Specialist (ITSS), Unified Help Desk Manager (HELP)',
+  description:'The Information Technology Service Unit Leader (ITSL) is a FEMA NIMS position within the ICT Branch of the Logistics Section. The ITSL plans and manages the technical and operational aspects of meeting the data and application needs of the incident — local area networks, internet connectivity, servers, computers, software systems (including FieldCommand IMS), and the Unified Help Desk. The ITSL develops the Incident IT Plan, supervises IT unit personnel (ITSS, HELP), coordinates with all responding agency IT departments, and ensures incident management systems remain operational. This position was formally added to NIMS in 2018-2019 by CISA/SAFECOM in recognition that modern incidents depend critically on data systems, and that the volume of IT support needed exceeds what the COML can manage alone.',
+  fallback:'If ITSL is unfilled, IT functions fall to the COML who already manages radio/comms. On complex incidents this creates an unmanageable span of control for the COML. At minimum, designate an ITSS to handle technical support even without a formal ITSL. On any incident using FieldCommand IMS, GIS, video conferencing, or shared data systems beyond a local radio network, ITSL should be filled.',
+  activation:[
+    {text:'Report to LSC and COML — receive briefing on incident technology needs',tag:'brief'},
+    {text:'Report to COML or ICT Branch Director — receive briefing on incident data and IT needs',tag:'brief'},
+    {text:'Assess IT infrastructure requirements — determine what data systems are needed and where'},
+    {text:'Develop Incident IT Plan — document network architecture, applications, security posture',tag:'form'},
+    {text:'Establish network connectivity — wired LAN at ICP, Wi-Fi for authorized personnel'},
+    {text:'Verify FieldCommand IMS server is online and accessible (192.168.50.1)',tag:'safety'},
+    {text:'Confirm all workstations can reach FieldCommand IMS dashboard'},
+    {text:'Verify WAN connectivity — cellular, satellite, or landline'},
+    {text:'Set up printer(s) for IAP and form printing at ICP'},
+    {text:'Establish network security — change default credentials, firewall active'},
+    {text:'Configure Wi-Fi access — EMCOMM-NET SSID accessible to authorized personnel'},
+    {text:'Test all systems before operational period begins',tag:'safety'},
+    {text:'Document network topology — IP addresses, device locations'},
+    {text:'Brief Section Chiefs on available technology resources',tag:'brief'},
+    {text:'Ensure backup power for all IT equipment — UPS or generator connection'},
+  ],
+  operational:[
+    {text:'Monitor FieldCommand IMS server health each period'},
+    {text:'Monitor network connectivity — WAN, LAN, Wi-Fi'},
+    {text:'Respond to IT failures immediately — prioritize Planning and Operations',tag:'safety'},
+    {text:'Manage user access — add accounts for incoming personnel as needed'},
+    {text:'Ensure IAP can be printed on schedule — printer must be operational',tag:'safety'},
+    {text:'Backup FieldCommand IMS database each operational period',tag:'doc'},
+    {text:'Monitor disk space on servers — prevent storage issues'},
+    {text:'Coordinate with COML on any network/communications overlap',tag:'coord'},
+    {text:'Support GIS/mapping functions if digital maps are in use'},
+    {text:'Manage video conferencing for any remote coordination calls'},
+    {text:'Monitor cybersecurity — no unauthorized devices on incident network',tag:'safety'},
+    {text:'Maintain IT equipment inventory and issue log'},
+    {text:'Maintain activity log (ICS-214)',tag:'doc'},
+  ],
+  deliverables:[
+    {form:'Incident IT Plan',desc:'Data network architecture, applications, security posture, resource list',when:'Activation — each period if updated'},
+    {form:'Network Diagram',desc:'IP addresses, device locations, connectivity topology',when:'Activation'},
+    {form:'IT Equipment Inventory',desc:'All computers, printers, network devices issued',when:'Activation and continuous'},
+    {form:'Daily Backup Confirmation',desc:'FieldCommand IMS database backup confirmed each period',when:'Each period'},
+    {form:'ICS-214',desc:'Activity Log',when:'Continuous'},
+  ],
+  meetings:['Logistics section meetings','Planning meeting (technology support for IAP production)'],
+  deactivation:[
+    {text:'Perform final backup of all incident data — FieldCommand IMS database'},
+    {text:'Export incident records per agency data retention policy'},
+    {text:'Collect all IT equipment — inventory every device before departure'},
+    {text:'Remove incident Wi-Fi credentials and network configuration'},
+    {text:'Reset any shared passwords changed during incident'},
+    {text:'Wipe any temporary accounts created for incident personnel'},
+    {text:'Document any IT issues or lessons learned for after-action'},
+    {text:'Complete final ICS-214'},
+  ],
+},
+
+{
+  id:'ITSS', abbr:'ITSS', title:'Incident Technology Support Specialist',
+  section:'Logistics', color:'#2980b9',
+  reports_to:'Information Technology Service Unit Leader (ITSL)',
+  supervises:'No supervisory responsibility — technical specialist',
+  description:'The Incident Technology Support Specialist (ITSS) is the hands-on technical worker of the IT Service Unit. While the ITSL manages and plans the IT operation, the ITSS installs, configures, and maintains the actual network equipment, computers, servers, and software. The ITSS responds to work tickets from the Unified Help Desk, establishes and maintains incident data networks, identifies and mitigates cybersecurity threats, and performs daily IT support functions for all incident personnel. This is the person who physically runs cable, configures routers, installs FieldCommand IMS, and fixes things when they break.',
+  fallback:'If ITSS is unfilled, the ITSL performs all technical hands-on functions. On incidents with significant IT infrastructure this is unsustainable. Fill ITSS whenever the incident has more than basic laptop connectivity needs.',
+  activation:[
+    {text:'Report to ITSL — receive briefing on incident IT architecture and assignments',tag:'brief'},
+    {text:'Inventory all IT hardware available — routers, switches, cables, laptops, printers'},
+    {text:'Establish LAN at ICP — configure switches, run cabling, test connectivity'},
+    {text:'Configure Wi-Fi access point — set SSID, security, authorized user list'},
+    {text:'Verify FieldCommand IMS server connectivity (192.168.50.1)',tag:'safety'},
+    {text:'Install and test printer for IAP production',tag:'safety'},
+    {text:'Configure internet gateway — cellular, satellite, or landline WAN'},
+    {text:'Document network topology — IP addresses, device locations, cable runs',tag:'doc'},
+    {text:'Test all systems — verify every workstation has connectivity'},
+    {text:'Brief ITSL on technical status'},
+  ],
+  operational:[
+    {text:'Respond to all work tickets from Unified Help Desk — prioritize life safety systems'},
+    {text:'Monitor network performance — identify and resolve connectivity issues'},
+    {text:'Maintain FieldCommand IMS server — monitor health, disk space, database'},
+    {text:'Backup FieldCommand IMS database each operational period',tag:'doc'},
+    {text:'Install and configure additional equipment as incident expands'},
+    {text:'Identify and mitigate cybersecurity threats — monitor for unauthorized devices',tag:'safety'},
+    {text:'Support GIS operations — connectivity and data sharing for mapping'},
+    {text:'Coordinate with COMT on any network/radio integration points',tag:'coord'},
+    {text:'Maintain IT equipment log — all devices, serial numbers, locations',tag:'doc'},
+    {text:'Maintain activity log (ICS-214)',tag:'doc'},
+  ],
+  deliverables:[
+    {form:'Network Log',desc:'All network events, changes, and issues resolved',when:'Continuous'},
+    {form:'IT Equipment Inventory',desc:'All hardware deployed — serial numbers and locations',when:'Activation and continuous'},
+    {form:'ICS-214',desc:'Activity Log',when:'Continuous'},
+  ],
+  meetings:['IT Service Unit meetings as directed by ITSL'],
+  deactivation:[
+    {text:'Perform final backup of all incident data — FieldCommand IMS, GIS, logs'},
+    {text:'Disassemble LAN — remove all cabling, equipment, label everything'},
+    {text:'Collect all IT hardware — inventory every device before departure'},
+    {text:'Reset network equipment to home configuration'},
+    {text:'Remove incident Wi-Fi credentials and configuration'},
+    {text:'Document lessons learned for ITSL after-action report'},
+    {text:'Complete final ICS-214'},
+  ],
+},
+
+{
+  id:'HELP', abbr:'HELP', title:'Unified Help Desk Manager',
+  section:'Logistics', color:'#2980b9',
+  reports_to:'Information Technology Service Unit Leader (ITSL)',
+  supervises:'Help desk staff (if assigned)',
+  description:'The Unified Help Desk Manager (HELP) establishes and manages a central help desk function for the incident — the single point of contact for all IT and communications support requests from incident personnel. The HELP receives work order tickets, prioritizes them, routes them to the appropriate IT or communications technician, and tracks resolution. The Unified Help Desk is called "unified" because it handles both IT (ITSL) and communications (COML) support requests through one intake process, reducing the confusion of personnel not knowing who to call when something breaks.',
+  fallback:'If HELP is unfilled, support requests go directly to the ITSL or COMT. On small incidents this is manageable. On large incidents without a HELP function, technicians are constantly interrupted by individuals seeking support rather than working the queue systematically.',
+  activation:[
+    {text:'Report to ITSL — receive briefing on incident systems and support procedures',tag:'brief'},
+    {text:'Establish help desk location — accessible to all incident personnel'},
+    {text:'Set up work order ticketing system — paper or digital'},
+    {text:'Coordinate with COML on which issues route to comms vs. IT',tag:'coord'},
+    {text:'Brief all supervisors on how to submit help desk requests',tag:'brief'},
+    {text:'Establish priority system — P1 (life safety) through P4 (convenience)'},
+    {text:'Post help desk contact information at ICP and all work areas'},
+  ],
+  operational:[
+    {text:'Receive all IT and comms support requests through help desk'},
+    {text:'Assign priority to each ticket — life safety systems always first'},
+    {text:'Route tickets to ITSS (IT issues) or COMT (radio/comms issues)',tag:'coord'},
+    {text:'Track all open tickets — escalate if unresolved within time standard'},
+    {text:'Update ITSL and COML on outstanding tickets each period'},
+    {text:'Maintain complete ticket log — all requests, assignments, resolutions',tag:'doc'},
+    {text:'Brief incoming shift on all open tickets',tag:'brief'},
+    {text:'Assist ITSL with forms and documentation',tag:'doc'},
+    {text:'Maintain activity log (ICS-214)',tag:'doc'},
+  ],
+  deliverables:[
+    {form:'Work Order Log',desc:'All help desk tickets — submitted, priority, assigned, resolved',when:'Continuous'},
+    {form:'ICS-214',desc:'Activity Log',when:'Continuous'},
+  ],
+  meetings:['IT Service Unit meetings'],
+  deactivation:[
+    {text:'Close all open help desk tickets or formally hand off outstanding items'},
+    {text:'Compile complete help desk log for incident records'},
+    {text:'Submit log to DOCL and ITSL'},
+    {text:'Complete final ICS-214'},
+  ],
+},
+
+{
+  id:'AUXC', abbr:'AUXC', title:'Auxiliary Communicator',
+  section:'Logistics', color:'#9b59b6',
+  reports_to:'Communications Unit Leader (COML) or Incident Communications Center Manager (INCM)',
+  supervises:'No supervisory responsibility',
+  description:'The Auxiliary Communicator (AUXC) provides supplemental communications capability using specialized or alternative communications systems — most commonly Amateur Radio (ham radio) operators providing backup and supplemental communications when primary systems are unavailable or overloaded. AUXC operators install and operate auxiliary communications equipment as directed by the COML or INCM. In the FieldCommand IMS context, AUXC is the formal ICS position for the ARES/RACES/MCESV amateur radio operators who provide the HF, VHF/UHF, APRS, Winlink, and 44Net communications capability that is the core competency of this program. The AUXC does NOT manage the communications plan — that is the COML. The AUXC implements whatever auxiliary communications assignment the COML directs.',
+  fallback:'If AUXC is unfilled, the COML or COMT handles auxiliary communications equipment directly. AUXC is specifically for amateur radio and auxiliary systems — it is a critical position for any incident relying on amateur radio supplemental communications.',
+  activation:[
+    {text:'Report to COML or INCM — receive briefing and specific auxiliary communications assignment',tag:'brief'},
+    {text:'Confirm which auxiliary systems you are responsible for: HF, VHF, APRS, Winlink, satellite, etc.'},
+    {text:'Install and test assigned auxiliary communications equipment per COML direction'},
+    {text:'Confirm operating frequencies and channels with COML',tag:'coord'},
+    {text:'Verify FieldCommand IMS connectivity for digital modes (Winlink, 44Net)',tag:'safety'},
+    {text:'Test all APRS digipeater and iGate functionality if applicable'},
+    {text:'Brief COML on auxiliary systems status and any limitations'},
+    {text:'Confirm power — battery, solar, generator backup for auxiliary equipment',tag:'safety'},
+  ],
+  operational:[
+    {text:'Operate auxiliary communications per COML or INCM direction'},
+    {text:'Monitor assigned frequencies continuously during operational period',tag:'safety'},
+    {text:'Pass traffic as directed — maintain accurate message logs',tag:'doc'},
+    {text:'Support Winlink message passing if primary internet is down'},
+    {text:'Maintain APRS beacon and tracking for resource location if deployed'},
+    {text:'Test backup power for all auxiliary equipment each period',tag:'safety'},
+    {text:'Report any auxiliary system issues immediately to COML'},
+    {text:'Coordinate digital message passing with FieldCommand IMS Winlink integration',tag:'coord'},
+    {text:'Maintain activity log (ICS-214)',tag:'doc'},
+  ],
+  deliverables:[
+    {form:'Message Log',desc:'All traffic passed through auxiliary systems — time, from, to, content',when:'Continuous'},
+    {form:'ICS-214',desc:'Activity Log',when:'Continuous'},
+  ],
+  meetings:['Communications unit meetings as directed by COML'],
+  deactivation:[
+    {text:'Disassemble auxiliary communications equipment — check and inventory'},
+    {text:'Submit complete message log to DOCL'},
+    {text:'Return all borrowed or agency-issued equipment to COML'},
+    {text:'Document any technical issues or lessons learned'},
+    {text:'Complete final ICS-214'},
+  ],
+},
+
+{
+  id:'INTD', abbr:'INTD', title:'Incident Tactical Dispatcher',
+  section:'Logistics', color:'#9b59b6',
+  reports_to:'Incident Communications Center Manager (INCM)',
+  supervises:'Radio Operators (RADO) if assigned to their position',
+  description:'The Incident Tactical Dispatcher (INTD) provides real-time dispatch support for the incident from the Incident Communications Center (INCCC). The INTD monitors tactical radio channels, relays resource requests between field personnel and supervisors, tracks unit status, and handles priority and emergency radio traffic. On wildfire incidents the INTD manages air-to-ground dispatch. On all-hazards incidents the INTD coordinates multi-agency resource dispatch. The INTD brings professional public safety dispatcher skills — calm under pressure, accurate message relay, simultaneous multi-channel monitoring — to the incident communications center.',
+  fallback:'If INTD is unfilled, the INCM handles all dispatch functions directly. On small incidents, supervisors self-dispatch on the radio. Fill INTD on any incident with high radio traffic volume or when multiple agencies need coordinated dispatch.',
+  activation:[
+    {text:'Report to INCM — receive briefing on all incident radio channels and assignments',tag:'brief'},
+    {text:'Review ICS-205 Radio Communications Plan — know every channel',tag:'form'},
+    {text:'Set up dispatch position — headset, multiple radio monitors, logging system'},
+    {text:'Confirm emergency channel is monitored at all times',tag:'safety'},
+    {text:'Review resource list with RESL — know what resources are assigned where'},
+    {text:'Confirm dispatch protocols with INCM — how requests are processed'},
+  ],
+  operational:[
+    {text:'Monitor all assigned tactical channels — simultaneous multi-channel monitoring',tag:'safety'},
+    {text:'Relay resource requests from field to supervisors and back'},
+    {text:'Log all significant radio traffic — time, unit, content, action taken',tag:'doc'},
+    {text:'Handle priority and emergency traffic immediately — clear all other traffic',tag:'safety'},
+    {text:'Track resource status changes — relay to RESL for T-card updates',tag:'coord'},
+    {text:'Coordinate air-to-ground dispatch if aircraft assigned',tag:'coord'},
+    {text:'Brief incoming INTD at shift change — full status and open items',tag:'brief'},
+    {text:'Maintain activity log (ICS-214)',tag:'doc'},
+  ],
+  deliverables:[
+    {form:'Dispatch Log',desc:'All dispatched traffic — unit, time, request, action taken',when:'Continuous'},
+    {form:'ICS-214',desc:'Activity Log',when:'Continuous'},
+  ],
+  meetings:['INCCC shift briefings'],
+  deactivation:[
+    {text:'Complete final dispatch log — ensure no open items'},
+    {text:'Brief INCM on any outstanding communications issues'},
+    {text:'Submit dispatch log to DOCL'},
+    {text:'Complete final ICS-214'},
+  ],
+},
+
+{
+  id:'RADO', abbr:'RADO', title:'Radio Operator',
+  section:'Logistics', color:'#9b59b6',
+  reports_to:'Incident Communications Center Manager (INCM) or Incident Tactical Dispatcher (INTD)',
+  supervises:'No supervisory responsibility',
+  description:'The Radio Operator (RADO) staffs the Incident Communications Center, monitors radio channels, and handles radio traffic as directed by the INCM or INTD. The RADO is the basic communications center staffing position — operating radios, logging traffic, and relaying messages. On smaller incidents, the RADO may perform all dispatch functions. On larger incidents, multiple RADOs may staff different channels with an INTD supervising. RADOs are frequently amateur radio operators serving in an ARES/RACES capacity as AUXC and RADO simultaneously.',
+  fallback:'If RADO is unfilled, the INTD or INCM operates radios directly in addition to their supervisory functions.',
+  activation:[
+    {text:'Report to INCM or INTD — receive channel assignments and briefing',tag:'brief'},
+    {text:'Set up radio position — test all assigned frequencies'},
+    {text:'Confirm emergency channel monitoring',tag:'safety'},
+    {text:'Review logging procedures with INCM'},
+  ],
+  operational:[
+    {text:'Monitor all assigned radio channels continuously'},
+    {text:'Relay messages accurately — read back for confirmation on critical messages',tag:'safety'},
+    {text:'Log all significant radio traffic with timestamps',tag:'doc'},
+    {text:'Escalate emergency or priority traffic immediately to INTD or INCM',tag:'safety'},
+    {text:'Maintain activity log (ICS-214)',tag:'doc'},
+  ],
+  deliverables:[
+    {form:'Radio Log',desc:'All traffic on assigned channels',when:'Continuous'},
+    {form:'ICS-214',desc:'Activity Log',when:'Continuous'},
+  ],
+  meetings:['INCCC shift briefings'],
+  deactivation:[
+    {text:'Submit radio log to INCM'},
+    {text:'Complete final ICS-214'},
+  ],
+},
+
+{
+  id:'CYSL', abbr:'CYSL', title:'Cybersecurity Unit Leader',
+  section:'Logistics', color:'#c0392b',
+  reports_to:'ICT Branch Director (if activated), or Communications Unit Leader (COML)',
+  supervises:'Cybersecurity Planner, Cybersecurity Coordinator, Cybersecurity Support Specialist (if assigned)',
+  description:'The Cybersecurity Unit Leader is a FEMA NIMS position within the ICT Branch that identifies cybersecurity vulnerabilities, assesses threats to the ICT infrastructure and the incident management organization, and recommends risk mitigation actions. As incidents increasingly rely on networked systems — including FieldCommand IMS, GIS platforms, video conferencing, and shared data systems — the attack surface for adversarial interference grows. The Cybersecurity Unit ensures that the incident's digital infrastructure is protected from unauthorized access, data tampering, and service disruption. This position was formally recognized in the FEMA ICT Functional Guidance to address the reality that both accidental and deliberate cybersecurity incidents during emergency response are real threats.',
+  fallback:'If Cybersecurity Unit Leader is unfilled, cybersecurity monitoring falls to the ITSL. On most Type III/IV incidents this is acceptable. Fill Cybersecurity Unit Leader on incidents involving sensitive law enforcement information, critical infrastructure, or high-profile events where adversarial interference is a credible risk.',
+  activation:[
+    {text:'Report to COML or ICT Branch Director — receive briefing on incident IT architecture',tag:'brief'},
+    {text:'Assess cybersecurity posture of all incident IT systems'},
+    {text:'Review network architecture with ITSL — identify vulnerabilities',tag:'coord'},
+    {text:'Confirm firewall rules and access controls on FieldCommand IMS server'},
+    {text:'Verify no unauthorized devices are connected to incident network',tag:'safety'},
+    {text:'Establish security monitoring baseline — what is normal traffic'},
+    {text:'Brief ITSL and COML on initial cybersecurity assessment'},
+    {text:'Develop cybersecurity portion of Incident IT Plan',tag:'form'},
+  ],
+  operational:[
+    {text:'Monitor incident network for unauthorized access or anomalous activity',tag:'safety'},
+    {text:'Assist ITSL with preparing and updating the Incident IT Plan',tag:'form'},
+    {text:'Review all new device connections to incident network',tag:'safety'},
+    {text:'Coordinate cybersecurity information sharing with all responding agencies',tag:'coord'},
+    {text:'Investigate any suspected security incidents — report to ITSL and COML'},
+    {text:'Monitor for suspicious activity at all ICT locations',tag:'safety'},
+    {text:'Brief ITSL on cybersecurity status each period'},
+    {text:'Maintain activity log (ICS-214)',tag:'doc'},
+  ],
+  deliverables:[
+    {form:'Cybersecurity Assessment',desc:'Initial and updated assessment of incident ICT security posture',when:'Activation and as needed'},
+    {form:'Incident IT Plan',desc:'Cybersecurity section — contributes to ITSL plan',when:'Each update'},
+    {form:'ICS-214',desc:'Activity Log',when:'Continuous'},
+  ],
+  meetings:['ICT Branch or Communications Unit meetings','Any meeting where cybersecurity risks are relevant'],
+  deactivation:[
+    {text:'Ensure all temporary credentials and access are revoked'},
+    {text:'Document all cybersecurity incidents or anomalies for after-action'},
+    {text:'Submit cybersecurity log to DOCL'},
+    {text:'Complete final ICS-214'},
+  ],
+},
+
+{
+  id:'ICTB', abbr:'ICTB', title:'ICT Branch Director',
+  section:'Logistics', color:'#1a3a6b',
+  reports_to:'Logistics Section Chief',
+  supervises:'Communications Unit Leader (COML), Information Technology Service Unit Leader (ITSL), Cybersecurity Unit Leader (CYSL)',
+  description:'The ICT Branch Director establishes and manages the entire Information and Communications Technology (ICT) Branch — the branch that encompasses the Communications Unit, IT Service Unit, and Cybersecurity Unit. The ICT Branch Director position was created in the FEMA NIMS ICT Functional Guidance to provide a single point of management when all three units are activated simultaneously and the LSC's span of control would otherwise be exceeded. On most Type III/IV incidents only the Communications Unit is activated and the COML reports directly to the LSC — no ICT Branch Director is needed. On major complex incidents where all three units are active, the ICT Branch Director manages the combined ICT operation and reports to the LSC as a single unit.',
+  fallback:'On most incidents, this position is NOT activated — the COML reports directly to the LSC. Activate ICT Branch Director only when both Communications Unit AND IT Service Unit are fully staffed and the combined span of control exceeds what the LSC can manage.',
+  activation:[
+    {text:'Receive briefing from LSC on incident scope and ICT requirements',tag:'brief'},
+    {text:'Confirm which units are being activated — Comms, IT Service, Cybersecurity'},
+    {text:'Brief COML, ITSL, and Cybersecurity Unit Leader on branch structure',tag:'brief'},
+    {text:'Establish ICT Branch workspace at ICP'},
+    {text:'Assess overall ICT infrastructure needs — coordinate across all three units',tag:'coord'},
+    {text:'Establish inter-unit coordination protocols — COML, ITSL, CYSL communication'},
+  ],
+  operational:[
+    {text:'Attend LSC meetings — represent full ICT Branch',tag:'brief'},
+    {text:'Coordinate between Communications, IT Service, and Cybersecurity units'},
+    {text:'Resolve resource conflicts between units',tag:'coord'},
+    {text:'Brief LSC on overall ICT status each period'},
+    {text:'Approve major ICT changes — new systems, significant configuration changes'},
+    {text:'Ensure ICT Plan is integrated across all units',tag:'form'},
+    {text:'Maintain activity log (ICS-214)',tag:'doc'},
+  ],
+  deliverables:[
+    {form:'ICT Branch Status Report',desc:'Combined status of all ICT units for LSC',when:'Each period'},
+    {form:'ICS-214',desc:'Activity Log',when:'Continuous'},
+  ],
+  meetings:['Logistics Section meetings','Planning meeting (ICT input for next period)'],
+  deactivation:[
+    {text:'Coordinate demobilization of all ICT equipment across all units'},
+    {text:'Ensure complete ICT documentation package is submitted to DOCL'},
+    {text:'Brief LSC on outstanding ICT issues'},
+    {text:'Complete final ICS-214'},
+  ],
+},
+
+{
+  id:'GIS',, abbr:'GIS', title:'GIS Specialist / Geospatial Analyst',
+  section:'Planning', color:'#1e8449',
+  reports_to:'Situation Unit Leader (SITL) — or Planning Section Chief if no SITL',
+  supervises:'No supervisory responsibility — technical specialist',
+  description:'The GIS Specialist (sometimes called Geospatial Analyst or GISS) is a technical specialist who provides mapping and spatial analysis support to the incident. The GIS Specialist produces incident maps, analyzes geographic data, and supports the Situation Unit with visual displays of incident information. This is a NIMS Technical Specialist position — it exists under the Planning Section as a support function. On incidents using FieldCommand IMS, the GIS Specialist leverages the built-in Leaflet mapping, tile cache, and map picker tools in ICS forms.',
+  fallback:'If GIS Specialist is unfilled, the SITL produces maps manually or uses available mapping tools. The SITL and PSC can use FieldCommand IMS map tools directly. Fill GIS Specialist when the incident requires complex spatial analysis, large-format map production, or continuous map updates.',
+  activation:[
+    {text:'Report to SITL — receive briefing on mapping needs and incident geography',tag:'brief'},
+    {text:'Assess available geographic data — incident perimeter, structures, roads, utilities'},
+    {text:'Establish mapping workstation — GIS software, printer capable of large format if available'},
+    {text:'Obtain base map data for incident area'},
+    {text:'Confirm FieldCommand IMS map tile cache covers incident area'},
+    {text:'Plot initial incident information on base map'},
+    {text:'Produce initial incident map for first IAP',tag:'form'},
+    {text:'Brief SITL on mapping capabilities and limitations'},
+  ],
+  operational:[
+    {text:'Update incident map each operational period with current information'},
+    {text:'Produce IAP map insert — sized and formatted for IAP distribution',tag:'form'},
+    {text:'Plot Division and Group boundaries on operational map'},
+    {text:'Plot resource locations on situation map'},
+    {text:'Produce specialty maps as requested — evacuation routes, hazard maps, etc.'},
+    {text:'Receive and plot field observer reports on situation map'},
+    {text:'Maintain map archive — one copy of each period map for documentation',tag:'doc'},
+    {text:'Support ICS-208 safety map production with SO',tag:'safety'},
+    {text:'Support ICS-215A hazard map with SO',tag:'safety'},
+    {text:'Maintain activity log (ICS-214)',tag:'doc'},
+  ],
+  deliverables:[
+    {form:'IAP Map',desc:'Incident map for each IAP — shows divisions, hazards, resources',when:'Each period'},
+    {form:'Situation Map',desc:'Continuously updated situation display at ICP',when:'Continuous'},
+    {form:'ICS-208 Map',desc:'Safety map showing hazard zones and evacuation routes',when:'Each period'},
+    {form:'ICS-214',desc:'Activity Log',when:'Continuous'},
+  ],
+  meetings:['Planning meeting (presents maps)','Tactics meeting (if mapping support needed)'],
+  deactivation:[
+    {text:'Archive all incident maps in digital and print format'},
+    {text:'Submit map archive to DOCL for incident records'},
+    {text:'Provide final incident perimeter and statistics to SITL'},
+    {text:'Complete final ICS-214'},
+  ],
+},
+
+{
+  id:'FDUL', abbr:'FDUL', title:'Food Unit Leader',
+  section:'Logistics', color:'#9b59b6',
+  reports_to:'Logistics Section Chief (Service Branch Director if activated)',
+  supervises:'Cooks, Food Service Workers',
+  description:'The Food Unit Leader (FDUL) is responsible for providing food and potable water to all incident personnel. This sounds simple but on a large incident is a major logistical operation — feeding hundreds of people on a schedule that keeps them healthy and working. The FDUL plans menus, orders food, manages mobile kitchens or catering contracts, and ensures no personnel go without food or water. Dehydration and poor nutrition are real operational hazards on extended incidents.',
+  fallback:'If FDUL is unfilled, the LSC manages food service. On incidents beyond initial attack, designate someone for food and water even informally — personnel without water are a safety issue within hours.',
+  activation:[
+    {text:'Receive briefing from LSC on personnel count and operational period schedule',tag:'brief'},
+    {text:'Assess feeding capability — mobile kitchen, catering contract, or MREs'},
+    {text:'Determine number of meals needed per day including shifts'},
+    {text:'Order food supplies for first 24-48 hours',tag:'coord'},
+    {text:'Establish food service location — ICP, base camp, or both'},
+    {text:'Confirm potable water supply for all personnel',tag:'safety'},
+    {text:'Set up food service area — tables, serving equipment, waste disposal'},
+    {text:'Post meal schedule where all personnel can see it'},
+    {text:'Confirm dietary restrictions and allergies for special accommodations'},
+  ],
+  operational:[
+    {text:'Provide meals on schedule — never delay a meal when personnel are transitioning shifts'},
+    {text:'Maintain potable water at all operational locations',tag:'safety'},
+    {text:'Order food for next 24-48 hours each period to maintain supply'},
+    {text:'Coordinate delivery of meals to remote crews if needed',tag:'coord'},
+    {text:'Maintain food service area sanitation — health code standards',tag:'safety'},
+    {text:'Monitor personnel count changes — adjust food quantities'},
+    {text:'Brief LSC on food service status each period'},
+    {text:'Maintain food expenditure log for Finance/Admin',tag:'doc'},
+    {text:'Maintain activity log (ICS-214)',tag:'doc'},
+  ],
+  deliverables:[
+    {form:'Meal Schedule',desc:'Posted meal times and locations for all personnel',when:'Activation'},
+    {form:'Food Log',desc:'All food orders, quantities, and costs',when:'Continuous'},
+    {form:'ICS-214',desc:'Activity Log',when:'Continuous'},
+  ],
+  meetings:['Logistics section meetings','Planning meeting (headcount for next period)'],
+  deactivation:[
+    {text:'Account for all food supplies — return unused non-perishables'},
+    {text:'Dispose of perishables properly'},
+    {text:'Demobilize catering contract if applicable'},
+    {text:'Submit food expenditure log to Finance/Admin'},
+    {text:'Complete final ICS-214'},
+  ],
+},
+
+{
+  id:'MEDL', abbr:'MEDL', title:'Medical Unit Leader',
+  section:'Logistics', color:'#9b59b6',
+  reports_to:'Logistics Section Chief (Service Branch Director if activated)',
+  supervises:'Medical Aids, Paramedics assigned to Logistics',
+  description:'The MEDL is responsible for the medical plan for INCIDENT PERSONNEL — not for treating victims (that is Operations). The MEDL ensures that if a firefighter, responder, or incident worker is injured, there is a plan for their treatment and transport. The MEDL produces the ICS-206 Medical Plan.',
+  fallback:'If MEDL is unfilled, the LSC manages the medical plan. ICS-206 must still be produced — it is a required IAP form. At minimum, someone must know where the nearest hospital is and have a plan to get an injured responder there.',
+  activation:[
+    {text:'Assess incident personnel medical needs and risks',tag:'safety'},
+    {text:'Identify nearest hospitals — confirm capabilities with MEDL database',tag:'form'},
+    {text:'Establish aid station location at ICP'},
+    {text:'Confirm ambulance support — available or on standby'},
+    {text:'Coordinate with SO on safety hazards that may cause injuries',tag:'safety'},
+    {text:'Draft ICS-206 Medical Plan',tag:'form'},
+    {text:'Brief IC and LSC on medical plan'},
+  ],
+  operational:[
+    {text:'Update ICS-206 Medical Plan each period',tag:'form'},
+    {text:'Maintain aid station — ensure it is stocked and staffed'},
+    {text:'Track all personnel injuries and treatments',tag:'doc'},
+    {text:'Coordinate medical transport for serious injuries',tag:'coord'},
+    {text:'Monitor personnel for heat/cold stress, fatigue',tag:'safety'},
+    {text:'Ensure medical information is accessible to SO',tag:'safety'},
+    {text:'Maintain activity log (ICS-214)',tag:'doc'},
+  ],
+  deliverables:[
+    {form:'ICS-206',desc:'Medical Plan — hospitals, aid stations, ambulance plan',when:'Each period'},
+    {form:'ICS-214',desc:'Activity Log',when:'Continuous'},
+  ],
+  meetings:['Planning meeting (ICS-206 input)'],
+  deactivation:[
+    {text:'Ensure all personnel injuries are documented'},
+    {text:'Submit injury records through proper channels per agency policy'},
+    {text:'Demobilize aid station — account for all medical supplies'},
+    {text:'Complete final ICS-214'},
+  ],
+},
+
+{
+  id:'SPUL', abbr:'SPUL', title:'Supply Unit Leader',
+  section:'Logistics', color:'#9b59b6',
+  reports_to:'Logistics Section Chief (Support Branch Director if activated)',
+  supervises:'Ordering Managers, Receiving/Distribution Managers',
+  description:'The SPUL manages all ordering, receiving, storage, and distribution of non-medical supplies and equipment. Every resource request (ICS-213RR) that comes from Operations flows through the SPUL to the appropriate vendors, agencies, or mutual aid sources.',
+  fallback:'If SPUL is unfilled, the LSC handles all supply ordering and distribution.',
+  activation:[
+    {text:'Establish supply area — receiving, storage, distribution zones'},
+    {text:'Confirm ordering authority — what can be ordered and by whom'},
+    {text:'Obtain current inventory from predecessor or Logistics'},
+    {text:'Set up tracking system for all orders and receipts'},
+    {text:'Confirm delivery address and access for incoming resources'},
+    {text:'Brief OSC and LSC on supply ordering process',tag:'brief'},
+  ],
+  operational:[
+    {text:'Process all ICS-213RR Resource Requests from Operations',tag:'form'},
+    {text:'Place orders with vendors, agencies, mutual aid as authorized'},
+    {text:'Track all outstanding orders — ETAs, order numbers'},
+    {text:'Receive and distribute incoming supplies and equipment'},
+    {text:'Maintain supply inventory — prevent shortages'},
+    {text:'Coordinate with Finance/Admin on procurement documentation',tag:'coord'},
+    {text:'Maintain activity log (ICS-214)',tag:'doc'},
+  ],
+  deliverables:[
+    {form:'ICS-213RR',desc:'Resource Requests — processes and tracks all requests',when:'Continuous'},
+    {form:'Supply Log',desc:'All orders placed, received, and distributed',when:'Continuous'},
+    {form:'ICS-214',desc:'Activity Log',when:'Continuous'},
+  ],
+  meetings:['Planning meeting (logistics needs)'],
+  deactivation:[
+    {text:'Compile complete supply/resource expenditure record for Finance/Admin'},
+    {text:'Arrange return of borrowed or rented equipment'},
+    {text:'Ensure all open orders are closed or transferred'},
+    {text:'Complete final ICS-214'},
+  ],
+},
+
+{
+  id:'GSUL', abbr:'GSUL', title:'Ground Support Unit Leader',
+  section:'Logistics', color:'#9b59b6',
+  reports_to:'Logistics Section Chief (Support Branch Director if activated)',
+  supervises:'Drivers, Equipment Operators, Fueling personnel',
+  description:'The GSUL provides transportation and fueling support for all incident resources. This includes vehicle maintenance, fueling, transportation of personnel and equipment, and maintaining the vehicle/equipment inventory (ICS-218).',
+  fallback:'If GSUL is unfilled, the LSC manages ground transportation. On incidents with significant vehicle operations, this becomes unmanageable quickly.',
+  activation:[
+    {text:'Inventory all vehicles and equipment available to Logistics'},
+    {text:'Complete ICS-218 Support Vehicle/Equipment Inventory',tag:'form'},
+    {text:'Establish fueling station location and schedule'},
+    {text:'Confirm transportation needs with Operations and Logistics',tag:'coord'},
+    {text:'Establish maintenance support — identify breakdown procedures'},
+    {text:'Brief drivers on safety and radio protocols',tag:'safety'},
+  ],
+  operational:[
+    {text:'Provide vehicle/equipment transportation per operational needs'},
+    {text:'Update ICS-218 as vehicles are added or removed',tag:'form'},
+    {text:'Maintain fueling operations — never let operational vehicles run out'},
+    {text:'Coordinate vehicle maintenance — minor repairs or towing arrangements'},
+    {text:'Track vehicle mileage and hours for Finance/Admin'},
+    {text:'Ensure all drivers have valid licenses for their vehicle class',tag:'safety'},
+    {text:'Maintain activity log (ICS-214)',tag:'doc'},
+  ],
+  deliverables:[
+    {form:'ICS-218',desc:'Support Vehicle/Equipment Inventory',when:'Each period'},
+    {form:'Vehicle/Fuel Log',desc:'All vehicle use and fuel dispensed',when:'Continuous'},
+    {form:'ICS-214',desc:'Activity Log',when:'Continuous'},
+  ],
+  meetings:['Planning meeting (transportation needs)'],
+  deactivation:[
+    {text:'Account for all vehicles — none leave without proper sign-out'},
+    {text:'Submit vehicle/fuel log to Finance/Admin'},
+    {text:'Coordinate return of rented vehicles'},
+    {text:'Complete final ICS-214'},
+  ],
+},
+
+{
+  id:'FACL', abbr:'FACL', title:'Facilities Unit Leader',
+  section:'Logistics', color:'#9b59b6',
+  reports_to:'Logistics Section Chief (Support Branch Director if activated)',
+  supervises:'Camp Manager, Security Manager (if assigned)',
+  description:'The FACL establishes and maintains all incident facilities — ICP, base camp, spike camps, staging areas, helibases. This includes layout, sanitation, security, and habitability for extended deployments.',
+  fallback:'If FACL is unfilled, the LSC manages facilities. On incidents lasting more than one operational period, someone must manage ICP setup, sanitation, and security.',
+  activation:[
+    {text:'Receive facilities plan from LSC or IC',tag:'brief'},
+    {text:'Layout and establish ICP — parking, work areas, sanitation'},
+    {text:'Establish base camp if extended deployment expected'},
+    {text:'Confirm sanitation facilities (portable toilets, handwashing)'},
+    {text:'Establish security plan for ICP and base'},
+    {text:'Ensure adequate lighting for night operations'},
+  ],
+  operational:[
+    {text:'Maintain ICP and base camp standards'},
+    {text:'Coordinate sanitation service schedule'},
+    {text:'Manage ICP security — control access'},
+    {text:'Coordinate power and utilities at ICP'},
+    {text:'Address habitability issues (heat, shade, rest areas)'},
+    {text:'Maintain activity log (ICS-214)',tag:'doc'},
+  ],
+  deliverables:[
+    {form:'Facilities Map',desc:'ICP and base camp layout map',when:'Activation'},
+    {form:'ICS-214',desc:'Activity Log',when:'Continuous'},
+  ],
+  meetings:['Planning meeting (facilities needs)'],
+  deactivation:[
+    {text:'Demobilize ICP — remove all incident equipment and materials'},
+    {text:'Restore facility to pre-incident condition'},
+    {text:'Ensure sanitation facilities are properly serviced before removal'},
+    {text:'Complete final ICS-214'},
+  ],
+},
+
+// ── FINANCE / ADMIN SECTION ───────────────────────────────────────
+{
+  id:'FSC', abbr:'FSC', title:'Finance / Admin Section Chief',
+  section:'Finance', color:'#7f8c8d',
+  reports_to:'Incident Commander',
+  supervises:'Time Unit Leader (TIME), Procurement Unit Leader (PROC), Compensation/Claims Unit Leader (COMP), Cost Unit Leader (COST)',
+  description:'The Finance/Admin Section Chief manages all financial, administrative, and cost aspects of the incident. Every dollar spent on the incident flows through Finance/Admin — time records, purchases, contracts, and cost tracking. The FSC is critical for any incident that will seek reimbursement.',
+  fallback:'If FSC is unfilled, the IC manages all financial functions. All time records, procurement, and cost documentation must still occur — the IC must designate someone to maintain time records even on small incidents, as uncaptured labor costs cannot be recovered.',
+  activation:[
+    {text:'Receive briefing from IC on financial authority, cost codes, and limits',tag:'brief'},
+    {text:'Activate and brief unit leaders: TIME, PROC, COMP, COST as needed'},
+    {text:'Establish finance work area — secure and private (personnel records)'},
+    {text:'Confirm financial authority levels — who can commit what amount'},
+    {text:'Begin time recording for all incident personnel immediately'},
+    {text:'Obtain copies of all existing procurement documents'},
+    {text:'Brief Section Chiefs on time-keeping and procurement requirements',tag:'brief'},
+  ],
+  operational:[
+    {text:'Attend Command and General Staff meeting — brief IC on cost status',tag:'brief'},
+    {text:'Review all expenditures against budget if applicable'},
+    {text:'Approve procurement actions within authorized limits'},
+    {text:'Ensure time records are collected every operational period',tag:'doc'},
+    {text:'Track total incident cost — update daily estimate'},
+    {text:'Review all injury/accident reports for compensation implications',tag:'safety'},
+    {text:'Coordinate with agency administrator on significant cost decisions',tag:'coord'},
+    {text:'Maintain activity log (ICS-214)',tag:'doc'},
+  ],
+  deliverables:[
+    {form:'Cost Summary',desc:'Incident cost tracking — updated each period',when:'Each period'},
+    {form:'ICS-214',desc:'Activity Log',when:'Continuous'},
+  ],
+  meetings:['Command and General Staff meeting','Planning meeting (cost inputs for ICS-209)'],
+  deactivation:[
+    {text:'Ensure ALL time records are collected — every person, every day'},
+    {text:'Process all outstanding procurement documents'},
+    {text:'Complete compensation/claims documentation for all injuries'},
+    {text:'Compile final incident cost package'},
+    {text:'Brief agency administrator on final cost and financial status'},
+    {text:'Complete final ICS-214'},
+  ],
+},
+
+{
+  id:'TIME', abbr:'TIME', title:'Time Unit Leader',
+  section:'Finance', color:'#7f8c8d',
+  reports_to:'Finance/Admin Section Chief',
+  supervises:'Timekeepers',
+  description:'The TIME unit records accurate time for all incident personnel and equipment. Every hour worked must be captured. Time records are the basis for personnel compensation, reimbursement claims, and cost accounting. Time records must be maintained from the FIRST hour of the incident.',
+  fallback:'If TIME is unfilled, the FSC maintains time records. If FSC is also unfilled, the IC must designate someone. Unrecorded time cannot be recovered — designate a timekeeper on every incident immediately.',
+  activation:[
+    {text:'Establish time-keeping system — paper or digital'},
+    {text:'Obtain current time records from any existing documentation'},
+    {text:'Brief all personnel on time-recording requirements',tag:'brief'},
+    {text:'Establish time collection schedule — end of each shift/period'},
+      {text:'Confirm equipment time recording with GSUL and SPUL',tag:'coord'},
+  ],
+  operational:[
+    {text:'Collect time records at end of every operational period'},
+    {text:'Verify time records are complete and signed'},
+    {text:'Reconcile time records with ICS-211 check-in/out times',tag:'form'},
+    {text:'Process emergency time payments if required'},
+    {text:'Maintain all time records securely — these are personnel documents'},
+    {text:'Maintain activity log (ICS-214)',tag:'doc'},
+  ],
+  deliverables:[
+    {form:'Time Records',desc:'Signed time sheets for every person, every period',when:'Each period'},
+    {form:'ICS-214',desc:'Activity Log',when:'Continuous'},
+  ],
+  meetings:['Finance/Admin section meetings'],
+  deactivation:[
+    {text:'Ensure time records for EVERY person are captured before they leave'},
+    {text:'Compile complete time record package'},
+    {text:'Submit to FSC for processing'},
+    {text:'Complete final ICS-214'},
+  ],
+},
+
+{
+  id:'PROC', abbr:'PROC', title:'Procurement Unit Leader',
+  section:'Finance', color:'#7f8c8d',
+  reports_to:'Finance/Admin Section Chief',
+  supervises:'Buying Team members',
+  description:'The PROC manages procurement of all supplies, services, and equipment not available through the standard resource ordering process. This includes emergency purchases, vendor contracts, and equipment rentals. Every purchase must be documented.',
+  fallback:'If PROC is unfilled, the FSC handles all procurement. Emergency purchases may be made by the IC but must be documented immediately for PROC/FSC to process.',
+  activation:[
+    {text:'Obtain blanket purchase authority from FSC — what is authorized'},
+    {text:'Identify local vendors and establish emergency accounts if needed'},
+    {text:'Brief Supply Unit Leader on procurement process',tag:'brief'},
+    {text:'Establish purchase documentation system'},
+  ],
+  operational:[
+    {text:'Process all purchase orders and vendor contracts'},
+    {text:'Ensure every purchase has written authorization and documentation'},
+    {text:'Track all open purchase orders to completion'},
+    {text:'Coordinate with Supply Unit on delivery and receipt',tag:'coord'},
+    {text:'Maintain activity log (ICS-214)',tag:'doc'},
+  ],
+  deliverables:[
+    {form:'Purchase Orders',desc:'All procurement documents',when:'Continuous'},
+    {form:'ICS-214',desc:'Activity Log',when:'Continuous'},
+  ],
+  meetings:['Finance/Admin section meetings'],
+  deactivation:[
+    {text:'Ensure all purchase orders are closed or transferred'},
+    {text:'Collect all receipts and invoices'},
+    {text:'Submit complete procurement package to FSC'},
+    {text:'Complete final ICS-214'},
+  ],
+},
+
+{
+  id:'COMP', abbr:'COMP', title:'Compensation / Claims Unit Leader',
+  section:'Finance', color:'#7f8c8d',
+  reports_to:'Finance/Admin Section Chief',
+  supervises:'Compensation Specialists, Claims Specialists',
+  description:'The COMP unit manages all worker injury compensation and third-party claims arising from the incident. Every injury to incident personnel must be documented. Property damage claims from outside parties (citizens, landowners) are also processed here.',
+  fallback:'If COMP is unfilled, the FSC manages compensation and claims. All injury documentation must flow to Finance/Admin regardless.',
+  activation:[
+    {text:'Coordinate with Safety Officer — establish injury reporting process',tag:'safety'},
+    {text:'Obtain agency workers compensation forms and procedures'},
+    {text:'Brief personnel on injury reporting requirements',tag:'brief'},
+    {text:'Establish claims intake process for third-party damage reports'},
+  ],
+  operational:[
+    {text:'Document all personnel injuries — coordinate with SO and MEDL',tag:'doc'},
+    {text:'Complete workers compensation forms for all injuries'},
+    {text:'Investigate third-party property damage claims'},
+    {text:'Coordinate with agency legal counsel on significant claims',tag:'coord'},
+    {text:'Maintain activity log (ICS-214)',tag:'doc'},
+  ],
+  deliverables:[
+    {form:'Injury Reports',desc:'Workers compensation documentation for all injuries',when:'Per injury'},
+    {form:'Claims Log',desc:'Third-party damage and injury claims',when:'Continuous'},
+    {form:'ICS-214',desc:'Activity Log',when:'Continuous'},
+  ],
+  meetings:['Finance/Admin section meetings'],
+  deactivation:[
+    {text:'Compile all injury and claims documentation'},
+    {text:'Ensure open claims have designated follow-up contacts'},
+    {text:'Submit package to FSC and agency risk management'},
+    {text:'Complete final ICS-214'},
+  ],
+},
+
+{
+  id:'COST', abbr:'COST', title:'Cost Unit Leader',
+  section:'Finance', color:'#7f8c8d',
+  reports_to:'Finance/Admin Section Chief',
+  supervises:'Cost Technicians',
+  description:'The COST unit tracks total incident costs, provides cost estimates for the IC and agency administrator, and identifies cost savings opportunities. Cost data feeds the ICS-209 Incident Status Summary and is critical for reimbursement applications.',
+  fallback:'If COST is unfilled, the FSC tracks costs.',
+  activation:[
+    {text:'Obtain incident cost codes from agency administrator'},
+    {text:'Establish cost tracking system by cost category'},
+    {text:'Collect initial cost data from all sections'},
+      {text:'Provide initial cost estimate to IC and FSC',tag:'brief'},
+  ],
+  operational:[
+    {text:'Update total incident cost estimate each period'},
+    {text:'Provide cost input for ICS-209 Incident Status Summary',tag:'form'},
+    {text:'Track costs by category (personnel, equipment, supplies, aircraft, contracts)'},
+    {text:'Identify significant cost drivers — brief FSC'},
+    {text:'Project future costs based on current burn rate'},
+    {text:'Maintain activity log (ICS-214)',tag:'doc'},
+  ],
+  deliverables:[
+    {form:'Cost Summary',desc:'Daily incident cost by category',when:'Each period'},
+    {form:'ICS-209',desc:'Cost input for Incident Status Summary',when:'Each period'},
+    {form:'ICS-214',desc:'Activity Log',when:'Continuous'},
+  ],
+  meetings:['Finance/Admin section meetings','Planning meeting (cost input)'],
+  deactivation:[
+    {text:'Compile final incident cost summary by category'},
+    {text:'Ensure all costs are accounted for before close'},
+    {text:'Submit final cost package to FSC'},
+    {text:'Complete final ICS-214'},
+  ],
+},
+
+// ── AIR OPERATIONS ────────────────────────────────────────────────
+{
+  id:'AOBD', abbr:'AOBD', title:'Air Operations Branch Director',
+  section:'Operations', color:'#2980b9',
+  reports_to:'Operations Section Chief',
+  supervises:'Air Tactical Group Supervisor (ATGS), Air Support Group Supervisor (ASGS), Helicopter Coordinators',
+  description:'The AOBD manages all air operations at the incident, including fixed-wing and rotary-wing aircraft. The AOBD ensures safe, coordinated, and effective use of all aviation resources. Aviation operations are inherently high-risk — the AOBD\'s primary job is safety through coordination.',
+  fallback:'If AOBD is unfilled, the OSC directly manages air operations. On any incident with more than 2 aircraft operating simultaneously, AOBD should be filled to prevent midair conflicts.',
+  activation:[
+    {text:'Receive aviation briefing from OSC — all aircraft assigned, missions, frequencies',tag:'brief'},
+    {text:'Complete ICS-220 Air Operations Summary',tag:'form'},
+    {text:'Establish air-to-ground frequencies for all aircraft',tag:'coord'},
+    {text:'Confirm Temporary Flight Restriction (TFR) if applicable',tag:'safety'},
+    {text:'Identify all helispots and helibases — document on ICS-220',tag:'form'},
+    {text:'Establish air-to-air coordination frequency',tag:'safety'},
+    {text:'Brief all pilots on incident airspace and safety procedures',tag:'safety'},
+    {text:'Confirm weather minimums and go/no-go criteria with pilots'},
+    {text:'Activate ATGS and ASGS as needed'},
+  ],
+  operational:[
+    {text:'Update ICS-220 each period',tag:'form'},
+    {text:'Coordinate all aircraft missions with OSC'},
+    {text:'Monitor weather — ground all aircraft if conditions deteriorate',tag:'safety'},
+    {text:'Maintain aircraft assignment log — where is each aircraft at all times'},
+    {text:'Conduct morning aerial reconnaissance if applicable'},
+    {text:'Enforce altitude minimums and traffic patterns',tag:'safety'},
+    {text:'Ensure pilots have current fuel and rest — fatigue is a major aviation risk',tag:'safety'},
+    {text:'Coordinate with ASGS on fueling and maintenance'},
+    {text:'Brief OSC on air operations status at each C&GS meeting'},
+    {text:'Maintain activity log (ICS-214)',tag:'doc'},
+  ],
+  deliverables:[
+    {form:'ICS-220',desc:'Air Operations Summary — all aircraft, helispots, frequencies',when:'Each period'},
+    {form:'ICS-214',desc:'Activity Log',when:'Continuous'},
+  ],
+  meetings:['Command and General Staff meeting','Tactics meeting','Operations Briefing','Morning weather briefing'],
+  deactivation:[
+    {text:'Ensure all aircraft are properly demobilized with documentation'},
+    {text:'Confirm all pilots have adequate rest before long flights home'},
+    {text:'Submit all aviation logs and fuel records to Finance/Admin'},
+    {text:'Ensure TFR cancellation is requested if applicable'},
+    {text:'Complete final ICS-214'},
+  ],
+},
+
+];
+
+// ══════════════════════════════════════════════════════════════════
+// SECTION CONFIG
+// ══════════════════════════════════════════════════════════════════
+const SECTIONS = [
+  { id:'Command',    label:'Command',              color:'#c8760a', icon:'⭐' },
+  { id:'Operations', label:'Operations Section',   color:'#1a5276', icon:'⚙️' },
+  { id:'Planning',   label:'Planning Section',     color:'#1e8449', icon:'📋' },
+  { id:'Logistics',  label:'Logistics Section',    color:'#9b59b6', icon:'📦' },
+  { id:'Finance',    label:'Finance / Admin',      color:'#7f8c8d', icon:'💰' },
+];
+
+// Track checked state per position per session
+const checkState = {};
+
+function getChecks(posId) {
+  if (!checkState[posId]) checkState[posId] = {};
+  return checkState[posId];
+}
+
+// ══════════════════════════════════════════════════════════════════
+// SIDEBAR
+// ══════════════════════════════════════════════════════════════════
+function buildSidebar(filter='') {
+  const container = document.getElementById('sidebarContent');
+  container.innerHTML = SECTIONS.map(sec => {
+    const positions = POSITIONS.filter(p =>
+      p.section === sec.id &&
+      (!filter || p.title.toLowerCase().includes(filter.toLowerCase()) ||
+       p.abbr.toLowerCase().includes(filter.toLowerCase()))
+    );
+    if (!positions.length) return '';
+    return `
+      <div class="section-group">
+        <div class="section-group-header" style="color:${sec.color}"
+          onclick="toggleSection('sec-${sec.id}')">
+          <span>${sec.icon} ${sec.label}</span>
+          <span style="font-size:9px;opacity:0.5">▼</span>
+        </div>
+        <div id="sec-${sec.id}">
+          ${positions.map(p => `
+            <button class="pos-btn" id="btn-${p.id}"
+              style="border-left-color:${p.color}"
+              onclick="showPosition('${p.id}')">
+              <span class="pos-abbr" style="background:${p.color}22;color:${p.color}">${p.abbr}</span>
+              ${p.title}
+            </button>`).join('')}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function toggleSection(id) {
+  const el = document.getElementById(id);
+  if (el) el.style.display = el.style.display === 'none' ? '' : 'none';
+}
+
+function filterPositions() {
+  const q = document.getElementById('posSearch').value;
+  buildSidebar(q);
+  // Re-apply active state
+  if (currentPos) {
+    const btn = document.getElementById(`btn-${currentPos}`);
+    if (btn) btn.classList.add('active');
+  }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// RENDER POSITION
+// ══════════════════════════════════════════════════════════════════
+let currentPos = null;
+
+function showPosition(id) {
+  const pos = POSITIONS.find(p => p.id === id);
+  if (!pos) return;
+  currentPos = id;
+
+  // Update sidebar active state
+  document.querySelectorAll('.pos-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById(`btn-${id}`);
+  if (btn) btn.classList.add('active');
+
+  const checks = getChecks(id);
+  const main = document.getElementById('mainContent');
+
+  // Count items for progress
+  const allItems = [
+    ...(pos.activation||[]),
+    ...(pos.operational||[]),
+    ...(pos.deactivation||[])
+  ];
+  const doneCount = allItems.filter((_,i) => checks[`item-${i}`]).length;
+
+  main.innerHTML = `
+    <!-- Position header -->
+    <div class="pos-header-card" style="background:linear-gradient(135deg,${pos.color}dd,${pos.color}88)">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <div>
+          <div class="pos-title">${pos.title}</div>
+          <div class="pos-subtitle">${pos.section} Section &nbsp;·&nbsp; ${pos.abbr}</div>
+        </div>
+        <div style="text-align:right;font-size:12px;opacity:0.8">
+          <div>${doneCount} / ${allItems.length} tasks completed</div>
+          <div style="margin-top:4px;font-size:10px;opacity:0.7">Checks persist during session</div>
+        </div>
+      </div>
+      <div class="reports-to">
+        <div style="margin-bottom:3px">
+          <strong>Reports to:</strong> ${pos.reports_to}
+        </div>
+        <div>
+          <strong>Supervises:</strong> ${pos.supervises}
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress bar -->
+    <div class="progress-bar">
+      <div class="progress-fill" style="width:${allItems.length?doneCount/allItems.length*100:0}%"></div>
+    </div>
+
+    <!-- Description -->
+    <div class="checklist-section">
+      <div class="checklist-section-header" style="background:rgba(0,0,0,0.2)">
+        <span style="color:var(--amber)">📖</span>
+        <span style="color:var(--amber)">POSITION DESCRIPTION</span>
+      </div>
+      <div style="padding:12px 16px;font-size:12px;color:var(--muted);line-height:1.7">
+        ${pos.description}
+      </div>
+    </div>
+
+    ${pos.fallback ? `
+    <!-- Supervisor fallback -->
+    <div class="fallback-box">
+      <strong>⚠ IF THIS POSITION IS UNFILLED:</strong><br>
+      ${pos.fallback}
+    </div>` : ''}
+
+    <!-- Activation checklist -->
+    ${renderChecklist(pos, 'activation', '⚡ ACTIVATION CHECKLIST', 'First 30 minutes — do these in order', 'var(--amber)', checks)}
+
+    <!-- Operational checklist -->
+    ${renderChecklist(pos, 'operational', '🔄 OPERATIONAL PERIOD CHECKLIST', 'Recurring — every operational period', 'var(--blue)', checks)}
+
+    <!-- Deliverables -->
+    ${renderDeliverables(pos)}
+
+    <!-- Meetings -->
+    ${renderMeetings(pos)}
+
+    <!-- Deactivation checklist -->
+    ${renderChecklist(pos, 'deactivation', '✅ DEACTIVATION / DEMOBILIZATION', 'When incident closes or position transfers', 'var(--green)', checks)}
+
+    <!-- ICS-214 reminder -->
+    <div style="background:rgba(26,58,107,0.1);border:1px solid rgba(26,58,107,0.3);
+                border-radius:6px;padding:10px 14px;font-size:11px;color:var(--muted);margin-top:4px">
+      📋 <strong>All positions maintain an ICS-214 Activity Log.</strong>
+      Document significant events, decisions, and actions continuously.
+      Submit ICS-214 to Documentation Unit at the end of each operational period.
+    </div>
+  `;
+
+  // Restore checkbox states
+  Object.keys(checks).forEach(key => {
+    if (checks[key]) {
+      const el = document.getElementById(key+'-'+id);
+      if (el) el.closest('.chk-item')?.classList.add('done');
+    }
+  });
+}
+
+function renderChecklist(pos, type, title, subtitle, color, checks) {
+  const items = pos[type];
+  if (!items || !items.length) return '';
+
+  // Calculate offset for unique IDs (activation starts at 0, operational after activation)
+  const offsets = { activation:0, operational:(pos.activation||[]).length, deactivation:(pos.activation||[]).length+(pos.operational||[]).length };
+  const offset = offsets[type] || 0;
+
+  return `
+    <div class="checklist-section">
+      <div class="checklist-section-header">
+        <span style="color:${color}">${title}</span>
+        <span style="font-size:10px;color:var(--dim);margin-left:auto">${subtitle}</span>
+      </div>
+      <div class="checklist-body">
+        ${items.map((item, i) => {
+          const globalIdx = offset + i;
+          const key = `item-${globalIdx}`;
+          const done = checks[key];
+          const tagClass = item.tag ? `tag-${item.tag}` : '';
+          const tagLabel = item.tag ? ({
+            form:'ICS FORM', brief:'BRIEFING', coord:'COORDINATION',
+            safety:'SAFETY', doc:'DOCUMENTATION'
+          }[item.tag]||item.tag.toUpperCase()) : '';
+          return `
+            <div class="chk-item ${done?'done':''}" id="${key}-${pos.id}"
+              onclick="toggleCheck('${pos.id}','${key}',this)">
+              <div class="chk-box">${done?'✓':''}</div>
+              <div style="flex:1">
+                <div class="chk-text">
+                  ${item.text}
+                  ${tagClass?`<span class="chk-tag ${tagClass}">${tagLabel}</span>`:''}
+                </div>
+                ${item.note?`<div class="chk-note">${item.note}</div>`:''}
+              </div>
+            </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+}
+
+function renderDeliverables(pos) {
+  if (!pos.deliverables || !pos.deliverables.length) return '';
+  return `
+    <div class="checklist-section">
+      <div class="checklist-section-header">
+        <span style="color:var(--blue)">📄 REQUIRED DELIVERABLES — ICS FORMS</span>
+      </div>
+      <div class="checklist-body">
+        ${pos.deliverables.map(d=>`
+          <div class="deliverable-item">
+            <div class="del-form">${d.form}</div>
+            <div class="del-desc">${d.desc}</div>
+            <div class="del-when">${d.when}</div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+function renderMeetings(pos) {
+  if (!pos.meetings || !pos.meetings.length) return '';
+  return `
+    <div class="checklist-section">
+      <div class="checklist-section-header">
+        <span style="color:var(--green)">🗓 MEETINGS — PLANNING-P PARTICIPATION</span>
+      </div>
+      <div style="padding:8px 16px;display:flex;flex-wrap:wrap;gap:6px">
+        ${pos.meetings.map(m=>`
+          <span style="font-size:11px;padding:4px 10px;background:rgba(26,122,58,0.1);
+                       border:1px solid rgba(26,122,58,0.3);border-radius:4px;color:var(--green)">
+            ${m}
+          </span>`).join('')}
+      </div>
+    </div>`;
+}
+
+function toggleCheck(posId, key, el) {
+  const checks = getChecks(posId);
+  checks[key] = !checks[key];
+  el.classList.toggle('done', checks[key]);
+  const box = el.querySelector('.chk-box');
+  if (box) box.textContent = checks[key] ? '✓' : '';
+  updateProgress(posId);
+}
+
+function updateProgress(posId) {
+  const pos = POSITIONS.find(p=>p.id===posId);
+  if (!pos) return;
+  const checks = getChecks(posId);
+  const allItems = [...(pos.activation||[]),...(pos.operational||[]),...(pos.deactivation||[])];
+  const done = allItems.filter((_,i)=>checks[`item-${i}`]).length;
+  const pct = allItems.length ? done/allItems.length*100 : 0;
+  const fill = document.querySelector('.progress-fill');
+  if (fill) fill.style.width = pct+'%';
+  const countEl = document.querySelector('.pos-header-card div[style*="text-align:right"] div');
+  if (countEl) countEl.textContent = `${done} / ${allItems.length} tasks completed`;
+}
+
+function resetAllChecks() {
+  if (!currentPos) return;
+  if (!confirm('Reset all checkboxes for this position?')) return;
+  const checks = getChecks(currentPos);
+  Object.keys(checks).forEach(k => delete checks[k]);
+  showPosition(currentPos);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// INIT
+// ══════════════════════════════════════════════════════════════════
+buildSidebar();
+</script>
+</body>
+</html>

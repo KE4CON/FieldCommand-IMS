@@ -318,10 +318,18 @@ CREATE TABLE IF NOT EXISTS ics_tcards (
     incident_id     TEXT NOT NULL REFERENCES incidents(id) ON DELETE CASCADE,
     resource_id     TEXT DEFAULT '',
     resource_name   TEXT NOT NULL DEFAULT '',
-    type            TEXT DEFAULT '',
-    status          TEXT NOT NULL DEFAULT 'Available',
-    assignment      TEXT DEFAULT '',
-    contact         TEXT DEFAULT '',
+    resource_type   TEXT DEFAULT '',   -- Crew, Engine, Helicopter, Dozer, etc.
+    category        TEXT DEFAULT '',   -- Personnel, Equipment, Supply, Aircraft
+    type            TEXT DEFAULT '',   -- Type I, II, III, IV
+    status          TEXT NOT NULL DEFAULT 'Available', -- Available, Assigned, Out of Service, Staging
+    assignment      TEXT DEFAULT '',   -- Division/Group assigned to
+    leader          TEXT DEFAULT '',   -- crew/unit leader name
+    contact         TEXT DEFAULT '',   -- radio channel or phone
+    num_personnel   INTEGER DEFAULT 0,
+    eta             TEXT DEFAULT '',   -- ETA if en route
+    notes           TEXT DEFAULT '',
+    order_number    TEXT DEFAULT '',   -- resource order number
+    home_agency     TEXT DEFAULT '',
     created         TEXT NOT NULL,
     updated         TEXT NOT NULL
 );
@@ -567,6 +575,14 @@ def init_db():
         "ALTER TABLE station_config ADD COLUMN ps_member_lookup TEXT DEFAULT 'radio_id'",
         "ALTER TABLE incidents ADD COLUMN ics_variant TEXT DEFAULT 'FEMA'",
         "ALTER TABLE net_entries ADD COLUMN ics_position TEXT DEFAULT ''",
+        "ALTER TABLE ics_tcards ADD COLUMN resource_type TEXT DEFAULT ''",
+        "ALTER TABLE ics_tcards ADD COLUMN category TEXT DEFAULT ''",
+        "ALTER TABLE ics_tcards ADD COLUMN leader TEXT DEFAULT ''",
+        "ALTER TABLE ics_tcards ADD COLUMN num_personnel INTEGER DEFAULT 0",
+        "ALTER TABLE ics_tcards ADD COLUMN eta TEXT DEFAULT ''",
+        "ALTER TABLE ics_tcards ADD COLUMN notes TEXT DEFAULT ''",
+        "ALTER TABLE ics_tcards ADD COLUMN order_number TEXT DEFAULT ''",
+        "ALTER TABLE ics_tcards ADD COLUMN home_agency TEXT DEFAULT ''",
         """CREATE TABLE IF NOT EXISTS hospitals (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL DEFAULT '', address TEXT DEFAULT '', city TEXT DEFAULT '', state TEXT DEFAULT '', county TEXT DEFAULT '', phone TEXT DEFAULT '', phone2 TEXT DEFAULT '', fax TEXT DEFAULT '', lat REAL, lon REAL, trauma_level TEXT DEFAULT '', burn_center INTEGER DEFAULT 0, helipad INTEGER DEFAULT 1, icu INTEGER DEFAULT 0, peds_trauma INTEGER DEFAULT 0, stroke_center INTEGER DEFAULT 0, cardiac_center INTEGER DEFAULT 0, travel_time_min INTEGER DEFAULT 0, notes TEXT DEFAULT '', active INTEGER DEFAULT 1)""",
         """CREATE TABLE IF NOT EXISTS ics_meetings (id TEXT PRIMARY KEY, incident_id TEXT NOT NULL DEFAULT '', period INTEGER NOT NULL DEFAULT 1, meeting_type TEXT NOT NULL, title TEXT NOT NULL DEFAULT '', scheduled_time TEXT, location TEXT DEFAULT '', chair TEXT DEFAULT '', attendees TEXT DEFAULT '[]', agenda_items TEXT DEFAULT '[]', status TEXT DEFAULT 'scheduled', notes TEXT DEFAULT '', created TEXT NOT NULL, updated TEXT NOT NULL)""",
     ]

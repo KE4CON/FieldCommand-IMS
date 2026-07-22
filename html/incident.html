@@ -416,10 +416,12 @@ function renderWorkspace() {
         Started: ${(periods[periods.length-1].started||'').slice(0,16).replace('T',' ')} UTC
       </span>` : ''}
       <div style="margin-left:auto">
-        <button onclick="exportIAP('${inc.id}')"
-          style="background:var(--eoc);border-color:var(--eoc);color:#fff;font-size:11px;padding:5px 14px">
+        <a href="iap.html?incident=${inc.id}"
+          style="background:var(--eoc);border:1px solid var(--eoc);color:#fff;
+                 font-weight:bold;padding:5px 14px;border-radius:4px;
+                 font-size:11px;text-decoration:none">
           📄 Export IAP
-        </button>
+        </a>
       </div>
     </div>
 
@@ -607,11 +609,6 @@ async function advancePeriod() {
     await selectIncident(inc.id);
     await loadIncidents();
   } catch(e) { alert('Failed: ' + e); }
-}
-
-// ── Export IAP (placeholder — full build in IAP assembly step) ──────────
-function exportIAP(incId) {
-  alert('IAP export will be available once ICS forms are completed.\n\nThis will compile all completed forms for this incident into a single PDF with cover page and organization logo.');
 }
 
 function changeVariant(incId) {

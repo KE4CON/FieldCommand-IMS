@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IAP Assembly — FieldCommand IMS</title>
+<link rel="stylesheet" href="theme.css">
+<style>
+.iap-header {
+  background:linear-gradient(135deg,#001428,#002858);
+  border-bottom:2px solid var(--eoc);padding:10px 16px;
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+}
+.iap-badge {
+  background:var(--eoc);color:#fff;font-family:var(--font-hd);
+  font-size:12px;padding:4px 12px;border-radius:4px;letter-spacing:2px;
+}
+.form-check-card {
+  background:var(--panel);border:1px solid var(--line);border-radius:8px;
+  padding:12px 16px;margin-bottom:8px;display:flex;
+  align-items:center;gap:12px;cursor:pointer;
+  transition:border-color 0.15s;
+}
+.form-check-card:hover { border-color:var(--eoc); }
+.form-check-card.included { border-color:var(--green);background:rgba(26,122,58,0.05); }
+.form-check-card.missing  { border-color:var(--line);opacity:0.5; }
+.form-num { font-family:var(--font-hd);font-size:13px;color:var(--amber);min-width:70px; }
+.form-title-txt { flex:1;font-size:13px; }
+.form-status { font-size:10px;padding:2px 8px;border-radius:10px; }
+.form-status.saved    { background:rgba(26,122,58,0.15);color:var(--green);border:1px solid var(--green); }
+.form-status.unsaved  { background:rgba(200,118,10,0.1);color:var(--amber);border:1px solid var(--amber); }
+.form-status.required { background:rgba(192,32,32,0.1);color:var(--red);border:1px solid var(--red); }
+.cover-preview {
+  background:var(--panel);border:1px solid var(--line);border-radius:8px;
+  padding:20px;margin-bottom:16px;text-align:center;
+}
+.cover-preview h2 { font-family:var(--font-hd);font-size:14px;color:var(--eoc);letter-spacing:2px;margin:0 0 6px; }
+</style>
+</head>
+<body>
+
+<div class="iap-header">
+  <span class="iap-badge">IAP</span>
+  <span style="font-family:var(--font-hd);font-size:14px;letter-spacing:2px">INCIDENT ACTION PLAN — ASSEMBLY</span>
+  <div id="incBadge" style="font-size:12px;color:var(--muted)">No incident selected</div>
+  <div style="margin-left:auto;display:flex;gap:8px">
+    <button onclick="exportIAP()"
+      style="background:var(--eoc);border-color:var(--eoc);color:#fff;font-weight:bold;padding:8px 20px">
+      📄 Export IAP (Print All)
+    </button>
+    <a href="incident.html" style="color:var(--muted);font-size:12px;padding:8px">← Incident</a>
+  </div>
+</div>
+
+<div class="page-wrap" style="display:grid;grid-template-columns:1fr 320px;gap:16px;padding:16px">
+
+<!-- Left: Form checklist -->
+<div>
+  <div style="font-family:var(--font-hd);font-size:11px;letter-spacing:2px;color:var(--eoc);
+              text-transform:uppercase;padding:8px 0 10px;border-bottom:1px solid var(--line);margin-bottom:12px">
+    IAP Form Checklist — Op Period <span id="periodLabel">1</span>
+  </div>
+  <p style="font-size:12px;color:var(--muted);margin:0 0 14px">
+    Check which forms to include in this IAP. Forms marked Required must be present for
+    a complete IAP per FEMA ICS standards.
+  </p>
+
+  <div id="formChecklist"></div>
+</div>
+
+<!-- Right: Cover page config + export -->
+<div>
+  <div class="cover-preview">
+    <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">IAP Cover Page</div>
+    <div id="coverLogoPreview" style="margin-bottom:8px;min-height:40px"></div>
+    <div style="font-family:var(--font-hd);font-size:18px;letter-spacing:3px;color:var(--eoc)" id="coverOrgName">ORGANIZATION</div>
+    <div style="font-size:12px;color:var(--muted);margin-top:4px" id="coverIncName">Incident Name</div>
+    <div style="font-size:11px;color:var(--dim);margin-top:2px" id="coverPeriod">Operational Period 1</div>
+    <div style="font-size:10px;color:var(--dim);margin-top:2px" id="coverIC">Incident Commander: —</div>
+  </div>
+
+  <div style="background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px;margin-bottom:12px">
+    <div style="font-family:var(--font-hd);font-size:11px;letter-spacing:1px;color:var(--amber);margin-bottom:10px">
+      IAP OPTIONS
+    </div>
+    <div class="fg" style="margin-bottom:8px">
+      <label style="font-size:11px;color:var(--muted)">Operational Period</label>
+      <select id="iapPeriod" onchange="loadFormStatus()"
+        style="background:var(--input-bg);border:1px solid var(--line);color:var(--txt);
+               padding:6px 10px;border-radius:4px;font-size:12px">
+        <option value="1">Period 1</option>
+        <option value="2">Period 2</option>
+        <option value="3">Period 3</option>
+        <option value="4">Period 4</option>
+        <option value="5">Period 5</option>
+      </select>
+    </div>
+    <div class="fg">
+      <label style="font-size:11px;color:var(--muted)">ICS Form Variant</label>
+      <select id="iapVariant"
+        style="background:var(--input-bg);border:1px solid var(--line);color:var(--txt);
+               padding:6px 10px;border-radius:4px;font-size:12px">
+        <option value="FEMA">FEMA</option>
+        <option value="USCG">USCG</option>
+        <option value="NWCG">NWCG</option>
+      </select>
+    </div>
+  </div>
+
+  <div style="background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px;margin-bottom:12px">
+    <div style="font-family:var(--font-hd);font-size:11px;letter-spacing:1px;color:var(--amber);margin-bottom:8px">
+      COMPLETENESS
+    </div>
+    <div id="completenessBar" style="background:var(--bg);border-radius:4px;overflow:hidden;height:8px;margin-bottom:6px">
+      <div id="complBar" style="height:100%;background:var(--green);width:0%;transition:width 0.3s"></div>
+    </div>
+    <div id="completenessText" style="font-size:11px;color:var(--muted)">
+      Loading...
+    </div>
+  </div>
+
+  <div style="background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px">
+    <div style="font-family:var(--font-hd);font-size:11px;letter-spacing:1px;color:var(--amber);margin-bottom:8px">
+      QUICK LINKS
+    </div>
+    <div id="quickLinks" style="display:flex;flex-direction:column;gap:4px"></div>
+  </div>
+</div>
+
+</div>
+
+<script>
+const ICS_API  = 'http://192.168.50.1:5051';
+const MAIN_API = 'http://192.168.50.1:5050';
+const params   = new URLSearchParams(location.search);
+const INC_ID   = params.get('incident') || '';
+let orgData    = {};
+let incData    = {};
+let savedForms = {};
+
+// IAP form set — order matters for IAP assembly
+const IAP_FORMS = [
+  { num:'201',   title:'Incident Briefing',                required:true,  section:'Command' },
+  { num:'202',   title:'Incident Objectives',              required:true,  section:'Command' },
+  { num:'203',   title:'Organization Assignment List',     required:true,  section:'Planning' },
+  { num:'204',   title:'Assignment List',                  required:true,  section:'Operations' },
+  { num:'205',   title:'Radio Communications Plan',        required:true,  section:'Logistics' },
+  { num:'205A',  title:'Communications List',              required:false, section:'Logistics' },
+  { num:'206',   title:'Medical Plan',                     required:true,  section:'Logistics' },
+  { num:'207',   title:'Organization Chart',               required:false, section:'Command' },
+  { num:'208',   title:'Safety Message/Plan',              required:false, section:'Command' },
+  { num:'209',   title:'Incident Status Summary',          required:false, section:'Planning' },
+  { num:'213RR', title:'Resource Request',                 required:false, section:'Logistics' },
+  { num:'214',   title:'Activity Log',                     required:false, section:'All' },
+  { num:'215',   title:'Operational Planning Worksheet',   required:false, section:'Planning' },
+  { num:'215A',  title:'IAP Safety Analysis',              required:false, section:'Command' },
+  { num:'210',   title:'Resource Status Change',           required:false, section:'Planning' },
+  { num:'211',   title:'Incident Check-In List',           required:false, section:'Command' },
+  { num:'219',   title:'Resource Status Cards (T-Board)',  required:false, section:'Planning' },
+  { num:'220',   title:'Air Operations Summary',           required:false, section:'Operations' },
+  { num:'233',   title:'Open Action Tracker',              required:false, section:'Planning' },
+];
+
+const SECTION_COLORS = {
+  'Command':'var(--amber)','Operations':'var(--blue)',
+  'Planning':'var(--green)','Logistics':'#9b59b6','All':'var(--muted)'
+};
+
+let included = new Set(IAP_FORMS.filter(f=>f.required).map(f=>f.num));
+
+async function init() {
+  try {
+    const [orgR, incR] = await Promise.all([
+      fetch(`${MAIN_API}/api/config`),
+      INC_ID ? fetch(`${ICS_API}/api/ics/incidents/${INC_ID}`) : Promise.resolve(null)
+    ]);
+    orgData = orgR.ok ? await orgR.json() : {};
+    if (incR?.ok) {
+      const d = await incR.json();
+      incData = d.incident || d;
+    }
+  } catch(e) {}
+
+  updateCoverPreview();
+  await loadFormStatus();
+  renderChecklist();
+  renderQuickLinks();
+
+  if (incData.name) {
+    document.getElementById('incBadge').textContent = incData.name;
+    document.title = `IAP — ${incData.name} — FieldCommand IMS`;
+  }
+  if (incData.ics_variant) {
+    document.getElementById('iapVariant').value = incData.ics_variant;
+  }
+  if (incData.current_period) {
+    document.getElementById('iapPeriod').value = incData.current_period;
+    document.getElementById('periodLabel').textContent = incData.current_period;
+  }
+}
+
+async function loadFormStatus() {
+  const period = document.getElementById('iapPeriod').value;
+  document.getElementById('periodLabel').textContent = period;
+  savedForms = {};
+  if (!INC_ID) return;
+  try {
+    for (const f of IAP_FORMS) {
+      const r = await fetch(
+        `${ICS_API}/api/ics/forms/ics${f.num}?incident_id=${INC_ID}&period=${period}`);
+      const forms = await r.json();
+      if (forms.length) savedForms[f.num] = forms[0];
+    }
+  } catch(e) {}
+  renderChecklist();
+  updateCompleteness();
+}
+
+function renderChecklist() {
+  const period = document.getElementById('iapPeriod').value;
+  const el = document.getElementById('formChecklist');
+  el.innerHTML = IAP_FORMS.map(f => {
+    const saved = savedForms[f.num];
+    const inc = included.has(f.num);
+    const statusTxt = saved ? 'Saved' : f.required ? 'Required — not yet saved' : 'Not started';
+    const statusCls = saved ? 'saved' : f.required ? 'required' : 'unsaved';
+    const sectionColor = SECTION_COLORS[f.section] || 'var(--muted)';
+    return `<div class="form-check-card ${inc?'included':''}"
+      onclick="toggleInclude('${f.num}')">
+      <input type="checkbox" ${inc?'checked':''} style="width:16px;height:16px;flex-shrink:0"
+        onclick="event.stopPropagation();toggleInclude('${f.num}')">
+      <div class="form-num">ICS-${f.num}</div>
+      <div class="form-title-txt">
+        ${f.title}
+        <span style="font-size:10px;color:${sectionColor};margin-left:6px">${f.section}</span>
+      </div>
+      <span class="form-status ${statusCls}">${statusTxt}</span>
+      <a href="ics-form.html?form=${f.num}&incident=${INC_ID}&period=${period}"
+        onclick="event.stopPropagation()"
+        style="font-size:11px;color:var(--blue);white-space:nowrap;margin-left:4px">
+        ${saved?'Edit':'Open'} →
+      </a>
+    </div>`;
+  }).join('');
+}
+
+function toggleInclude(num) {
+  if (included.has(num)) included.delete(num);
+  else included.add(num);
+  renderChecklist();
+  updateCompleteness();
+}
+
+function updateCompleteness() {
+  const required = IAP_FORMS.filter(f=>f.required);
+  const done = required.filter(f=>savedForms[f.num]).length;
+  const pct = Math.round(done/required.length*100);
+  document.getElementById('complBar').style.width = pct+'%';
+  document.getElementById('complBar').style.background =
+    pct===100?'var(--green)':pct>60?'var(--amber)':'var(--red)';
+  document.getElementById('completenessText').textContent =
+    `${done} of ${required.length} required forms saved (${pct}% complete)`;
+}
+
+function updateCoverPreview() {
+  document.getElementById('coverOrgName').textContent =
+    orgData.org_short || orgData.callsign || 'ORGANIZATION';
+  document.getElementById('coverIncName').textContent =
+    incData.name || 'Incident Name';
+  document.getElementById('coverPeriod').textContent =
+    `Operational Period ${document.getElementById('iapPeriod')?.value || 1}`;
+  document.getElementById('coverIC').textContent =
+    `Incident Commander: ${incData.incident_commander || '—'}`;
+  if (orgData.logo_data && orgData.logo_mime) {
+    document.getElementById('coverLogoPreview').innerHTML =
+      `<img src="data:${orgData.logo_mime};base64,${orgData.logo_data}"
+        style="max-height:50px;max-width:100%;object-fit:contain">`;
+  }
+}
+
+function renderQuickLinks() {
+  const period = document.getElementById('iapPeriod')?.value || 1;
+  document.getElementById('quickLinks').innerHTML = IAP_FORMS.slice(0,6).map(f=>
+    `<a href="ics-form.html?form=${f.num}&incident=${INC_ID}&period=${period}"
+      style="font-size:12px;color:var(--blue);padding:4px 0;text-decoration:none;
+             display:flex;justify-content:space-between">
+      <span>ICS-${f.num} ${f.title}</span>
+      <span style="color:${savedForms[f.num]?'var(--green)':'var(--dim)'}">
+        ${savedForms[f.num]?'✓':'—'}
+      </span>
+    </a>`
+  ).join('');
+}
+
+function exportIAP() {
+  const period = document.getElementById('iapPeriod').value;
+  const variant = document.getElementById('iapVariant').value;
+  const includedForms = IAP_FORMS.filter(f => included.has(f.num));
+
+  // Open each form in print mode in sequence
+  // Build a combined print window
+  const printWin = window.open('', '_blank', 'width=900,height=700');
+  printWin.document.write(`<!DOCTYPE html><html><head>
+    <title>IAP — ${incData.name||'Incident'} — Period ${period}</title>
+    <style>
+      body { font-family:Arial,sans-serif; margin:0; }
+      .cover-page {
+        width:100%; min-height:100vh; display:flex; flex-direction:column;
+        align-items:center; justify-content:center;
+        background:#001428; color:#fff; text-align:center; padding:40px;
+        box-sizing:border-box; page-break-after:always;
+      }
+      .cover-logo img { max-height:100px; max-width:200px; object-fit:contain; margin-bottom:30px; }
+      .cover-org { font-size:32px; font-weight:bold; letter-spacing:6px; color:#f5a623; margin-bottom:16px; }
+      .cover-title { font-size:22px; letter-spacing:3px; color:#fff; margin-bottom:10px; }
+      .cover-incident { font-size:18px; color:rgba(255,255,255,0.8); margin-bottom:6px; }
+      .cover-period { font-size:14px; color:rgba(255,255,255,0.6); margin-bottom:6px; }
+      .cover-ic { font-size:13px; color:rgba(255,255,255,0.5); }
+      .cover-footer { margin-top:40px; font-size:10px; color:rgba(255,255,255,0.3); }
+      .form-section { page-break-before:always; }
+      @media print { body { margin:0; } }
+    </style>
+  </head><body>
+
+  <!-- IAP Cover Page -->
+  <div class="cover-page">
+    ${orgData.logo_data?`<div class="cover-logo"><img src="data:${orgData.logo_mime};base64,${orgData.logo_data}"></div>`:''}
+    <div class="cover-org">${orgData.org_short||orgData.callsign||orgData.org_name||'FIELDCOMMAND IMS'}</div>
+    ${orgData.agency_name?`<div style="font-size:13px;color:rgba(255,255,255,0.5);margin-bottom:20px">${orgData.agency_name}</div>`:''}
+    <div class="cover-title">INCIDENT ACTION PLAN</div>
+    <div class="cover-incident">${incData.name||'Unnamed Incident'}</div>
+    <div class="cover-period">Operational Period ${period}</div>
+    <div class="cover-ic">Incident Commander: ${incData.incident_commander||'—'}</div>
+    <div class="cover-ic">Location: ${incData.location||incData.jurisdiction||'—'}</div>
+    <div style="margin-top:30px;font-size:12px;color:rgba(255,255,255,0.4)">
+      Forms included: ${includedForms.map(f=>'ICS-'+f.num).join(' · ')}
+    </div>
+    <div class="cover-footer">
+      ${variant} · FieldCommand IMS · © 2026 James Rospopo KE4CON<br>
+      Generated: ${new Date().toLocaleString()}
+    </div>
+  </div>
+
+  <!-- Form table of contents -->
+  <div style="padding:40px;page-break-after:always">
+    <h2 style="font-size:16px;border-bottom:2px solid #1a3a6b;padding-bottom:8px;color:#1a3a6b">
+      IAP CONTENTS — ${incData.name||''} — Operational Period ${period}
+    </h2>
+    <table style="width:100%;border-collapse:collapse;font-size:12px;margin-top:16px">
+      <thead><tr style="background:#e8eef7">
+        <th style="padding:6px 10px;text-align:left;border:1px solid #ccc">#</th>
+        <th style="padding:6px 10px;text-align:left;border:1px solid #ccc">Form</th>
+        <th style="padding:6px 10px;text-align:left;border:1px solid #ccc">Title</th>
+        <th style="padding:6px 10px;text-align:left;border:1px solid #ccc">Section</th>
+        <th style="padding:6px 10px;text-align:center;border:1px solid #ccc">Required</th>
+      </tr></thead>
+      <tbody>
+        ${includedForms.map((f,i)=>`<tr style="border-bottom:1px solid #eee">
+          <td style="padding:5px 10px;border:1px solid #ccc">${i+1}</td>
+          <td style="padding:5px 10px;border:1px solid #ccc;font-weight:bold;font-family:monospace">ICS-${f.num}</td>
+          <td style="padding:5px 10px;border:1px solid #ccc">${f.title}</td>
+          <td style="padding:5px 10px;border:1px solid #ccc">${f.section}</td>
+          <td style="padding:5px 10px;border:1px solid #ccc;text-align:center">${f.required?'✓':''}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+    <div style="margin-top:20px;font-size:10px;color:#888">
+      ${variant} variant · FieldCommand IMS · © 2026 James Rospopo KE4CON · CC BY-SA 4.0
+    </div>
+  </div>
+
+  <!-- Individual forms will print from their own pages -->
+  <div style="padding:30px;font-size:13px;color:#333">
+    <h3>To print individual forms:</h3>
+    <p>Open each form using the links below and use the Print button in the form header.
+    For a complete IAP, print each form in order and collate behind this cover page.</p>
+    <ul style="line-height:2">
+      ${includedForms.map(f=>
+        `<li><strong>ICS-${f.num}</strong> — ${f.title}
+          <a href="ics-form.html?form=${f.num}&incident=${INC_ID}&period=${period}"
+            target="_blank" style="margin-left:8px;color:#1a5276">Open Form →</a>
+        </li>`
+      ).join('')}
+    </ul>
+    <p style="margin-top:20px;font-size:11px;color:#888">
+      Full automated IAP PDF export (all forms compiled into one document) is planned for a future
+      update when the IAP assembly feature is complete.
+    </p>
+  </div>
+
+  <script>window.print()<\/script>
+  </body></html>`);
+  printWin.document.close();
+}
+
+init();
+</script>
+</body>
+</html>

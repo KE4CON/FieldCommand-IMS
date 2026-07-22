@@ -244,10 +244,17 @@ async function loadSavedForm() {
       `${ICS_API}/api/ics/forms/ics${FORM_NUM}?incident_id=${INC_ID}&period=${PERIOD}`);
     const forms = await r.json();
     if (forms.length) {
-      savedId = forms[0].id;
+      // ICS-211 uses fixed ID ics211-{incident_id}
+      savedId = FORM_NUM === '211' ? `ics211-${INC_ID}` : forms[0].id;
       const data = JSON.parse(forms[0].data || '{}');
       // Merge saved data into formData
       Object.assign(formData, data);
+      // Update last sync display for ICS-211
+      if (FORM_NUM === '211') {
+        const updated = forms[0].updated || forms[0].created || '';
+        const ls = document.getElementById('ci211LastSync');
+        if (ls && updated) ls.textContent = new Date(updated).toLocaleString();
+      }
     }
   } catch(e) {}
 }
@@ -3765,6 +3772,1556 @@ function add221Person() {
     <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="dp221_dest_${pers221Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>`;
   tbody.appendChild(tr);
   pers221Count++;
+}
+
+
+// ══════════════════════════════════════════════════════════════════
+// ICS-207 ORGANIZATION CHART
+// ══════════════════════════════════════════════════════════════════
+FORMS['207'] = {
+  title: 'ICS-207 Organization Chart',
+  badge: 'ICS-207',
+  variants: { FEMA:'FEMA 010-0-7', USCG:'CG-5216', NWCG:'ICS-207 (NWCG)' },
+
+  render() {
+    document.getElementById('formTitle').textContent = 'ICS-207 \u2014 Organization Chart';
+    document.getElementById('formBadge').textContent = 'ICS-207';
+    document.getElementById('formMeta').textContent =
+      `${this.variants[VARIANT]} \u00b7 Period ${PERIOD} \u00b7 ${incData.name||'No incident'}`;
+
+    // Pull from ICS-203 data
+    const ic  = formData.incident_commander || incData.incident_commander || '';
+    const osc = formData.ops_section_chief  || '';
+    const psc = formData.planning_section_chief || '';
+    const lsc = formData.logistics_section_chief || '';
+    const fsc = formData.finance_section_chief || '';
+    const so  = formData.safety_officer || '';
+    const pio = formData.public_info_officer || '';
+    const lo  = formData.liaison_officer || '';
+
+    return `
+    <div class="section-card">
+      <h2>1. Incident Information</h2>
+      <div class="grid-3">
+        ${field('incident_name','Incident Name','text',incData.name||'')}
+        ${field('operational_period_number','Op Period #','text',String(PERIOD))}
+        ${field('date_prepared','Date Prepared','date',todayDate())}
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>2. Visual Organization Chart</h2>
+      <p style="font-size:11px;color:var(--muted);margin:0 0 12px">
+        Two options: use the interactive chart builder below, or upload/select a
+        pre-drawn organization chart image using the map/image picker.
+      </p>
+
+      <!-- Interactive ICS org chart builder -->
+      <div style="background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:14px;overflow-x:auto">
+        <div style="font-size:11px;color:var(--blue);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px">
+          Interactive Org Chart — auto-populated from ICS-203
+        </div>
+
+        <!-- IC Box -->
+        <div style="display:flex;justify-content:center;margin-bottom:8px">
+          <div style="border:2px solid var(--amber);border-radius:6px;padding:8px 16px;text-align:center;min-width:180px;background:rgba(200,118,10,0.08)">
+            <div style="font-size:9px;color:var(--amber);text-transform:uppercase;letter-spacing:1px">Incident Commander</div>
+            <input type="text" data-key="chart_ic" value="${ic}" style="background:transparent;border:none;border-bottom:1px solid var(--line);color:var(--txt);font-size:13px;text-align:center;width:100%;margin-top:4px">
+          </div>
+        </div>
+
+        <!-- Vertical line down from IC -->
+        <div style="display:flex;justify-content:center;height:16px">
+          <div style="width:2px;background:var(--line)"></div>
+        </div>
+
+        <!-- Command Staff row -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px;max-width:700px;margin-left:auto;margin-right:auto">
+          ${[
+            {key:'chart_so',  label:'Safety Officer',          val:so},
+            {key:'chart_pio', label:'Public Info Officer',     val:pio},
+            {key:'chart_lo',  label:'Liaison Officer',         val:lo},
+          ].map(b=>`<div style="border:1px solid var(--eoc);border-radius:5px;padding:6px 10px;text-align:center;background:rgba(26,58,107,0.08)">
+            <div style="font-size:9px;color:var(--muted);text-transform:uppercase;margin-bottom:3px">${b.label}</div>
+            <input type="text" data-key="${b.key}" value="${b.val}" style="background:transparent;border:none;border-bottom:1px solid var(--line);color:var(--txt);font-size:11px;text-align:center;width:100%">
+          </div>`).join('')}
+        </div>
+
+        <!-- Horizontal line across sections -->
+        <div style="border-top:2px solid var(--line);margin:8px 0"></div>
+
+        <!-- Four Section Chiefs -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+          ${[
+            {key:'chart_osc',color:'var(--blue)',   label:'Operations\nSection Chief',     val:osc},
+            {key:'chart_psc',color:'var(--green)',  label:'Planning\nSection Chief',       val:psc},
+            {key:'chart_lsc',color:'var(--amber)',  label:'Logistics\nSection Chief',      val:lsc},
+            {key:'chart_fsc',color:'var(--muted)',  label:'Finance/Admin\nSection Chief',  val:fsc},
+          ].map(b=>`<div style="border:2px solid ${b.color};border-radius:6px;padding:8px;text-align:center">
+            <div style="font-size:9px;color:${b.color};text-transform:uppercase;white-space:pre-line;margin-bottom:4px">${b.label}</div>
+            <input type="text" data-key="${b.key}" value="${b.val}" style="background:transparent;border:none;border-bottom:1px solid var(--line);color:var(--txt);font-size:11px;text-align:center;width:100%">
+          </div>`).join('')}
+        </div>
+
+        <!-- Sub-positions by section -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px">
+          <!-- Operations -->
+          <div style="font-size:10px">
+            ${[
+              {key:'chart_branch1',label:'Branch I Director'},
+              {key:'chart_branch2',label:'Branch II Director'},
+              {key:'chart_diva',   label:'Div A Supervisor'},
+              {key:'chart_divb',   label:'Div B Supervisor'},
+              {key:'chart_staging',label:'Staging Area Mgr'},
+            ].map(b=>`<div style="border:1px solid var(--line);border-radius:4px;padding:4px 6px;margin-bottom:4px">
+              <div style="font-size:9px;color:var(--dim)">${b.label}</div>
+              <input type="text" data-key="${b.key}" value="${formData[b.key]||''}" style="background:transparent;border:none;border-bottom:1px solid var(--line);color:var(--txt);font-size:10px;width:100%">
+            </div>`).join('')}
+          </div>
+          <!-- Planning -->
+          <div style="font-size:10px">
+            ${[
+              {key:'chart_resl',label:'Resources Unit Ldr'},
+              {key:'chart_sitl',label:'Situation Unit Ldr'},
+              {key:'chart_docl',label:'Documentation Ldr'},
+              {key:'chart_dmob',label:'Demob Unit Leader'},
+            ].map(b=>`<div style="border:1px solid var(--line);border-radius:4px;padding:4px 6px;margin-bottom:4px">
+              <div style="font-size:9px;color:var(--dim)">${b.label}</div>
+              <input type="text" data-key="${b.key}" value="${formData[b.key]||''}" style="background:transparent;border:none;border-bottom:1px solid var(--line);color:var(--txt);font-size:10px;width:100%">
+            </div>`).join('')}
+          </div>
+          <!-- Logistics -->
+          <div style="font-size:10px">
+            ${[
+              {key:'chart_coml',label:'Comms Unit Leader'},
+              {key:'chart_medl',label:'Medical Unit Ldr'},
+              {key:'chart_spul',label:'Supply Unit Leader'},
+              {key:'chart_gsul',label:'Grnd Support Ldr'},
+            ].map(b=>`<div style="border:1px solid var(--line);border-radius:4px;padding:4px 6px;margin-bottom:4px">
+              <div style="font-size:9px;color:var(--dim)">${b.label}</div>
+              <input type="text" data-key="${b.key}" value="${formData[b.key]||''}" style="background:transparent;border:none;border-bottom:1px solid var(--line);color:var(--txt);font-size:10px;width:100%">
+            </div>`).join('')}
+          </div>
+          <!-- Finance -->
+          <div style="font-size:10px">
+            ${[
+              {key:'chart_time',label:'Time Unit Leader'},
+              {key:'chart_proc',label:'Procurement Ldr'},
+              {key:'chart_comp',label:'Comp/Claims Ldr'},
+              {key:'chart_cost',label:'Cost Unit Leader'},
+            ].map(b=>`<div style="border:1px solid var(--line);border-radius:4px;padding:4px 6px;margin-bottom:4px">
+              <div style="font-size:9px;color:var(--dim)">${b.label}</div>
+              <input type="text" data-key="${b.key}" value="${formData[b.key]||''}" style="background:transparent;border:none;border-bottom:1px solid var(--line);color:var(--txt);font-size:10px;width:100%">
+            </div>`).join('')}
+          </div>
+        </div>
+      </div>
+
+      <!-- OR upload a chart image -->
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px">
+        — OR — upload / select a pre-drawn organization chart:
+      </div>
+      ${imageField('ics207_chart','Organization Chart Image',
+        'Upload a pre-drawn org chart, or use map picker to capture a drawn chart')}
+    </div>
+
+    <div class="section-card">
+      <h2>3. Prepared By</h2>
+      <div class="grid-2">
+        ${field('prepared_by','Prepared By (Resources Unit Leader)','text',
+          formData.resources_unit_ldr||orgData.personal_call||'')}
+        ${field('date_time_prepared','Date / Time','datetime-local','')}
+      </div>
+    </div>`;
+  },
+
+  buildPrint() {
+    const fd = collectFormData();
+    Object.assign(formData, fd);
+    const variant = FORMS['207'].variants[VARIANT];
+
+    // Build HTML org chart for print
+    const box = (label, key, color='#1a3a6b', bg='#e8eef7') =>
+      `<div style="border:2px solid ${color};border-radius:4px;padding:6px 10px;text-align:center;background:${bg};min-width:120px">
+        <div style="font-size:8px;color:${color};text-transform:uppercase;letter-spacing:0.5px">${label}</div>
+        <div style="font-size:11px;font-weight:bold;margin-top:2px">${fd[key]||'\u2014'}</div>
+      </div>`;
+
+    const smallBox = (label, key) =>
+      `<div style="border:1px solid #ccc;border-radius:3px;padding:3px 6px;text-align:center;margin-bottom:3px;font-size:9px">
+        <div style="color:#888">${label}</div>
+        <div style="font-weight:bold">${fd[key]||''}</div>
+      </div>`;
+
+    return `
+    <div class="ics-print-header">
+      <div class="logo-cell">${logoHtml()}</div>
+      <div class="title-cell"><h1>ICS-207 ORGANIZATION CHART</h1>
+        <div class="sub">${variant} \u00b7 FieldCommand IMS</div></div>
+      <div class="meta-cell">
+        <div class="ml">Incident Name</div><div class="mv" style="font-size:10px">${fd.incident_name||'\u2014'}</div>
+        <div class="ml">Op Period</div><div class="mv">${fd.operational_period_number||PERIOD}</div>
+        <div class="ml">Date</div><div class="mv">${fd.date_prepared||'\u2014'}</div>
+      </div>
+    </div>
+    ${fd.ics207_chart_img ? `
+    <div style="padding:12px;text-align:center">
+      <div style="font-size:9px;text-transform:uppercase;color:#555;margin-bottom:6px">${fd.ics207_chart_caption||'Organization Chart'}</div>
+      <img src="${fd.ics207_chart_img}" style="max-width:100%;max-height:500px;object-fit:contain">
+    </div>` : `
+    <div style="padding:16px;font-family:Arial,sans-serif">
+      <!-- IC -->
+      <div style="display:flex;justify-content:center;margin-bottom:6px">
+        ${box('Incident Commander','chart_ic','#c07010','#fff8e8')}
+      </div>
+      <div style="display:flex;justify-content:center;height:12px"><div style="width:2px;background:#999"></div></div>
+      <!-- Command Staff -->
+      <div style="display:flex;justify-content:center;gap:12px;margin-bottom:6px">
+        ${box('Safety Officer','chart_so','#666','#f5f5f5')}
+        ${box('PIO','chart_pio','#666','#f5f5f5')}
+        ${box('Liaison Officer','chart_lo','#666','#f5f5f5')}
+      </div>
+      <div style="border-top:2px solid #333;margin:8px 0"></div>
+      <!-- Section Chiefs -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin-bottom:6px">
+        ${box('Operations Section Chief','chart_osc','#1a5276','#eaf0f9')}
+        ${box('Planning Section Chief','chart_psc','#1e8449','#eafaf1')}
+        ${box('Logistics Section Chief','chart_lsc','#c07010','#fff8e8')}
+        ${box('Finance/Admin Section Chief','chart_fsc','#555','#f5f5f5')}
+      </div>
+      <!-- Sub-positions -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px">
+        <div>
+          ${smallBox('Branch I Director','chart_branch1')}
+          ${smallBox('Branch II Director','chart_branch2')}
+          ${smallBox('Div A Supervisor','chart_diva')}
+          ${smallBox('Div B Supervisor','chart_divb')}
+          ${smallBox('Staging Area Manager','chart_staging')}
+        </div>
+        <div>
+          ${smallBox('Resources Unit Leader','chart_resl')}
+          ${smallBox('Situation Unit Leader','chart_sitl')}
+          ${smallBox('Documentation Unit Ldr','chart_docl')}
+          ${smallBox('Demob Unit Leader','chart_dmob')}
+        </div>
+        <div>
+          ${smallBox('Comms Unit Leader','chart_coml')}
+          ${smallBox('Medical Unit Leader','chart_medl')}
+          ${smallBox('Supply Unit Leader','chart_spul')}
+          ${smallBox('Ground Support Unit Ldr','chart_gsul')}
+        </div>
+        <div>
+          ${smallBox('Time Unit Leader','chart_time')}
+          ${smallBox('Procurement Unit Ldr','chart_proc')}
+          ${smallBox('Comp/Claims Unit Ldr','chart_comp')}
+          ${smallBox('Cost Unit Leader','chart_cost')}
+        </div>
+      </div>
+    </div>`}
+    <div class="sig-row">
+      <div class="sig-cell"><div class="sl">Prepared By (Resources Unit Leader)</div>
+        <div class="ss">${fd.prepared_by||''}</div>
+        <div class="sl">Date/Time: ${fd.date_time_prepared||''}</div></div>
+      <div class="sig-cell"><div class="sl">Signature</div><div class="ss"></div></div>
+      <div class="sig-cell"></div><div class="sig-cell"></div>
+    </div>
+    <div class="print-footer">
+      <span>${variant} \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
+      <span>Printed: ${new Date().toLocaleString()}</span>
+    </div>`;
+  }
+};
+
+// ══════════════════════════════════════════════════════════════════
+// ICS-215A IAP SAFETY ANALYSIS
+// ══════════════════════════════════════════════════════════════════
+FORMS['215A'] = {
+  title: 'ICS-215A IAP Safety Analysis',
+  badge: 'ICS-215A',
+  variants: { FEMA:'FEMA 010-0-15A', USCG:'CG-5225', NWCG:'ICS-215A (NWCG)' },
+
+  render() {
+    document.getElementById('formTitle').textContent = 'ICS-215A \u2014 IAP Safety Analysis';
+    document.getElementById('formBadge').textContent = 'ICS-215A';
+    document.getElementById('formMeta').textContent =
+      `${this.variants[VARIANT]} \u00b7 Period ${PERIOD} \u00b7 ${incData.name||'No incident'}`;
+    return `
+    <div class="section-card">
+      <h2>1. Incident Information</h2>
+      <div class="grid-3">
+        ${field('incident_name','Incident Name','text',incData.name||'')}
+        ${field('operational_period_number','Op Period #','text',String(PERIOD))}
+        ${field('date_prepared','Date Prepared','date',todayDate())}
+      </div>
+      <div class="grid-2">
+        ${field('operational_period_from','Op Period From','datetime-local','')}
+        ${field('operational_period_to','Op Period To','datetime-local','')}
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>2. Hazard / Risk Analysis by Division/Group</h2>
+      <p style="font-size:11px;color:var(--muted);margin:0 0 10px">
+        Completed jointly by Safety Officer and Operations Section Chief during or after the Tactics Meeting.
+        Identifies hazards for each tactical assignment and the mitigation measures required.
+      </p>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:11px">
+          <thead><tr style="background:var(--panel2)">
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:60px">Div/Group/<br>Assignment</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:150px">Hazards Identified</th>
+            <th style="padding:6px 8px;text-align:center;border:1px solid var(--line);min-width:50px">Risk<br>Rating</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:150px">Mitigation / Safety Controls</th>
+            <th style="padding:6px 8px;text-align:center;border:1px solid var(--line);min-width:50px">Residual<br>Risk</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">Responsible<br>Party</th>
+          </tr></thead>
+          <tbody id="hazard215aBody">
+            ${[...Array(8)].map((_,i)=>`<tr>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="h215a_div_${i}" placeholder="Div A" style="width:100%;font-size:11px;padding:3px 4px;font-family:var(--font-hd)"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="h215a_hazard_${i}" placeholder="Hazard description" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px;text-align:center">
+                <select data-key="h215a_risk_${i}" style="font-size:11px;padding:2px 4px;background:var(--input-bg);color:var(--txt);border:1px solid var(--line);border-radius:3px">
+                  <option value=""></option>
+                  <option value="High" style="color:red">High</option>
+                  <option value="Medium" style="color:orange">Medium</option>
+                  <option value="Low" style="color:green">Low</option>
+                </select>
+              </td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="h215a_mitigation_${i}" placeholder="Control measures" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px;text-align:center">
+                <select data-key="h215a_residual_${i}" style="font-size:11px;padding:2px 4px;background:var(--input-bg);color:var(--txt);border:1px solid var(--line);border-radius:3px">
+                  <option value=""></option>
+                  <option value="High">High</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Low">Low</option>
+                </select>
+              </td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="h215a_resp_${i}" placeholder="SO / Supervisor" style="width:100%;font-size:11px;padding:3px 4px"></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <button onclick="add215ARow()" style="margin-top:8px;font-size:11px;padding:4px 12px">+ Add Row</button>
+    </div>
+
+    <div class="section-card">
+      <h2>3. Overall Safety Guidance</h2>
+      ${field('safety215a_message','Overall Safety Guidance / Message for this IAP','textarea',
+        '',{rows:4})}
+      <div class="grid-2" style="margin-top:8px">
+        ${field('ppe_215a','Required PPE (all personnel)','text','')}
+        ${field('medical_plan_ref','Medical Plan Reference (ICS-206)','text','See ICS-206')}
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>4. Safety Map / Site Diagram</h2>
+      ${imageField('ics215a_map','Safety Analysis Site Map',
+        'Map showing hazard zones, high-risk areas, evacuation routes for the IAP')}
+    </div>
+
+    <div class="section-card">
+      <h2>5. Prepared By</h2>
+      <div class="grid-2">
+        ${field('prepared_by_so','Safety Officer (SO)','text',
+          formData.safety_officer||incData.safety_officer||'')}
+        ${field('date_time_prepared','Date / Time','datetime-local','')}
+      </div>
+      <div class="grid-2">
+        ${field('reviewed_by_osc','Reviewed By (Operations Section Chief)','text',
+          formData.ops_section_chief||incData.ops_section_chief||'')}
+        ${field('date_time_reviewed','Date / Time Reviewed','datetime-local','')}
+      </div>
+    </div>`;
+  },
+
+  buildPrint() {
+    const fd = collectFormData();
+    Object.assign(formData, fd);
+    const variant = FORMS['215A'].variants[VARIANT];
+    const riskColor = r => r==='High'?'#c0392b':r==='Medium'?'#c07010':'#1e8449';
+    const hazRows = [...Array(haz215aCount)].map((_,i) =>
+      fd[`h215a_div_${i}`]||fd[`h215a_hazard_${i}`]
+        ? `<tr>
+           <td style="padding:3px 5px;border:1px solid #ccc;font-weight:bold;font-family:monospace">${fd[`h215a_div_${i}`]||''}</td>
+           <td style="padding:3px 5px;border:1px solid #ccc">${fd[`h215a_hazard_${i}`]||''}</td>
+           <td style="padding:3px 5px;border:1px solid #ccc;text-align:center;font-weight:bold;color:${riskColor(fd[`h215a_risk_${i}`])}">${fd[`h215a_risk_${i}`]||''}</td>
+           <td style="padding:3px 5px;border:1px solid #ccc">${fd[`h215a_mitigation_${i}`]||''}</td>
+           <td style="padding:3px 5px;border:1px solid #ccc;text-align:center;font-weight:bold;color:${riskColor(fd[`h215a_residual_${i}`])}">${fd[`h215a_residual_${i}`]||''}</td>
+           <td style="padding:3px 5px;border:1px solid #ccc">${fd[`h215a_resp_${i}`]||''}</td>
+           </tr>` : ''
+    ).join('');
+    return `
+    <div class="ics-print-header">
+      <div class="logo-cell">${logoHtml()}</div>
+      <div class="title-cell"><h1>ICS-215A IAP SAFETY ANALYSIS</h1>
+        <div class="sub">${variant} \u00b7 FieldCommand IMS</div></div>
+      <div class="meta-cell">
+        <div class="ml">Incident Name</div><div class="mv" style="font-size:10px">${fd.incident_name||'\u2014'}</div>
+        <div class="ml">Op Period</div><div class="mv">${fd.operational_period_number||PERIOD}</div>
+        <div class="ml">Date</div><div class="mv">${fd.date_prepared||'\u2014'}</div>
+      </div>
+    </div>
+    <div class="pr"><div class="pc" style="flex:4">
+      <div class="pl">2. Hazard / Risk Analysis by Division/Group</div>
+      <table style="width:100%;border-collapse:collapse;font-size:9px;margin-top:3px">
+        <thead><tr style="background:#e8eef7">
+          <th style="padding:3px 4px;border:1px solid #ccc">Div/Grp</th>
+          <th style="padding:3px 4px;border:1px solid #ccc;text-align:left">Hazards Identified</th>
+          <th style="padding:3px 4px;border:1px solid #ccc">Risk</th>
+          <th style="padding:3px 4px;border:1px solid #ccc;text-align:left">Mitigation / Controls</th>
+          <th style="padding:3px 4px;border:1px solid #ccc">Residual</th>
+          <th style="padding:3px 4px;border:1px solid #ccc;text-align:left">Responsible</th>
+        </tr></thead>
+        <tbody>${hazRows||'<tr><td colspan="6" style="padding:6px;color:#888;text-align:center">No hazards entered</td></tr>'}</tbody>
+      </table>
+    </div></div>
+    <div class="pr">
+      <div class="pc w3"><div class="pl">3. Safety Guidance</div>
+        <div class="pv" style="min-height:40px">${fd.safety215a_message||''}</div>
+      </div>
+      <div class="pc"><div class="pl">PPE Required</div><div class="pv">${fd.ppe_215a||''}</div></div>
+    </div>
+    ${fd.ics215a_map_img?`<div style="border-top:2px solid #000;padding:8px">
+      <div style="font-size:9px;text-transform:uppercase;color:#555;margin-bottom:4px">
+        Safety Analysis Site Map \u2014 ${fd.ics215a_map_caption||'Hazard Zones & High-Risk Areas'}
+      </div>
+      <img src="${fd.ics215a_map_img}" style="max-width:100%;max-height:350px;object-fit:contain">
+    </div>`:''}
+    <div class="sig-row">
+      <div class="sig-cell"><div class="sl">Safety Officer (SO)</div>
+        <div class="ss">${fd.prepared_by_so||''}</div>
+        <div class="sl">Date/Time: ${fd.date_time_prepared||''}</div></div>
+      <div class="sig-cell"><div class="sl">SO Signature</div><div class="ss"></div></div>
+      <div class="sig-cell"><div class="sl">Reviewed By (OSC)</div>
+        <div class="ss">${fd.reviewed_by_osc||''}</div>
+        <div class="sl">Date/Time: ${fd.date_time_reviewed||''}</div></div>
+      <div class="sig-cell"><div class="sl">OSC Signature</div><div class="ss"></div></div>
+    </div>
+    <div class="print-footer">
+      <span>${variant} \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
+      <span>Printed: ${new Date().toLocaleString()}</span>
+    </div>`;
+  }
+};
+
+let haz215aCount = 8;
+function add215ARow() {
+  const tbody = document.getElementById('hazard215aBody');
+  if (!tbody) return;
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="h215a_div_${haz215aCount}" style="width:100%;font-size:11px;padding:3px 4px;font-family:var(--font-hd)"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="h215a_hazard_${haz215aCount}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+    <td style="border:1px solid var(--line);padding:3px;text-align:center">
+      <select data-key="h215a_risk_${haz215aCount}" style="font-size:11px;padding:2px 4px;background:var(--input-bg);color:var(--txt);border:1px solid var(--line);border-radius:3px">
+        <option></option><option value="High">High</option><option value="Medium">Medium</option><option value="Low">Low</option>
+      </select></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="h215a_mitigation_${haz215aCount}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+    <td style="border:1px solid var(--line);padding:3px;text-align:center">
+      <select data-key="h215a_residual_${haz215aCount}" style="font-size:11px;padding:2px 4px;background:var(--input-bg);color:var(--txt);border:1px solid var(--line);border-radius:3px">
+        <option></option><option value="High">High</option><option value="Medium">Medium</option><option value="Low">Low</option>
+      </select></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="h215a_resp_${haz215aCount}" style="width:100%;font-size:11px;padding:3px 4px"></td>`;
+  tbody.appendChild(tr);
+  haz215aCount++;
+}
+
+
+// ══════════════════════════════════════════════════════════════════
+// ICS-210 RESOURCE STATUS CHANGE
+// ══════════════════════════════════════════════════════════════════
+FORMS['210'] = {
+  title: 'ICS-210 Resource Status Change',
+  badge: 'ICS-210',
+  variants: { FEMA:'FEMA 010-0-10', USCG:'CG-5219', NWCG:'ICS-210 (NWCG)' },
+
+  render() {
+    document.getElementById('formTitle').textContent = 'ICS-210 \u2014 Resource Status Change';
+    document.getElementById('formBadge').textContent = 'ICS-210';
+    document.getElementById('formMeta').textContent =
+      `${this.variants[VARIANT]} \u00b7 Period ${PERIOD} \u00b7 ${incData.name||'No incident'}`;
+    return `
+    <div class="section-card">
+      <h2>1. Incident Information</h2>
+      <div class="grid-3">
+        ${field('incident_name','Incident Name','text',incData.name||'')}
+        ${field('operational_period_number','Op Period #','text',String(PERIOD))}
+        ${field('date_time','Date / Time of Change','datetime-local','')}
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>2. Resource Status Changes</h2>
+      <p style="font-size:11px;color:var(--muted);margin:0 0 10px">
+        Record each resource status change here. The Resources Unit Leader uses this
+        to update T-cards. Changes feed directly into the T-card board.
+      </p>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="background:var(--panel2)">
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:130px">Resource Name / Designator</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:70px">Type</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:90px">Previous Status</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:90px">New Status</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:100px">New Assignment / Location</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">Date/Time</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">Contact / Freq</th>
+          </tr></thead>
+          <tbody id="sc210Body">
+            ${[...Array(10)].map((_,i)=>`<tr>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="sc210_name_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="sc210_type_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px">
+                <select data-key="sc210_prev_${i}" style="width:100%;font-size:11px;padding:2px 4px;background:var(--input-bg);color:var(--txt);border:none">
+                  <option></option><option>Available</option><option>Assigned</option>
+                  <option>Out of Service</option><option>Staging</option><option>En Route</option>
+                </select>
+              </td>
+              <td style="border:1px solid var(--line);padding:3px">
+                <select data-key="sc210_new_${i}" style="width:100%;font-size:11px;padding:2px 4px;background:var(--input-bg);color:var(--txt);border:none">
+                  <option></option><option>Available</option><option>Assigned</option>
+                  <option>Out of Service</option><option>Staging</option><option>En Route</option>
+                </select>
+              </td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="sc210_assign_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="sc210_time_${i}" style="width:100%;font-size:11px;padding:3px 4px;font-family:var(--font-hd)"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="sc210_contact_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button onclick="add210Row()" style="font-size:11px;padding:4px 12px">+ Add Row</button>
+        <button onclick="apply210ToTCards()"
+          style="font-size:11px;padding:4px 14px;background:var(--eoc);border-color:var(--eoc);color:#fff">
+          📋 Apply Changes to T-Card Board
+        </button>
+      </div>
+      <div id="sc210Status" style="font-size:11px;color:var(--green);margin-top:6px;display:none"></div>
+    </div>
+
+    <div class="section-card">
+      <h2>3. Prepared By</h2>
+      <div class="grid-2">
+        ${field('prepared_by_resl','Prepared By (Resources Unit Leader)','text',
+          formData.resources_unit_ldr||orgData.personal_call||'')}
+        ${field('date_time_prepared','Date / Time','datetime-local','')}
+      </div>
+    </div>`;
+  },
+
+  buildPrint() {
+    const fd = collectFormData();
+    Object.assign(formData, fd);
+    const variant = FORMS['210'].variants[VARIANT];
+    let rows = '';
+    const statusColor = s => s==='Available'?'#1e8449':s==='Assigned'?'#1a5276':s==='Out of Service'?'#c0392b':'#888';
+    for (let i=0; i<sc210Count; i++) {
+      if (!fd[`sc210_name_${i}`]) continue;
+      rows += `<tr>
+        <td style="padding:3px 5px;border:1px solid #ccc;font-weight:bold">${fd[`sc210_name_${i}`]}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`sc210_type_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc;color:${statusColor(fd[`sc210_prev_${i}`])}">${fd[`sc210_prev_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc;font-weight:bold;color:${statusColor(fd[`sc210_new_${i}`])}">${fd[`sc210_new_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`sc210_assign_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc;font-family:monospace">${fd[`sc210_time_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`sc210_contact_${i}`]||''}</td>
+      </tr>`;
+    }
+    return `
+    <div class="ics-print-header">
+      <div class="logo-cell">${logoHtml()}</div>
+      <div class="title-cell"><h1>ICS-210 RESOURCE STATUS CHANGE</h1>
+        <div class="sub">${variant} \u00b7 FieldCommand IMS</div></div>
+      <div class="meta-cell">
+        <div class="ml">Incident Name</div><div class="mv" style="font-size:10px">${fd.incident_name||'\u2014'}</div>
+        <div class="ml">Op Period</div><div class="mv">${fd.operational_period_number||PERIOD}</div>
+        <div class="ml">Date/Time</div><div class="mv">${fd.date_time||'\u2014'}</div>
+      </div>
+    </div>
+    <div class="pr"><div class="pc" style="flex:4">
+      <div class="pl">2. Resource Status Changes</div>
+      <table style="width:100%;border-collapse:collapse;font-size:10px;margin-top:3px">
+        <thead><tr style="background:#e8eef7">
+          <th style="padding:3px 5px;border:1px solid #ccc;text-align:left">Resource Name</th>
+          <th style="padding:3px 5px;border:1px solid #ccc">Type</th>
+          <th style="padding:3px 5px;border:1px solid #ccc">Previous Status</th>
+          <th style="padding:3px 5px;border:1px solid #ccc">New Status</th>
+          <th style="padding:3px 5px;border:1px solid #ccc;text-align:left">Assignment</th>
+          <th style="padding:3px 5px;border:1px solid #ccc">Date/Time</th>
+          <th style="padding:3px 5px;border:1px solid #ccc;text-align:left">Contact</th>
+        </tr></thead>
+        <tbody>${rows||'<tr><td colspan="7" style="padding:6px;color:#888;text-align:center">No changes recorded</td></tr>'}</tbody>
+      </table>
+    </div></div>
+    <div class="sig-row">
+      <div class="sig-cell"><div class="sl">Prepared By (RESL)</div>
+        <div class="ss">${fd.prepared_by_resl||''}</div>
+        <div class="sl">Date/Time: ${fd.date_time_prepared||''}</div></div>
+      <div class="sig-cell"><div class="sl">Signature</div><div class="ss"></div></div>
+      <div class="sig-cell"></div><div class="sig-cell"></div>
+    </div>
+    <div class="print-footer">
+      <span>${variant} \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
+      <span>Printed: ${new Date().toLocaleString()}</span>
+    </div>`;
+  }
+};
+
+let sc210Count = 10;
+function add210Row() {
+  const tbody = document.getElementById('sc210Body');
+  if (!tbody) return;
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="sc210_name_${sc210Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="sc210_type_${sc210Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+    <td style="border:1px solid var(--line);padding:3px"><select data-key="sc210_prev_${sc210Count}" style="width:100%;font-size:11px;padding:2px 4px;background:var(--input-bg);color:var(--txt);border:none"><option></option><option>Available</option><option>Assigned</option><option>Out of Service</option><option>Staging</option><option>En Route</option></select></td>
+    <td style="border:1px solid var(--line);padding:3px"><select data-key="sc210_new_${sc210Count}" style="width:100%;font-size:11px;padding:2px 4px;background:var(--input-bg);color:var(--txt);border:none"><option></option><option>Available</option><option>Assigned</option><option>Out of Service</option><option>Staging</option><option>En Route</option></select></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="sc210_assign_${sc210Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="sc210_time_${sc210Count}" style="width:100%;font-size:11px;padding:3px 4px;font-family:var(--font-hd)"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="sc210_contact_${sc210Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>`;
+  tbody.appendChild(tr);
+  sc210Count++;
+}
+
+async function apply210ToTCards() {
+  if (!INC_ID) { alert('Open this form from an incident to apply changes to the T-card board.'); return; }
+  const fd = collectFormData();
+  let applied = 0;
+  const statusEl = document.getElementById('sc210Status');
+  for (let i=0; i<sc210Count; i++) {
+    const name = fd[`sc210_name_${i}`];
+    const newStatus = fd[`sc210_new_${i}`];
+    if (!name || !newStatus) continue;
+    try {
+      // Find existing T-card by name
+      const r = await fetch(`${ICS_API}/api/ics/tcards?incident_id=${INC_ID}`);
+      const cards = await r.json();
+      const existing = cards.find(c => c.resource_name.toLowerCase() === name.toLowerCase());
+      const payload = {
+        id: existing?.id || undefined,
+        incident_id: INC_ID,
+        resource_name: name,
+        resource_type: fd[`sc210_type_${i}`]||'',
+        status: newStatus,
+        assignment: fd[`sc210_assign_${i}`]||existing?.assignment||'',
+        contact: fd[`sc210_contact_${i}`]||existing?.contact||'',
+      };
+      if (!payload.id) delete payload.id;
+      await fetch(`${ICS_API}/api/ics/tcards`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(payload)
+      });
+      applied++;
+    } catch(e) {}
+  }
+  statusEl.textContent = `\u2713 Applied ${applied} status change${applied!==1?'s':''} to T-card board.`;
+  statusEl.style.display = 'block';
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ICS-211 INCIDENT CHECK-IN LIST
+// ══════════════════════════════════════════════════════════════════
+FORMS['211'] = {
+  title: 'ICS-211 Incident Check-In List',
+  badge: 'ICS-211',
+  variants: { FEMA:'FEMA 010-0-11', USCG:'CG-5220', NWCG:'ICS-211 (NWCG)' },
+
+  render() {
+    document.getElementById('formTitle').textContent = 'ICS-211 \u2014 Incident Check-In List';
+    document.getElementById('formBadge').textContent = 'ICS-211';
+    document.getElementById('formMeta').textContent =
+      `${this.variants[VARIANT]} \u00b7 Period ${PERIOD} \u00b7 ${incData.name||'No incident'}`;
+    return `
+    <div class="section-card">
+      <h2>1. Incident Information</h2>
+      <div class="grid-3">
+        ${field('incident_name','Incident Name','text',incData.name||'')}
+        ${field('check_in_location','Check-In Location','text','ICP / Staging Area')}
+        ${field('date_prepared','Date','date',todayDate())}
+      </div>
+      <div class="grid-2">
+        ${field('check_in_recorder','Check-In Recorder (name / position)','text','')}
+        ${field('operational_period_number','Op Period #','text',String(PERIOD))}
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>2. Check-In Log</h2>
+      <p style="font-size:11px;color:var(--muted);margin:0 0 10px">
+        All personnel, equipment, and vehicles arriving at the incident must check in here.
+        This feeds the T-card board and ICS-203/204 assignment tracking.
+      </p>
+      <div style="background:rgba(26,122,58,0.1);border:1px solid var(--green);border-radius:6px;
+                  padding:8px 12px;margin-bottom:10px;font-size:11px;color:var(--green)">
+        ℹ <strong>ICS-211 is the official check-in record.</strong>
+        Net logger check-ins automatically populate this form when an Incident ID is entered at check-in.
+        Data here flows to the T-card board and ICS-203/204 assignment tracking.
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+        <button onclick="sync211FromNetLogger()"
+          style="font-size:12px;padding:5px 14px;background:var(--eoc);border-color:var(--eoc);color:#fff">
+          🔄 Sync from Net Logger
+        </button>
+        <button onclick="push211ToTCards()"
+          style="font-size:12px;padding:5px 14px;background:var(--green);border-color:var(--green);color:#fff">
+          📋 Push All to T-Card Board
+        </button>
+        <span style="font-size:11px;color:var(--dim);align-self:center">
+          Last auto-sync: <span id="ci211LastSync">checking...</span>
+        </span>
+      </div>
+      <div id="ci211ImportStatus" style="font-size:11px;color:var(--green);margin-bottom:8px;display:none"></div>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="background:var(--panel2)">
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:120px">Name</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">Callsign / ID</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:100px">Home Agency</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:110px">ICS Position</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">Resource Type</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">Check-In Time</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">Check-Out Time</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:70px">Vehicle / Equip</th>
+          </tr></thead>
+          <tbody id="ci211Body">
+            ${[...Array(12)].map((_,i)=>`<tr>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ci211_name_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ci211_id_${i}" style="width:100%;font-size:11px;padding:3px 4px;font-family:var(--font-hd)"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ci211_agency_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ci211_pos_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ci211_rtype_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ci211_in_${i}" style="width:100%;font-size:11px;padding:3px 4px;font-family:var(--font-hd)"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ci211_out_${i}" style="width:100%;font-size:11px;padding:3px 4px;font-family:var(--font-hd)"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ci211_equip_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <button onclick="add211Row()" style="margin-top:6px;font-size:11px;padding:4px 12px">+ Add Row</button>
+    </div>
+
+    <div class="section-card">
+      <h2>3. Prepared By</h2>
+      <div class="grid-2">
+        ${field('prepared_by_211','Check-In Recorder','text','')}
+        ${field('date_time_prepared','Date / Time','datetime-local','')}
+      </div>
+    </div>`;
+  },
+
+  buildPrint() {
+    const fd = collectFormData();
+    Object.assign(formData, fd);
+    const variant = FORMS['211'].variants[VARIANT];
+    let rows = '';
+    for (let i=0; i<ci211Count; i++) {
+      if (!fd[`ci211_name_${i}`] && !fd[`ci211_id_${i}`]) continue;
+      rows += `<tr>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`ci211_name_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc;font-family:monospace">${fd[`ci211_id_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`ci211_agency_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`ci211_pos_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`ci211_rtype_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc;font-family:monospace">${fd[`ci211_in_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc;font-family:monospace">${fd[`ci211_out_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`ci211_equip_${i}`]||''}</td>
+      </tr>`;
+    }
+    return `
+    <div class="ics-print-header">
+      <div class="logo-cell">${logoHtml()}</div>
+      <div class="title-cell"><h1>ICS-211 INCIDENT CHECK-IN LIST</h1>
+        <div class="sub">${variant} \u00b7 FieldCommand IMS</div></div>
+      <div class="meta-cell">
+        <div class="ml">Incident Name</div><div class="mv" style="font-size:10px">${fd.incident_name||'\u2014'}</div>
+        <div class="ml">Check-In Location</div><div class="mv" style="font-size:10px">${fd.check_in_location||'\u2014'}</div>
+        <div class="ml">Date</div><div class="mv">${fd.date_prepared||'\u2014'}</div>
+      </div>
+    </div>
+    <div class="pr"><div class="pc" style="flex:4">
+      <div class="pl">2. Check-In Log</div>
+      <table style="width:100%;border-collapse:collapse;font-size:9px;margin-top:3px">
+        <thead><tr style="background:#e8eef7">
+          <th style="padding:3px 4px;border:1px solid #ccc;text-align:left">Name</th>
+          <th style="padding:3px 4px;border:1px solid #ccc">Callsign/ID</th>
+          <th style="padding:3px 4px;border:1px solid #ccc;text-align:left">Home Agency</th>
+          <th style="padding:3px 4px;border:1px solid #ccc;text-align:left">ICS Position</th>
+          <th style="padding:3px 4px;border:1px solid #ccc">Type</th>
+          <th style="padding:3px 4px;border:1px solid #ccc">Check-In</th>
+          <th style="padding:3px 4px;border:1px solid #ccc">Check-Out</th>
+          <th style="padding:3px 4px;border:1px solid #ccc;text-align:left">Vehicle/Equip</th>
+        </tr></thead>
+        <tbody>${rows||'<tr><td colspan="8" style="padding:6px;color:#888;text-align:center">No entries</td></tr>'}</tbody>
+      </table>
+    </div></div>
+    <div class="sig-row">
+      <div class="sig-cell"><div class="sl">Check-In Recorder</div>
+        <div class="ss">${fd.prepared_by_211||''}</div>
+        <div class="sl">Date/Time: ${fd.date_time_prepared||''}</div></div>
+      <div class="sig-cell"><div class="sl">Signature</div><div class="ss"></div></div>
+      <div class="sig-cell"></div><div class="sig-cell"></div>
+    </div>
+    <div class="print-footer">
+      <span>${variant} \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
+      <span>Printed: ${new Date().toLocaleString()}</span>
+    </div>`;
+  }
+};
+
+let ci211Count = 12;
+function add211Row() {
+  const tbody = document.getElementById('ci211Body');
+  if (!tbody) return;
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ci211_name_${ci211Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ci211_id_${ci211Count}" style="width:100%;font-size:11px;padding:3px 4px;font-family:var(--font-hd)"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ci211_agency_${ci211Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ci211_pos_${ci211Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ci211_rtype_${ci211Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ci211_in_${ci211Count}" style="width:100%;font-size:11px;padding:3px 4px;font-family:var(--font-hd)"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ci211_out_${ci211Count}" style="width:100%;font-size:11px;padding:3px 4px;font-family:var(--font-hd)"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ci211_equip_${ci211Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>`;
+  tbody.appendChild(tr);
+  ci211Count++;
+}
+
+async function sync211FromNetLogger() {
+  if (!INC_ID) { alert('Open from an incident to import check-ins.'); return; }
+  try {
+    const r = await fetch(`${ICS_API}/api/ics/assignments?incident_id=${INC_ID}`);
+    const data = await r.json();
+    const all = [...(data.assignments||[])];
+    let idx = 0;
+    all.forEach(a => {
+      if (idx >= ci211Count) add211Row();
+      const set = (key,val) => { const el=document.querySelector(`[data-key="${key}"]`); if(el) el.value=val; };
+      set(`ci211_name_${idx}`, a.name||a.callsign||'');
+      set(`ci211_id_${idx}`, a.callsign||'');
+      set(`ci211_pos_${idx}`, a.ics_position||'');
+      set(`ci211_in_${idx}`, a.timestamp?a.timestamp.slice(0,16):'');
+      set(`ci211_out_${idx}`, a.checkout_time?a.checkout_time.slice(0,16):'');
+      idx++;
+    });
+    const st = document.getElementById('ci211ImportStatus');
+    st.textContent = `\u2713 Imported ${idx} check-in${idx!==1?'s':''} from net logger.`;
+    st.style.display = 'block';
+  } catch(e) { alert('Import failed: '+e); }
+}
+
+async function push211ToTCards() {
+  if (!INC_ID) { alert('Open from an incident to push to T-card board.'); return; }
+  const fd = collectFormData();
+  let pushed = 0;
+  for (let i=0; i<ci211Count; i++) {
+    const name = fd[`ci211_name_${i}`];
+    if (!name) continue;
+    try {
+      await fetch(`${ICS_API}/api/ics/tcards`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          incident_id: INC_ID,
+          resource_name: name,
+          resource_type: fd[`ci211_rtype_${i}`]||'Personnel',
+          status: fd[`ci211_out_${i}`]?'Out of Service':'Available',
+          assignment: fd[`ci211_pos_${i}`]||'',
+          home_agency: fd[`ci211_agency_${i}`]||'',
+          contact: fd[`ci211_id_${i}`]||'',
+        })
+      });
+      pushed++;
+    } catch(e) {}
+  }
+  const st = document.getElementById('ci211ImportStatus');
+  st.textContent = `\u2713 Pushed ${pushed} resource${pushed!==1?'s':''} to T-card board.`;
+  st.style.display = 'block';
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ICS-219 RESOURCE STATUS CARDS (T-CARD BOARD)
+// Connected to existing ics_tcards table
+// ══════════════════════════════════════════════════════════════════
+FORMS['219'] = {
+  title: 'ICS-219 Resource Status Cards (T-Card Board)',
+  badge: 'ICS-219',
+  variants: { FEMA:'FEMA 010-0-19', USCG:'CG-5228', NWCG:'ICS-219 (NWCG)' },
+
+  render() {
+    document.getElementById('formTitle').textContent = 'ICS-219 \u2014 Resource Status / T-Card Board';
+    document.getElementById('formBadge').textContent = 'ICS-219';
+    document.getElementById('formMeta').textContent =
+      `${this.variants[VARIANT]} \u00b7 ${incData.name||'No incident'} \u00b7 Live Board`;
+
+    // Load T-cards from the database
+    if (INC_ID) loadTCards219();
+
+    return `
+    <div class="section-card">
+      <h2>Resource Status Board</h2>
+      <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+        <button onclick="showAddTCard()"
+          style="background:var(--eoc);border-color:var(--eoc);color:#fff;font-weight:bold">
+          + Add Resource
+        </button>
+        <button onclick="loadTCards219()" style="font-size:12px">🔄 Refresh</button>
+        <div style="display:flex;gap:6px;align-items:center;font-size:11px;color:var(--muted)">
+          Filter:
+          <select id="tc219Filter" onchange="filterTCards219()"
+            style="background:var(--input-bg);border:1px solid var(--line);color:var(--txt);
+                   padding:4px 8px;border-radius:4px;font-size:11px">
+            <option value="">All</option>
+            <option value="Available">Available</option>
+            <option value="Assigned">Assigned</option>
+            <option value="Out of Service">Out of Service</option>
+            <option value="Staging">Staging</option>
+            <option value="En Route">En Route</option>
+          </select>
+          <select id="tc219CatFilter" onchange="filterTCards219()"
+            style="background:var(--input-bg);border:1px solid var(--line);color:var(--txt);
+                   padding:4px 8px;border-radius:4px;font-size:11px">
+            <option value="">All Categories</option>
+            <option value="Personnel">Personnel</option>
+            <option value="Equipment">Equipment</option>
+            <option value="Aircraft">Aircraft</option>
+            <option value="Supply">Supply</option>
+          </select>
+        </div>
+        <div id="tc219Count" style="font-size:11px;color:var(--muted);margin-left:auto"></div>
+      </div>
+
+      <!-- Status summary row -->
+      <div id="tc219Summary" style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:14px"></div>
+
+      <!-- T-card board by status -->
+      <div id="tc219Board" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:10px">
+        <div style="color:var(--muted);text-align:center;padding:30px;grid-column:1/-1">
+          Loading T-card board...
+        </div>
+      </div>
+    </div>
+
+    <!-- Add T-card modal -->
+    <div id="addTCardModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);
+         z-index:200;align-items:center;justify-content:center">
+      <div style="background:var(--panel);border:1px solid var(--eoc);border-radius:10px;
+                  padding:22px;width:520px;max-width:96vw;max-height:85vh;overflow-y:auto">
+        <div style="font-family:var(--font-hd);font-size:14px;color:var(--amber);letter-spacing:1px;margin-bottom:14px">
+          📋 ADD / EDIT RESOURCE (T-CARD)
+        </div>
+        <input type="hidden" id="tc_edit_id">
+        <div class="grid-2">
+          ${field('tc_name','Resource Name / Designator *','')}
+          ${field('tc_rtype','Resource Type','text','e.g. Engine, Crew, Personnel')}
+        </div>
+        <div class="grid-2">
+          ${field('tc_category','Category','text','')}
+          ${field('tc_type','Type Classification','text','e.g. Type I, II, III')}
+        </div>
+        <div class="grid-2">
+          ${field('tc_leader','Leader / IC Name','')}
+          ${field('tc_personnel','# Personnel','text','')}
+        </div>
+        <div class="grid-2">
+          <div class="fg"><label>Status</label>
+            <select id="tc_status" style="background:var(--input-bg);border:1px solid var(--line);
+              color:var(--txt);padding:7px 10px;font-size:13px;width:100%;border-radius:4px">
+              <option>Available</option><option>Assigned</option>
+              <option>Out of Service</option><option>Staging</option><option>En Route</option>
+            </select>
+          </div>
+          ${field('tc_assignment','Assignment / Location','')}
+        </div>
+        <div class="grid-2">
+          ${field('tc_contact','Contact / Radio Channel','')}
+          ${field('tc_eta','ETA (if en route)','')}
+        </div>
+        <div class="grid-2">
+          ${field('tc_home_agency','Home Agency','')}
+          ${field('tc_order_number','Order / Request Number','')}
+        </div>
+        ${field('tc_notes','Notes','')}
+        <div style="display:flex;gap:8px;margin-top:10px">
+          <button onclick="saveTCard219()"
+            style="flex:1;background:var(--eoc);border-color:var(--eoc);color:#fff;font-weight:bold;padding:9px">
+            SAVE T-CARD
+          </button>
+          <button onclick="document.getElementById('addTCardModal').style.display='none'" style="padding:9px 16px">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>`;
+  },
+
+  buildPrint() {
+    // T-card board prints as a status report
+    const variant = FORMS['219'].variants[VARIANT];
+    return `
+    <div class="ics-print-header">
+      <div class="logo-cell">${logoHtml()}</div>
+      <div class="title-cell"><h1>ICS-219 RESOURCE STATUS BOARD</h1>
+        <div class="sub">${variant} \u00b7 FieldCommand IMS \u00b7 Printed: ${new Date().toLocaleString()}</div></div>
+      <div class="meta-cell">
+        <div class="ml">Incident Name</div><div class="mv" style="font-size:10px">${incData.name||'\u2014'}</div>
+        <div class="ml">IC</div><div class="mv" style="font-size:10px">${incData.incident_commander||'\u2014'}</div>
+      </div>
+    </div>
+    <div id="tc219PrintContent" style="padding:10px">
+      <div style="color:#888;font-size:12px;text-align:center;padding:20px">
+        Use the Print button to capture the current T-card board status.
+        The board content will be captured at print time.
+      </div>
+    </div>
+    <div class="print-footer">
+      <span>${variant} \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
+      <span>Printed: ${new Date().toLocaleString()}</span>
+    </div>`;
+  }
+};
+
+let allTCards = [];
+const TC_STATUS_COLORS = {
+  'Available':    {bg:'rgba(26,122,58,0.15)',  border:'var(--green)',  dot:'var(--green)'},
+  'Assigned':     {bg:'rgba(26,58,107,0.15)',  border:'var(--blue)',   dot:'var(--blue)'},
+  'Out of Service':{bg:'rgba(192,32,32,0.1)',  border:'var(--red)',    dot:'var(--red)'},
+  'Staging':      {bg:'rgba(200,118,10,0.1)',  border:'var(--amber)',  dot:'var(--amber)'},
+  'En Route':     {bg:'rgba(155,89,182,0.1)',  border:'#9b59b6',      dot:'#9b59b6'},
+};
+
+async function loadTCards219() {
+  if (!INC_ID) return;
+  try {
+    const r = await fetch(`${ICS_API}/api/ics/tcards?incident_id=${INC_ID}`);
+    allTCards = await r.json();
+    renderTCards219(allTCards);
+  } catch(e) {
+    const board = document.getElementById('tc219Board');
+    if (board) board.innerHTML = '<div style="color:var(--red);padding:20px;grid-column:1/-1">\u26a0 T-card board unavailable \u2014 ICS platform offline</div>';
+  }
+}
+
+function filterTCards219() {
+  const statusF = document.getElementById('tc219Filter')?.value;
+  const catF = document.getElementById('tc219CatFilter')?.value;
+  let filtered = allTCards;
+  if (statusF) filtered = filtered.filter(c => c.status === statusF);
+  if (catF) filtered = filtered.filter(c => c.category === catF || c.resource_type === catF);
+  renderTCards219(filtered);
+}
+
+function renderTCards219(cards) {
+  const board = document.getElementById('tc219Board');
+  const summary = document.getElementById('tc219Summary');
+  const countEl = document.getElementById('tc219Count');
+  if (!board) return;
+
+  // Summary
+  const statuses = ['Available','Assigned','Out of Service','Staging','En Route'];
+  if (summary) {
+    summary.innerHTML = statuses.map(s => {
+      const n = allTCards.filter(c=>c.status===s).length;
+      const col = TC_STATUS_COLORS[s] || {bg:'var(--panel)',border:'var(--line)',dot:'var(--dim)'};
+      return `<div style="background:${col.bg};border:1px solid ${col.border};border-radius:6px;
+                          padding:8px;text-align:center">
+        <div style="font-size:20px;font-weight:bold;color:${col.dot}">${n}</div>
+        <div style="font-size:10px;color:var(--muted)">${s}</div>
+      </div>`;
+    }).join('');
+  }
+
+  if (countEl) countEl.textContent = `${cards.length} resource${cards.length!==1?'s':''} shown`;
+
+  if (!cards.length) {
+    board.innerHTML = `<div style="color:var(--muted);text-align:center;padding:40px;grid-column:1/-1">
+      <div style="font-size:32px;margin-bottom:8px">📋</div>
+      <div style="font-size:14px">No resources on board</div>
+      <button onclick="showAddTCard()" style="margin-top:10px;background:var(--eoc);border-color:var(--eoc);color:#fff">+ Add First Resource</button>
+    </div>`;
+    return;
+  }
+
+  board.innerHTML = cards.map(c => {
+    const col = TC_STATUS_COLORS[c.status] || {bg:'var(--panel)',border:'var(--line)',dot:'var(--dim)'};
+    return `<div style="background:${col.bg};border:2px solid ${col.border};border-radius:8px;padding:12px;position:relative">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+        <div style="font-family:var(--font-hd);font-size:14px">${c.resource_name}</div>
+        <span style="font-size:9px;padding:2px 7px;border-radius:8px;background:${col.border};
+                     color:#fff;white-space:nowrap">${c.status}</span>
+      </div>
+      ${c.resource_type?`<div style="font-size:11px;color:var(--muted)">${c.resource_type}${c.type?' \u00b7 '+c.type:''}</div>`:''}
+      ${c.leader?`<div style="font-size:11px;margin-top:3px">\ud83d\udc64 ${c.leader}</div>`:''}
+      ${c.num_personnel?`<div style="font-size:11px;color:var(--muted)">\ud83d\udc65 ${c.num_personnel} personnel</div>`:''}
+      ${c.assignment?`<div style="font-size:11px;margin-top:3px">\ud83d\udccc ${c.assignment}</div>`:''}
+      ${c.contact?`<div style="font-size:11px;color:var(--muted)">\ud83d\udcde ${c.contact}</div>`:''}
+      ${c.eta?`<div style="font-size:11px;color:#9b59b6">ETA: ${c.eta}</div>`:''}
+      ${c.home_agency?`<div style="font-size:10px;color:var(--dim)">${c.home_agency}</div>`:''}
+      <div style="display:flex;gap:4px;margin-top:8px">
+        <select onchange="quickStatusChange('${c.id}',this.value)"
+          style="flex:1;font-size:11px;padding:3px 5px;background:var(--input-bg);
+                 border:1px solid var(--line);color:var(--txt);border-radius:3px">
+          ${['Available','Assigned','Out of Service','Staging','En Route'].map(s=>
+            `<option ${s===c.status?'selected':''}>${s}</option>`).join('')}
+        </select>
+        <button onclick="showEditTCard('${c.id}')"
+          style="font-size:10px;padding:3px 6px;background:var(--panel2)">✏</button>
+        <button onclick="deleteTCard219('${c.id}')"
+          style="font-size:10px;padding:3px 6px;background:var(--panel2);color:var(--red)">✕</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function quickStatusChange(id, newStatus) {
+  const card = allTCards.find(c=>c.id===id);
+  if (!card) return;
+  await fetch(`${ICS_API}/api/ics/tcards`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({...card, status:newStatus, incident_id:INC_ID})
+  });
+  await loadTCards219();
+}
+
+function showAddTCard() {
+  document.getElementById('tc_edit_id').value = '';
+  ['tc_name','tc_rtype','tc_category','tc_type','tc_leader','tc_personnel',
+   'tc_assignment','tc_contact','tc_eta','tc_home_agency','tc_order_number','tc_notes'
+  ].forEach(id => { const el=document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('tc_status').value = 'Available';
+  document.getElementById('addTCardModal').style.display = 'flex';
+  document.getElementById('tc_name').focus();
+}
+
+function showEditTCard(id) {
+  const card = allTCards.find(c=>c.id===id);
+  if (!card) return;
+  document.getElementById('tc_edit_id').value = card.id;
+  const set = (eid,val) => { const el=document.getElementById(eid); if(el) el.value=val||''; };
+  set('tc_name', card.resource_name);
+  set('tc_rtype', card.resource_type);
+  set('tc_category', card.category);
+  set('tc_type', card.type);
+  set('tc_leader', card.leader);
+  set('tc_personnel', card.num_personnel);
+  set('tc_assignment', card.assignment);
+  set('tc_contact', card.contact);
+  set('tc_eta', card.eta);
+  set('tc_home_agency', card.home_agency);
+  set('tc_order_number', card.order_number);
+  set('tc_notes', card.notes);
+  document.getElementById('tc_status').value = card.status || 'Available';
+  document.getElementById('addTCardModal').style.display = 'flex';
+}
+
+async function saveTCard219() {
+  const name = document.getElementById('tc_name').value.trim();
+  if (!name) { alert('Resource name is required'); return; }
+  const editId = document.getElementById('tc_edit_id').value;
+  const payload = {
+    id: editId || undefined,
+    incident_id: INC_ID,
+    resource_name: name,
+    resource_type: document.getElementById('tc_rtype').value.trim(),
+    category: document.getElementById('tc_category').value.trim(),
+    type: document.getElementById('tc_type').value.trim(),
+    leader: document.getElementById('tc_leader').value.trim(),
+    num_personnel: parseInt(document.getElementById('tc_personnel').value)||0,
+    status: document.getElementById('tc_status').value,
+    assignment: document.getElementById('tc_assignment').value.trim(),
+    contact: document.getElementById('tc_contact').value.trim(),
+    eta: document.getElementById('tc_eta').value.trim(),
+    home_agency: document.getElementById('tc_home_agency').value.trim(),
+    order_number: document.getElementById('tc_order_number').value.trim(),
+    notes: document.getElementById('tc_notes').value.trim(),
+  };
+  if (!payload.id) delete payload.id;
+  await fetch(`${ICS_API}/api/ics/tcards`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(payload)
+  });
+  document.getElementById('addTCardModal').style.display = 'none';
+  await loadTCards219();
+}
+
+async function deleteTCard219(id) {
+  if (!confirm('Remove this resource from the T-card board?')) return;
+  await fetch(`${ICS_API}/api/ics/tcards/${id}`, {method:'DELETE'});
+  await loadTCards219();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ICS-220 AIR OPERATIONS SUMMARY
+// ══════════════════════════════════════════════════════════════════
+FORMS['220'] = {
+  title: 'ICS-220 Air Operations Summary',
+  badge: 'ICS-220',
+  variants: { FEMA:'FEMA 010-0-20', USCG:'CG-5229', NWCG:'ICS-220 (NWCG)' },
+
+  render() {
+    document.getElementById('formTitle').textContent = 'ICS-220 \u2014 Air Operations Summary';
+    document.getElementById('formBadge').textContent = 'ICS-220';
+    document.getElementById('formMeta').textContent =
+      `${this.variants[VARIANT]} \u00b7 Period ${PERIOD} \u00b7 ${incData.name||'No incident'}`;
+    return `
+    <div class="section-card">
+      <h2>1. Incident Information</h2>
+      <div class="grid-3">
+        ${field('incident_name','Incident Name','text',incData.name||'')}
+        ${field('operational_period_number','Op Period #','text',String(PERIOD))}
+        ${field('date_prepared','Date Prepared','date',todayDate())}
+      </div>
+      <div class="grid-2">
+        ${field('operational_period_from','Op Period From','datetime-local','')}
+        ${field('operational_period_to','Op Period To','datetime-local','')}
+      </div>
+      <div class="grid-2">
+        ${field('air_ops_branch_dir','Air Operations Branch Director','text',
+          formData.air_ops_branch_dir||'')}
+        ${field('air_tactical_grp_sup','Air Tactical Group Supervisor','text','')}
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>2. Air Operations Frequencies</h2>
+      <div class="grid-3">
+        ${field('air_to_air_freq','Air-to-Air Frequency','text','')}
+        ${field('air_to_ground_freq','Air-to-Ground Frequency','text','')}
+        ${field('command_freq_air','Command Net Frequency','text','')}
+      </div>
+      <div class="grid-2">
+        ${field('aviation_interagency','Aviation Interagency Frequency','text','')}
+        ${field('guard_freq','Guard / Emergency Frequency','text','121.5 MHz (Civil) / 243.0 MHz (Military)')}
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>3. Aircraft Assigned</h2>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="background:var(--panel2)">
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">Aircraft ID / N#</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">Type</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">Agency</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">Pilot Name</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">Captain / IC</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:70px">Frequency</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">Base / Helispot</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">Assignment</th>
+          </tr></thead>
+          <tbody id="ac220Body">
+            ${[...Array(8)].map((_,i)=>`<tr>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ac220_id_${i}" style="width:100%;font-size:11px;padding:3px 4px;font-family:var(--font-hd)"></td>
+              <td style="border:1px solid var(--line);padding:3px">
+                <select data-key="ac220_type_${i}" style="width:100%;font-size:11px;padding:2px 4px;background:var(--input-bg);color:var(--txt);border:none">
+                  <option></option>
+                  <option>Helicopter \u2014 Type I</option><option>Helicopter \u2014 Type II</option>
+                  <option>Helicopter \u2014 Type III</option><option>Single Engine Airtanker</option>
+                  <option>Multi Engine Airtanker</option><option>Very Large Airtanker</option>
+                  <option>Lead Plane</option><option>Air Attack</option>
+                  <option>Smokejumper</option><option>Fixed Wing \u2014 Recon</option>
+                  <option>Unmanned Aircraft (UAS)</option><option>Medevac</option>
+                  <option>Other Fixed Wing</option>
+                </select>
+              </td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ac220_agency_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ac220_pilot_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ac220_captain_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ac220_freq_${i}" style="width:100%;font-size:11px;padding:3px 4px;font-family:var(--font-hd)"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ac220_base_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ac220_assign_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <button onclick="add220Row()" style="margin-top:6px;font-size:11px;padding:4px 12px">+ Add Aircraft</button>
+    </div>
+
+    <div class="section-card">
+      <h2>4. Helispots / Helibases</h2>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="background:var(--panel2)">
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line)">Helispot / Helibase ID</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line)">Location / GPS</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line)">Manager</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line)">Frequency</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line)">Elevation (ft)</th>
+          </tr></thead>
+          <tbody>
+            ${[...Array(4)].map((_,i)=>`<tr>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="hs220_id_${i}" style="width:100%;font-size:11px;padding:3px 4px;font-family:var(--font-hd)"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="hs220_loc_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="hs220_mgr_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="hs220_freq_${i}" style="width:100%;font-size:11px;padding:3px 4px;font-family:var(--font-hd)"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="hs220_elev_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>5. Special Instructions / Restrictions</h2>
+      ${field('air_special_instructions','Air Operations Special Instructions','textarea',
+        'TFR details, altitude restrictions, airspace coordination, hazards to aviation...',{rows:3})}
+      <div class="grid-2" style="margin-top:8px">
+        ${field('air_medical_freq','Medical Emergency Frequency','text','')}
+        ${field('air_weather_briefing','Weather Briefing Source / Time','text','')}
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>6. Prepared By</h2>
+      <div class="grid-2">
+        ${field('prepared_by_aobr','Prepared By (Air Operations Branch Director)','text',
+          formData.air_ops_branch_dir||'')}
+        ${field('date_time_prepared','Date / Time','datetime-local','')}
+      </div>
+    </div>`;
+  },
+
+  buildPrint() {
+    const fd = collectFormData();
+    Object.assign(formData, fd);
+    const variant = FORMS['220'].variants[VARIANT];
+    let acRows = '';
+    for (let i=0; i<ac220Count; i++) {
+      if (!fd[`ac220_id_${i}`]) continue;
+      acRows += `<tr>
+        <td style="padding:3px 5px;border:1px solid #ccc;font-family:monospace;font-weight:bold">${fd[`ac220_id_${i}`]}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`ac220_type_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`ac220_agency_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`ac220_pilot_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc;font-family:monospace">${fd[`ac220_freq_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`ac220_base_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`ac220_assign_${i}`]||''}</td>
+      </tr>`;
+    }
+    return `
+    <div class="ics-print-header">
+      <div class="logo-cell">${logoHtml()}</div>
+      <div class="title-cell"><h1>ICS-220 AIR OPERATIONS SUMMARY</h1>
+        <div class="sub">${variant} \u00b7 FieldCommand IMS</div></div>
+      <div class="meta-cell">
+        <div class="ml">Incident Name</div><div class="mv" style="font-size:10px">${fd.incident_name||'\u2014'}</div>
+        <div class="ml">Op Period</div><div class="mv">${fd.operational_period_number||PERIOD}</div>
+        <div class="ml">Date</div><div class="mv">${fd.date_prepared||'\u2014'}</div>
+      </div>
+    </div>
+    <div class="pr">
+      <div class="pc w2"><div class="pl">Air Operations Branch Director</div><div class="pv">${fd.air_ops_branch_dir||''}</div></div>
+      <div class="pc"><div class="pl">Air-to-Air Freq</div><div class="pv">${fd.air_to_air_freq||''}</div></div>
+      <div class="pc"><div class="pl">Air-to-Ground Freq</div><div class="pv">${fd.air_to_ground_freq||''}</div></div>
+    </div>
+    <div class="pr"><div class="pc" style="flex:4">
+      <div class="pl">3. Aircraft Assigned</div>
+      <table style="width:100%;border-collapse:collapse;font-size:9px;margin-top:3px">
+        <thead><tr style="background:#e8eef7">
+          <th style="padding:3px 4px;border:1px solid #ccc">Aircraft ID</th>
+          <th style="padding:3px 4px;border:1px solid #ccc;text-align:left">Type</th>
+          <th style="padding:3px 4px;border:1px solid #ccc">Agency</th>
+          <th style="padding:3px 4px;border:1px solid #ccc;text-align:left">Pilot</th>
+          <th style="padding:3px 4px;border:1px solid #ccc">Frequency</th>
+          <th style="padding:3px 4px;border:1px solid #ccc">Base</th>
+          <th style="padding:3px 4px;border:1px solid #ccc;text-align:left">Assignment</th>
+        </tr></thead>
+        <tbody>${acRows||'<tr><td colspan="7" style="padding:5px;color:#888;text-align:center">No aircraft assigned</td></tr>'}</tbody>
+      </table>
+    </div></div>
+    <div class="pr"><div class="pc" style="flex:4">
+      <div class="pl">5. Special Instructions / Restrictions</div>
+      <div class="pv" style="min-height:40px">${fd.air_special_instructions||''}</div>
+    </div></div>
+    <div class="sig-row">
+      <div class="sig-cell"><div class="sl">Air Operations Branch Director</div>
+        <div class="ss">${fd.prepared_by_aobr||''}</div>
+        <div class="sl">Date/Time: ${fd.date_time_prepared||''}</div></div>
+      <div class="sig-cell"><div class="sl">Signature</div><div class="ss"></div></div>
+      <div class="sig-cell"></div><div class="sig-cell"></div>
+    </div>
+    <div class="print-footer">
+      <span>${variant} \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
+      <span>Printed: ${new Date().toLocaleString()}</span>
+    </div>`;
+  }
+};
+
+let ac220Count = 8;
+function add220Row() {
+  const tbody = document.getElementById('ac220Body');
+  if (!tbody) return;
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ac220_id_${ac220Count}" style="width:100%;font-size:11px;padding:3px 4px;font-family:var(--font-hd)"></td>
+    <td style="border:1px solid var(--line);padding:3px"><select data-key="ac220_type_${ac220Count}" style="width:100%;font-size:11px;padding:2px 4px;background:var(--input-bg);color:var(--txt);border:none"><option></option><option>Helicopter \u2014 Type I</option><option>Helicopter \u2014 Type II</option><option>Helicopter \u2014 Type III</option><option>Medevac</option><option>Fixed Wing \u2014 Recon</option><option>Unmanned Aircraft (UAS)</option><option>Other</option></select></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ac220_agency_${ac220Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ac220_pilot_${ac220Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ac220_captain_${ac220Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ac220_freq_${ac220Count}" style="width:100%;font-size:11px;padding:3px 4px;font-family:var(--font-hd)"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ac220_base_${ac220Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ac220_assign_${ac220Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>`;
+  tbody.appendChild(tr);
+  ac220Count++;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ICS-233 OPEN ACTION TRACKER
+// (Not a numbered FEMA form — used widely in practice as IAP supplement)
+// ══════════════════════════════════════════════════════════════════
+FORMS['233'] = {
+  title: 'ICS-233 Open Action Tracker',
+  badge: 'ICS-233',
+  variants: { FEMA:'FEMA Supplement', USCG:'USCG Supplement', NWCG:'NWCG Supplement' },
+
+  render() {
+    document.getElementById('formTitle').textContent = 'ICS-233 \u2014 Open Action Tracker';
+    document.getElementById('formBadge').textContent = 'ICS-233';
+    document.getElementById('formMeta').textContent =
+      `IAP Supplement \u00b7 Period ${PERIOD} \u00b7 ${incData.name||'No incident'}`;
+    return `
+    <div class="section-card">
+      <h2>1. Incident Information</h2>
+      <div class="grid-3">
+        ${field('incident_name','Incident Name','text',incData.name||'')}
+        ${field('operational_period_number','Op Period #','text',String(PERIOD))}
+        ${field('date_prepared','Date Prepared','date',todayDate())}
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>2. Open Action Items</h2>
+      <p style="font-size:11px;color:var(--muted);margin:0 0 10px">
+        Tracks unresolved actions, requests, and decisions across all ICS sections.
+        Reviewed at every Command Staff meeting. Items are closed when complete.
+      </p>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="background:var(--panel2)">
+            <th style="padding:6px 8px;text-align:center;border:1px solid var(--line);min-width:30px">#</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:60px">Date/Time</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:60px">Section</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:200px">Action Required</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:100px">Responsible Party</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">Due By</th>
+            <th style="padding:6px 8px;text-align:center;border:1px solid var(--line);min-width:60px">Status</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:100px">Resolution / Notes</th>
+          </tr></thead>
+          <tbody id="at233Body">
+            ${[...Array(10)].map((_,i)=>`<tr>
+              <td style="border:1px solid var(--line);padding:3px;text-align:center;color:var(--dim);font-size:11px">${i+1}</td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="at233_time_${i}" style="width:100%;font-size:11px;padding:3px 4px;font-family:var(--font-hd)"></td>
+              <td style="border:1px solid var(--line);padding:3px">
+                <select data-key="at233_section_${i}" style="width:100%;font-size:11px;padding:2px 4px;background:var(--input-bg);color:var(--txt);border:none">
+                  <option></option><option>Command</option><option>Operations</option>
+                  <option>Planning</option><option>Logistics</option><option>Finance</option>
+                  <option>All Sections</option>
+                </select>
+              </td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="at233_action_${i}" placeholder="Action required..." style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="at233_owner_${i}" placeholder="Name / position" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="at233_due_${i}" placeholder="Date/time" style="width:100%;font-size:11px;padding:3px 4px;font-family:var(--font-hd)"></td>
+              <td style="border:1px solid var(--line);padding:3px;text-align:center">
+                <select data-key="at233_status_${i}" style="width:100%;font-size:11px;padding:2px 4px;background:var(--input-bg);color:var(--txt);border:none">
+                  <option value="Open">Open</option>
+                  <option value="In Progress">In Progress</option>
+                  <option value="Closed">Closed</option>
+                  <option value="Cancelled">Cancelled</option>
+                </select>
+              </td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="at233_notes_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <button onclick="add233Row()" style="margin-top:6px;font-size:11px;padding:4px 12px">+ Add Action Item</button>
+    </div>
+
+    <div class="section-card">
+      <h2>3. Maintained By</h2>
+      <div class="grid-2">
+        ${field('maintained_by','Maintained By (Planning Section Chief / Documentation Unit)','text',
+          formData.planning_section_chief||'')}
+        ${field('last_updated','Last Updated','datetime-local','')}
+      </div>
+    </div>`;
+  },
+
+  buildPrint() {
+    const fd = collectFormData();
+    Object.assign(formData, fd);
+    const statusColor = s => s==='Open'?'#c0392b':s==='In Progress'?'#c07010':s==='Closed'?'#1e8449':'#888';
+    let rows = '';
+    let num = 1;
+    for (let i=0; i<at233Count; i++) {
+      if (!fd[`at233_action_${i}`]) continue;
+      rows += `<tr>
+        <td style="padding:3px 5px;border:1px solid #ccc;text-align:center">${num++}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc;font-family:monospace">${fd[`at233_time_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`at233_section_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`at233_action_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`at233_owner_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc;font-family:monospace">${fd[`at233_due_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc;text-align:center;font-weight:bold;color:${statusColor(fd[`at233_status_${i}`])}">${fd[`at233_status_${i}`]||'Open'}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`at233_notes_${i}`]||''}</td>
+      </tr>`;
+    }
+    return `
+    <div class="ics-print-header">
+      <div class="logo-cell">${logoHtml()}</div>
+      <div class="title-cell"><h1>ICS-233 OPEN ACTION TRACKER</h1>
+        <div class="sub">IAP Supplement \u00b7 FieldCommand IMS</div></div>
+      <div class="meta-cell">
+        <div class="ml">Incident Name</div><div class="mv" style="font-size:10px">${fd.incident_name||'\u2014'}</div>
+        <div class="ml">Op Period</div><div class="mv">${fd.operational_period_number||PERIOD}</div>
+        <div class="ml">Last Updated</div><div class="mv" style="font-size:9px">${fd.last_updated||'\u2014'}</div>
+      </div>
+    </div>
+    <div class="pr"><div class="pc" style="flex:4">
+      <div class="pl">Open Action Items</div>
+      <table style="width:100%;border-collapse:collapse;font-size:9px;margin-top:3px">
+        <thead><tr style="background:#e8eef7">
+          <th style="padding:3px 4px;border:1px solid #ccc">#</th>
+          <th style="padding:3px 4px;border:1px solid #ccc">Date/Time</th>
+          <th style="padding:3px 4px;border:1px solid #ccc">Section</th>
+          <th style="padding:3px 4px;border:1px solid #ccc;text-align:left">Action Required</th>
+          <th style="padding:3px 4px;border:1px solid #ccc;text-align:left">Owner</th>
+          <th style="padding:3px 4px;border:1px solid #ccc">Due By</th>
+          <th style="padding:3px 4px;border:1px solid #ccc">Status</th>
+          <th style="padding:3px 4px;border:1px solid #ccc;text-align:left">Notes</th>
+        </tr></thead>
+        <tbody>${rows||'<tr><td colspan="8" style="padding:6px;color:#888;text-align:center">No open action items</td></tr>'}</tbody>
+      </table>
+    </div></div>
+    <div class="pr">
+      <div class="pc w2"><div class="pl">Maintained By</div><div class="pv">${fd.maintained_by||''}</div></div>
+      <div class="pc w2"><div class="pl">Last Updated</div><div class="pv">${fd.last_updated||''}</div></div>
+    </div>
+    <div class="print-footer">
+      <span>IAP Supplement \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
+      <span>Printed: ${new Date().toLocaleString()}</span>
+    </div>`;
+  }
+};
+
+let at233Count = 10;
+function add233Row() {
+  const tbody = document.getElementById('at233Body');
+  if (!tbody) return;
+  const num = at233Count + 1;
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td style="border:1px solid var(--line);padding:3px;text-align:center;color:var(--dim);font-size:11px">${num}</td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="at233_time_${at233Count}" style="width:100%;font-size:11px;padding:3px 4px;font-family:var(--font-hd)"></td>
+    <td style="border:1px solid var(--line);padding:3px"><select data-key="at233_section_${at233Count}" style="width:100%;font-size:11px;padding:2px 4px;background:var(--input-bg);color:var(--txt);border:none"><option></option><option>Command</option><option>Operations</option><option>Planning</option><option>Logistics</option><option>Finance</option><option>All Sections</option></select></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="at233_action_${at233Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="at233_owner_${at233Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="at233_due_${at233Count}" style="width:100%;font-size:11px;padding:3px 4px;font-family:var(--font-hd)"></td>
+    <td style="border:1px solid var(--line);padding:3px"><select data-key="at233_status_${at233Count}" style="width:100%;font-size:11px;padding:2px 4px;background:var(--input-bg);color:var(--txt);border:none"><option value="Open">Open</option><option value="In Progress">In Progress</option><option value="Closed">Closed</option><option value="Cancelled">Cancelled</option></select></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="at233_notes_${at233Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>`;
+  tbody.appendChild(tr);
+  at233Count++;
 }
 
 </script>

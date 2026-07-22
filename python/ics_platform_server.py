@@ -277,13 +277,18 @@ class ICSHandler(BaseHTTPRequestHandler):
         elif path == "/api/ics/tcards":
             cid=body.get("id") or f"tc-{int(time.time()*1000)}"
             c.execute("""INSERT OR REPLACE INTO ics_tcards
-                (id,incident_id,resource_id,resource_name,type,
-                 status,assignment,contact,created,updated)
-                VALUES(?,?,?,?,?,?,?,?,?,?)""",
+                (id,incident_id,resource_id,resource_name,resource_type,category,type,
+                 status,assignment,leader,contact,num_personnel,eta,notes,
+                 order_number,home_agency,created,updated)
+                VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (cid,body.get("incident_id",""),body.get("resource_id",""),
-                 body.get("resource_name",""),body.get("type",""),
+                 body.get("resource_name",""),body.get("resource_type",""),
+                 body.get("category",""),body.get("type",""),
                  body.get("status","Available"),body.get("assignment",""),
-                 body.get("contact",""),body.get("created",now),now))
+                 body.get("leader",""),body.get("contact",""),
+                 body.get("num_personnel",0),body.get("eta",""),
+                 body.get("notes",""),body.get("order_number",""),
+                 body.get("home_agency",""),body.get("created",now),now))
             c.commit()
             log_activity(body.get("incident_id",""),"Resources","T-Card Updated",
                          body.get("resource_name",""))

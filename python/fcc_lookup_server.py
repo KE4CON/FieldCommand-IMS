@@ -506,6 +506,47 @@ class Handler(BaseHTTPRequestHandler):
                      now,ema_id,body.get("ics_position","")))
                 c.execute("UPDATE dms_state SET last_activity=? WHERE id=1",(now,))
                 c.commit()
+
+                # ── ICS-211 sync ─────────────────────────────────────────────
+                # When check-in is linked to an incident, write to ICS-211 record
+                incident_id = body.get("incident_id","")
+                if incident_id:
+                    # Load existing ICS-211 data for this incident or start fresh
+                    f211_id = f"ics211-{incident_id}"
+                    existing = c.execute(
+                        "SELECT data FROM ics_forms WHERE id=?", (f211_id,)).fetchone()
+                    if existing:
+                        import json as _json
+                        try:
+                            f211_data = _json.loads(existing[0])
+                        except Exception:
+                            f211_data = {}
+                    else:
+                        f211_data = {"incident_id": incident_id, "form_type": "ics211"}
+                    # Find next available row index
+                    idx = 0
+                    while f211_data.get(f"ci211_name_{idx}") or f211_data.get(f"ci211_id_{idx}"):
+                        idx += 1
+                    # Write this check-in to the next available row
+                    f211_data[f"ci211_name_{idx}"]   = body.get("name","")
+                    f211_data[f"ci211_id_{idx}"]     = body.get("callsign","") or radio_id
+                    f211_data[f"ci211_agency_{idx}"] = body.get("visitor_agency","")
+                    f211_data[f"ci211_pos_{idx}"]    = body.get("ics_position","")
+                    f211_data[f"ci211_rtype_{idx}"]  = "Personnel"
+                    f211_data[f"ci211_in_{idx}"]     = now[:16]
+                    f211_data[f"ci211_equip_{idx}"]  = body.get("remarks","")
+                    f211_data["incident_id"]          = incident_id
+                    f211_data["form_type"]            = "ics211"
+                    import json as _json2
+                    c.execute("""INSERT OR REPLACE INTO ics_forms
+                        (id,incident_id,form_type,period,summary,data,created,updated)
+                        VALUES(?,?,?,?,?,?,COALESCE(
+                            (SELECT created FROM ics_forms WHERE id=?),?),?)""",
+                        (f211_id, incident_id, "ics211", 1,
+                         f"Check-In List — {body.get('name','')}",
+                         _json2.dumps(f211_data), f211_id, now, now))
+                    c.commit()
+
                 return self.send_json({"ok":True,"entry":{**body,"id":eid,"timestamp":now,"ema_id":ema_id}})
 
             elif sub == "traffic":
@@ -536,6 +577,37 @@ class Handler(BaseHTTPRequestHandler):
                 c.execute("UPDATE net_entries SET checkout_time=? WHERE id=? AND net_id=?",
                           (now,entry_id,net_id))
                 c.commit()
+
+                # ── ICS-211 checkout sync ─────────────────────────────────────
+                # Update checkout time in ICS-211 record if linked to incident
+                entry_row = c.execute(
+                    "SELECT callsign,name,incident_id FROM net_entries WHERE id=?",
+                    (entry_id,)).fetchone()
+                if entry_row and entry_row[2]:  # has incident_id
+                    incident_id = entry_row[2]
+                    f211_id = f"ics211-{incident_id}"
+                    existing = c.execute(
+                        "SELECT data FROM ics_forms WHERE id=?", (f211_id,)).fetchone()
+                    if existing:
+                        import json as _json3
+                        try:
+                            f211_data = _json3.loads(existing[0])
+                            callsign = entry_row[0]
+                            name = entry_row[1]
+                            # Find matching row by callsign or name
+                            for i in range(100):
+                                rid = f211_data.get(f"ci211_id_{i}","")
+                                rname = f211_data.get(f"ci211_name_{i}","")
+                                if (callsign and rid == callsign) or (name and rname == name):
+                                    f211_data[f"ci211_out_{i}"] = now[:16]
+                                    break
+                            c.execute(
+                                "UPDATE ics_forms SET data=?,updated=? WHERE id=?",
+                                (_json3.dumps(f211_data), now, f211_id))
+                            c.commit()
+                        except Exception:
+                            pass
+
                 return self.send_json({"ok":True,"checkout_time":now})
 
             elif sub == "open":

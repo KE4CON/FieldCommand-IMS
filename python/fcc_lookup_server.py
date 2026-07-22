@@ -439,8 +439,69 @@ class Handler(BaseHTTPRequestHandler):
                 new_id = c.execute("SELECT last_insert_rowid()").fetchone()[0]
                 return self.send_json({"ok":True,"id":new_id})
 
+        # ── CMS Hospital Database Import ────────────────────────────────────
+        # Fetches from CMS Provider Data Catalog — public, no account required.
+        # Returns name/address/phone/type. Does NOT include lat/lon or trauma level.
+        if path == "/api/hospitals/cms_search":
+            import urllib.request as _ureq
+            state  = body.get("state","").upper().strip()
+            county = body.get("county","").upper().strip()
+            q      = body.get("q","").lower().strip()
+            types  = body.get("types",["Acute Care Hospitals","Critical Access Hospitals"])
+            limit  = int(body.get("limit",200))
+            if not state:
+                return self.send_json({"error":"state is required"},400)
+            try:
+                url = (
+                    "https://data.cms.gov/provider-data/api/1/datastore/query/"
+                    f"xubh-q36u/0?filter%5BState%5D={state}&limit={min(limit,500)}&offset=0"
+                )
+                req = _ureq.Request(url,headers={
+                    "Accept":"application/json",
+                    "User-Agent":"FieldCommandIMS/1.0"
+                })
+                with _ureq.urlopen(req,timeout=15) as resp:
+                    data = json.loads(resp.read().decode("utf-8"))
+                results = data.get("results",[])
+                hospitals = []
+                for r in results:
+                    htype = r.get("Hospital Type","")
+                    if types and not any(t.lower() in htype.lower() for t in types):
+                        continue
+                    if r.get("Emergency Services","") == "No":
+                        continue
+                    if county and county not in r.get("County/Parish","").upper():
+                        continue
+                    if q and q not in json.dumps(r).lower():
+                        continue
+                    hospitals.append({
+                        "name":       r.get("Facility Name","").title(),
+                        "address":    r.get("Address","").title(),
+                        "city":       r.get("City/Town","").title(),
+                        "state":      r.get("State",""),
+                        "county":     r.get("County/Parish","").title(),
+                        "phone":      r.get("Telephone Number",""),
+                        "zip":        r.get("ZIP Code",""),
+                        "type":       htype,
+                        "cms_rating": r.get("Hospital overall rating",""),
+                        "lat":None,"lon":None,
+                        "trauma_level":"","burn_center":0,"helipad":0,
+                        "source":"CMS Provider Data"
+                    })
+                return self.send_json({
+                    "hospitals":hospitals[:limit],
+                    "count":len(hospitals),
+                    "note":(
+                        "CMS data includes name/address/phone/type. "
+                        "Lat/lon and trauma level are NOT in CMS — add manually after import, "
+                        "or use a pre-geocoded CSV from your state EMS office."
+                    ),
+                    "source":"data.cms.gov/provider-data"
+                })
+            except Exception as e:
+                return self.send_json({"error":str(e),"hint":"CMS import requires WAN."},503)
+
         if path == "/api/hospitals":
-            hid = body.get("id")
             fields = ['name','address','city','state','county','phone','phone2','fax',
                       'lat','lon','trauma_level','burn_center','helipad','icu',
                       'peds_trauma','stroke_center','cardiac_center','travel_time_min',

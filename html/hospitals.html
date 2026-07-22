@@ -3,402 +3,912 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Hospital Database — FieldCommand IMS</title>
+<title>Hospital Proximity — FieldCommand IMS</title>
 <link rel="stylesheet" href="theme.css">
 <style>
-.hosp-header {
-  background:linear-gradient(135deg,#001428,#002858);
-  border-bottom:2px solid var(--red);padding:10px 16px;
-  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
-}
-.hosp-badge {
-  background:var(--red);color:#fff;font-family:var(--font-hd);
-  font-size:12px;padding:4px 12px;border-radius:4px;letter-spacing:2px;
-}
 .hosp-card {
-  background:var(--panel);border:1px solid var(--line);border-radius:8px;
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--r-md);
   padding:14px 16px;margin-bottom:8px;
-  border-left:4px solid var(--line);
+  border-left:4px solid var(--line);box-shadow:var(--shadow-sm);
 }
 .hosp-card.trauma1 { border-left-color:var(--red); }
 .hosp-card.trauma2 { border-left-color:var(--amber); }
-.hosp-card.other   { border-left-color:var(--blue); }
-.hosp-name { font-family:var(--font-hd);font-size:14px;margin-bottom:4px; }
-.hosp-meta { font-size:11px;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap; }
+.hosp-card.trauma3 { border-left-color:var(--blue); }
+.hosp-card.other   { border-left-color:var(--line); }
+
+.hosp-name { font-family:var(--font-hd);font-size:14px;margin-bottom:4px;color:var(--txt); }
+.hosp-meta { font-size:11px;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap;margin-bottom:6px; }
+.hosp-caps { display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px; }
 .cap-badge {
-  font-size:10px;padding:1px 6px;border-radius:3px;
-  border:1px solid var(--line);color:var(--muted);
+  font-size:10px;padding:2px 8px;border-radius:10px;
+  background:var(--eoc-tint);color:var(--eoc);border:1px solid var(--line);
+  font-weight:600;
 }
-.cap-badge.active { border-color:var(--green);color:var(--green);background:rgba(26,122,58,0.1); }
-.modal-overlay {
-  display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);
-  z-index:200;align-items:center;justify-content:center;
+.cap-badge.red    { background:var(--red-bg);color:var(--red);border-color:#fca5a5; }
+.cap-badge.amber  { background:var(--amber-bg);color:var(--amber);border-color:#fcd34d; }
+.cap-badge.green  { background:var(--green-bg);color:var(--green);border-color:#86efac; }
+.cap-badge.blue   { background:var(--blue-bg);color:var(--blue);border-color:#93c5fd; }
+
+/* Distance/time grid */
+.dist-grid {
+  display:grid;grid-template-columns:repeat(4,1fr);gap:6px;
+  background:var(--panel2);border-radius:var(--r-sm);padding:8px 10px;
+  margin-bottom:8px;font-size:11px;
 }
-.modal-overlay.open { display:flex; }
-.modal-box {
-  background:var(--panel);border:1px solid var(--eoc);border-radius:10px;
-  padding:24px;width:600px;max-width:96vw;max-height:90vh;overflow-y:auto;
+.dist-item { display:flex;flex-direction:column;align-items:center;gap:1px; }
+.dist-val { font-family:var(--font-hd);font-size:15px;color:var(--eoc); }
+.dist-lbl { font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em; }
+
+/* Helo selector */
+.helo-bar {
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--r-md);
+  padding:10px 16px;margin-bottom:12px;
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  box-shadow:var(--shadow-sm);
 }
-.fg { display:flex;flex-direction:column;gap:4px;margin-bottom:10px; }
-.fg label { font-size:11px;color:var(--muted);text-transform:uppercase; }
-.fg input,.fg select { background:var(--input-bg);border:1px solid var(--line);
-  border-radius:4px;color:var(--txt);padding:7px 10px;font-size:13px;width:100%;box-sizing:border-box; }
-.grid-2 { display:grid;grid-template-columns:1fr 1fr;gap:10px; }
-.grid-3 { display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px; }
+
+/* Incident coords input */
+.inc-bar {
+  background:var(--eoc-tint);border:1px solid var(--line);border-radius:var(--r-md);
+  padding:10px 16px;margin-bottom:10px;
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+}
+
+/* Sort bar */
+.sort-bar {
+  display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;align-items:center;
+}
+.sort-btn {
+  font-size:11px;padding:4px 10px;border:1px solid var(--line);
+  background:var(--panel);color:var(--muted);border-radius:var(--r-sm);cursor:pointer;
+}
+.sort-btn.active {
+  background:var(--eoc);border-color:var(--eoc);color:#fff;
+}
 </style>
 </head>
 <body>
 
-<div class="hosp-header">
-  <span class="hosp-badge">MEDICAL</span>
-  <span style="font-family:var(--font-hd);font-size:14px;letter-spacing:2px">HOSPITAL DATABASE</span>
-  <div style="font-size:11px;color:var(--muted)">Used by ICS-206 Medical Plan</div>
+<div class="page-header">
+  <span class="page-header-badge">MEDICAL</span>
+  <span class="page-header-title">Hospital Proximity</span>
+  <div class="page-header-sub">Sort by distance, trauma level, air time</div>
   <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
     <button onclick="showAddModal(null)"
-      style="background:var(--red);border-color:var(--red);color:#fff;font-weight:bold">
+      style="background:var(--red);border-color:var(--red);color:#fff;font-size:12px;padding:5px 14px">
       + Add Hospital
     </button>
-    <button onclick="showImportModal()" style="font-size:12px">📥 Import CSV</button>
-    <a href="index.html" style="color:var(--muted);font-size:12px">← Dashboard</a>
+    <button onclick="document.getElementById('csvImportInput').click()"
+      style="font-size:12px;padding:5px 12px">📥 Import CSV</button>
+    <button onclick="exportCSV()" style="font-size:12px;padding:5px 12px">📤 Export CSV</button>
+    <button onclick="toggleCMS()"
+      style="font-size:12px;padding:5px 12px;
+             background:rgba(26,58,107,0.1);border-color:rgba(26,58,107,0.3);
+             color:var(--blue)">
+      🏛 Import from CMS
+    </button>
+    <input type="file" id="csvImportInput" accept=".csv" style="display:none"
+      onchange="handleCSVImport(this)">
+    <a href="index.html" class="back-link" style="color:rgba(255,255,255,.55);font-size:12px">← Dashboard</a>
   </div>
 </div>
 
-<!-- Filter bar -->
-<div style="background:var(--panel);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-  <input type="text" id="filterText" placeholder="Search hospitals..."
-    oninput="filterHospitals()"
-    style="width:220px;background:var(--input-bg);border:1px solid var(--line);
-           border-radius:4px;color:var(--txt);padding:6px 10px;font-size:12px">
-  <select id="filterState" onchange="loadHospitals()"
-    style="background:var(--input-bg);border:1px solid var(--line);color:var(--txt);
-           padding:6px 10px;border-radius:4px;font-size:12px">
-    <option value="">All States</option>
-    <option value="IL">Illinois</option>
-    <option value="WI">Wisconsin</option>
-    <option value="IN">Indiana</option>
-    <option value="IA">Iowa</option>
-    <option value="MO">Missouri</option>
-  </select>
-  <input type="text" id="filterCounty" placeholder="County..."
-    oninput="loadHospitals()"
-    style="width:140px;background:var(--input-bg);border:1px solid var(--line);
-           border-radius:4px;color:var(--txt);padding:6px 10px;font-size:12px">
-  <div style="font-size:11px;color:var(--muted)" id="hospCount"></div>
-</div>
+<!-- CMS Import Panel -->
+<div id="cmsPanel" style="display:none;background:rgba(26,58,107,0.06);
+     border-bottom:2px solid rgba(26,58,107,0.2);padding:14px 20px">
+  <div style="font-family:var(--font-hd);font-size:12px;color:var(--eoc);
+              letter-spacing:1px;margin-bottom:8px">
+    🏛 IMPORT FROM CMS PROVIDER DATA — data.cms.gov · Public dataset · No account required
+  </div>
+  <div style="background:var(--amber-bg);border:1px solid #fcd34d;border-radius:var(--r-sm);
+              padding:8px 12px;font-size:11px;color:var(--amber);margin-bottom:10px;line-height:1.6">
+    ⚠ <strong>Important:</strong> The CMS dataset includes hospital names, addresses, and phone numbers
+    for ~5,000 Medicare-certified facilities. It does <strong>not</strong> include latitude/longitude
+    or trauma level — those must be added manually after importing. Trauma level designations are
+    maintained by the American College of Surgeons (ACS), not CMS. For geocoded, trauma-level data,
+    ask your state EMS office for their hospital registry or import a pre-built CSV.
+  </div>
+  <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
+    <div class="fg" style="margin:0">
+      <label>State (required)</label>
+      <input type="text" id="cms_state" placeholder="IL" maxlength="2"
+        style="width:60px;text-transform:uppercase">
+    </div>
+    <div class="fg" style="margin:0">
+      <label>County (optional)</label>
+      <input type="text" id="cms_county" placeholder="McHenry" style="width:140px">
+    </div>
+    <div class="fg" style="margin:0">
+      <label>Hospital types</label>
+      <div style="display:flex;gap:8px;padding-top:6px">
+        <label style="font-size:11px;text-transform:none;letter-spacing:0;
+                       display:flex;align-items:center;gap:4px">
+          <input type="checkbox" id="cms_acute" checked> Acute Care
+        </label>
+        <label style="font-size:11px;text-transform:none;letter-spacing:0;
+                       display:flex;align-items:center;gap:4px">
+          <input type="checkbox" id="cms_cah"> Critical Access
+        </label>
+      </div>
+    </div>
+    <button onclick="fetchCMS()"
+      style="background:var(--eoc);border-color:var(--eoc);color:#fff;
+             font-size:12px;padding:7px 16px">
+      🔍 Search CMS
+    </button>
+    <button onclick="toggleCMS()" style="font-size:12px;padding:7px 12px">Cancel</button>
+  </div>
+  <div id="cmsStatus" style="font-size:11px;color:var(--muted);margin-top:8px"></div>
 
-<div class="page-wrap" style="padding:16px">
-  <div id="hospList">
-    <div style="color:var(--muted);text-align:center;padding:30px">Loading...</div>
+  <!-- CMS results -->
+  <div id="cmsResults" style="display:none;margin-top:12px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+      <span style="font-size:11px;font-weight:600;color:var(--eoc)" id="cmsCount"></span>
+      <button onclick="cmsImportAll()"
+        style="font-size:11px;padding:4px 12px;background:var(--green);
+               border-color:var(--green);color:#fff">
+        Import All
+      </button>
+      <button onclick="cmsImportSelected()" style="font-size:11px;padding:4px 12px">
+        Import Selected
+      </button>
+      <span style="font-size:10px;color:var(--dim);margin-left:4px">
+        Lat/lon and trauma level will be blank — fill in after import
+      </span>
+    </div>
+    <div style="max-height:280px;overflow-y:auto;border:1px solid var(--line);
+                border-radius:var(--r-sm);background:var(--panel)">
+      <table style="width:100%;border-collapse:collapse;font-size:11px" id="cmsTable">
+        <thead style="position:sticky;top:0;background:var(--panel2)">
+          <tr>
+            <th style="padding:5px 8px;width:30px">
+              <input type="checkbox" id="cmsSelectAll"
+                onchange="document.querySelectorAll('.cms-sel').forEach(c=>c.checked=this.checked)">
+            </th>
+            <th style="padding:5px 8px;text-align:left">Hospital Name</th>
+            <th style="padding:5px 8px;text-align:left">City</th>
+            <th style="padding:5px 8px;text-align:left">County</th>
+            <th style="padding:5px 8px;text-align:left">Phone</th>
+            <th style="padding:5px 8px;text-align:left">Type</th>
+          </tr>
+        </thead>
+        <tbody id="cmsBody"></tbody>
+      </table>
+    </div>
   </div>
 </div>
 
-<!-- Add/Edit Modal -->
-<div class="modal-overlay" id="addModal" onclick="if(event.target===this)closeModal()">
-<div class="modal-box">
-  <div style="font-family:var(--font-hd);font-size:15px;color:var(--amber);
-              letter-spacing:2px;margin-bottom:16px" id="modalTitle">➕ ADD HOSPITAL</div>
-  <input type="hidden" id="editId">
+<div class="page-wrap">
 
-  <div class="fg"><label>Hospital Name *</label>
-    <input type="text" id="h_name" placeholder="Full hospital name">
+  <!-- Incident coordinates -->
+  <div class="inc-bar">
+    <span style="font-size:11px;font-weight:600;color:var(--eoc);white-space:nowrap">📍 Incident Location</span>
+    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+      <div class="fg" style="margin:0;flex-direction:row;align-items:center;gap:6px">
+        <label style="font-size:10px;white-space:nowrap">Latitude</label>
+        <input type="number" id="incLat" step="0.0001" placeholder="e.g. 42.3089"
+          style="width:120px" oninput="recalcDistances()">
+      </div>
+      <div class="fg" style="margin:0;flex-direction:row;align-items:center;gap:6px">
+        <label style="font-size:10px;white-space:nowrap">Longitude</label>
+        <input type="number" id="incLon" step="0.0001" placeholder="e.g. -88.4356"
+          style="width:130px" oninput="recalcDistances()">
+      </div>
+      <button onclick="useGeneralInfo()" style="font-size:11px;padding:5px 10px">
+        ↓ From General Info
+      </button>
+      <button onclick="useDeviceGPS()" style="font-size:11px;padding:5px 10px">
+        📍 Use GPS
+      </button>
+    </div>
+    <span style="font-size:10px;color:var(--muted)" id="distStatus"></span>
   </div>
-  <div class="grid-2">
-    <div class="fg"><label>Address</label><input type="text" id="h_address"></div>
-    <div class="fg"><label>City *</label><input type="text" id="h_city"></div>
-  </div>
-  <div class="grid-3">
-    <div class="fg"><label>State</label>
-      <select id="h_state">
-        <option>IL</option><option>WI</option><option>IN</option>
-        <option>IA</option><option>MO</option><option>Other</option>
+
+  <!-- Helicopter type selector (Item 18) -->
+  <div class="helo-bar">
+    <span style="font-size:11px;font-weight:600;color:var(--eoc);white-space:nowrap">🚁 Air Transport</span>
+    <div class="fg" style="margin:0;flex-direction:row;align-items:center;gap:6px">
+      <label style="font-size:10px;white-space:nowrap">Helicopter Type</label>
+      <select id="heloType" onchange="recalcDistances()"
+        style="background:var(--input-bg);border:1px solid var(--input-border);
+               color:var(--txt);padding:5px 9px;font-size:12px;border-radius:var(--r-sm)">
+        <option value="145">Air Methods / Metro (Bell 206) — 145 mph</option>
+        <option value="150">Helicopter EMS Midsize (EC135) — 150 mph</option>
+        <option value="155" selected>Air Methods Standard (Bell 407) — 155 mph</option>
+        <option value="165">Agusta AW109 — 165 mph</option>
+        <option value="170">Sikorsky S-76 — 170 mph</option>
+        <option value="180">MedStar / AirLife (EC145) — 180 mph</option>
+        <option value="custom">Custom speed...</option>
       </select>
     </div>
-    <div class="fg"><label>County</label><input type="text" id="h_county" placeholder="McHenry"></div>
-    <div class="fg"><label>Est. Travel Time (min)</label>
-      <input type="number" id="h_travel_time" placeholder="20" min="0">
+    <div id="customSpeedWrap" style="display:none;flex-direction:row;align-items:center;gap:4px" class="fg">
+      <label style="font-size:10px">Speed (mph)</label>
+      <input type="number" id="customSpeed" value="155" min="80" max="250" style="width:70px"
+        oninput="recalcDistances()">
     </div>
-  </div>
-  <div class="grid-2">
-    <div class="fg"><label>Primary Phone</label><input type="tel" id="h_phone" placeholder="(555) 000-0000"></div>
-    <div class="fg"><label>Secondary Phone</label><input type="tel" id="h_phone2" placeholder="(555) 000-0000"></div>
-  </div>
-  <div class="grid-2">
-    <div class="fg"><label>Latitude (decimal)</label><input type="number" id="h_lat" step="0.0001" placeholder="42.3089"></div>
-    <div class="fg"><label>Longitude (decimal)</label><input type="number" id="h_lon" step="0.0001" placeholder="-88.4356"></div>
+    <span style="font-size:10px;color:var(--muted)">
+      + 8 min scene/liftoff · + 5 min hospital approach
+    </span>
   </div>
 
-  <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:14px 0 8px">Capabilities</div>
-  <div class="grid-2">
-    <div class="fg"><label>Trauma Level</label>
-      <select id="h_trauma_level">
-        <option value="">None / Not Designated</option>
-        <option value="Level I">Level I (Highest)</option>
+  <!-- Sort controls -->
+  <div class="sort-bar">
+    <span style="font-size:11px;color:var(--muted);font-weight:600">Sort by:</span>
+    <button class="sort-btn active" onclick="setSort('air_miles')" id="sort-air_miles">✈ Air Miles</button>
+    <button class="sort-btn" onclick="setSort('air_time')" id="sort-air_time">🚁 Air Time</button>
+    <button class="sort-btn" onclick="setSort('ground_miles')" id="sort-ground_miles">🚗 Ground Miles</button>
+    <button class="sort-btn" onclick="setSort('ground_time')" id="sort-ground_time">⏱ Drive Time</button>
+    <button class="sort-btn" onclick="setSort('trauma')" id="sort-trauma">🏥 Trauma Level</button>
+    <button class="sort-btn" onclick="setSort('burn')" id="sort-burn">🔥 Burn Center First</button>
+    <div style="margin-left:auto;display:flex;gap:6px;align-items:center">
+      <input type="text" id="hospSearch" placeholder="Search hospitals..."
+        oninput="renderHospitals()"
+        style="width:200px;background:var(--input-bg);border:1px solid var(--input-border);
+               color:var(--txt);padding:5px 9px;font-size:12px;border-radius:var(--r-sm)">
+      <label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:4px">
+        <input type="checkbox" id="filterHelipad" onchange="renderHospitals()">
+        Helipad only
+      </label>
+      <label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:4px">
+        <input type="checkbox" id="filterTrauma" onchange="renderHospitals()">
+        Trauma only
+      </label>
+    </div>
+  </div>
+
+  <div style="font-size:11px;color:var(--muted);margin-bottom:8px" id="hospCount"></div>
+  <div id="hospList"></div>
+
+</div>
+
+<!-- Add / Edit Modal -->
+<div id="addModal" style="display:none;position:fixed;inset:0;
+     background:rgba(0,0,0,0.55);z-index:200;align-items:center;justify-content:center"
+     onclick="if(event.target===this)closeModal()">
+<div style="background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);
+            padding:22px;width:580px;max-width:96vw;max-height:90vh;overflow-y:auto">
+  <div style="font-family:var(--font-hd);font-size:13px;color:var(--eoc);
+              letter-spacing:1px;margin-bottom:14px" id="modalTitle">+ ADD HOSPITAL</div>
+  <input type="hidden" id="edit_id">
+  <div class="grid-2" style="margin-bottom:10px">
+    <div class="fg" style="grid-column:1/-1">
+      <label>Hospital Name *</label>
+      <input type="text" id="f_name" placeholder="e.g. Northwestern Medicine McHenry Hospital">
+    </div>
+    <div class="fg" style="grid-column:1/-1">
+      <label>Address</label>
+      <input type="text" id="f_address" placeholder="Street address">
+    </div>
+    <div class="fg"><label>City</label><input type="text" id="f_city"></div>
+    <div class="fg"><label>State</label><input type="text" id="f_state" maxlength="2" placeholder="IL"></div>
+    <div class="fg"><label>County</label><input type="text" id="f_county"></div>
+    <div class="fg"><label>Phone</label><input type="text" id="f_phone" placeholder="(815) 555-0000"></div>
+    <div class="fg"><label>Latitude</label><input type="number" id="f_lat" step="0.0001" placeholder="42.3089"></div>
+    <div class="fg"><label>Longitude</label><input type="number" id="f_lon" step="0.0001" placeholder="-88.4356"></div>
+    <div class="fg">
+      <label>Trauma Level</label>
+      <select id="f_trauma">
+        <option value="">None / Unknown</option>
+        <option value="Level I">Level I</option>
         <option value="Level II">Level II</option>
         <option value="Level III">Level III</option>
         <option value="Level IV">Level IV</option>
       </select>
     </div>
-    <div style="display:flex;flex-direction:column;gap:8px;padding-top:4px">
-      <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer">
-        <input type="checkbox" id="h_burn"> Burn Center
-      </label>
-      <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer">
-        <input type="checkbox" id="h_helipad" checked> Helipad
-      </label>
-      <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer">
-        <input type="checkbox" id="h_icu"> ICU
-      </label>
-      <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer">
-        <input type="checkbox" id="h_peds"> Pediatric Trauma
-      </label>
-      <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer">
-        <input type="checkbox" id="h_stroke"> Stroke Center
-      </label>
-      <label style="display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer">
-        <input type="checkbox" id="h_cardiac"> Cardiac Center
-      </label>
+    <div class="fg" style="display:flex;flex-direction:column;justify-content:flex-end">
+      <div style="display:flex;flex-wrap:wrap;gap:10px;padding-top:4px">
+        <label style="display:flex;align-items:center;gap:5px;font-size:12px;text-transform:none;letter-spacing:0">
+          <input type="checkbox" id="f_burn"> Burn Center
+        </label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:12px;text-transform:none;letter-spacing:0">
+          <input type="checkbox" id="f_helipad" checked> Helipad
+        </label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:12px;text-transform:none;letter-spacing:0">
+          <input type="checkbox" id="f_peds"> Peds Trauma
+        </label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:12px;text-transform:none;letter-spacing:0">
+          <input type="checkbox" id="f_stroke"> Stroke Center
+        </label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:12px;text-transform:none;letter-spacing:0">
+          <input type="checkbox" id="f_cardiac"> Cardiac Center
+        </label>
+      </div>
+    </div>
+    <div class="fg" style="grid-column:1/-1">
+      <label>Notes</label>
+      <input type="text" id="f_notes" placeholder="Additional notes">
     </div>
   </div>
-
-  <div class="fg" style="margin-top:8px"><label>Notes</label>
-    <input type="text" id="h_notes" placeholder="Coverage area, special capabilities, access notes...">
-  </div>
-
-  <div style="display:flex;gap:8px;margin-top:12px">
+  <div style="display:flex;gap:8px">
     <button onclick="saveHospital()"
-      style="flex:1;background:var(--red);border-color:var(--red);color:#fff;font-weight:bold;padding:9px">
-      SAVE HOSPITAL
+      style="flex:1;background:var(--red);border-color:var(--red);color:#fff;padding:9px;font-weight:600">
+      SAVE
     </button>
-    <button onclick="closeModal()" style="padding:9px 16px">Cancel</button>
+    <button onclick="if(confirm('Delete this hospital?'))deleteHospital()" id="deleteBtn"
+      style="display:none;padding:9px 14px;background:var(--red-bg);border-color:#fca5a5;color:var(--red)">
+      Delete
+    </button>
+    <button onclick="closeModal()" style="padding:9px 14px">Cancel</button>
   </div>
-</div>
-</div>
-
-<!-- CSV Import Modal -->
-<div class="modal-overlay" id="importModal" onclick="if(event.target===this)document.getElementById('importModal').classList.remove('open')">
-<div class="modal-box">
-  <div style="font-family:var(--font-hd);font-size:15px;color:var(--amber);letter-spacing:2px;margin-bottom:12px">
-    📥 IMPORT HOSPITALS FROM CSV
-  </div>
-  <p style="font-size:12px;color:var(--muted);margin:0 0 12px">
-    CSV format: <code>name,address,city,state,county,phone,lat,lon,trauma_level,burn_center,helipad,travel_time_min,notes</code><br>
-    burn_center and helipad: 1=Yes, 0=No
-  </p>
-  <textarea id="csvInput" rows="10" placeholder="Paste CSV data here..."
-    style="width:100%;box-sizing:border-box;background:var(--input-bg);border:1px solid var(--line);
-           border-radius:4px;color:var(--txt);padding:8px;font-size:11px;font-family:monospace;resize:vertical"></textarea>
-  <div style="display:flex;gap:8px;margin-top:10px">
-    <button onclick="importCSV()"
-      style="background:var(--eoc);border-color:var(--eoc);color:#fff;font-weight:bold">Import</button>
-    <button onclick="document.getElementById('importModal').classList.remove('open')">Cancel</button>
-  </div>
-  <div id="importStatus" style="font-size:11px;margin-top:8px"></div>
 </div>
 </div>
 
 <script>
-const API = 'http://192.168.50.1:5050';
-let allHospitals = [];
+const API     = 'http://192.168.50.1:5050';
+const ICS_API = 'http://192.168.50.1:5051';
+let hospitals = [];
+let sortBy    = 'air_miles';
+let incLat    = null;
+let incLon    = null;
 
-async function loadHospitals() {
-  const state  = document.getElementById('filterState').value;
-  const county = document.getElementById('filterCounty').value.trim();
-  let url = `${API}/api/hospitals?`;
-  if (state)  url += `state=${encodeURIComponent(state)}&`;
-  if (county) url += `county=${encodeURIComponent(county)}&`;
-  try {
-    const r = await fetch(url);
-    allHospitals = await r.json();
-    renderHospitals(allHospitals);
-  } catch(e) {
-    document.getElementById('hospList').innerHTML =
-      '<div style="color:var(--red);padding:20px">⚠ Could not load hospitals — API offline</div>';
-  }
+// ── Haversine distance (miles) ─────────────────────────────────────
+function haversine(lat1, lon1, lat2, lon2) {
+  const R = 3958.8; // Earth radius in miles
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2
+    + Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180)
+    * Math.sin(dLon/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
-function filterHospitals() {
-  const q = document.getElementById('filterText').value.toLowerCase();
-  const filtered = q ? allHospitals.filter(h =>
-    JSON.stringify(h).toLowerCase().includes(q)) : allHospitals;
-  renderHospitals(filtered);
+// ── Helicopter air time (minutes) ─────────────────────────────────
+function heloMinutes(airMiles) {
+  const sel   = document.getElementById('heloType');
+  const speed = sel.value === 'custom'
+    ? parseFloat(document.getElementById('customSpeed').value) || 155
+    : parseFloat(sel.value) || 155;
+  const flightMin = (airMiles / speed) * 60;
+  return Math.round(flightMin + 8 + 5); // + scene liftoff + hospital approach
 }
 
-function renderHospitals(hospitals) {
+// ── Ground driving estimate: avg 45 mph accounting for traffic/roads
+function groundMinutes(groundMiles) {
+  return Math.round((groundMiles / 45) * 60);
+}
+
+// ── Trauma level sort order ────────────────────────────────────────
+function traumaOrder(level) {
+  const map = { 'Level I':1, 'Level II':2, 'Level III':3, 'Level IV':4, '':5 };
+  return map[level] ?? 5;
+}
+
+// ── Calculate distances for all hospitals ─────────────────────────
+function calcDistances() {
+  hospitals.forEach(h => {
+    if (incLat !== null && incLon !== null && h.lat && h.lon) {
+      const d = haversine(incLat, incLon, h.lat, h.lon);
+      h._airMiles   = Math.round(d * 10) / 10;
+      h._airMin     = heloMinutes(d);
+      // Ground: use 1.3× air miles as road multiplier (industry standard)
+      const gd      = d * 1.3;
+      h._groundMiles = Math.round(gd * 10) / 10;
+      h._groundMin  = groundMinutes(gd);
+    } else {
+      h._airMiles = h._groundMiles = h._airMin = h._groundMin = null;
+    }
+  });
+}
+
+function recalcDistances() {
+  incLat = parseFloat(document.getElementById('incLat').value) || null;
+  incLon = parseFloat(document.getElementById('incLon').value) || null;
+  const status = document.getElementById('distStatus');
+  status.textContent = (incLat && incLon)
+    ? `✓ Distances calculated from ${incLat.toFixed(4)}, ${incLon.toFixed(4)}`
+    : 'Enter incident coordinates for distance sort';
+  document.getElementById('heloType').dispatchEvent(new Event('change'));
+  calcDistances();
+  renderHospitals();
+}
+
+// ── Sort ───────────────────────────────────────────────────────────
+function setSort(key) {
+  sortBy = key;
+  document.querySelectorAll('.sort-btn').forEach(b =>
+    b.classList.toggle('active', b.id === 'sort-' + key));
+  renderHospitals();
+}
+
+function sortedHospitals(list) {
+  return [...list].sort((a, b) => {
+    switch(sortBy) {
+      case 'air_miles':
+        if (a._airMiles === null) return 1;
+        if (b._airMiles === null) return -1;
+        return a._airMiles - b._airMiles;
+      case 'air_time':
+        if (a._airMin === null) return 1;
+        if (b._airMin === null) return -1;
+        return a._airMin - b._airMin;
+      case 'ground_miles':
+        if (a._groundMiles === null) return 1;
+        if (b._groundMiles === null) return -1;
+        return a._groundMiles - b._groundMiles;
+      case 'ground_time':
+        if (a._groundMin === null) return 1;
+        if (b._groundMin === null) return -1;
+        return a._groundMin - b._groundMin;
+      case 'trauma':
+        const ta = traumaOrder(a.trauma_level);
+        const tb = traumaOrder(b.trauma_level);
+        if (ta !== tb) return ta - tb;
+        return (a._airMiles ?? 999) - (b._airMiles ?? 999);
+      case 'burn':
+        if (a.burn_center !== b.burn_center) return b.burn_center - a.burn_center;
+        return traumaOrder(a.trauma_level) - traumaOrder(b.trauma_level);
+      default:
+        return 0;
+    }
+  });
+}
+
+// ── Render ─────────────────────────────────────────────────────────
+function renderHospitals() {
+  const q           = (document.getElementById('hospSearch')?.value || '').toLowerCase();
+  const heliOnly    = document.getElementById('filterHelipad')?.checked;
+  const traumaOnly  = document.getElementById('filterTrauma')?.checked;
+
+  let list = hospitals.filter(h => {
+    if (q && !JSON.stringify(h).toLowerCase().includes(q)) return false;
+    if (heliOnly && !h.helipad) return false;
+    if (traumaOnly && !h.trauma_level) return false;
+    return true;
+  });
+
+  list = sortedHospitals(list);
   document.getElementById('hospCount').textContent =
-    `${hospitals.length} hospital${hospitals.length!==1?'s':''}`;
-  if (!hospitals.length) {
-    document.getElementById('hospList').innerHTML =
-      `<div style="color:var(--muted);text-align:center;padding:30px">
-        No hospitals found. <button onclick="showAddModal(null)"
-          style="background:var(--red);border-color:var(--red);color:#fff;margin-left:8px">Add Hospital</button>
+    `${list.length} hospital${list.length!==1?'s':''}${
+      incLat ? ' — sorted by ' + sortBy.replace('_',' ') : ''}`;
+
+  if (!list.length && !hospitals.length) {
+    document.getElementById('hospList').innerHTML = `
+      <div style="background:var(--panel);border:1px solid var(--line);border-radius:var(--r-md);
+                  padding:28px 24px;text-align:center;box-shadow:var(--shadow-sm)">
+        <div style="font-size:32px;margin-bottom:10px">🏥</div>
+        <div style="font-family:var(--font-hd);font-size:14px;letter-spacing:1px;
+                    color:var(--eoc);margin-bottom:8px">
+          NO HOSPITALS CONFIGURED
+        </div>
+        <div style="font-size:12px;color:var(--muted);max-width:480px;margin:0 auto 16px;line-height:1.7">
+          Add the trauma centers, burn centers, and community EDs in your response area.
+          The system will calculate air miles, helicopter time, and driving estimates
+          from your incident location once hospitals are entered.
+        </div>
+        <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+          <button onclick="showAddModal(null)"
+            style="background:var(--red);border-color:var(--red);color:#fff;
+                   font-weight:600;padding:8px 18px">
+            + Add First Hospital
+          </button>
+          <button onclick="document.getElementById('csvImportInput').click()"
+            style="padding:8px 18px">
+            📥 Import from CSV
+          </button>
+        </div>
+        <div style="margin-top:16px;font-size:11px;color:var(--dim)">
+          Suggested: add all Level I and II trauma centers within 60 air miles,
+          any burn center within 90 miles, and your nearest community ED.
+        </div>
       </div>`;
     return;
   }
-  document.getElementById('hospList').innerHTML = hospitals.map(h => {
-    const cls = h.trauma_level==='Level I'?'trauma1':h.trauma_level==='Level II'?'trauma2':'other';
+  if (!list.length) {
+    document.getElementById('hospList').innerHTML =
+      `<div style="color:var(--muted);text-align:center;padding:30px">
+        No hospitals match filter.
+      </div>`;
+    return;
+  }
+
+  document.getElementById('hospList').innerHTML = list.map((h, rank) => {
+    const cls = h.trauma_level === 'Level I'   ? 'trauma1'
+              : h.trauma_level === 'Level II'  ? 'trauma2'
+              : h.trauma_level === 'Level III' ? 'trauma3'
+              : 'other';
+
+    // Capability badges
     const caps = [
-      h.trauma_level ? `🏥 Trauma ${h.trauma_level}` : '',
-      h.burn_center  ? '🔥 Burn Center' : '',
-      h.helipad      ? '🚁 Helipad' : '',
-      h.icu          ? '🫀 ICU' : '',
-      h.peds_trauma  ? '👶 Peds Trauma' : '',
-      h.stroke_center? '🧠 Stroke' : '',
-      h.cardiac_center?'❤ Cardiac' : '',
+      h.trauma_level ? { label: `Trauma ${h.trauma_level}`, cls: h.trauma_level==='Level I'?'red':h.trauma_level==='Level II'?'amber':'blue' } : null,
+      h.burn_center  ? { label: '🔥 Burn Center', cls:'red' }    : null,
+      h.helipad      ? { label: '🚁 Helipad', cls:'green' }       : null,
+      h.peds_trauma  ? { label: '👶 Peds Trauma', cls:'blue' }    : null,
+      h.stroke_center? { label: '🧠 Stroke', cls:'blue' }         : null,
+      h.cardiac_center?{ label: '❤️ Cardiac', cls:'red' }         : null,
+      h.icu          ? { label: 'ICU', cls:'' }                   : null,
     ].filter(Boolean);
-    return `<div class="hosp-card ${cls}">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between">
-        <div style="flex:1">
-          <div class="hosp-name">${h.name}</div>
-          <div class="hosp-meta">
-            <span>📍 ${[h.address,h.city,h.state].filter(Boolean).join(', ')}</span>
-            ${h.county?`<span>📌 ${h.county} County</span>`:''}
-            ${h.phone?`<span>📞 ${h.phone}</span>`:''}
-            ${h.travel_time_min?`<span>🕐 ~${h.travel_time_min} min</span>`:''}
-          </div>
-          <div style="margin-top:6px">
-            ${caps.map(c=>`<span class="cap-badge active">${c}</span>`).join('')}
-          </div>
-          ${h.notes?`<div style="font-size:11px;color:var(--dim);margin-top:4px">${h.notes}</div>`:''}
+
+    const capHtml = caps.map(c =>
+      `<span class="cap-badge ${c.cls}">${c.label}</span>`).join('');
+
+    // Distance block
+    const hasCoords = h._airMiles !== null;
+    const distHtml = hasCoords ? `
+      <div class="dist-grid">
+        <div class="dist-item">
+          <div class="dist-val">${h._airMiles}</div>
+          <div class="dist-lbl">Air Miles</div>
         </div>
-        <div style="display:flex;gap:6px;flex-shrink:0;margin-left:10px">
-          <button onclick="showAddModal(${h.id})"
-            style="font-size:11px;padding:3px 10px">✏ Edit</button>
-          <button onclick="deleteHospital(${h.id},'${h.name.replace(/'/g,"\\'")}')"
-            style="font-size:11px;padding:3px 8px;background:var(--panel2)">✕</button>
+        <div class="dist-item">
+          <div class="dist-val">${h._airMin} min</div>
+          <div class="dist-lbl">Helo Time</div>
         </div>
-      </div>
-    </div>`;
+        <div class="dist-item">
+          <div class="dist-val">${h._groundMiles}</div>
+          <div class="dist-lbl">Ground Mi</div>
+        </div>
+        <div class="dist-item">
+          <div class="dist-val">${h._groundMin} min</div>
+          <div class="dist-lbl">Drive Est</div>
+        </div>
+      </div>` : '';
+
+    const rankBadge = incLat
+      ? `<span style="font-family:var(--font-hd);font-size:11px;
+                      color:var(--muted);margin-left:8px">#${rank+1}</span>`
+      : '';
+
+    return `
+      <div class="hosp-card ${cls}">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div class="hosp-name">${h.name}${rankBadge}</div>
+          <div style="display:flex;gap:6px">
+            <button onclick="showAddModal('${h.id}')"
+              style="font-size:10px;padding:2px 8px">✏ Edit</button>
+            ${h.phone ? `<a href="tel:${h.phone}"
+              style="font-size:10px;padding:2px 8px;background:var(--green-bg);
+                     border:1px solid #86efac;color:var(--green);border-radius:var(--r-sm)">
+              📞 ${h.phone}</a>` : ''}
+          </div>
+        </div>
+        <div class="hosp-meta">
+          <span>${[h.address, h.city, h.state].filter(Boolean).join(', ')}</span>
+          ${h.county ? `<span>${h.county} County</span>` : ''}
+        </div>
+        ${capHtml ? `<div class="hosp-caps">${capHtml}</div>` : ''}
+        ${distHtml}
+        ${h.notes ? `<div style="font-size:11px;color:var(--muted);margin-top:4px">${h.notes}</div>` : ''}
+      </div>`;
   }).join('');
 }
 
-function showAddModal(id) {
-  const modal = document.getElementById('addModal');
-  const title = document.getElementById('modalTitle');
-  const fields = ['name','address','city','state','county','phone','phone2',
-                  'lat','lon','trauma_level','travel_time'];
-  if (id) {
-    const h = allHospitals.find(x => x.id === id);
-    if (!h) return;
-    title.textContent = '✏ EDIT HOSPITAL';
-    document.getElementById('editId').value = id;
-    document.getElementById('h_name').value = h.name||'';
-    document.getElementById('h_address').value = h.address||'';
-    document.getElementById('h_city').value = h.city||'';
-    document.getElementById('h_state').value = h.state||'IL';
-    document.getElementById('h_county').value = h.county||'';
-    document.getElementById('h_phone').value = h.phone||'';
-    document.getElementById('h_phone2').value = h.phone2||'';
-    document.getElementById('h_lat').value = h.lat||'';
-    document.getElementById('h_lon').value = h.lon||'';
-    document.getElementById('h_trauma_level').value = h.trauma_level||'';
-    document.getElementById('h_travel_time').value = h.travel_time_min||'';
-    document.getElementById('h_notes').value = h.notes||'';
-    document.getElementById('h_burn').checked   = !!h.burn_center;
-    document.getElementById('h_helipad').checked = !!h.helipad;
-    document.getElementById('h_icu').checked    = !!h.icu;
-    document.getElementById('h_peds').checked   = !!h.peds_trauma;
-    document.getElementById('h_stroke').checked  = !!h.stroke_center;
-    document.getElementById('h_cardiac').checked = !!h.cardiac_center;
-  } else {
-    title.textContent = '➕ ADD HOSPITAL';
-    document.getElementById('editId').value = '';
-    ['h_name','h_address','h_city','h_county','h_phone','h_phone2',
-     'h_lat','h_lon','h_travel_time','h_notes'].forEach(id => {
-      document.getElementById(id).value = '';
-    });
-    document.getElementById('h_state').value = 'IL';
-    document.getElementById('h_trauma_level').value = '';
-    ['h_burn','h_icu','h_peds','h_stroke','h_cardiac'].forEach(id =>
-      document.getElementById(id).checked = false);
-    document.getElementById('h_helipad').checked = true;
+// ── Load data ──────────────────────────────────────────────────────
+async function loadHospitals() {
+  try {
+    const r = await fetch(`${API}/api/hospitals`);
+    hospitals = r.ok ? await r.json() : [];
+    calcDistances();
+    renderHospitals();
+  } catch(e) {
+    document.getElementById('hospList').innerHTML =
+      `<div style="color:var(--red);text-align:center;padding:40px">
+        ⚠ Cannot reach server<br>
+        <span style="font-size:11px;color:var(--muted)">${e.message}</span>
+      </div>`;
   }
-  modal.classList.add('open');
-  document.getElementById('h_name').focus();
+}
+
+// ── Pull coords from General Info ──────────────────────────────────
+async function useGeneralInfo() {
+  const inc = localStorage.getItem('selectedIncident');
+  if (!inc) { alert('No incident selected'); return; }
+  try {
+    const r = await fetch(`${ICS_API}/api/ics/general_info?incident_id=${inc}&period=1`);
+    if (r.ok) {
+      const d = await r.json();
+      if (d.incident_lat && d.incident_lon) {
+        document.getElementById('incLat').value = d.incident_lat;
+        document.getElementById('incLon').value = d.incident_lon;
+        recalcDistances();
+      } else {
+        alert('No coordinates in General Info — enter them on the General Info form first.');
+      }
+    }
+  } catch(e) { alert('Could not reach ICS server'); }
+}
+
+// ── GPS ────────────────────────────────────────────────────────────
+function useDeviceGPS() {
+  if (!navigator.geolocation) { alert('GPS not available'); return; }
+  document.getElementById('distStatus').textContent = 'Getting GPS position...';
+  navigator.geolocation.getCurrentPosition(pos => {
+    document.getElementById('incLat').value = pos.coords.latitude.toFixed(4);
+    document.getElementById('incLon').value = pos.coords.longitude.toFixed(4);
+    recalcDistances();
+  }, err => {
+    document.getElementById('distStatus').textContent = 'GPS error: ' + err.message;
+  });
+}
+
+// ── Helicopter type change ─────────────────────────────────────────
+document.getElementById('heloType').addEventListener('change', function() {
+  document.getElementById('customSpeedWrap').style.display =
+    this.value === 'custom' ? 'flex' : 'none';
+  calcDistances();
+  renderHospitals();
+});
+
+// ── Add / Edit modal ───────────────────────────────────────────────
+function showAddModal(id) {
+  const fields = ['name','address','city','state','county','phone','lat','lon','notes'];
+  const checks = ['burn','helipad','peds','stroke','cardiac'];
+  if (id) {
+    const h = hospitals.find(x => String(x.id) === String(id));
+    if (!h) return;
+    document.getElementById('modalTitle').textContent = '✏ EDIT HOSPITAL';
+    document.getElementById('edit_id').value = id;
+    document.getElementById('deleteBtn').style.display = '';
+    fields.forEach(f => {
+      const el = document.getElementById('f_'+f);
+      if (el) el.value = h[f] || '';
+    });
+    document.getElementById('f_trauma').value = h.trauma_level || '';
+    document.getElementById('f_burn').checked    = !!h.burn_center;
+    document.getElementById('f_helipad').checked = !!h.helipad;
+    document.getElementById('f_peds').checked    = !!h.peds_trauma;
+    document.getElementById('f_stroke').checked  = !!h.stroke_center;
+    document.getElementById('f_cardiac').checked = !!h.cardiac_center;
+  } else {
+    document.getElementById('modalTitle').textContent = '+ ADD HOSPITAL';
+    document.getElementById('edit_id').value = '';
+    document.getElementById('deleteBtn').style.display = 'none';
+    fields.forEach(f => { const el = document.getElementById('f_'+f); if(el) el.value=''; });
+    document.getElementById('f_trauma').value = '';
+    document.getElementById('f_helipad').checked = true;
+    ['burn','peds','stroke','cardiac'].forEach(f =>
+      document.getElementById('f_'+f).checked = false);
+  }
+  document.getElementById('addModal').style.display = 'flex';
+  document.getElementById('f_name').focus();
 }
 
 async function saveHospital() {
-  const name = document.getElementById('h_name').value.trim();
-  const city = document.getElementById('h_city').value.trim();
+  const name = document.getElementById('f_name').value.trim();
   if (!name) { alert('Hospital name is required'); return; }
-
+  const id = document.getElementById('edit_id').value;
   const payload = {
-    id:             document.getElementById('editId').value || undefined,
     name,
-    address:        document.getElementById('h_address').value.trim(),
-    city,
-    state:          document.getElementById('h_state').value,
-    county:         document.getElementById('h_county').value.trim(),
-    phone:          document.getElementById('h_phone').value.trim(),
-    phone2:         document.getElementById('h_phone2').value.trim(),
-    lat:            parseFloat(document.getElementById('h_lat').value)||null,
-    lon:            parseFloat(document.getElementById('h_lon').value)||null,
-    trauma_level:   document.getElementById('h_trauma_level').value,
-    burn_center:    document.getElementById('h_burn').checked?1:0,
-    helipad:        document.getElementById('h_helipad').checked?1:0,
-    icu:            document.getElementById('h_icu').checked?1:0,
-    peds_trauma:    document.getElementById('h_peds').checked?1:0,
-    stroke_center:  document.getElementById('h_stroke').checked?1:0,
-    cardiac_center: document.getElementById('h_cardiac').checked?1:0,
-    travel_time_min:parseInt(document.getElementById('h_travel_time').value)||0,
-    notes:          document.getElementById('h_notes').value.trim(),
-    active:         1,
+    address:       document.getElementById('f_address').value.trim(),
+    city:          document.getElementById('f_city').value.trim(),
+    state:         document.getElementById('f_state').value.trim().toUpperCase(),
+    county:        document.getElementById('f_county').value.trim(),
+    phone:         document.getElementById('f_phone').value.trim(),
+    lat:           parseFloat(document.getElementById('f_lat').value) || null,
+    lon:           parseFloat(document.getElementById('f_lon').value) || null,
+    trauma_level:  document.getElementById('f_trauma').value,
+    burn_center:   document.getElementById('f_burn').checked ? 1 : 0,
+    helipad:       document.getElementById('f_helipad').checked ? 1 : 0,
+    peds_trauma:   document.getElementById('f_peds').checked ? 1 : 0,
+    stroke_center: document.getElementById('f_stroke').checked ? 1 : 0,
+    cardiac_center:document.getElementById('f_cardiac').checked ? 1 : 0,
+    notes:         document.getElementById('f_notes').value.trim(),
+    active:        1,
   };
-  if (!payload.id) delete payload.id;
-
+  if (id) payload.id = parseInt(id);
   try {
-    await fetch(`${API}/api/hospitals`, {
+    const r = await fetch(`${API}/api/hospitals`, {
       method:'POST', headers:{'Content-Type':'application/json'},
-      body:JSON.stringify(payload)
+      body: JSON.stringify(payload)
     });
+    if (r.ok) { closeModal(); await loadHospitals(); }
+    else alert('Save failed');
+  } catch(e) { alert('Cannot reach server: ' + e.message); }
+}
+
+async function deleteHospital() {
+  const id = document.getElementById('edit_id').value;
+  if (!id) return;
+  try {
+    await fetch(`${API}/api/hospitals/${id}`, { method:'DELETE' });
     closeModal();
     await loadHospitals();
-  } catch(e) { alert('Save failed: ' + e); }
-}
-
-async function deleteHospital(id, name) {
-  if (!confirm(`Remove "${name}" from the hospital database?`)) return;
-  await fetch(`${API}/api/hospitals/${id}`, {method:'DELETE'});
-  await loadHospitals();
-}
-
-function showImportModal() {
-  document.getElementById('importModal').classList.add('open');
-}
-
-async function importCSV() {
-  const csv = document.getElementById('csvInput').value.trim();
-  if (!csv) return;
-  const lines = csv.split('\n').filter(l=>l.trim());
-  let imported = 0;
-  const status = document.getElementById('importStatus');
-  for (const line of lines) {
-    const parts = line.split(',').map(p=>p.trim().replace(/^"|"$/g,''));
-    if (parts.length < 3) continue;
-    const payload = {
-      name: parts[0], address: parts[1]||'', city: parts[2]||'',
-      state: parts[3]||'IL', county: parts[4]||'', phone: parts[5]||'',
-      lat: parseFloat(parts[6])||null, lon: parseFloat(parts[7])||null,
-      trauma_level: parts[8]||'', burn_center: parseInt(parts[9])||0,
-      helipad: parseInt(parts[10])||0, travel_time_min: parseInt(parts[11])||0,
-      notes: parts[12]||'', active: 1,
-    };
-    try {
-      await fetch(`${API}/api/hospitals`, {
-        method:'POST', headers:{'Content-Type':'application/json'},
-        body:JSON.stringify(payload)
-      });
-      imported++;
-    } catch(e) {}
-  }
-  status.textContent = `✓ Imported ${imported} hospital${imported!==1?'s':''}`;
-  status.style.color = 'var(--green)';
-  await loadHospitals();
+  } catch(e) { alert('Delete failed: ' + e.message); }
 }
 
 function closeModal() {
-  document.getElementById('addModal').classList.remove('open');
+  document.getElementById('addModal').style.display = 'none';
 }
 
+async function handleCSVImport(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const text = await file.text();
+  const lines = text.split('\n').filter(l => l.trim());
+  if (lines.length < 2) { alert('CSV appears empty'); return; }
+
+  // Parse header row — flexible column matching
+  const headers = lines[0].split(',').map(h =>
+    h.replace(/^"|"$/g,'').trim().toLowerCase()
+      .replace(/\s+/g,'_').replace(/[^a-z_]/g,''));
+
+  const colMap = {
+    name:          headers.findIndex(h => h.includes('name')),
+    address:       headers.findIndex(h => h.includes('address')),
+    city:          headers.findIndex(h => h.includes('city')),
+    state:         headers.findIndex(h => h.includes('state')),
+    county:        headers.findIndex(h => h.includes('county')),
+    phone:         headers.findIndex(h => h.includes('phone')),
+    lat:           headers.findIndex(h => h === 'lat' || h === 'latitude'),
+    lon:           headers.findIndex(h => h === 'lon' || h === 'longitude' || h === 'lng'),
+    trauma_level:  headers.findIndex(h => h.includes('trauma')),
+    burn_center:   headers.findIndex(h => h.includes('burn')),
+    helipad:       headers.findIndex(h => h.includes('heli')),
+    peds_trauma:   headers.findIndex(h => h.includes('peds') || h.includes('pediatric')),
+    stroke_center: headers.findIndex(h => h.includes('stroke')),
+    cardiac_center:headers.findIndex(h => h.includes('cardiac')),
+    notes:         headers.findIndex(h => h.includes('note')),
+  };
+
+  if (colMap.name < 0) { alert('CSV must have a "name" column'); return; }
+
+  let count = 0, errors = 0;
+  for (let i = 1; i < lines.length; i++) {
+    const vals = lines[i].match(/(".*?"|[^,]+|(?<=,)(?=,)|(?<=,)$|^(?=,))/g) || [];
+    const get  = (col) => col >= 0 ? (vals[col]||'').replace(/^"|"$/g,'').trim() : '';
+    const name = get(colMap.name);
+    if (!name) continue;
+
+    const payload = {
+      name,
+      address:        get(colMap.address),
+      city:           get(colMap.city),
+      state:          get(colMap.state).toUpperCase().slice(0,2),
+      county:         get(colMap.county),
+      phone:          get(colMap.phone),
+      lat:            parseFloat(get(colMap.lat))  || null,
+      lon:            parseFloat(get(colMap.lon))  || null,
+      trauma_level:   get(colMap.trauma_level),
+      burn_center:    ['1','true','yes','y'].includes(get(colMap.burn_center).toLowerCase()) ? 1 : 0,
+      helipad:        ['1','true','yes','y'].includes(get(colMap.helipad).toLowerCase()) ? 1 : 0,
+      peds_trauma:    ['1','true','yes','y'].includes(get(colMap.peds_trauma).toLowerCase()) ? 1 : 0,
+      stroke_center:  ['1','true','yes','y'].includes(get(colMap.stroke_center).toLowerCase()) ? 1 : 0,
+      cardiac_center: ['1','true','yes','y'].includes(get(colMap.cardiac_center).toLowerCase()) ? 1 : 0,
+      notes:          get(colMap.notes),
+      active:         1,
+    };
+    try {
+      const r = await fetch(`${API}/api/hospitals`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      });
+      if (r.ok) count++; else errors++;
+    } catch(e) { errors++; }
+  }
+  input.value = '';
+  alert(`Imported ${count} hospitals.${errors ? ` ${errors} failed.` : ''}`);
+  await loadHospitals();
+}
+
+function exportCSV() {
+  const headers = ['name','address','city','state','county','phone',
+                   'lat','lon','trauma_level','burn_center','helipad',
+                   'peds_trauma','stroke_center','cardiac_center','notes'];
+  const rows = [headers.join(',')];
+  hospitals.forEach(h => {
+    rows.push(headers.map(k => `"${(h[k]??'').toString().replace(/"/g,'""')}"`).join(','));
+  });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([rows.join('\n')], {type:'text/csv'}));
+  a.download = 'hospitals.csv';
+  a.click();
+}
+
+// ── CMS Import ────────────────────────────────────────────────────
+let _cmsHospitals = [];
+
+function toggleCMS() {
+  const panel = document.getElementById('cmsPanel');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+  document.getElementById('cmsResults').style.display = 'none';
+}
+
+function cmsStatus(msg, color='var(--muted)') {
+  const el = document.getElementById('cmsStatus');
+  el.textContent = msg;
+  el.style.color = color;
+}
+
+async function fetchCMS() {
+  const state  = document.getElementById('cms_state').value.trim().toUpperCase();
+  const county = document.getElementById('cms_county').value.trim();
+  const acute  = document.getElementById('cms_acute').checked;
+  const cah    = document.getElementById('cms_cah').checked;
+
+  if (!state || state.length !== 2) {
+    cmsStatus('Enter a valid 2-letter state code (e.g. IL, TX, CA)', 'var(--red)');
+    return;
+  }
+  if (!acute && !cah) {
+    cmsStatus('Select at least one hospital type', 'var(--red)');
+    return;
+  }
+
+  cmsStatus('Searching CMS database… (requires internet)', 'var(--amber)');
+  const types = [];
+  if (acute) types.push('Acute Care Hospitals');
+  if (cah)   types.push('Critical Access Hospitals');
+
+  try {
+    const r = await fetch(`${API}/api/hospitals/cms_search`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ state, county, types, limit: 300 })
+    });
+    const d = await r.json();
+    if (d.error) { cmsStatus('Error: ' + d.error, 'var(--red)'); return; }
+
+    _cmsHospitals = d.hospitals || [];
+    document.getElementById('cmsCount').textContent =
+      `${_cmsHospitals.length} hospitals found in ${state}${county ? ', ' + county + ' County' : ''}`;
+    cmsStatus(
+      `✓ ${d.count} results · ${d.note}`,
+      'var(--green)'
+    );
+
+    const tbody = document.getElementById('cmsBody');
+    tbody.innerHTML = _cmsHospitals.map((h, i) => `
+      <tr>
+        <td style="padding:4px 8px;text-align:center">
+          <input type="checkbox" class="cms-sel" data-idx="${i}" checked>
+        </td>
+        <td style="padding:4px 8px;font-weight:bold">${h.name}</td>
+        <td style="padding:4px 8px">${h.city}</td>
+        <td style="padding:4px 8px;color:var(--muted)">${h.county}</td>
+        <td style="padding:4px 8px;font-family:var(--font-mono);font-size:10px">${h.phone}</td>
+        <td style="padding:4px 8px;font-size:10px;color:var(--muted)">${h.type}</td>
+      </tr>`).join('');
+
+    document.getElementById('cmsResults').style.display = '';
+  } catch(e) {
+    cmsStatus('Failed — check internet connection: ' + e.message, 'var(--red)');
+  }
+}
+
+async function cmsImportAll() { await cmsImportHospitals(_cmsHospitals); }
+
+async function cmsImportSelected() {
+  const selected = [...document.querySelectorAll('.cms-sel:checked')]
+    .map(cb => _cmsHospitals[parseInt(cb.dataset.idx)])
+    .filter(Boolean);
+  if (!selected.length) { alert('No hospitals selected'); return; }
+  await cmsImportHospitals(selected);
+}
+
+async function cmsImportHospitals(list) {
+  cmsStatus(`Importing ${list.length} hospitals…`, 'var(--amber)');
+  let count = 0;
+  for (const h of list) {
+    try {
+      const r = await fetch(`${API}/api/hospitals`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name:         h.name,
+          address:      h.address,
+          city:         h.city,
+          state:        h.state,
+          county:       h.county,
+          phone:        h.phone,
+          lat:          null,
+          lon:          null,
+          trauma_level: '',      // must be filled in manually — CMS doesn't have this
+          burn_center:  0,
+          helipad:      0,
+          notes:        `CMS type: ${h.type}${h.cms_rating ? ' · Rating: ' + h.cms_rating + '★' : ''}`,
+          active:       1
+        })
+      });
+      if (r.ok) count++;
+    } catch(e) {}
+  }
+  cmsStatus(
+    `✓ Imported ${count} hospitals. Edit each one to add lat/lon and trauma level.`,
+    'var(--green)'
+  );
+  await loadHospitals();
+}
+
+// Init
 loadHospitals();
 </script>
 </body>

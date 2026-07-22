@@ -1406,14 +1406,16 @@ def _alter_existing_tables():
                 log.warning(f"Could not add net_entries.{col}: {e}")
 
 # ── Default hospital seeding ──────────────────────────────────────────────────
-DEFAULT_HOSPITALS = [
-    ('Northwestern Medicine Huntley Hospital','10400 Haligus Rd','Huntley','IL','McHenry','(847) 669-5000',42.1697,-88.4275,'',0,0,20,'Closest to NW McHenry County'),
-    ('Northwestern Medicine McHenry Hospital','4201 Medical Center Dr','McHenry','IL','McHenry','(815) 344-5000',42.3375,-88.2717,'',0,0,15,'Main McHenry County hospital'),
-    ('Centegra Hospital Woodstock','3701 Doty Rd','Woodstock','IL','McHenry','(815) 338-2500',42.3089,-88.4356,'',0,0,5,'Closest to Woodstock'),
-    ('Advocate Condell Medical Center','801 S Milwaukee Ave','Libertyville','IL','Lake','(847) 362-2900',42.2936,-87.9531,'Level II',0,1,30,'Trauma II, helipad, stroke/cardiac center'),
-    ('Advocate Lutheran General Hospital','1775 Dempster St','Park Ridge','IL','Cook','(847) 723-2210',42.0178,-87.8436,'Level I',1,1,55,'Trauma I, burn center, peds trauma, helipad'),
-    ('Ascension Saint Alexius','1555 Barrington Rd','Hoffman Estates','IL','Cook','(847) 843-2000',42.0325,-88.1219,'Level II',0,1,40,'Trauma II, helipad'),
-]
+DEFAULT_HOSPITALS = []
+# Hospital database is empty by default.
+# Add your local hospitals via the Hospital Proximity page (hospitals.html)
+# or import from CSV using the Export/Import buttons.
+# Any agency deploying FieldCommand IMS should populate this with
+# hospitals relevant to their jurisdiction — trauma centers, burn centers,
+# and community EDs within their typical response area.
+# Fields: name, address, city, state, county, phone, lat, lon,
+#         trauma_level, burn_center, helipad, travel_time_min, notes
+
 
 def seed_hospitals(conn):
     try:

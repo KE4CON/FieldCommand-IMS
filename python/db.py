@@ -257,6 +257,56 @@ CREATE TABLE IF NOT EXISTS incidents (
 );
 CREATE INDEX IF NOT EXISTS idx_inc_status ON incidents(status);
 
+-- ── General Info (cross-form auto-population) ───────────────────────────────
+CREATE TABLE IF NOT EXISTS general_info (
+    id                      TEXT PRIMARY KEY,  -- "{incident_id}-{period}"
+    incident_id             TEXT NOT NULL REFERENCES incidents(id) ON DELETE CASCADE,
+    period                  INTEGER NOT NULL DEFAULT 1,
+    -- Incident header fields
+    incident_name           TEXT DEFAULT '',
+    incident_number         TEXT DEFAULT '',
+    incident_type           TEXT DEFAULT '',
+    jurisdiction            TEXT DEFAULT '',
+    incident_location       TEXT DEFAULT '',
+    lat                     TEXT DEFAULT '',
+    lon                     TEXT DEFAULT '',
+    -- Operational period
+    operational_period_from TEXT DEFAULT '',
+    operational_period_to   TEXT DEFAULT '',
+    -- Command and General Staff
+    incident_commander      TEXT DEFAULT '',
+    deputy_ic               TEXT DEFAULT '',
+    safety_officer          TEXT DEFAULT '',
+    public_info_officer     TEXT DEFAULT '',
+    liaison_officer         TEXT DEFAULT '',
+    ops_section_chief       TEXT DEFAULT '',
+    planning_section_chief  TEXT DEFAULT '',
+    logistics_section_chief TEXT DEFAULT '',
+    finance_section_chief   TEXT DEFAULT '',
+    -- Key unit leaders (for signature auto-fill)
+    resources_unit_ldr      TEXT DEFAULT '',
+    situation_unit_ldr      TEXT DEFAULT '',
+    documentation_unit_ldr  TEXT DEFAULT '',
+    demob_unit_ldr          TEXT DEFAULT '',
+    coml_name               TEXT DEFAULT '',
+    medical_unit_ldr        TEXT DEFAULT '',
+    -- Weather (fetched or manual)
+    weather_forecast        TEXT DEFAULT '',
+    weather_temp            TEXT DEFAULT '',
+    weather_wind            TEXT DEFAULT '',
+    weather_humidity        TEXT DEFAULT '',
+    weather_sky             TEXT DEFAULT '',
+    sunrise                 TEXT DEFAULT '',
+    sunset                  TEXT DEFAULT '',
+    -- IAP meta
+    prepared_by             TEXT DEFAULT '',
+    approved_by             TEXT DEFAULT '',
+    ics_variant             TEXT DEFAULT 'FEMA',
+    updated                 TEXT DEFAULT ''
+);
+CREATE INDEX IF NOT EXISTS idx_gi_incident ON general_info(incident_id);
+
+
 -- ── Hospital Database ───────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS hospitals (
     id          INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -597,6 +647,18 @@ def init_db():
         "ALTER TABLE station_config ADD COLUMN ps_member_lookup TEXT DEFAULT 'radio_id'",
         "ALTER TABLE incidents ADD COLUMN ics_variant TEXT DEFAULT 'FEMA'",
         "ALTER TABLE net_entries ADD COLUMN ics_position TEXT DEFAULT ''",
+        "ALTER TABLE general_info ADD COLUMN lat TEXT DEFAULT ''",
+        "ALTER TABLE general_info ADD COLUMN lon TEXT DEFAULT ''",
+        "ALTER TABLE general_info ADD COLUMN sunrise TEXT DEFAULT ''",
+        "ALTER TABLE general_info ADD COLUMN sunset TEXT DEFAULT ''",
+        "ALTER TABLE general_info ADD COLUMN weather_sky TEXT DEFAULT ''",
+        "ALTER TABLE general_info ADD COLUMN deputy_ic TEXT DEFAULT ''",
+        "ALTER TABLE general_info ADD COLUMN resources_unit_ldr TEXT DEFAULT ''",
+        "ALTER TABLE general_info ADD COLUMN situation_unit_ldr TEXT DEFAULT ''",
+        "ALTER TABLE general_info ADD COLUMN documentation_unit_ldr TEXT DEFAULT ''",
+        "ALTER TABLE general_info ADD COLUMN demob_unit_ldr TEXT DEFAULT ''",
+        "ALTER TABLE general_info ADD COLUMN coml_name TEXT DEFAULT ''",
+        "ALTER TABLE general_info ADD COLUMN medical_unit_ldr TEXT DEFAULT ''",
         "ALTER TABLE ics_tcards ADD COLUMN resource_type TEXT DEFAULT ''",
         "ALTER TABLE ics_tcards ADD COLUMN category TEXT DEFAULT ''",
         "ALTER TABLE ics_tcards ADD COLUMN leader TEXT DEFAULT ''",

@@ -213,19 +213,60 @@ let   savedId   = null;
 // ── Load org and incident context ─────────────────────────────────────
 async function loadContext() {
   try {
-    const [orgR, incR] = await Promise.all([
+    const [orgR, incR, giR] = await Promise.all([
       fetch(`${MAIN_API}/api/config`),
-      INC_ID ? fetch(`${ICS_API}/api/ics/incidents/${INC_ID}`) : Promise.resolve(null)
+      INC_ID ? fetch(`${ICS_API}/api/ics/incidents/${INC_ID}`) : Promise.resolve(null),
+      INC_ID ? fetch(`${ICS_API}/api/ics/general_info?incident_id=${INC_ID}&period=${PERIOD}`) : Promise.resolve(null)
     ]);
     orgData = orgR.ok ? await orgR.json() : {};
     if (incR?.ok) {
       const d = await incR.json();
       incData = d.incident || d;
     }
+    // Merge General Info on top of incData — GI fields take precedence
+    if (giR?.ok) {
+      const gi = await giR.json();
+      // Map GI fields into incData so val() auto-populates all forms
+      incData = { ...incData, ...gi };
+      // Ensure key aliases are set
+      if (gi.incident_name)  incData.incident_name  = gi.incident_name;
+      if (gi.safety_officer) incData.safety_officer = gi.safety_officer;
+      if (gi.prepared_by)    incData.prepared_by    = gi.prepared_by;
+      if (gi.approved_by)    incData.approved_by    = gi.approved_by;
+      if (gi.operational_period_from) {
+        incData.operational_period_from = gi.operational_period_from;
+        incData.from_date = gi.operational_period_from?.slice(0,10) || '';
+      }
+      if (gi.operational_period_to) {
+        incData.operational_period_to = gi.operational_period_to;
+        incData.to_date = gi.operational_period_to?.slice(0,10) || '';
+      }
+      incData.operational_period_number = PERIOD;
+    } else {
+      // Try localStorage fallback when offline
+      try {
+        const cached = localStorage.getItem(`gi_${INC_ID}_${PERIOD}`);
+        if (cached) {
+          const gi = JSON.parse(cached);
+          incData = { ...incData, ...gi };
+        }
+      } catch(e) {}
+    }
     VARIANT = incData.ics_variant || orgData.ics_form_variant || 'FEMA';
     setVariant(VARIANT, false);
     if (INC_ID) {
       document.getElementById('backLink').href = `incident.html?incident=${INC_ID}`;
+    }
+    // Add General Info link to back area if we have an incident
+    if (INC_ID) {
+      const bl = document.getElementById('backLink');
+      if (bl) {
+        const giLink = document.createElement('a');
+        giLink.href  = `general_info.html?incident=${INC_ID}&period=${PERIOD}`;
+        giLink.textContent = '📋 General Info';
+        giLink.style.cssText = 'color:var(--amber);font-size:11px;margin-left:10px;text-decoration:none';
+        bl.parentNode.insertBefore(giLink, bl.nextSibling);
+      }
     }
     // Try to load existing saved form
     await loadSavedForm();

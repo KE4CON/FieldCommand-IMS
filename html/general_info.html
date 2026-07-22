@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>General Info — FieldCommand IMS</title>
+<link rel="stylesheet" href="theme.css">
+<style>
+.gi-header {
+  background:linear-gradient(135deg,#001428,#002858);
+  border-bottom:3px solid var(--amber);
+  padding:12px 20px;
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+}
+.gi-badge {
+  background:var(--amber);color:#001428;
+  font-family:var(--font-hd);font-size:11px;
+  padding:3px 10px;border-radius:3px;letter-spacing:2px;font-weight:bold;
+}
+.gi-body { max-width:900px;margin:0 auto;padding:20px; }
+
+.gi-section {
+  background:var(--panel);border:1px solid var(--line);border-radius:8px;
+  margin-bottom:16px;overflow:hidden;
+}
+.gi-section-header {
+  padding:9px 16px;
+  font-family:var(--font-hd);font-size:11px;letter-spacing:1.5px;
+  border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:8px;
+}
+.gi-grid {
+  display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:14px 16px;
+}
+.gi-grid-3 {
+  display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;padding:14px 16px;
+}
+.gi-full { grid-column:1/-1; }
+
+.fg label {
+  display:block;font-size:10px;color:var(--muted);
+  text-transform:uppercase;letter-spacing:1px;margin-bottom:4px;
+}
+.fg input, .fg select, .fg textarea {
+  width:100%;box-sizing:border-box;
+  background:var(--input-bg);border:1px solid var(--line);
+  color:var(--txt);padding:7px 10px;font-size:13px;border-radius:4px;
+}
+.fg input:focus, .fg select:focus, .fg textarea:focus {
+  outline:none;border-color:var(--amber);
+}
+.fg textarea { resize:vertical;min-height:60px; }
+
+.save-bar {
+  position:sticky;bottom:0;
+  background:var(--panel);border-top:1px solid var(--amber);
+  padding:12px 20px;
+  display:flex;align-items:center;gap:10px;
+  z-index:50;
+}
+.save-status {
+  font-size:11px;color:var(--muted);margin-left:auto;
+}
+.save-status.saved { color:var(--green); }
+.save-status.saving { color:var(--amber); }
+.save-status.error  { color:var(--red); }
+
+.propagate-note {
+  background:rgba(200,118,10,0.08);border:1px solid rgba(200,118,10,0.25);
+  border-radius:6px;padding:10px 14px;font-size:11px;color:var(--muted);
+  margin-bottom:16px;line-height:1.6;
+}
+.period-selector {
+  display:flex;align-items:center;gap:8px;
+  background:var(--panel2);border:1px solid var(--line);
+  border-radius:6px;padding:6px 12px;
+}
+.period-btn {
+  background:var(--panel);border:1px solid var(--line);
+  color:var(--muted);font-size:13px;padding:3px 10px;
+  border-radius:4px;cursor:pointer;
+}
+.period-btn:hover { border-color:var(--amber);color:var(--amber); }
+.period-num {
+  font-family:var(--font-hd);font-size:16px;color:var(--amber);
+  min-width:30px;text-align:center;
+}
+</style>
+</head>
+<body>
+
+<div class="gi-header">
+  <span class="gi-badge">IAP</span>
+  <span style="font-family:var(--font-hd);font-size:15px;letter-spacing:2px">
+    GENERAL INFORMATION
+  </span>
+  <div style="font-size:11px;color:rgba(255,255,255,0.4)">
+    Enter once — auto-fills all 29 ICS forms
+  </div>
+  <div style="margin-left:auto;display:flex;align-items:center;gap:10px">
+    <div class="period-selector">
+      <button class="period-btn" onclick="changePeriod(-1)">◀</button>
+      <div>
+        <div style="font-size:9px;color:var(--dim);text-align:center">OP PERIOD</div>
+        <div class="period-num" id="periodDisplay">1</div>
+      </div>
+      <button class="period-btn" onclick="changePeriod(1)">▶</button>
+    </div>
+    <a href="incident.html" id="backLink"
+      style="color:rgba(255,255,255,0.4);font-size:12px">← Incident</a>
+  </div>
+</div>
+
+<div class="gi-body">
+
+  <div class="propagate-note">
+    📋 <strong>Enter information here once.</strong> Every ICS form for this incident
+    and operational period will automatically inherit these values — incident name,
+    op period dates, commander, section chiefs, and all personnel assignments.
+    Change it here and every form updates immediately.
+  </div>
+
+  <!-- INCIDENT IDENTITY -->
+  <div class="gi-section">
+    <div class="gi-section-header" style="color:var(--amber)">
+      🚨 INCIDENT IDENTITY
+    </div>
+    <div class="gi-grid">
+      <div class="fg gi-full">
+        <label>Incident Name *</label>
+        <input type="text" id="incident_name" placeholder="e.g. CRYSTAL LAKE FLOOD 2026"
+          oninput="markDirty()">
+      </div>
+      <div class="fg">
+        <label>Incident Number</label>
+        <input type="text" id="incident_number" placeholder="e.g. IL-MC-2026-001"
+          oninput="markDirty()">
+      </div>
+      <div class="fg">
+        <label>Incident Type</label>
+        <select id="incident_type" onchange="markDirty()">
+          <option value="">-- Select Type --</option>
+          <option>Flood / Water</option>
+          <option>Severe Weather</option>
+          <option>Search and Rescue</option>
+          <option>Structure Fire</option>
+          <option>Wildland Fire</option>
+          <option>HazMat</option>
+          <option>Mass Casualty</option>
+          <option>Shelter Activation</option>
+          <option>Public Safety</option>
+          <option>Planned Event</option>
+          <option>Earthquake</option>
+          <option>Tornado</option>
+          <option>Communications Support</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Jurisdiction</label>
+        <input type="text" id="jurisdiction" placeholder="e.g. McHenry County"
+          oninput="markDirty()">
+      </div>
+      <div class="fg gi-full">
+        <label>Incident Location / Address</label>
+        <input type="text" id="incident_location" placeholder="e.g. Crystal Lake, McHenry County, IL"
+          oninput="markDirty()">
+      </div>
+      <div class="fg">
+        <label>Latitude</label>
+        <input type="text" id="lat" placeholder="e.g. 42.2411"
+          oninput="markDirty()">
+      </div>
+      <div class="fg">
+        <label>Longitude</label>
+        <input type="text" id="lon" placeholder="e.g. -88.3162"
+          oninput="markDirty()">
+      </div>
+      <div class="fg">
+        <label>ICS Variant</label>
+        <select id="ics_variant" onchange="markDirty()">
+          <option value="FEMA">FEMA (All-Hazards)</option>
+          <option value="NWCG">NWCG (Wildland Fire)</option>
+          <option value="USCG">USCG (Coast Guard)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPERATIONAL PERIOD -->
+  <div class="gi-section">
+    <div class="gi-section-header" style="color:var(--blue)">
+      🕐 OPERATIONAL PERIOD <span id="opPeriodLabel" style="color:var(--amber);margin-left:8px"></span>
+    </div>
+    <div class="gi-grid">
+      <div class="fg">
+        <label>From Date/Time</label>
+        <input type="datetime-local" id="operational_period_from" onchange="markDirty();calcSunrise()">
+      </div>
+      <div class="fg">
+        <label>To Date/Time</label>
+        <input type="datetime-local" id="operational_period_to" onchange="markDirty()">
+      </div>
+    </div>
+  </div>
+
+  <!-- COMMAND -->
+  <div class="gi-section">
+    <div class="gi-section-header" style="color:var(--amber)">
+      ⭐ COMMAND
+    </div>
+    <div class="gi-grid">
+      <div class="fg">
+        <label>Incident Commander (IC)</label>
+        <input type="text" id="incident_commander" placeholder="Last, First"
+          oninput="markDirty()">
+      </div>
+      <div class="fg">
+        <label>Deputy IC</label>
+        <input type="text" id="deputy_ic" placeholder="Last, First (if filled)"
+          oninput="markDirty()">
+      </div>
+      <div class="fg">
+        <label>Safety Officer (SO)</label>
+        <input type="text" id="safety_officer" placeholder="Last, First"
+          oninput="markDirty()">
+      </div>
+      <div class="fg">
+        <label>Public Information Officer (PIO)</label>
+        <input type="text" id="public_info_officer" placeholder="Last, First"
+          oninput="markDirty()">
+      </div>
+      <div class="fg">
+        <label>Liaison Officer (LNO)</label>
+        <input type="text" id="liaison_officer" placeholder="Last, First"
+          oninput="markDirty()">
+      </div>
+    </div>
+  </div>
+
+  <!-- GENERAL STAFF -->
+  <div class="gi-section">
+    <div class="gi-section-header" style="color:#2980b9">
+      ⚙️ GENERAL STAFF — SECTION CHIEFS
+    </div>
+    <div class="gi-grid">
+      <div class="fg">
+        <label>Operations Section Chief (OSC)</label>
+        <input type="text" id="ops_section_chief" placeholder="Last, First"
+          oninput="markDirty()">
+      </div>
+      <div class="fg">
+        <label>Planning Section Chief (PSC)</label>
+        <input type="text" id="planning_section_chief" placeholder="Last, First"
+          oninput="markDirty()">
+      </div>
+      <div class="fg">
+        <label>Logistics Section Chief (LSC)</label>
+        <input type="text" id="logistics_section_chief" placeholder="Last, First"
+          oninput="markDirty()">
+      </div>
+      <div class="fg">
+        <label>Finance / Admin Section Chief (FSC)</label>
+        <input type="text" id="finance_section_chief" placeholder="Last, First"
+          oninput="markDirty()">
+      </div>
+    </div>
+  </div>
+
+  <!-- KEY UNIT LEADERS -->
+  <div class="gi-section">
+    <div class="gi-section-header" style="color:#9b59b6">
+      👤 KEY UNIT LEADERS <span style="font-size:10px;color:var(--dim);font-family:monospace;margin-left:6px">for signature auto-fill</span>
+    </div>
+    <div class="gi-grid">
+      <div class="fg">
+        <label>Resources Unit Leader (RESL)</label>
+        <input type="text" id="resources_unit_ldr" placeholder="Last, First"
+          oninput="markDirty()">
+      </div>
+      <div class="fg">
+        <label>Situation Unit Leader (SITL)</label>
+        <input type="text" id="situation_unit_ldr" placeholder="Last, First"
+          oninput="markDirty()">
+      </div>
+      <div class="fg">
+        <label>Documentation Unit Leader (DOCL)</label>
+        <input type="text" id="documentation_unit_ldr" placeholder="Last, First"
+          oninput="markDirty()">
+      </div>
+      <div class="fg">
+        <label>Demobilization Unit Leader (DMOB)</label>
+        <input type="text" id="demob_unit_ldr" placeholder="Last, First"
+          oninput="markDirty()">
+      </div>
+      <div class="fg">
+        <label>Communications Unit Leader (COML)</label>
+        <input type="text" id="coml_name" placeholder="Last, First"
+          oninput="markDirty()">
+      </div>
+      <div class="fg">
+        <label>Medical Unit Leader (MEDL)</label>
+        <input type="text" id="medical_unit_ldr" placeholder="Last, First"
+          oninput="markDirty()">
+      </div>
+      <div class="fg">
+        <label>Prepared By</label>
+        <input type="text" id="prepared_by" placeholder="Name / Position"
+          oninput="markDirty()">
+      </div>
+      <div class="fg">
+        <label>Approved By (IC)</label>
+        <input type="text" id="approved_by" placeholder="IC Name"
+          oninput="markDirty()">
+      </div>
+    </div>
+  </div>
+
+  <!-- WEATHER -->
+  <div class="gi-section">
+    <div class="gi-section-header" style="color:#16a085">
+      🌤 WEATHER
+      <button onclick="fetchWeather()" id="wxFetchBtn"
+        style="font-size:10px;padding:2px 10px;margin-left:10px;
+               background:rgba(22,160,133,0.15);border-color:rgba(22,160,133,0.4);
+               color:#16a085">
+        Fetch NWS
+      </button>
+      <span id="wxStatus" style="font-size:10px;color:var(--dim);margin-left:8px"></span>
+    </div>
+    <div class="gi-grid-3">
+      <div class="fg">
+        <label>Temperature (°F)</label>
+        <input type="text" id="weather_temp" placeholder="e.g. 72°F" oninput="markDirty()">
+      </div>
+      <div class="fg">
+        <label>Wind</label>
+        <input type="text" id="weather_wind" placeholder="e.g. SW 15 mph" oninput="markDirty()">
+      </div>
+      <div class="fg">
+        <label>Humidity</label>
+        <input type="text" id="weather_humidity" placeholder="e.g. 65%" oninput="markDirty()">
+      </div>
+      <div class="fg">
+        <label>Sky / Conditions</label>
+        <input type="text" id="weather_sky" placeholder="e.g. Partly Cloudy" oninput="markDirty()">
+      </div>
+      <div class="fg">
+        <label>Sunrise</label>
+        <input type="text" id="sunrise" placeholder="e.g. 05:47" oninput="markDirty()">
+      </div>
+      <div class="fg">
+        <label>Sunset</label>
+        <input type="text" id="sunset" placeholder="e.g. 20:18" oninput="markDirty()">
+      </div>
+      <div class="fg gi-full" style="grid-column:1/-1">
+        <label>Weather Forecast / Outlook</label>
+        <textarea id="weather_forecast" rows="3"
+          placeholder="NWS forecast text or manual entry..." oninput="markDirty()"></textarea>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end gi-body -->
+
+<!-- Save bar -->
+<div class="save-bar">
+  <button onclick="save()" id="saveBtn"
+    style="background:var(--amber);border-color:var(--amber);color:#001428;
+           font-weight:bold;padding:8px 24px;font-size:13px">
+    💾 SAVE & PROPAGATE TO ALL FORMS
+  </button>
+  <button onclick="copyPeriod()"
+    style="font-size:12px;padding:8px 16px">
+    📋 Copy to Next Period
+  </button>
+  <div class="save-status" id="saveStatus"></div>
+</div>
+
+<script>
+const API     = 'http://192.168.50.1:5051';
+const MAIN    = 'http://192.168.50.1:5050';
+const params  = new URLSearchParams(location.search);
+const INC_ID  = params.get('incident') || '';
+let   PERIOD  = parseInt(params.get('period') || '1');
+let   dirty   = false;
+let   saveTimer = null;
+
+const FIELDS = [
+  'incident_name','incident_number','incident_type','jurisdiction',
+  'incident_location','lat','lon',
+  'operational_period_from','operational_period_to',
+  'incident_commander','deputy_ic','safety_officer',
+  'public_info_officer','liaison_officer',
+  'ops_section_chief','planning_section_chief',
+  'logistics_section_chief','finance_section_chief',
+  'resources_unit_ldr','situation_unit_ldr',
+  'documentation_unit_ldr','demob_unit_ldr',
+  'coml_name','medical_unit_ldr',
+  'weather_forecast','weather_temp','weather_wind',
+  'weather_humidity','weather_sky','sunrise','sunset',
+  'prepared_by','approved_by','ics_variant'
+];
+
+function setStatus(msg, cls='') {
+  const el = document.getElementById('saveStatus');
+  el.textContent = msg;
+  el.className = 'save-status ' + cls;
+}
+
+function markDirty() {
+  dirty = true;
+  setStatus('Unsaved changes', '');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(save, 3000); // auto-save after 3s idle
+}
+
+function updateUI() {
+  document.getElementById('periodDisplay').textContent = PERIOD;
+  document.getElementById('opPeriodLabel').textContent = `(Period ${PERIOD})`;
+  if (INC_ID) {
+    document.getElementById('backLink').href = `incident.html?incident=${INC_ID}`;
+  }
+}
+
+function collect() {
+  const d = { incident_id: INC_ID, period: PERIOD };
+  FIELDS.forEach(f => {
+    const el = document.getElementById(f);
+    if (el) d[f] = el.value;
+  });
+  return d;
+}
+
+function populate(data) {
+  FIELDS.forEach(f => {
+    const el = document.getElementById(f);
+    if (el && data[f] !== undefined) el.value = data[f];
+  });
+}
+
+async function load() {
+  if (!INC_ID) return;
+  try {
+    const r = await fetch(`${API}/api/ics/general_info?incident_id=${INC_ID}&period=${PERIOD}`);
+    if (r.ok) {
+      const d = await r.json();
+      populate(d);
+    }
+  } catch(e) {
+    // Offline fallback — try localStorage
+    const cached = localStorage.getItem(`gi_${INC_ID}_${PERIOD}`);
+    if (cached) populate(JSON.parse(cached));
+  }
+  dirty = false;
+  setStatus('');
+}
+
+async function save() {
+  if (!INC_ID) { setStatus('No incident selected', 'error'); return; }
+  clearTimeout(saveTimer);
+  setStatus('Saving...', 'saving');
+  const data = collect();
+  // Cache locally first
+  localStorage.setItem(`gi_${INC_ID}_${PERIOD}`, JSON.stringify(data));
+  try {
+    const r = await fetch(`${API}/api/ics/general_info`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(data)
+    });
+    if (r.ok) {
+      dirty = false;
+      const t = new Date().toLocaleTimeString();
+      setStatus(`✓ Saved & propagated at ${t}`, 'saved');
+    } else {
+      setStatus('Server error — saved locally', 'error');
+    }
+  } catch(e) {
+    setStatus('Offline — saved locally', '');
+  }
+}
+
+async function changePeriod(delta) {
+  if (dirty) {
+    if (!confirm('Save current period before switching?')) return;
+    await save();
+  }
+  PERIOD = Math.max(1, PERIOD + delta);
+  updateUI();
+  // Clear fields
+  FIELDS.forEach(f => { const el = document.getElementById(f); if (el) el.value = ''; });
+  await load();
+  // Update URL without reload
+  const url = new URL(location.href);
+  url.searchParams.set('period', PERIOD);
+  history.replaceState({}, '', url);
+}
+
+async function copyPeriod() {
+  const data = collect();
+  const nextPeriod = PERIOD + 1;
+  if (!confirm(`Copy Period ${PERIOD} data to Period ${nextPeriod}?`)) return;
+  const nextData = {...data, period: nextPeriod};
+  // Clear period-specific fields
+  nextData.operational_period_from = '';
+  nextData.operational_period_to   = '';
+  nextData.weather_forecast = '';
+  nextData.weather_temp = '';
+  nextData.weather_wind = '';
+  nextData.weather_humidity = '';
+  nextData.weather_sky = '';
+  nextData.sunrise = '';
+  nextData.sunset  = '';
+  try {
+    await fetch(`${API}/api/ics/general_info`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(nextData)
+    });
+    if (confirm(`Period ${nextPeriod} created. Switch to it now?`)) {
+      PERIOD = nextPeriod;
+      updateUI();
+      await load();
+    }
+  } catch(e) {
+    alert('Could not copy period — check server connection');
+  }
+}
+
+// ── Weather fetch ──────────────────────────────────────────────────────
+async function fetchWeather() {
+  const lat = document.getElementById('lat').value;
+  const lon = document.getElementById('lon').value;
+  if (!lat || !lon) {
+    alert('Enter incident Latitude and Longitude first');
+    return;
+  }
+  const btn = document.getElementById('wxFetchBtn');
+  const status = document.getElementById('wxStatus');
+  btn.disabled = true;
+  status.textContent = 'Fetching NWS...';
+  try {
+    // NWS points API
+    const pointsR = await fetch(`https://api.weather.gov/points/${lat},${lon}`);
+    if (!pointsR.ok) throw new Error('NWS points API failed');
+    const points = await pointsR.json();
+    const forecastUrl = points.properties.forecast;
+    const hourlyUrl   = points.properties.forecastHourly;
+    // Get hourly for current conditions
+    const hourlyR = await fetch(hourlyUrl);
+    const hourly  = await hourlyR.json();
+    const current = hourly.properties.periods[0];
+    // Get daily for forecast text
+    const forecastR = await fetch(forecastUrl);
+    const forecast  = await forecastR.json();
+    const todayFc   = forecast.properties.periods.slice(0,3);
+    // Populate fields
+    document.getElementById('weather_temp').value =
+      `${current.temperature}°${current.temperatureUnit}`;
+    document.getElementById('weather_wind').value =
+      current.windDirection + ' ' + current.windSpeed;
+    document.getElementById('weather_humidity').value =
+      current.relativeHumidity?.value ? `${current.relativeHumidity.value}%` : '';
+    document.getElementById('weather_sky').value = current.shortForecast;
+    document.getElementById('weather_forecast').value =
+      todayFc.map(p => `${p.name}: ${p.detailedForecast}`).join('\n\n');
+    markDirty();
+    status.textContent = '✓ Updated from NWS';
+    // Auto calc sunrise/sunset
+    calcSunrise();
+  } catch(e) {
+    status.textContent = '⚠ NWS unavailable — enter manually';
+  }
+  btn.disabled = false;
+}
+
+// ── Sunrise/sunset calculation ─────────────────────────────────────────
+function calcSunrise() {
+  const lat = parseFloat(document.getElementById('lat').value);
+  const lon = parseFloat(document.getElementById('lon').value);
+  const dtStr = document.getElementById('operational_period_from').value;
+  if (!lat || !lon || !dtStr) return;
+  const date = new Date(dtStr);
+  const { rise, set } = sunTimes(lat, lon, date);
+  document.getElementById('sunrise').value = rise;
+  document.getElementById('sunset').value  = set;
+  markDirty();
+}
+
+// Simple sunrise/sunset calculation (NOAA algorithm)
+function sunTimes(lat, lon, date) {
+  const rad = Math.PI / 180;
+  const JD = (date.getTime() / 86400000) + 2440587.5;
+  const n  = JD - 2451545.0;
+  const L  = (280.460 + 0.9856474 * n) % 360;
+  const g  = (357.528 + 0.9856003 * n) % 360;
+  const lambda = L + 1.915 * Math.sin(g * rad) + 0.020 * Math.sin(2 * g * rad);
+  const epsilon = 23.439 - 0.0000004 * n;
+  const sinDec  = Math.sin(epsilon * rad) * Math.sin(lambda * rad);
+  const cosDec  = Math.cos(Math.asin(sinDec));
+  const cosH    = (Math.sin(-0.8333 * rad) - Math.sin(lat * rad) * sinDec)
+                / (Math.cos(lat * rad) * cosDec);
+  if (Math.abs(cosH) > 1) return { rise: '--:--', set: '--:--' };
+  const H    = Math.acos(cosH) / rad;
+  const EqT  = (L - (282.9404 + 4.70935E-5 * n) - g + 0.016708634 * Math.sin(g * rad) * 360 / (2 * Math.PI)) / 15;
+  const noon = 12 - EqT - lon / 15;
+  const riseH = noon - H / 15;
+  const setH  = noon + H / 15;
+  // Convert to UTC then local
+  const toLocal = (h) => {
+    const offset = -date.getTimezoneOffset() / 60;
+    let local = h + offset;
+    local = ((local % 24) + 24) % 24;
+    const hh = String(Math.floor(local)).padStart(2,'0');
+    const mm = String(Math.round((local % 1) * 60)).padStart(2,'0');
+    return `${hh}:${mm}`;
+  };
+  return { rise: toLocal(riseH), set: toLocal(setH) };
+}
+
+// ── Init ───────────────────────────────────────────────────────────────
+updateUI();
+load();
+
+// Warn on unsaved leave
+window.addEventListener('beforeunload', e => {
+  if (dirty) { e.preventDefault(); e.returnValue = ''; }
+});
+</script>
+</body>
+</html>

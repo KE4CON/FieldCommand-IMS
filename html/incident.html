@@ -416,6 +416,13 @@ function renderWorkspace() {
         Started: ${(periods[periods.length-1].started||'').slice(0,16).replace('T',' ')} UTC
       </span>` : ''}
       <div style="margin-left:auto">
+        <a href="general_info.html?incident=${incId}&period=${period}"
+           style="background:var(--amber);border-color:var(--amber);
+                  color:#001428;font-weight:bold;text-decoration:none;
+                  padding:8px 16px;border-radius:4px;font-size:12px;
+                  font-family:var(--font-hd);letter-spacing:1px">
+           📋 GENERAL INFO
+        </a>
         <a href="iap.html?incident=${inc.id}"
           style="background:var(--eoc);border:1px solid var(--eoc);color:#fff;
                  font-weight:bold;padding:5px 14px;border-radius:4px;

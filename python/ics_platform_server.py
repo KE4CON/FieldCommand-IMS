@@ -186,6 +186,52 @@ class ICSHandler(BaseHTTPRequestHandler):
             if not row: return self.send_json({"error":"Not found"},404)
             return self.send_json(row_to_dict(row))
 
+        elif path == "/api/ics/general_info":
+            inc_id = qs.get("incident_id",[""])[0]
+            period = int(qs.get("period",["1"])[0])
+            if not inc_id:
+                return self.send_json({"error":"incident_id required"},400)
+            row = c.execute(
+                "SELECT * FROM general_info WHERE incident_id=? AND period=?",
+                (inc_id, period)).fetchone()
+            if row:
+                return self.send_json(row_to_dict(row))
+            inc = c.execute("SELECT * FROM incidents WHERE id=?",(inc_id,)).fetchone()
+            if inc:
+                d = row_to_dict(inc)
+                d["incident_location"] = d.get("location","")
+                d["operational_period_number"] = period
+                return self.send_json(d)
+            return self.send_json({})
+
+        elif path == "/api/ics/general_info":
+            inc_id = body.get("incident_id","")
+            period = int(body.get("period",1))
+            if not inc_id:
+                return self.send_json({"error":"incident_id required"},400)
+            gi_id  = f"{inc_id}-{period}"
+            fields = [
+                "incident_name","incident_number","incident_type","jurisdiction","incident_location","lat","lon","operational_period_from","operational_period_to","incident_commander","deputy_ic","safety_officer","public_info_officer","liaison_officer","ops_section_chief","planning_section_chief","logistics_section_chief","finance_section_chief","resources_unit_ldr","situation_unit_ldr","documentation_unit_ldr","demob_unit_ldr","coml_name","medical_unit_ldr","weather_forecast","weather_temp","weather_wind","weather_humidity","weather_sky","sunrise","sunset","prepared_by","approved_by","ics_variant"
+            ]
+            existing = c.execute(
+                "SELECT id FROM general_info WHERE id=?",(gi_id,)).fetchone()
+            if existing:
+                sets = ", ".join(f"{f}=?" for f in fields) + ", updated=?"
+                vals = [body.get(f,"") for f in fields] + [now, gi_id]
+                c.execute(f"UPDATE general_info SET {sets} WHERE id=?", vals)
+            else:
+                cols = "id, incident_id, period, " + ", ".join(fields) + ", updated"
+                phs  = ", ".join(["?"] * (len(fields) + 4))
+                vals = [gi_id, inc_id, period] + [body.get(f,"") for f in fields] + [now]
+                c.execute(f"INSERT INTO general_info ({cols}) VALUES ({phs})", vals)
+            c.execute("""UPDATE incidents SET name=?, incident_commander=?,
+                location=?, jurisdiction=?, ics_variant=?, updated=? WHERE id=?""",
+                (body.get("incident_name",""),body.get("incident_commander",""),
+                 body.get("incident_location",""),body.get("jurisdiction",""),
+                 body.get("ics_variant","FEMA"),now, inc_id))
+            c.commit()
+            return self.send_json({"status":"ok","id":gi_id})
+
         else:
             self.send_json({"error":"Not found"},404)
 

@@ -280,7 +280,17 @@
       <option>EmComm Net</option><option>Traffic Net</option><option>Training Net</option>
       <option>HF Net</option><option>VHF/UHF Net</option><option>Digital Net</option>
     </select>
-    <input type="text" id="newNetFreq" placeholder="Frequency / Mode (e.g. 146.520 FM)">
+    <div style="display:flex;gap:6px;align-items:center">
+      <input type="text" id="newNetFreq" placeholder="Frequency / Mode (e.g. 146.520 FM)"
+        style="flex:1">
+      <button onclick="openChannelPicker('newNetFreq','newNetName')"
+        title="Pick from ICS-205 / Channel Library"
+        style="padding:6px 10px;font-size:11px;white-space:nowrap;
+               background:rgba(200,118,10,0.1);border-color:rgba(200,118,10,0.3);
+               color:var(--amber)">
+        📡 Pick
+      </button>
+    </div>
     <input type="text" id="newNetNC" placeholder="Net Control Callsign">
   </div>
   <div style="display:flex;gap:8px;margin-top:16px">
@@ -809,6 +819,109 @@ setInterval(loadNets, 30000);
 // Handle ?net= URL param
 const urlNet = new URLSearchParams(location.search).get("net");
 if (urlNet) selectNet(urlNet);
+
+// ── ICS-205 / Channel Library Picker ─────────────────────────────
+async function openChannelPicker(freqFieldId, nameFieldId) {
+  const incId  = document.getElementById('incidentIdInput')?.value?.trim() || '';
+  const period = 1;
+  let channels = [];
+  try {
+    const r = await fetch(
+      `http://192.168.50.1:5051/api/ics/active_channels?incident_id=${incId}&period=${period}`
+    );
+    if (r.ok) {
+      const d = await r.json();
+      channels = d.channels || [];
+    }
+  } catch(e) {}
+
+  if (!channels.length) {
+    // Fallback — let user type
+    alert('No channels found. Enter frequency manually or set up the Channel Library.');
+    return;
+  }
+
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:500;display:flex;align-items:center;justify-content:center';
+
+  const rows = channels.map((ch,i) => {
+    const src = ch.source === 'ICS-205'
+      ? '<span style="font-size:9px;color:var(--amber);margin-left:4px">205</span>'
+      : ch.source === 'Repeater DB'
+      ? '<span style="font-size:9px;color:var(--green);margin-left:4px">RPT</span>'
+      : '<span style="font-size:9px;color:var(--muted);margin-left:4px">LIB</span>';
+    const divTag = ch.division
+      ? `<span style="font-size:9px;color:var(--blue);margin-left:4px">${ch.division}</span>`
+      : '';
+    const display = `${ch.rx_freq} ${ch.mode||'FM'}${ch.pl_tone?' PL '+ch.pl_tone:''}`;
+    return `<div onclick="selectChannel(${i})"
+      style="padding:8px 12px;border-bottom:1px solid var(--line);cursor:pointer;
+             display:flex;align-items:center;gap:8px"
+      onmouseover="this.style.background='rgba(200,118,10,0.08)'"
+      onmouseout="this.style.background=''">
+      <div style="flex:1">
+        <div style="font-size:12px;font-weight:bold">
+          ${ch.name}${src}${divTag}
+        </div>
+        <div style="font-size:11px;color:var(--muted);font-family:monospace">
+          ${display}
+        </div>
+      </div>
+      ${ch.function ? `<span style="font-size:10px;color:var(--muted)">${ch.function}</span>` : ''}
+    </div>`;
+  }).join('');
+
+  modal.innerHTML = `
+    <div style="background:var(--panel);border:1px solid var(--amber);border-radius:10px;
+                padding:16px;width:500px;max-width:95vw;max-height:70vh;overflow-y:auto">
+      <div style="font-family:var(--font-hd);font-size:13px;color:var(--amber);
+                  letter-spacing:1px;margin-bottom:10px">
+        📡 SELECT CHANNEL
+        <span style="font-size:10px;color:var(--dim);margin-left:8px">
+          ${incId ? 'ICS-205 · ' : ''}Channel Library · Repeaters
+        </span>
+      </div>
+      <input type="text" placeholder="Search channels..."
+        oninput="filterPickerChannels(this.value)"
+        style="width:100%;box-sizing:border-box;background:var(--input-bg);
+               border:1px solid var(--line);color:var(--txt);
+               padding:6px 10px;font-size:12px;border-radius:4px;margin-bottom:8px">
+      <div id="pickerList">${rows}</div>
+      <div style="margin-top:10px;display:flex;justify-content:flex-end">
+        <button onclick="this.closest('[style*=fixed]').remove()"
+          style="padding:6px 14px;font-size:12px">Cancel</button>
+      </div>
+    </div>`;
+
+  window._pickerChannels    = channels;
+  window._pickerFreqField   = freqFieldId;
+  window._pickerNameField   = nameFieldId;
+  modal.onclick = e => { if (e.target === modal) modal.remove(); };
+  document.body.appendChild(modal);
+  modal.querySelector('input').focus();
+}
+
+function filterPickerChannels(q) {
+  const lq = q.toLowerCase();
+  document.querySelectorAll('#pickerList > div').forEach((el, i) => {
+    const ch = window._pickerChannels[i];
+    const match = !lq || JSON.stringify(ch).toLowerCase().includes(lq);
+    el.style.display = match ? '' : 'none';
+  });
+}
+
+function selectChannel(idx) {
+  const ch = window._pickerChannels[idx];
+  if (!ch) return;
+  const freqEl = document.getElementById(window._pickerFreqField);
+  const nameEl = document.getElementById(window._pickerNameField);
+  if (freqEl) {
+    const pl = ch.pl_tone ? ` PL ${ch.pl_tone}` : '';
+    freqEl.value = `${ch.rx_freq} ${ch.mode||'FM'}${pl}`;
+  }
+  if (nameEl && !nameEl.value) nameEl.value = ch.name;
+  document.querySelector('[style*="position:fixed"][style*="z-index:500"]')?.remove();
+}
 </script>
 </body>
 </html>

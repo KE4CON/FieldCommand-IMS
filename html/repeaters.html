@@ -346,6 +346,11 @@
     <button class="btn btn-sm" onclick="copyDetail()">📋 Copy</button>
     <button class="btn btn-sm" onclick="programDetail()" style="border-color: var(--eoc-lt);color:var(--eoc)">📡 Program</button>
     <button class="btn btn-sm" onclick="window.print()" style="background:var(--panel2)">🖨</button>
+    <button class="btn btn-sm" onclick="addRepToChannelLibrary()"
+      style="border-color:rgba(200,118,10,0.4);color:var(--amber);background:rgba(200,118,10,0.08)"
+      title="Add to Channel Library for use in ICS-205">
+      + Channel Lib
+    </button>
   </div>
   <div id="programBox" style="display:none;margin-top:12px;background: var(--bg);border:1px solid var(--line);border-radius:6px;padding:12px;font-size:11px;color:var(--muted);font-family:monospace;line-height:1.7"></div>
 </div>
@@ -986,6 +991,48 @@ window.addEventListener('load', () => {
 });
 </script>
 
-<script src="/lib/identity.js"></script>
+<script src="/lib/identity.js">
+// ── Push repeater to Channel Library ─────────────────────────────
+async function addRepToChannelLibrary() {
+  const r = selectedRep;
+  if (!r) return;
+  const fn = (r.ares || r.races) ? 'Interop' : 'Amateur';
+  const payload = {
+    id:        'rep-' + Date.now(),
+    name:      r.callsign
+      ? `${r.callsign} (${r.city||''} ${r.state||''}`.trim() + ')'
+      : `${parseFloat(r.output_freq||0).toFixed(4)} MHz Repeater`,
+    alpha_tag:  r.callsign || '',
+    rx_freq:    r.output_freq || '',
+    tx_freq:    r.input_freq  || r.output_freq || '',
+    pl_tone:    r.tone || '',
+    mode:       r.mode || 'FM',
+    function:   fn,
+    division:   '',
+    notes:      [r.city, r.state, r.use, r.ares?'ARES':'', r.races?'RACES':'']
+                  .filter(Boolean).join(' · '),
+    custom:     1,
+    active:     1,
+  };
+  try {
+    const res = await fetch('http://192.168.50.1:5051/api/ics/channel_library', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    if (res.ok) {
+      // Brief confirmation in the detail panel
+      const btn = event.target;
+      const orig = btn.textContent;
+      btn.textContent = '✓ Added';
+      btn.style.color = 'var(--green)';
+      setTimeout(() => { btn.textContent = orig; btn.style.color = ''; }, 2000);
+    } else {
+      alert('Could not add to channel library — server error');
+    }
+  } catch(e) {
+    alert('Could not reach server: ' + e.message);
+  }
+}
+</script>
 </body>
 </html>

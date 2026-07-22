@@ -251,6 +251,92 @@ class ICSHandler(BaseHTTPRequestHandler):
                 ).fetchall()
             return self.send_json(rows_to_list(rows))
 
+
+        # ── Active Channels — unified comms lookup ──────────────────────────
+        # Returns merged channel list: ICS-205 for incident + channel_library
+        # Used by net loggers, tactical map, cheat sheets for channel picker
+        elif path == "/api/ics/active_channels":
+            inc_id = qs.get("incident_id",[""])[0]
+            period = int(qs.get("period",["1"])[0])
+            channels = []
+
+            # 1. Pull from ICS-205 saved form for this incident/period
+            if inc_id:
+                row = c.execute(
+                    "SELECT data FROM ics_forms "
+                    "WHERE form_type=? AND incident_id=? AND period=? "
+                    "ORDER BY updated DESC LIMIT 1",
+                    ("ics205", inc_id, period)).fetchone()
+                if row:
+                    try:
+                        import json as _json
+                        fd = _json.loads(row[0] or "{}")
+                        for i in range(30):
+                            name = fd.get(f"ch205_name_{i}","").strip()
+                            rx   = fd.get(f"ch205_rx_{i}","").strip()
+                            if not name and not rx:
+                                if i > 15: break
+                                continue
+                            channels.append({
+                                "id":        f"205-{inc_id}-{i}",
+                                "name":      name or rx,
+                                "alpha_tag": fd.get(f"ch205_zone_{i}",""),
+                                "rx_freq":   rx,
+                                "tx_freq":   fd.get(f"ch205_tx_{i}","") or rx,
+                                "pl_tone":   fd.get(f"ch205_pl_{i}",""),
+                                "mode":      fd.get(f"ch205_mode_{i}","FM"),
+                                "function":  fd.get(f"ch205_assign_{i}","Tactical"),
+                                "division":  fd.get(f"ch205_division_{i}",""),
+                                "notes":     fd.get(f"ch205_notes_{i}",""),
+                                "source":    "ICS-205",
+                                "incident_id": inc_id,
+                                "period":    period,
+                            })
+                    except Exception:
+                        pass
+
+            # 2. Append channel_library entries (skip duplicates by freq)
+            existing_freqs = {ch["rx_freq"] for ch in channels}
+            lib_rows = c.execute(
+                "SELECT * FROM channel_library WHERE active=1 ORDER BY name"
+            ).fetchall()
+            for lr in lib_rows:
+                d = row_to_dict(lr)
+                if d.get("rx_freq") not in existing_freqs:
+                    d["source"] = "Library"
+                    channels.append(d)
+
+            # 3. Also pull active repeaters tagged ARES/RACES
+            rep_rows = c.execute(
+                "SELECT * FROM repeaters WHERE active=1 AND (ares=1 OR races=1) "
+                "ORDER BY callsign LIMIT 50"
+            ).fetchall()
+            existing_freqs = {ch["rx_freq"] for ch in channels}
+            for rr in rep_rows:
+                d = row_to_dict(rr)
+                freq = d.get("output_freq","")
+                if freq and freq not in existing_freqs:
+                    channels.append({
+                        "id":        f"rep-{d.get('id','')}",
+                        "name":      f"{d.get('callsign','')} Repeater",
+                        "alpha_tag": d.get("callsign",""),
+                        "rx_freq":   freq,
+                        "tx_freq":   d.get("input_freq","") or freq,
+                        "pl_tone":   d.get("tone",""),
+                        "mode":      d.get("mode","FM"),
+                        "function":  "Amateur" if not d.get("races") else "Interop",
+                        "division":  "",
+                        "notes":     d.get("city","") + " " + d.get("state",""),
+                        "source":    "Repeater DB",
+                    })
+
+            return self.send_json({
+                "channels": channels,
+                "count":    len(channels),
+                "incident_id": inc_id,
+                "period":   period,
+            })
+
         elif path == "/api/ics/general_info":
             inc_id = qs.get("incident_id",[""])[0]
             period = int(qs.get("period",["1"])[0])

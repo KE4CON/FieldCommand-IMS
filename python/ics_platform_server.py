@@ -339,11 +339,25 @@ class ICSHandler(BaseHTTPRequestHandler):
 
 
 
+
+        # ── WAN Configuration GET/POST ────────────────────────────────────────
+        elif path == "/api/ics/wan_config":
+            import json as _json
+            cfg_path = Path("/opt/fieldcommand/data/wan_config.json")
+            defaults_path = Path(__file__).parent / "wan_config_defaults.json"
+            for p in [cfg_path, defaults_path]:
+                if p.exists():
+                    try:
+                        return self.send_json(_json.loads(p.read_text()))
+                    except Exception:
+                        pass
+            return self.send_json({})
+
         # ── Incident Archive / Restore / Delete ─────────────────────────────
         # GET  /api/ics/incidents/archived     → list archived incidents on Pi
-        # GET  /api/ics/incidents/lacie        → list archives on LaCie USB
-        # POST /api/ics/incidents/archive      → archive incident to LaCie + mark Pi DB
-        # POST /api/ics/incidents/restore      → restore from LaCie back to Pi DB
+        # GET  /api/ics/incidents/lacie        → list archives on USB backup drive USB
+        # POST /api/ics/incidents/archive      → archive incident to USB backup drive + mark Pi DB
+        # POST /api/ics/incidents/restore      → restore from USB backup drive back to Pi DB
         # POST /api/ics/incidents/delete       → hard-delete incident from Pi DB
         # POST /api/ics/reset                  → beta reset: wipe all scenario data
 
@@ -354,7 +368,7 @@ class ICSHandler(BaseHTTPRequestHandler):
             return self.send_json(rows_to_list(rows))
 
         elif path == "/api/ics/incidents/lacie":
-            # List incident archives on the LaCie drive
+            # List incident archives on the USB backup drive drive
             import os, json as _json
             lacie_base = "/media/fieldcommand/backup/incidents"
             archives = []
@@ -591,6 +605,18 @@ class ICSHandler(BaseHTTPRequestHandler):
         # ── ICS-211 Remote Check-In POST ────────────────────────────────────
 
 
+
+        # ── WAN Configuration POST ───────────────────────────────────────────
+        elif path == "/api/ics/wan_config":
+            import json as _json
+            cfg_path = Path("/opt/fieldcommand/data/wan_config.json")
+            try:
+                cfg_path.parent.mkdir(parents=True, exist_ok=True)
+                cfg_path.write_text(_json.dumps(body, indent=2))
+                return self.send_json({"ok": True})
+            except Exception as e:
+                return self.send_json({"error": str(e)}, 500)
+
         # ── Incident Archive POST ────────────────────────────────────────────
         elif path == "/api/ics/incidents/archive":
             import os, json as _json, shutil, sqlite3 as _sq
@@ -600,7 +626,7 @@ class ICSHandler(BaseHTTPRequestHandler):
 
             lacie_base = "/media/fieldcommand/backup/incidents"
             if not os.path.isdir("/media/fieldcommand"):
-                return self.send_json({"error":"LaCie not mounted — label drive FIELDCOMMAND and connect"},503)
+                return self.send_json({"error":"USB backup drive not mounted — label drive FIELDCOMMAND and connect"},503)
 
             # Fetch incident from DB
             row = c.execute("SELECT * FROM incidents WHERE id=?", (inc_id,)).fetchone()
@@ -658,7 +684,7 @@ class ICSHandler(BaseHTTPRequestHandler):
             c.commit()
             return self.send_json({"ok":True,"archive_path":dest,"folder":folder})
 
-        # ── Restore archived incident from LaCie ────────────────────────────
+        # ── Restore archived incident from USB backup drive ────────────────────────────
         elif path == "/api/ics/incidents/restore":
             import os, json as _json
             folder = body.get("folder","")

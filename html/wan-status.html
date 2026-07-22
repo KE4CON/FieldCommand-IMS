@@ -118,7 +118,7 @@ tr:nth-child(even) td { background: var(--bg); }
 <div class="page-header">
   <div>
     <h1>📡 WAN Status</h1>
-    <div class="sub">InstyConnect Cellular  ·  Starlink Satellite  ·  EMCOMM-NET Internet</div>
+    <div class="sub" id="wan-sub">Primary WAN  ·  Secondary WAN  ·  EMCOMM-NET Internet</div>
   </div>
   <a href="/" class="back-btn">← Dashboard</a>
 </div>
@@ -176,10 +176,7 @@ tr:nth-child(even) td { background: var(--bg); }
 
     <!-- Starlink -->
     <div class="source-card" id="starlink-card">
-      <h3>
-        <span>🛰 Starlink Satellite</span>
-        <span class="priority-badge standby-badge" id="sl-badge">STANDBY</span>
-      </h3>
+      <h3><span id="sec-wan-title">Secondary WAN</span></h3>
       <div class="status-row">
         <div class="dot dot-gray" id="sl-dot"></div>
         <span id="sl-status">Checking...</span>
@@ -360,7 +357,7 @@ function setHero(source, detail) {
   if (source === 'cellular') {
     hero.className = 'active-wan cellular';
     icon.textContent = '📶';
-    text.textContent = 'ACTIVE WAN: InstyConnect Cellular';
+    text.textContent = 'ACTIVE WAN: ' + (_wanConfig?.primary_wan_name || 'Primary');
     text.style.color = 'var(--green)';
   } else if (source === 'satellite') {
     hero.className = 'active-wan satellite';
@@ -406,9 +403,30 @@ function load() {
       }
       lastWanSource = active;
 
+      // Capture config labels from status
+      if (data.config) {
+        _wanConfig = data.config;
+        // Update page subtitle dynamically
+        const sub = document.getElementById('wan-sub');
+        if (sub) {
+          const parts = [];
+          if (_wanConfig.show_primary_wan !== false)
+            parts.push(_wanConfig.primary_wan_name || 'Primary WAN');
+          if (_wanConfig.show_secondary_wan)
+            parts.push(_wanConfig.secondary_wan_name || 'Secondary WAN');
+          parts.push('EMCOMM-NET');
+          sub.textContent = parts.join('  ·  ');
+        }
+        // Update secondary WAN card title
+        const secTitle = document.getElementById('sec-wan-title');
+        if (secTitle) secTitle.textContent = _wanConfig.secondary_wan_name || 'Secondary WAN';
+        // Show/hide secondary WAN card
+        const secCard = document.getElementById('starlink-card');
+        if (secCard) secCard.style.display = _wanConfig.show_secondary_wan ? '' : 'none';
+      }
       // Update hero
       if (active === 'cellular') {
-        const carrier = insty.carrier || 'T-Mobile / Verizon';
+        const carrier = insty.carrier || _wanConfig?.primary_wan_name || 'Primary';
         setHero('cellular', carrier + ' — ' + (insty.technology || '5G/LTE'));
       } else if (active === 'satellite') {
         setHero('satellite', 'Latency: ' + (sl.latency_ms ? sl.latency_ms + ' ms' : '—'));
@@ -508,3 +526,6 @@ renderLog();
 </script>
 </body>
 </html>
+  // WAN config labels — populated from status JSON
+  let _wanConfig = null;
+

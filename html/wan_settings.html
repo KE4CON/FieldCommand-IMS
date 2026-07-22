@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WAN Settings — FieldCommand IMS</title>
+<link rel="stylesheet" href="theme.css">
+</head>
+<body>
+
+<div class="page-header">
+  <span class="page-header-badge">ADMIN</span>
+  <span class="page-header-title">WAN / Internet Settings</span>
+  <div class="page-header-sub">Configure internet sources displayed on dashboard and wan-status page</div>
+  <a href="index.html" class="back-link">← Dashboard</a>
+</div>
+
+<div class="page-wrap" style="max-width:720px">
+
+  <div style="background:var(--eoc-tint);border:1px solid var(--line);border-radius:var(--r-md);
+              padding:12px 16px;margin-bottom:16px;font-size:12px;line-height:1.7">
+    Settings are saved to <code style="font-family:var(--font-mono);font-size:11px">/opt/fieldcommand/data/wan_config.json</code>
+    on the Pi and take effect within 30 seconds (next poll cycle).
+    Any USB drive labelled <code style="font-family:var(--font-mono);font-size:11px">FIELDCOMMAND</code>
+    triggers an automatic backup — works with any brand or size.
+  </div>
+
+  <!-- Primary WAN -->
+  <div class="section-card">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <h2 style="margin:0">Primary Internet Source</h2>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;
+                     text-transform:none;letter-spacing:0;font-weight:normal;margin-left:auto">
+        <input type="checkbox" id="pri_enabled" checked onchange="toggleSection('primary')">
+        Enabled
+      </label>
+    </div>
+    <div id="primary_fields">
+      <div class="grid-2" style="gap:10px">
+        <div class="fg">
+          <label>Display Name</label>
+          <input type="text" id="pri_label" value="Cellular"
+            placeholder="Cellular, LTE Modem, WISP, Fiber...">
+        </div>
+        <div class="fg">
+          <label>Provider / Carrier</label>
+          <input type="text" id="pri_provider"
+            placeholder="InstyConnect, Cradlepoint, T-Mobile...">
+        </div>
+        <div class="fg">
+          <label>Icon</label>
+          <input type="text" id="pri_icon" value="📡" style="width:60px">
+        </div>
+        <div class="fg">
+          <label>Detection Method</label>
+          <select id="pri_method" onchange="toggleDetection('primary')"
+            style="background:var(--input-bg);border:1px solid var(--input-border);
+                   color:var(--txt);padding:6px 10px;font-size:12px;border-radius:var(--r-sm)">
+            <option value="admin_reachable">Modem admin page reachable</option>
+            <option value="ping">Ping host reachable</option>
+          </select>
+        </div>
+        <div class="fg" id="pri_admin_wrap">
+          <label>Modem Admin URL</label>
+          <input type="text" id="pri_admin" value="http://10.1.1.1"
+            placeholder="http://192.168.1.1">
+        </div>
+        <div class="fg" id="pri_ping_wrap" style="display:none">
+          <label>Ping Host</label>
+          <input type="text" id="pri_ping" placeholder="192.168.1.1">
+        </div>
+      </div>
+      <div style="margin-top:8px;font-size:11px;color:var(--dim);line-height:1.6">
+        Detection: when internet is up, if the modem admin page (or ping host) is reachable,
+        this source is declared active. Set this to your modem/router LAN admin IP.
+        For InstyConnect: <code style="font-family:var(--font-mono)">http://10.1.1.1</code>.
+        For most home routers: <code style="font-family:var(--font-mono)">http://192.168.1.1</code>.
+      </div>
+    </div>
+  </div>
+
+  <!-- Secondary WAN -->
+  <div class="section-card">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <h2 style="margin:0">Secondary Internet Source</h2>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;
+                     text-transform:none;letter-spacing:0;font-weight:normal;margin-left:auto">
+        <input type="checkbox" id="sec_enabled" onchange="toggleSection('secondary')">
+        Enabled
+      </label>
+    </div>
+    <div id="secondary_fields" style="opacity:.5;pointer-events:none">
+      <div class="grid-2" style="gap:10px">
+        <div class="fg">
+          <label>Display Name</label>
+          <input type="text" id="sec_label" value="Satellite"
+            placeholder="Satellite, Starlink, HughesNet, ViaSat...">
+        </div>
+        <div class="fg">
+          <label>Provider</label>
+          <input type="text" id="sec_provider"
+            placeholder="Starlink, HughesNet, OneWeb...">
+        </div>
+        <div class="fg">
+          <label>Icon</label>
+          <input type="text" id="sec_icon" value="🛰" style="width:60px">
+        </div>
+        <div class="fg">
+          <label>Detection Method</label>
+          <select id="sec_method" onchange="toggleDetection('secondary')"
+            style="background:var(--input-bg);border:1px solid var(--input-border);
+                   color:var(--txt);padding:6px 10px;font-size:12px;border-radius:var(--r-sm)">
+            <option value="ping">Ping host reachable</option>
+            <option value="admin_reachable">Admin page reachable</option>
+          </select>
+        </div>
+        <div class="fg" id="sec_ping_wrap">
+          <label>Ping Host (modem LAN IP)</label>
+          <input type="text" id="sec_ping" value="192.168.100.1"
+            placeholder="Starlink: 192.168.100.1  HughesNet: 192.168.0.1">
+        </div>
+        <div class="fg" id="sec_admin_wrap" style="display:none">
+          <label>Admin URL</label>
+          <input type="text" id="sec_admin" placeholder="http://192.168.100.1">
+        </div>
+      </div>
+      <div style="margin-top:8px;font-size:11px;color:var(--dim);line-height:1.6">
+        Common ping hosts: Starlink <code style="font-family:var(--font-mono)">192.168.100.1</code> ·
+        HughesNet <code style="font-family:var(--font-mono)">192.168.0.1</code> ·
+        ViaSat <code style="font-family:var(--font-mono)">192.168.100.1</code> ·
+        OneWeb varies by terminal model.
+        The host must be reachable <em>only</em> when this connection is active.
+      </div>
+    </div>
+  </div>
+
+  <!-- Dashboard display -->
+  <div class="section-card">
+    <h2>Dashboard Display</h2>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <label style="font-size:12px;text-transform:none;letter-spacing:0;
+                     font-weight:normal;display:flex;align-items:center;gap:8px">
+        <input type="checkbox" id="dash_show_primary" checked>
+        Show primary WAN card on dashboard
+      </label>
+      <label style="font-size:12px;text-transform:none;letter-spacing:0;
+                     font-weight:normal;display:flex;align-items:center;gap:8px">
+        <input type="checkbox" id="dash_show_secondary">
+        Show secondary WAN card on dashboard
+      </label>
+      <label style="font-size:12px;text-transform:none;letter-spacing:0;
+                     font-weight:normal;display:flex;align-items:center;gap:8px">
+        <input type="checkbox" id="dash_show_amprnet" checked>
+        Show AMPRNet / 44Net status card
+      </label>
+    </div>
+  </div>
+
+  <!-- Backup drive -->
+  <div class="section-card">
+    <h2>USB Backup Drive</h2>
+    <div style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:10px">
+      Any USB drive formatted and labelled <strong>FIELDCOMMAND</strong> (all caps)
+      will trigger automatic backup when plugged in. Works with any brand — LaCie, WD,
+      SanDisk, Seagate, generic — any size, ext4 or exFAT format.
+    </div>
+    <div class="grid-2" style="gap:10px">
+      <div class="fg">
+        <label>Drive Label (udev trigger)</label>
+        <input type="text" id="usb_label" value="FIELDCOMMAND"
+          placeholder="FIELDCOMMAND"
+          style="font-family:var(--font-mono);text-transform:uppercase">
+      </div>
+      <div class="fg">
+        <label>Display Name</label>
+        <input type="text" id="usb_display" value="USB Backup Drive"
+          placeholder="LaCie Rugged, WD Passport...">
+      </div>
+    </div>
+    <div style="margin-top:8px;font-size:11px;color:var(--dim)">
+      To rename the trigger label, you must also update the udev rule at
+      <code style="font-family:var(--font-mono)">/etc/udev/rules.d/99-fieldcommand-backup.rules</code>
+      on the Pi and reload udev. The display name is cosmetic only.
+    </div>
+  </div>
+
+  <!-- Save -->
+  <div style="display:flex;gap:10px;align-items:center;margin-top:8px">
+    <button onclick="saveSettings()"
+      style="background:var(--eoc);border-color:var(--eoc);color:#fff;
+             padding:9px 24px;font-weight:600;font-size:13px">
+      Save WAN Settings
+    </button>
+    <button onclick="loadSettings()" style="padding:9px 16px">↺ Reload from Pi</button>
+    <span id="saveStatus" style="font-size:12px;color:var(--green);display:none"></span>
+  </div>
+
+</div><!-- /page-wrap -->
+
+<script>
+const ICS_API = 'http://192.168.50.1:5051';
+
+function toggleSection(which) {
+  const en  = document.getElementById(which === 'primary' ? 'pri_enabled' : 'sec_enabled').checked;
+  const el  = document.getElementById(which === 'primary' ? 'primary_fields' : 'secondary_fields');
+  el.style.opacity        = en ? '1' : '.5';
+  el.style.pointerEvents  = en ? '' : 'none';
+}
+
+function toggleDetection(which) {
+  const method = document.getElementById(which === 'primary' ? 'pri_method' : 'sec_method').value;
+  const pfx    = which === 'primary' ? 'pri' : 'sec';
+  document.getElementById(pfx + '_admin_wrap').style.display = method === 'admin_reachable' ? '' : 'none';
+  document.getElementById(pfx + '_ping_wrap').style.display  = method === 'ping'            ? '' : 'none';
+}
+
+async function loadSettings() {
+  try {
+    const r = await fetch(`${ICS_API}/api/ics/wan_config`);
+    if (!r.ok) { console.warn('No config yet — using defaults'); return; }
+    const cfg = await r.json();
+
+    const p = cfg.primary_wan   || {};
+    const s = cfg.secondary_wan || {};
+    const d = cfg.dashboard     || {};
+    const b = cfg.backup_drive  || {};
+
+    document.getElementById('pri_enabled').checked  = p.enabled !== false;
+    document.getElementById('pri_label').value      = p.label    || 'Cellular';
+    document.getElementById('pri_provider').value   = p.provider || '';
+    document.getElementById('pri_icon').value       = p.icon     || '📡';
+    document.getElementById('pri_method').value     = p.detection_method || 'admin_reachable';
+    document.getElementById('pri_admin').value      = p.admin_url || 'http://10.1.1.1';
+    document.getElementById('pri_ping').value       = p.ping_host || '';
+
+    document.getElementById('sec_enabled').checked  = s.enabled === true;
+    document.getElementById('sec_label').value      = s.label    || 'Satellite';
+    document.getElementById('sec_provider').value   = s.provider || '';
+    document.getElementById('sec_icon').value       = s.icon     || '🛰';
+    document.getElementById('sec_method').value     = s.detection_method || 'ping';
+    document.getElementById('sec_ping').value       = s.ping_host || '192.168.100.1';
+    document.getElementById('sec_admin').value      = s.admin_url || '';
+
+    document.getElementById('dash_show_primary').checked   = d.show_primary_wan !== false;
+    document.getElementById('dash_show_secondary').checked = d.show_secondary_wan === true;
+    document.getElementById('dash_show_amprnet').checked   = d.show_amprnet !== false;
+
+    document.getElementById('usb_label').value    = b.udev_label   || 'FIELDCOMMAND';
+    document.getElementById('usb_display').value  = b.label        || 'USB Backup Drive';
+
+    toggleSection('primary');
+    toggleSection('secondary');
+    toggleDetection('primary');
+    toggleDetection('secondary');
+  } catch(e) {
+    // No config saved yet — defaults shown
+  }
+}
+
+async function saveSettings() {
+  const cfg = {
+    primary_wan: {
+      enabled:          document.getElementById('pri_enabled').checked,
+      label:            document.getElementById('pri_label').value.trim() || 'Cellular',
+      provider:         document.getElementById('pri_provider').value.trim(),
+      icon:             document.getElementById('pri_icon').value.trim() || '📡',
+      detection_method: document.getElementById('pri_method').value,
+      admin_url:        document.getElementById('pri_admin').value.trim(),
+      ping_host:        document.getElementById('pri_ping').value.trim(),
+    },
+    secondary_wan: {
+      enabled:          document.getElementById('sec_enabled').checked,
+      label:            document.getElementById('sec_label').value.trim() || 'Satellite',
+      provider:         document.getElementById('sec_provider').value.trim(),
+      icon:             document.getElementById('sec_icon').value.trim() || '🛰',
+      detection_method: document.getElementById('sec_method').value,
+      ping_host:        document.getElementById('sec_ping').value.trim(),
+      admin_url:        document.getElementById('sec_admin').value.trim(),
+    },
+    dashboard: {
+      show_primary_wan:   document.getElementById('dash_show_primary').checked,
+      show_secondary_wan: document.getElementById('dash_show_secondary').checked,
+      show_amprnet:       document.getElementById('dash_show_amprnet').checked,
+      primary_wan_name:   document.getElementById('pri_label').value.trim() || 'Cellular',
+      secondary_wan_name: document.getElementById('sec_label').value.trim() || 'Satellite',
+    },
+    backup_drive: {
+      udev_label:  document.getElementById('usb_label').value.trim().toUpperCase() || 'FIELDCOMMAND',
+      label:       document.getElementById('usb_display').value.trim() || 'USB Backup Drive',
+      mount_path:  '/media/fieldcommand',
+    },
+  };
+
+  try {
+    const r = await fetch(`${ICS_API}/api/ics/wan_config`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(cfg),
+    });
+    const d = await r.json();
+    const st = document.getElementById('saveStatus');
+    if (d.ok) {
+      st.style.display = 'inline';
+      st.style.color   = 'var(--green)';
+      st.textContent   = '✓ Saved — WAN monitor will pick up changes within 30s';
+      setTimeout(() => st.style.display = 'none', 5000);
+    } else {
+      st.style.display = 'inline';
+      st.style.color   = 'var(--red)';
+      st.textContent   = 'Save failed: ' + (d.error || 'Unknown error');
+    }
+  } catch(e) {
+    alert('Could not reach server: ' + e.message);
+  }
+}
+
+loadSettings();
+</script>
+</body>
+</html>

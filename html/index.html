@@ -760,10 +760,16 @@
     <div class="card-desc">Agency radio channels for ICS-205 auto-fill — add your local repeaters and interop freqs</div>
     <div class="card-port">Configurable per agency</div>
   </a>
+  <a class="op-card" href="wan_settings.html" style="--card-color:var(--blue)">
+    <div class="card-icon">🌐</div>
+    <div class="card-name">WAN Settings</div>
+    <div class="card-desc">Configure primary/secondary internet sources, USB backup drive label</div>
+    <div class="card-port">Admin / Config</div>
+  </a>
   <a class="op-card" href="incident_mgmt.html" style="--card-color:var(--dim)">
     <div class="card-icon">📁</div>
     <div class="card-name">Incident Management</div>
-    <div class="card-desc">Archive to LaCie · Restore from LaCie · Delete from Pi · Beta reset</div>
+    <div class="card-desc">Archive to USB Drive · Restore from USB Drive · Delete from Pi · Beta reset</div>
     <div class="card-port">Admin / Data</div>
   </a>
   <a class="op-card" href="fema_costs.html" style="--card-color:var(--red)">
@@ -1514,12 +1520,17 @@ function openJS8Call(e) {
     fetch(API + '/wan/status', {signal: AbortSignal.timeout(4000)})
       .then(r => r.json())
       .then(d => {
-        const src = d.active_source || 'unknown';
-        const carrier = (d.instyconnect && d.instyconnect.carrier) || 'Cellular';
+        const src     = d.active_source || 'unknown';
+        const cfg     = d.config || {};
+        const priName = cfg.primary_wan_name   || (d.primary_wan && d.primary_wan.label)   || 'Primary WAN';
+        const secName = cfg.secondary_wan_name || (d.secondary_wan && d.secondary_wan.label) || 'Secondary WAN';
+        const carrier = (d.instyconnect && d.instyconnect.carrier) || (d.primary_wan && d.primary_wan.carrier) || '';
         const labels = {
-          cellular:  'Cellular  \u00b7  ' + carrier,
-          satellite: 'Starlink  (failover)',
-          site:      'Site Ethernet',
+          primary:   priName + (carrier ? '  \u00b7  ' + carrier : ''),
+          cellular:  priName + (carrier ? '  \u00b7  ' + carrier : ''),
+          secondary: secName + '  (failover)',
+          satellite: secName + '  (failover)',
+          site:      'Site / Fixed Internet',
           none:      'No WAN  \u2014  Offline',
         };
         updateWanCards(src, labels[src] || src);

@@ -48,17 +48,17 @@
 <div class="page-header">
   <span class="page-header-badge" style="background:var(--red)">DATA</span>
   <span class="page-header-title">Incident Management</span>
-  <div class="page-header-sub">Archive to LaCie · Restore · Delete · Beta Reset</div>
+  <div class="page-header-sub">Archive to USB Drive · Restore · Delete · Beta Reset</div>
   <a href="index.html" class="back-link">← Dashboard</a>
 </div>
 
 <div class="page-wrap" style="max-width:820px">
 
-  <!-- LaCie status -->
+  <!-- USB Backup Drive status -->
   <div id="lacieStatus" class="lacie-status lacie-off">
     <span style="font-size:18px">💾</span>
     <div>
-      <div style="font-weight:600">LaCie — Checking...</div>
+      <div style="font-weight:600">USB Backup Drive — Checking...</div>
       <div style="font-size:10px;opacity:.8">Drive must be labelled FIELDCOMMAND and mounted</div>
     </div>
   </div>
@@ -72,18 +72,18 @@
   <!-- Archived on Pi (not yet deleted) -->
   <div class="section-hdr">Archived on Pi SSD — awaiting deletion</div>
   <div style="font-size:11px;color:var(--muted);margin-bottom:8px;line-height:1.6">
-    These incidents have been archived to the LaCie but still occupy space on the Pi SSD.
-    Verify the LaCie backup is complete before deleting from the Pi.
+    These incidents have been archived to the USB Backup Drive but still occupy space on the Pi SSD.
+    Verify the USB Backup Drive backup is complete before deleting from the Pi.
   </div>
   <div id="piArchivedList">
     <div style="color:var(--muted);font-size:12px">Loading...</div>
   </div>
 
-  <!-- Archives on LaCie -->
-  <div class="section-hdr">Archives on LaCie Drive</div>
+  <!-- Archives on USB Backup Drive -->
+  <div class="section-hdr">Archives on USB Backup Drive Drive</div>
   <div id="lacieList">
     <div style="color:var(--muted);font-size:12px">
-      Connect and mount LaCie drive to see archives.
+      Connect and mount USB Backup Drive drive to see archives.
     </div>
   </div>
 
@@ -146,20 +146,20 @@ async function loadAll() {
     const r2 = await fetch(`${ICS_API}/api/ics/incidents/archived`);
     const piArchived = r2.ok ? await r2.json() : [];
 
-    // LaCie archives
+    // USB Backup Drive archives
     const r3 = await fetch(`${ICS_API}/api/ics/incidents/lacie`);
     const lacieData = r3.ok ? await r3.json() : { lacie_mounted: false, archives: [] };
     lacieOk = lacieData.lacie_mounted;
     lacieArchives = lacieData.archives || [];
 
-    // Update LaCie status badge
+    // Update USB Backup Drive status badge
     const lacieEl = document.getElementById('lacieStatus');
     if (lacieOk) {
       lacieEl.className = 'lacie-status lacie-ok';
       lacieEl.innerHTML = `
         <span style="font-size:18px">💾</span>
         <div>
-          <div style="font-weight:600">LaCie Connected ✓</div>
+          <div style="font-weight:600">USB Backup Drive Connected ✓</div>
           <div style="font-size:10px">${lacieArchives.length} incident archive${lacieArchives.length!==1?'s':''} found · /media/fieldcommand/backup/incidents</div>
         </div>`;
     } else {
@@ -167,8 +167,8 @@ async function loadAll() {
       lacieEl.innerHTML = `
         <span style="font-size:18px">⚠</span>
         <div>
-          <div style="font-weight:600">LaCie Not Detected</div>
-          <div style="font-size:10px">Connect LaCie drive labelled FIELDCOMMAND to enable archiving</div>
+          <div style="font-weight:600">USB Backup Drive Not Detected</div>
+          <div style="font-size:10px">Connect USB Backup Drive drive labelled FIELDCOMMAND to enable archiving</div>
         </div>`;
     }
 
@@ -206,8 +206,8 @@ function renderActive(list) {
         <button onclick="archiveIncident('${inc.id}','${inc.name.replace(/'/g,"\\'")}',false)"
           style="font-size:11px;padding:4px 12px;background:var(--blue-bg);
                  border-color:#93c5fd;color:var(--blue)"
-          ${lacieOk?'':'disabled title="LaCie not connected"'}>
-          💾 Archive to LaCie
+          ${lacieOk?'':'disabled title="USB Backup Drive not connected"'}>
+          💾 Archive to USB Backup Drive
         </button>
         <button onclick="markScenario('${inc.id}',${inc.is_scenario?0:1})"
           style="font-size:11px;padding:4px 12px;background:var(--amber-bg);
@@ -238,7 +238,7 @@ function renderPiArchived(list) {
         </div>
         <div class="inc-meta">
           <span>Archived: ${fmt(inc.archived_at)}</span>
-          <span>LaCie: ${inc.archive_path ? inc.archive_path.split('/').slice(-1)[0] : '—'}</span>
+          <span>USB Backup Drive: ${inc.archive_path ? inc.archive_path.split('/').slice(-1)[0] : '—'}</span>
         </div>
       </div>
       <div class="inc-actions">
@@ -251,15 +251,15 @@ function renderPiArchived(list) {
     </div>`).join('');
 }
 
-// ── Render LaCie archives ─────────────────────────────────────────
+// ── Render USB Backup Drive archives ─────────────────────────────────────────
 function renderLacie(list) {
   const el = document.getElementById('lacieList');
   if (!lacieOk) {
-    el.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:10px 0">LaCie not mounted.</div>';
+    el.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:10px 0">USB Backup Drive not mounted.</div>';
     return;
   }
   if (!list.length) {
-    el.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:10px 0">No archives on LaCie yet.</div>';
+    el.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:10px 0">No archives on USB Backup Drive yet.</div>';
     return;
   }
   el.innerHTML = list.map(a => `
@@ -284,13 +284,13 @@ function renderLacie(list) {
     </div>`).join('');
 }
 
-// ── Archive to LaCie ──────────────────────────────────────────────
+// ── Archive to USB Backup Drive ──────────────────────────────────────────────
 async function archiveIncident(id, name, silent) {
   if (!lacieOk && !silent) {
-    alert('LaCie not connected. Connect the LaCie drive labelled FIELDCOMMAND first.');
+    alert('USB Backup Drive not connected. Connect the USB Backup Drive drive labelled FIELDCOMMAND first.');
     return;
   }
-  if (!silent && !confirm(`Archive "${name}" to LaCie?\n\nThe incident stays on the Pi until you delete it.`)) return;
+  if (!silent && !confirm(`Archive "${name}" to USB Backup Drive?\n\nThe incident stays on the Pi until you delete it.`)) return;
   try {
     const r = await fetch(`${ICS_API}/api/ics/incidents/archive`, {
       method:'POST', headers:{'Content-Type':'application/json'},
@@ -298,7 +298,7 @@ async function archiveIncident(id, name, silent) {
     });
     const d = await r.json();
     if (d.ok) {
-      alert(`✓ Archived to LaCie:\n${d.folder}`);
+      alert(`✓ Archived to USB Backup Drive:\n${d.folder}`);
       await loadAll();
     } else {
       alert('Archive failed: ' + (d.error || 'Unknown error'));
@@ -306,9 +306,9 @@ async function archiveIncident(id, name, silent) {
   } catch(e) { alert('Error: ' + e.message); }
 }
 
-// ── Restore from LaCie ────────────────────────────────────────────
+// ── Restore from USB Backup Drive ────────────────────────────────────────────
 async function restoreFromLacie(folder, name) {
-  if (!confirm(`Restore "${name}" from LaCie back to Pi?\n\nExisting data for this incident will be overwritten.`)) return;
+  if (!confirm(`Restore "${name}" from USB Backup Drive back to Pi?\n\nExisting data for this incident will be overwritten.`)) return;
   try {
     const r = await fetch(`${ICS_API}/api/ics/incidents/restore`, {
       method:'POST', headers:{'Content-Type':'application/json'},
@@ -327,8 +327,8 @@ async function restoreFromLacie(folder, name) {
 // ── Hard delete from Pi ───────────────────────────────────────────
 async function hardDelete(id, name, isArchived) {
   const warn = isArchived
-    ? `Delete "${name}" from Pi SSD?\n\nIt is already backed up to LaCie. This frees Pi storage.`
-    : `Delete "${name}" from Pi SSD?\n\n⚠ WARNING: This incident has NOT been archived to LaCie.\nAll data will be permanently lost.`;
+    ? `Delete "${name}" from Pi SSD?\n\nIt is already backed up to USB Backup Drive. This frees Pi storage.`
+    : `Delete "${name}" from Pi SSD?\n\n⚠ WARNING: This incident has NOT been archived to USB Backup Drive.\nAll data will be permanently lost.`;
   if (!confirm(warn)) return;
   try {
     const r = await fetch(`${ICS_API}/api/ics/incidents/delete`, {

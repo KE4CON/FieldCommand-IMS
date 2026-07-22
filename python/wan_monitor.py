@@ -1,21 +1,22 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # FieldCommand IMS — Copyright (C) 2026 James Rospopo KE4CON
 # Developed for McHenry County Emergency Services Volunteers (K9ESV)
-# Licensed under the GNU Affero General Public License v3.0 or later.
-# See LICENSE in the project root for full license text.
 # https://github.com/KE4CON/FieldCommand-IMS
 
 #!/usr/bin/env python3
 """
-wan_monitor.py — WAN Status Monitor Service
-Runs on the FieldCommand Pi (192.168.50.1).
+wan_monitor.py — WAN Status Monitor
 Polls configured WAN sources every 30 seconds.
-Reads configuration from /opt/fieldcommand/data/wan_config.json
-(falls back to python/wan_config_defaults.json if not present).
+Config: /opt/fieldcommand/data/wan_config.json
+Fallback: python/wan_config_defaults.json
 
-Configuration drives all provider-specific behaviour — no hardcoded
-provider names, IPs, or brands. Any cellular modem, satellite provider,
-or fixed ISP can be configured without editing this file.
+Each WAN source has a role — 'preferred' or 'fallback'.
+The preferred source is tried first. If it's down or not detected,
+the fallback source is used. Either source can be cellular, satellite,
+fixed ISP, hotspot, or any other type. No assumptions about which
+slot is which technology.
+
+Supports up to 2 WAN sources (easily extended to 3+).
 """
 
 import json
@@ -27,12 +28,20 @@ import urllib.error
 from datetime import datetime, timezone
 from pathlib import Path
 
-BASE         = Path("/opt/fieldcommand")
-DATA         = BASE / "data"
-OUTPUT_FILE  = DATA / "wan_status.json"
-CONFIG_FILE  = DATA / "wan_config.json"
+BASE          = Path("/opt/fieldcommand")
+DATA          = BASE / "data"
+OUTPUT_FILE   = DATA / "wan_status.json"
+CONFIG_FILE   = DATA / "wan_config.json"
 DEFAULTS_FILE = Path(__file__).parent / "wan_config_defaults.json"
 POLL_INTERVAL = 30  # seconds
+
+TYPE_ICONS = {
+    "cellular":  "📡",
+    "satellite": "🛰",
+    "fixed":     "🌐",
+    "hotspot":   "📱",
+    "other":     "🔗",
+}
 
 
 def load_config():
@@ -40,15 +49,58 @@ def load_config():
     for path in [CONFIG_FILE, DEFAULTS_FILE]:
         try:
             with open(path) as f:
-                return json.load(f)
+                cfg = json.load(f)
+            # Migrate old primary_wan/secondary_wan format to wan_sources array
+            if "primary_wan" in cfg and "wan_sources" not in cfg:
+                cfg = _migrate_old_config(cfg)
+            return cfg
         except Exception:
             pass
-    # Bare minimum if no config file exists at all
+    # Absolute bare minimum
     return {
-        "primary_wan":   {"enabled": True,  "label": "Primary WAN",   "admin_url": "http://10.1.1.1",      "detection_method": "admin_reachable"},
-        "secondary_wan": {"enabled": False, "label": "Secondary WAN", "ping_host": "",           "detection_method": "ping"},
-        "dashboard":     {"show_primary_wan": True, "show_secondary_wan": False},
+        "wan_sources": [
+            {"id": "source_a", "enabled": True, "role": "preferred",
+             "label": "Internet", "type": "cellular", "icon": "📡",
+             "detection_method": "internet_only"},
+        ],
+        "dashboard": {"show_wan_a": True, "show_wan_b": False, "show_amprnet": True},
     }
+
+
+def _migrate_old_config(cfg):
+    """Convert old primary_wan/secondary_wan keys to wan_sources array."""
+    p = cfg.get("primary_wan", {})
+    s = cfg.get("secondary_wan", {})
+    sources = [
+        {
+            "id": "source_a",
+            "enabled":          p.get("enabled", True),
+            "role":             "preferred",
+            "label":            p.get("label", "Primary WAN"),
+            "type":             "cellular",
+            "provider":         p.get("provider", ""),
+            "icon":             p.get("icon", "📡"),
+            "detection_method": p.get("detection_method", "internet_only"),
+            "ping_host":        p.get("ping_host", ""),
+            "admin_url":        p.get("admin_url", ""),
+            "admin_timeout_s":  p.get("admin_timeout_s", 3),
+        },
+        {
+            "id": "source_b",
+            "enabled":          s.get("enabled", False),
+            "role":             "fallback",
+            "label":            s.get("label", "Secondary WAN"),
+            "type":             "satellite",
+            "provider":         s.get("provider", ""),
+            "icon":             s.get("icon", "🛰"),
+            "detection_method": s.get("detection_method", "ping"),
+            "ping_host":        s.get("ping_host", ""),
+            "admin_url":        s.get("admin_url", ""),
+            "admin_timeout_s":  s.get("admin_timeout_s", 2),
+        },
+    ]
+    cfg["wan_sources"] = sources
+    return cfg
 
 
 def utcnow():
@@ -76,157 +128,211 @@ def ping_test(host, count=2, timeout=3):
 
 
 def http_test(url, timeout=5):
-    """Return (reachable, response_ms)."""
+    """Return (reachable, response_ms, body)."""
     try:
         start = time.time()
-        req = urllib.request.Request(url, headers={"User-Agent": "FieldCommand/1.0"})
+        req   = urllib.request.Request(url, headers={"User-Agent": "FieldCommand/1.0"})
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             body = resp.read(8192).decode(errors="ignore")
-            ms   = round((time.time() - start) * 1000, 1)
-            return True, ms, body
+            return True, round((time.time() - start) * 1000, 1), body
     except Exception:
         return False, None, ""
 
 
-def detect_wan_source(cfg):
+def check_source(source):
     """
-    Determine active WAN source using config-driven detection.
-    Returns: ('primary'|'secondary'|'site'|'none', latency_ms)
+    Test whether a WAN source is currently reachable.
+    Returns True/False based on detection_method.
     """
-    internet_ok, latency = ping_test("1.1.1.1")
-    if not internet_ok:
-        return "none", None
-
-    primary = cfg.get("primary_wan", {})
-    secondary = cfg.get("secondary_wan", {})
-
-    # Check primary WAN
-    if primary.get("enabled", True):
-        method = primary.get("detection_method", "admin_reachable")
-        if method == "admin_reachable" and primary.get("admin_url"):
-            ok, _, _ = http_test(primary["admin_url"], timeout=primary.get("admin_timeout_s", 3))
-            if ok:
-                return "primary", latency
-        elif method == "ping" and primary.get("ping_host"):
-            ok, _ = ping_test(primary["ping_host"], count=1, timeout=2)
-            if ok:
-                return "primary", latency
-
-    # Check secondary WAN
-    if secondary.get("enabled", False):
-        method = secondary.get("detection_method", "ping")
-        if method == "ping" and secondary.get("ping_host"):
-            ok, _ = ping_test(secondary["ping_host"], count=1, timeout=2)
-            if ok:
-                return "secondary", latency
-        elif method == "admin_reachable" and secondary.get("admin_url"):
-            ok, _, _ = http_test(secondary["admin_url"], timeout=secondary.get("admin_timeout_s", 3))
-            if ok:
-                return "secondary", latency
-
-    # Internet is up but neither primary nor secondary detected
-    return "site", latency
+    method = source.get("detection_method", "internet_only")
+    if method == "internet_only":
+        return True   # caller already confirmed internet is up
+    elif method == "ping":
+        host = source.get("ping_host", "")
+        if not host:
+            return False
+        ok, _ = ping_test(host, count=1, timeout=2)
+        return ok
+    elif method == "admin_reachable":
+        url = source.get("admin_url", "")
+        if not url:
+            return False
+        ok, _, _ = http_test(url, timeout=source.get("admin_timeout_s", 3))
+        return ok
+    return False
 
 
-def get_primary_status(cfg):
-    """Poll primary WAN admin interface for signal/carrier details."""
-    primary = cfg.get("primary_wan", {})
-    admin_url = primary.get("admin_url")
+def get_source_details(source):
+    """
+    Poll a WAN source for signal/carrier/throughput details.
+    Returns a status dict — works for any source type.
+    """
     result = {
+        "id":        source.get("id", ""),
+        "label":     source.get("label", "WAN"),
+        "type":      source.get("type", "other"),
+        "provider":  source.get("provider", ""),
+        "role":      source.get("role", "preferred"),
+        "icon":      source.get("icon") or TYPE_ICONS.get(source.get("type", "other"), "🔗"),
         "connected": False,
-        "label":     primary.get("label", "Primary WAN"),
-        "provider":  primary.get("provider", ""),
-        "icon":      primary.get("icon", "📡"),
+        "enabled":   source.get("enabled", True),
+        "detection_method": source.get("detection_method", "internet_only"),
     }
-    if not admin_url:
-        return result
 
-    ok, _, body = http_test(admin_url, timeout=primary.get("admin_timeout_s", 4))
-    if not ok:
-        return result
-
-    result["connected"] = True
-
-    # Generic carrier detection — looks for common carrier names in page body.
-    # Works with most cellular router and modem admin pages regardless of brand.
-    # (InstyConnect, Cradlepoint, Sierra Wireless, Pepwave, etc. all expose this)
-    common_carriers = ["T-Mobile", "Verizon", "AT&T", "FirstNet", "US Cellular",
-                       "C Spire", "Sprint", "Dish", "Band 14", "CBRS"]
-    for carrier in common_carriers:
-        if carrier.lower() in body.lower():
-            result["carrier"] = carrier
-            break
-    else:
-        result["carrier"] = primary.get("provider", "Unknown carrier")
-
-    # Technology detection
-    for tech in ["5G NR", "5G", "LTE", "4G", "3G", "2G"]:
-        if tech in body:
-            result["technology"] = tech
-            break
-
-    # Signal strength (RSSI)
-    rssi_m = re.search(r"rssi[\":\s]+(-?\d+)", body, re.I)
-    if rssi_m:
-        rssi = int(rssi_m.group(1))
-        result["signal_dbm"] = rssi
-        result["signal_strength"] = (
-            f"Excellent ({rssi} dBm)" if rssi >= -70 else
-            f"Good ({rssi} dBm)"     if rssi >= -85 else
-            f"Fair ({rssi} dBm)"     if rssi >= -100 else
-            f"Poor ({rssi} dBm)"
-        )
-
-    return result
-
-
-def get_secondary_status(cfg):
-    """Poll secondary WAN (satellite or other) for status details."""
-    secondary = cfg.get("secondary_wan", {})
-    result = {
-        "connected":    False,
-        "dish_present": False,
-        "label":        secondary.get("label", "Secondary WAN"),
-        "provider":     secondary.get("provider", ""),
-        "icon":         secondary.get("icon", "🛰"),
-    }
-    if not secondary.get("enabled", False):
-        return result
-
-    ping_host = secondary.get("ping_host")
-    if not ping_host:
-        return result
-
-    ok, _ = ping_test(ping_host, count=1, timeout=2)
-    if not ok:
-        return result
-
-    result["dish_present"] = True
-
-    # Try generic HTTP status endpoint
-    admin_url = secondary.get("admin_url")
+    # Try admin page for richer detail
+    admin_url = source.get("admin_url", "")
     if admin_url:
-        ok2, _, body = http_test(admin_url, timeout=secondary.get("admin_timeout_s", 4))
-        if ok2:
+        ok, _, body = http_test(admin_url, timeout=source.get("admin_timeout_s", 4))
+        if ok:
             result["connected"] = True
-            # Parse satellite provider metrics if present.
-            # Starlink gRPC JSON format — also check for Hughes/ViaSat equivalents.
+            result["admin_reachable"] = True
+
+            # Carrier name (cellular sources)
+            common_carriers = ["T-Mobile", "Verizon", "AT&T", "FirstNet",
+                               "US Cellular", "C Spire", "Sprint", "Dish"]
+            for carrier in common_carriers:
+                if carrier.lower() in body.lower():
+                    result["carrier"] = carrier
+                    break
+
+            # Technology (cellular)
+            for tech in ["5G NR", "5G", "LTE", "4G", "3G", "2G"]:
+                if tech in body:
+                    result["technology"] = tech
+                    break
+
+            # RSSI signal strength
+            rssi_m = re.search(r"rssi[\":\s]+(-?\d+)", body, re.I)
+            if rssi_m:
+                rssi = int(rssi_m.group(1))
+                result["signal_dbm"] = rssi
+                result["signal_strength"] = (
+                    f"Excellent ({rssi} dBm)" if rssi >= -70 else
+                    f"Good ({rssi} dBm)"      if rssi >= -85 else
+                    f"Fair ({rssi} dBm)"      if rssi >= -100 else
+                    f"Poor ({rssi} dBm)"
+                )
+
+            # Satellite throughput (Starlink gRPC / similar JSON APIs)
             lat_m = re.search(r'"popPingLatencyMs":\s*([\d.]+)', body)
             dl_m  = re.search(r'"downlinkThroughputBps":\s*([\d.]+)', body)
             ul_m  = re.search(r'"uplinkThroughputBps":\s*([\d.]+)', body)
             obs_m = re.search(r'"fractionObstructed":\s*([\d.]+)', body)
             up_m  = re.search(r'"uptimeS":\s*(\d+)', body)
-            if lat_m: result["latency_ms"]     = round(float(lat_m.group(1)), 1)
-            if dl_m:  result["download_mbps"]  = round(float(dl_m.group(1)) / 1e6, 1)
-            if ul_m:  result["upload_mbps"]    = round(float(ul_m.group(1)) / 1e6, 1)
+            if lat_m: result["latency_ms"]      = round(float(lat_m.group(1)), 1)
+            if dl_m:  result["download_mbps"]   = round(float(dl_m.group(1)) / 1e6, 1)
+            if ul_m:  result["upload_mbps"]     = round(float(ul_m.group(1)) / 1e6, 1)
             if obs_m: result["obstruction_pct"] = round(float(obs_m.group(1)) * 100, 1)
             if up_m:
                 secs = int(up_m.group(1))
                 result["uptime"] = f"{secs//3600}h {(secs%3600)//60}m"
-        else:
-            result["connected"] = True  # ping worked, API not responding
+
+    # Ping-reachable fallback (sets connected without admin details)
+    elif source.get("ping_host"):
+        ok, _ = ping_test(source["ping_host"], count=1, timeout=2)
+        if ok:
+            result["connected"] = True
+
+    # internet_only — connected is set by caller based on WAN detection
+    elif source.get("detection_method") == "internet_only":
+        pass   # connected set below by poll()
 
     return result
+
+
+def poll():
+    """Run one complete WAN status poll cycle."""
+    cfg     = load_config()
+    ts      = utcnow()
+    sources = cfg.get("wan_sources", [])
+
+    # Only consider enabled sources
+    enabled = [s for s in sources if s.get("enabled", True)]
+
+    # Test internet connectivity first
+    internet_ok, internet_latency = ping_test("1.1.1.1")
+
+    active_source_id = None
+    active_label     = "None"
+    source_details   = {}
+
+    if internet_ok:
+        # Sort: preferred role first, then fallback
+        ordered = sorted(enabled, key=lambda s: (0 if s.get("role") == "preferred" else 1))
+
+        for source in ordered:
+            if check_source(source):
+                active_source_id = source.get("id")
+                active_label     = source.get("label", "WAN")
+                break
+
+        # If no specific source matched (e.g. all internet_only), use first preferred
+        if not active_source_id and enabled:
+            pref = [s for s in ordered if s.get("role") == "preferred"]
+            if pref:
+                active_source_id = pref[0].get("id")
+                active_label     = pref[0].get("label", "WAN")
+            else:
+                active_source_id = ordered[0].get("id")
+                active_label     = ordered[0].get("label", "WAN")
+
+    # Get details for all enabled sources
+    for source in enabled:
+        details = get_source_details(source)
+        # Mark connected if this is the active source
+        if source.get("id") == active_source_id and internet_ok:
+            details["connected"] = True
+        source_details[source.get("id", "")] = details
+
+    # Determine simple active_source string for dashboard backwards compat
+    active_src_cfg = next((s for s in sources if s.get("id") == active_source_id), {})
+    src_type = active_src_cfg.get("type", "site") if internet_ok else "none"
+    # Map type to legacy dashboard keys
+    legacy_src = (
+        "cellular"  if src_type in ("cellular", "hotspot") else
+        "satellite" if src_type == "satellite" else
+        "site"      if src_type in ("fixed", "other")     else
+        "none"
+    ) if internet_ok else "none"
+
+    dash = cfg.get("dashboard", {})
+
+    # Build source_a / source_b for backwards-compat with wan-status.html
+    src_list = cfg.get("wan_sources", [])
+    wa = source_details.get(src_list[0]["id"] if src_list else "source_a", {})
+    wb = source_details.get(src_list[1]["id"] if len(src_list) > 1 else "source_b", {})
+
+    return {
+        "timestamp":           ts,
+        "active_source":       legacy_src,
+        "active_source_id":    active_source_id,
+        "active_label":        active_label,
+        "internet_latency_ms": internet_latency,
+        # New structured keys
+        "wan_sources": source_details,
+        # Legacy keys (dashboard/wan-status.html backwards compat)
+        "instyconnect": wa,
+        "starlink":     wb,
+        "primary_wan":  wa,
+        "secondary_wan": wb,
+        "config": {
+            "show_wan_a":          dash.get("show_wan_a", True),
+            "show_wan_b":          dash.get("show_wan_b", False),
+            "show_amprnet":        dash.get("show_amprnet", True),
+            # Legacy label keys
+            "show_primary_wan":    dash.get("show_wan_a", True),
+            "show_secondary_wan":  dash.get("show_wan_b", False),
+            "primary_wan_name":    wa.get("label", "WAN A"),
+            "secondary_wan_name":  wb.get("label", "WAN B"),
+            "wan_sources":         [
+                {"id": s.get("id"), "label": s.get("label"),
+                 "role": s.get("role"), "type": s.get("type"),
+                 "enabled": s.get("enabled", True),
+                 "icon": s.get("icon") or TYPE_ICONS.get(s.get("type","other"),"🔗")}
+                for s in src_list
+            ],
+        },
+    }
 
 
 def write_status(data):
@@ -240,59 +346,28 @@ def write_status(data):
         print(f"[wan-monitor] Write error: {e}")
 
 
-def poll():
-    cfg = load_config()
-    ts  = utcnow()
-
-    active_source, internet_latency = detect_wan_source(cfg)
-    primary_status   = get_primary_status(cfg)
-    secondary_status = get_secondary_status(cfg)
-
-    if active_source == "primary" and not primary_status.get("connected"):
-        primary_status["connected"] = True
-
-    dash = cfg.get("dashboard", {})
-
-    return {
-        "timestamp":           ts,
-        "active_source":       active_source,
-        "internet_latency_ms": internet_latency,
-        # Keep legacy keys for dashboard backwards compat
-        "instyconnect": primary_status,
-        "starlink":     secondary_status,
-        # New generic keys
-        "primary_wan":  primary_status,
-        "secondary_wan": secondary_status,
-        "config": {
-            "show_primary_wan":    dash.get("show_primary_wan", True),
-            "show_secondary_wan":  dash.get("show_secondary_wan", False),
-            "primary_wan_name":    dash.get("primary_wan_name", primary_status.get("label", "Cellular")),
-            "secondary_wan_name":  dash.get("secondary_wan_name", secondary_status.get("label", "Satellite")),
-        },
-    }
-
-
 if __name__ == "__main__":
     print(f"[wan-monitor] Starting — polling every {POLL_INTERVAL}s")
-    print(f"[wan-monitor] Config: {CONFIG_FILE} (fallback: {DEFAULTS_FILE})")
-    print(f"[wan-monitor] Output: {OUTPUT_FILE}")
+    print(f"[wan-monitor] Config:  {CONFIG_FILE}")
+    print(f"[wan-monitor] Output:  {OUTPUT_FILE}")
 
     while True:
         try:
             data = poll()
             write_status(data)
-            source  = data.get("active_source", "unknown")
+            src     = data.get("active_label", "none")
             latency = data.get("internet_latency_ms")
-            print(f"[wan-monitor] {utcnow()}  WAN={source}"
+            print(f"[wan-monitor] {utcnow()}  active={src}"
                   f"{'  ' + str(latency) + 'ms' if latency else ''}")
         except Exception as e:
             print(f"[wan-monitor] Poll error: {e}")
             write_status({
-                "timestamp": utcnow(), "active_source": "unknown",
+                "timestamp": utcnow(), "active_source": "none",
                 "error": str(e),
-                "instyconnect":  {"connected": False},
-                "starlink":      {"connected": False, "dish_present": False},
-                "primary_wan":   {"connected": False},
+                "instyconnect": {"connected": False},
+                "starlink":     {"connected": False},
+                "primary_wan":  {"connected": False},
                 "secondary_wan": {"connected": False},
+                "wan_sources":  {},
             })
         time.sleep(POLL_INTERVAL)

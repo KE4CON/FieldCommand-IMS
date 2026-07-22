@@ -1,41 +1,47 @@
 {
-  "_comment": "FieldCommand IMS WAN configuration. Copy to /opt/fieldcommand/data/wan_config.json and edit for your deployment. This file is never overwritten by updates.",
+  "_comment": "FieldCommand IMS WAN configuration. Edit /opt/fieldcommand/data/wan_config.json for your deployment. This file is the factory default — never overwritten by updates.",
 
-  "primary_wan": {
-    "enabled": true,
-    "label": "Cellular",
-    "provider": "Cellular Modem",
-    "icon": "📡",
-    "admin_url": "http://10.1.1.1",
-    "admin_timeout_s": 3,
-    "detection_method": "admin_reachable",
-    "notes": "Set admin_url to your cellular modem/router admin page IP. If your modem has no web UI, set detection_method to 'ping' and set ping_host. Examples: InstyConnect http://10.1.1.1 · Cradlepoint http://192.168.0.1 · Sierra Wireless varies by model."
-  },
-
-  "secondary_wan": {
-    "enabled": false,
-    "label": "Satellite",
-    "provider": "Satellite Internet",
-    "icon": "🛰",
-    "ping_host": "192.168.100.1",
-    "admin_url": "http://192.168.100.1:9201",
-    "admin_timeout_s": 2,
-    "detection_method": "ping",
-    "notes": "Set ping_host to the satellite modem/router LAN address. Starlink default is 192.168.100.1. Hughes/ViaSat/OneWeb vary by model."
-  },
+  "wan_sources": [
+    {
+      "id": "source_a",
+      "enabled": true,
+      "role": "preferred",
+      "label": "Internet",
+      "type": "cellular",
+      "provider": "",
+      "icon": "📡",
+      "detection_method": "internet_only",
+      "ping_host": "",
+      "admin_url": "",
+      "admin_timeout_s": 3,
+      "notes": "Configure for your primary internet source. Set role=preferred for the one you want used first."
+    },
+    {
+      "id": "source_b",
+      "enabled": false,
+      "role": "fallback",
+      "label": "Backup Internet",
+      "type": "satellite",
+      "provider": "",
+      "icon": "🛰",
+      "detection_method": "ping",
+      "ping_host": "",
+      "admin_url": "",
+      "admin_timeout_s": 2,
+      "notes": "Configure for your backup/failover internet source. Enable and set ping_host to your modem gateway IP."
+    }
+  ],
 
   "backup_drive": {
     "label": "USB Backup Drive",
     "mount_path": "/media/fieldcommand",
     "udev_label": "FIELDCOMMAND",
-    "notes": "Format any USB drive (ext4 or exFAT) and label it FIELDCOMMAND. Any brand works — LaCie, SanDisk, WD, etc."
+    "notes": "Format any USB drive (ext4 or exFAT) and label it FIELDCOMMAND. Any brand or size works."
   },
 
   "dashboard": {
-    "show_primary_wan": true,
-    "show_secondary_wan": false,
-    "primary_wan_name": "Cellular",
-    "secondary_wan_name": "Satellite",
+    "show_wan_a": true,
+    "show_wan_b": false,
     "show_amprnet": true
   },
 

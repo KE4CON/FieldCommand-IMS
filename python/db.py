@@ -499,6 +499,28 @@ CREATE TABLE IF NOT EXISTS forms (
 );
 CREATE INDEX IF NOT EXISTS idx_forms_type ON forms(form_type);
 
+-- ── ICS-211 Remote Check-In Entries ────────────────────────────────────────────
+-- Populated by checkin.html when field personnel self-check in from any LAN device
+CREATE TABLE IF NOT EXISTS checkin_entries (
+    id            TEXT PRIMARY KEY,
+    incident_id   TEXT NOT NULL DEFAULT '',
+    period        INTEGER NOT NULL DEFAULT 1,
+    name          TEXT DEFAULT '',
+    callsign_id   TEXT DEFAULT '',
+    agency        TEXT DEFAULT '',
+    ics_position  TEXT DEFAULT '',
+    resource_type TEXT DEFAULT '',
+    check_in_time TEXT DEFAULT '',
+    equipment     TEXT DEFAULT '',
+    home_unit     TEXT DEFAULT '',
+    status        TEXT DEFAULT 'Checked In',
+    synced_to_211 INTEGER DEFAULT 0,
+    notes         TEXT DEFAULT '',
+    created       TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_ci_incident ON checkin_entries(incident_id);
+CREATE INDEX IF NOT EXISTS idx_ci_status   ON checkin_entries(status);
+
 -- ── Dead Man's Switch (singleton row id=1) ────────────────────────────────────
 CREATE TABLE IF NOT EXISTS dms_state (
     id              INTEGER PRIMARY KEY DEFAULT 1,

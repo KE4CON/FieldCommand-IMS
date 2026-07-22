@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Incident Check-In — FieldCommand IMS</title>
+<link rel="stylesheet" href="theme.css">
+<style>
+/* Mobile-optimised — this page runs on phones and tablets in the field */
+body { background:var(--bg);font-size:15px; }
+
+.ci-header {
+  background:linear-gradient(135deg,var(--eoc) 0%,var(--eoc-lt) 100%);
+  border-bottom:3px solid var(--accent);
+  padding:14px 18px;
+}
+.ci-title {
+  font-family:var(--font-hd);font-size:16px;color:#fff;
+  letter-spacing:2px;text-transform:uppercase;
+}
+.ci-sub { font-size:12px;color:rgba(255,255,255,.6);margin-top:3px; }
+
+.ci-body { max-width:540px;margin:0 auto;padding:20px 16px; }
+
+.ci-field {
+  margin-bottom:16px;
+}
+.ci-field label {
+  display:block;font-size:12px;font-weight:600;
+  color:var(--muted);text-transform:uppercase;letter-spacing:.07em;
+  margin-bottom:5px;
+}
+.ci-field input, .ci-field select, .ci-field textarea {
+  width:100%;font-size:16px;padding:12px 14px;
+  background:var(--input-bg);border:1px solid var(--input-border);
+  color:var(--txt);border-radius:var(--r-md);
+  -webkit-appearance:none;appearance:none;
+  transition:border-color .15s,box-shadow .15s;
+}
+.ci-field input:focus, .ci-field select:focus {
+  border-color:var(--input-focus);
+  box-shadow:0 0 0 3px rgba(37,88,160,.12);
+  outline:none;
+}
+
+.ci-submit {
+  width:100%;padding:16px;font-size:16px;font-weight:700;
+  background:var(--green);border:none;color:#fff;
+  border-radius:var(--r-md);cursor:pointer;margin-top:8px;
+  letter-spacing:.05em;text-transform:uppercase;
+  transition:background .15s,transform .1s;
+}
+.ci-submit:active { transform:scale(.98); }
+.ci-submit:disabled { background:var(--dim);cursor:not-allowed; }
+
+.ci-success {
+  display:none;background:var(--green-bg);border:2px solid #86efac;
+  border-radius:var(--r-lg);padding:28px;text-align:center;margin-bottom:20px;
+}
+.ci-success .icon { font-size:48px;margin-bottom:12px; }
+.ci-success .msg {
+  font-family:var(--font-hd);font-size:16px;color:var(--green);
+  letter-spacing:1px;margin-bottom:6px;
+}
+.ci-success .sub { font-size:13px;color:var(--muted); }
+
+.inc-badge {
+  background:var(--eoc-tint);border:1px solid var(--line);
+  border-radius:var(--r-md);padding:10px 14px;margin-bottom:20px;
+  font-size:13px;
+}
+.inc-badge .lbl { font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:.08em; }
+.inc-badge .val { font-family:var(--font-hd);font-size:15px;color:var(--eoc);margin-top:2px; }
+
+.error-banner {
+  display:none;background:var(--red-bg);border:1px solid #fca5a5;
+  border-radius:var(--r-md);padding:10px 14px;
+  font-size:13px;color:var(--red);margin-bottom:14px;
+}
+</style>
+</head>
+<body>
+
+<div class="ci-header">
+  <div class="ci-title">📋 Incident Check-In</div>
+  <div class="ci-sub">FieldCommand IMS · Complete this form when you arrive at the incident</div>
+</div>
+
+<div class="ci-body">
+
+  <!-- Incident info badge -->
+  <div class="inc-badge" id="incBadge" style="display:none">
+    <div class="lbl">Incident</div>
+    <div class="val" id="incName">—</div>
+    <div style="margin-top:4px;display:flex;gap:16px">
+      <div><div class="lbl">Op Period</div><div style="font-size:13px;color:var(--txt)" id="incPeriod">—</div></div>
+      <div><div class="lbl">Check-In Location</div><div style="font-size:13px;color:var(--txt)" id="incLocation">—</div></div>
+    </div>
+  </div>
+
+  <!-- Error banner -->
+  <div class="error-banner" id="errorBanner"></div>
+
+  <!-- Success state -->
+  <div class="ci-success" id="successBox">
+    <div class="icon">✅</div>
+    <div class="msg">CHECK-IN COMPLETE</div>
+    <div class="sub" id="successName"></div>
+    <div class="sub" style="margin-top:6px" id="successTime"></div>
+    <button onclick="resetForm()"
+      style="margin-top:16px;padding:10px 24px;background:var(--eoc);
+             border:none;color:#fff;border-radius:var(--r-md);
+             font-size:14px;cursor:pointer">
+      Check In Another Person
+    </button>
+  </div>
+
+  <!-- Check-in form -->
+  <div id="ciForm">
+    <div class="ci-field">
+      <label>Full Name *</label>
+      <input type="text" id="ci_name" autocomplete="name"
+        placeholder="First Last" inputmode="text">
+    </div>
+
+    <div class="ci-field">
+      <label>Callsign / Radio ID / Badge #</label>
+      <input type="text" id="ci_id" autocomplete="off"
+        placeholder="KE4CON or Unit 412 or 88342" style="font-family:var(--font-mono)">
+    </div>
+
+    <div class="ci-field">
+      <label>Agency / Home Unit</label>
+      <input type="text" id="ci_agency" autocomplete="organization"
+        placeholder="McHenry County ARES or MCFD Station 1">
+    </div>
+
+    <div class="ci-field">
+      <label>ICS Position / Role</label>
+      <select id="ci_position">
+        <option value="">Select position...</option>
+        <optgroup label="Command">
+          <option>Incident Commander (IC)</option>
+          <option>Deputy IC</option>
+          <option>Safety Officer (SOFR)</option>
+          <option>Public Information Officer (PIO)</option>
+          <option>Liaison Officer (LOFR)</option>
+        </optgroup>
+        <optgroup label="Operations">
+          <option>Operations Section Chief (OSC)</option>
+          <option>Branch Director</option>
+          <option>Division/Group Supervisor (DIVS)</option>
+          <option>Task Force Leader (TFLD)</option>
+          <option>Strike Team Leader (STLD)</option>
+          <option>Single Resource</option>
+        </optgroup>
+        <optgroup label="Planning">
+          <option>Planning Section Chief (PSC)</option>
+          <option>Resources Unit Leader (RESL)</option>
+          <option>Situation Unit Leader (SITL)</option>
+          <option>Documentation Unit Leader (DOCL)</option>
+          <option>Technical Specialist</option>
+        </optgroup>
+        <optgroup label="Logistics">
+          <option>Logistics Section Chief (LSC)</option>
+          <option>Communications Unit Leader (COML)</option>
+          <option>Medical Unit Leader (MEDL)</option>
+          <option>Supply Unit Leader (SPUL)</option>
+          <option>Ground Support Unit Leader (GSUL)</option>
+          <option>Facilities Unit Leader (FACL)</option>
+        </optgroup>
+        <optgroup label="Finance/Admin">
+          <option>Finance/Admin Section Chief (FSC)</option>
+          <option>Time Unit Leader (TIME)</option>
+          <option>Procurement Unit Leader (PROC)</option>
+        </optgroup>
+        <optgroup label="Field">
+          <option>Net Control</option>
+          <option>Amateur Radio Operator</option>
+          <option>Emergency Medical</option>
+          <option>Search Team Member</option>
+          <option>Volunteer</option>
+          <option>Observer</option>
+          <option>Other</option>
+        </optgroup>
+      </select>
+    </div>
+
+    <div class="ci-field">
+      <label>Resource Type</label>
+      <select id="ci_rtype">
+        <option value="">Select type...</option>
+        <option>Personnel</option>
+        <option>Engine</option>
+        <option>Crew</option>
+        <option>Dozer</option>
+        <option>Helicopter</option>
+        <option>Water Tender</option>
+        <option>Vehicle</option>
+        <option>Equipment</option>
+        <option>Amateur Radio</option>
+        <option>Medical Unit</option>
+        <option>Other</option>
+      </select>
+    </div>
+
+    <div class="ci-field">
+      <label>Equipment / Vehicle (if applicable)</label>
+      <input type="text" id="ci_equip"
+        placeholder="e.g. E-412, Portable Radio #7, nothing">
+    </div>
+
+    <div class="ci-field">
+      <label>Notes (optional)</label>
+      <textarea id="ci_notes" rows="2"
+        placeholder="Specialties, limitations, or other information for check-in recorder"
+        style="font-size:15px;padding:12px 14px;resize:none"></textarea>
+    </div>
+
+    <button class="ci-submit" onclick="submitCheckin()" id="submitBtn">
+      ✓ Check In
+    </button>
+
+    <div style="text-align:center;margin-top:14px;font-size:11px;color:var(--dim)">
+      Your check-in goes to the ICS-211 roster and T-card board at the ICP.
+    </div>
+  </div>
+
+</div><!-- /ci-body -->
+
+<script>
+const ICS_API = 'http://192.168.50.1:5051';
+const params  = new URLSearchParams(location.search);
+const INC_ID  = params.get('incident') || '';
+const PERIOD  = parseInt(params.get('period') || '1');
+
+// ── Load incident info ─────────────────────────────────────────────
+async function loadIncident() {
+  if (!INC_ID) {
+    showError('No incident specified. Use the link from FieldCommand IMS to access this page.');
+    document.getElementById('submitBtn').disabled = true;
+    return;
+  }
+  try {
+    const [incR, giR] = await Promise.all([
+      fetch(`${ICS_API}/api/ics/incidents/${INC_ID}`).catch(()=>null),
+      fetch(`${ICS_API}/api/ics/general_info?incident_id=${INC_ID}&period=${PERIOD}`).catch(()=>null),
+    ]);
+    const inc = incR?.ok ? await incR.json() : null;
+    const gi  = giR?.ok  ? await giR.json()  : null;
+
+    const name     = gi?.incident_name || inc?.name || 'Unknown Incident';
+    const location = gi?.incident_location || inc?.location || 'ICP';
+
+    document.getElementById('incName').textContent    = name;
+    document.getElementById('incPeriod').textContent  = `Period ${PERIOD}`;
+    document.getElementById('incLocation').textContent = location;
+    document.getElementById('incBadge').style.display  = '';
+    document.title = `Check-In · ${name}`;
+  } catch(e) {
+    showError('Could not load incident info. Ensure you are connected to EMCOMM-NET.');
+  }
+}
+
+// ── Submit check-in ────────────────────────────────────────────────
+async function submitCheckin() {
+  const name = document.getElementById('ci_name').value.trim();
+  if (!name) {
+    showError('Name is required.'); return;
+  }
+  clearError();
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Submitting…';
+
+  const now = new Date();
+  const timeStr = now.toTimeString().slice(0,5);
+  const dateStr = now.toISOString().slice(0,10);
+
+  const payload = {
+    incident_id:    INC_ID,
+    period:         PERIOD,
+    name,
+    callsign_id:    document.getElementById('ci_id').value.trim(),
+    agency:         document.getElementById('ci_agency').value.trim(),
+    ics_position:   document.getElementById('ci_position').value,
+    resource_type:  document.getElementById('ci_rtype').value,
+    equipment:      document.getElementById('ci_equip').value.trim(),
+    notes:          document.getElementById('ci_notes').value.trim(),
+    check_in_time:  `${dateStr}T${timeStr}`,
+    status:         'Checked In',
+    synced_to_211:  0,
+  };
+
+  try {
+    const r = await fetch(`${ICS_API}/api/ics/checkin`, {
+      method:  'POST',
+      headers: {'Content-Type':'application/json'},
+      body:    JSON.stringify(payload),
+    });
+
+    if (r.ok) {
+      document.getElementById('ciForm').style.display       = 'none';
+      document.getElementById('successBox').style.display   = 'block';
+      document.getElementById('successName').textContent    = `${name} — ${payload.callsign_id || payload.agency || 'Volunteer'}`;
+      document.getElementById('successTime').textContent    = `Checked in at ${timeStr}`;
+    } else {
+      showError('Server error — check with the ICP operator.');
+      btn.disabled = false;
+      btn.textContent = '✓ Check In';
+    }
+  } catch(e) {
+    showError('Could not reach server. Ensure device is connected to EMCOMM-NET (192.168.50.x).');
+    btn.disabled = false;
+    btn.textContent = '✓ Check In';
+  }
+}
+
+function resetForm() {
+  document.getElementById('ciForm').style.display       = 'block';
+  document.getElementById('successBox').style.display   = 'none';
+  document.getElementById('ci_name').value    = '';
+  document.getElementById('ci_id').value      = '';
+  document.getElementById('ci_agency').value  = '';
+  document.getElementById('ci_position').value = '';
+  document.getElementById('ci_rtype').value   = '';
+  document.getElementById('ci_equip').value   = '';
+  document.getElementById('ci_notes').value   = '';
+  document.getElementById('submitBtn').disabled = false;
+  document.getElementById('submitBtn').textContent = '✓ Check In';
+  document.getElementById('ci_name').focus();
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorBanner');
+  el.textContent = '⚠ ' + msg;
+  el.style.display = 'block';
+}
+function clearError() {
+  document.getElementById('errorBanner').style.display = 'none';
+}
+
+loadIncident();
+</script>
+</body>
+</html>

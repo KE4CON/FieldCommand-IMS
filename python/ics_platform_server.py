@@ -337,6 +337,20 @@ class ICSHandler(BaseHTTPRequestHandler):
                 "period":   period,
             })
 
+
+        # ── ICS-211 Remote Check-In ─────────────────────────────────────────
+        # GET: fetch pending entries for an incident/period
+        elif path == "/api/ics/checkin":
+            inc_id = qs.get("incident_id",[""])[0]
+            period = int(qs.get("period",["1"])[0])
+            synced = qs.get("synced",[""])[0]
+            sql    = "SELECT * FROM checkin_entries WHERE incident_id=? AND period=?"
+            params = [inc_id, period]
+            if synced == "0":
+                sql    += " AND synced_to_211=0"
+            rows = c.execute(sql + " ORDER BY created DESC", params).fetchall()
+            return self.send_json(rows_to_list(rows))
+
         elif path == "/api/ics/general_info":
             inc_id = qs.get("incident_id",[""])[0]
             period = int(qs.get("period",["1"])[0])
@@ -507,6 +521,35 @@ class ICSHandler(BaseHTTPRequestHandler):
 
             except Exception as e:
                 return self.send_json({"error": str(e)}, 503)
+
+
+        # ── ICS-211 Remote Check-In POST ────────────────────────────────────
+        elif path == "/api/ics/checkin":
+            ci_id = body.get("id") or f"ci-{int(time.time()*1000)}"
+            c.execute("""INSERT OR REPLACE INTO checkin_entries
+                (id, incident_id, period, name, callsign_id, agency,
+                 ics_position, resource_type, check_in_time, equipment,
+                 home_unit, status, synced_to_211, notes, created)
+                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (ci_id,
+                 body.get("incident_id",""), body.get("period",1),
+                 body.get("name",""), body.get("callsign_id",""),
+                 body.get("agency",""), body.get("ics_position",""),
+                 body.get("resource_type",""), body.get("check_in_time", now),
+                 body.get("equipment",""), body.get("home_unit",""),
+                 body.get("status","Checked In"),
+                 body.get("synced_to_211",0),
+                 body.get("notes",""), now))
+            c.commit()
+            return self.send_json({"status":"ok","id":ci_id})
+
+        # ── Mark check-in entries as synced to ICS-211 ─────────────────────
+        elif path == "/api/ics/checkin/sync":
+            ids = body.get("ids",[])
+            for cid in ids:
+                c.execute("UPDATE checkin_entries SET synced_to_211=1 WHERE id=?", (cid,))
+            c.commit()
+            return self.send_json({"status":"ok","synced":len(ids)})
 
         elif path == "/api/ics/general_info":
             inc_id = body.get("incident_id","")

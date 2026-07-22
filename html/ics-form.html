@@ -6064,6 +6064,16 @@ FORMS['211'] = {
           style="font-size:12px;padding:5px 14px;background:var(--green);border-color:var(--green);color:#fff">
           📋 Push All to T-Card Board
         </button>
+        <button onclick="show211RemoteLink()"
+          style="font-size:12px;padding:5px 14px;background:rgba(200,118,10,0.1);
+                 border-color:rgba(200,118,10,0.3);color:var(--amber)">
+          🔗 Share Check-In URL
+        </button>
+        <button onclick="pull211Remote()"
+          style="font-size:12px;padding:5px 14px;background:rgba(30,132,73,0.1);
+                 border-color:rgba(30,132,73,0.3);color:var(--green)">
+          ⬇ Pull Remote Check-Ins
+        </button>
         <span style="font-size:11px;color:var(--dim);align-self:center">
           Last auto-sync: <span id="ci211LastSync">checking...</span>
         </span>
@@ -7965,6 +7975,106 @@ function build225FullPage(fd) {
   </body></html>`;
 }
 
+
+
+// ── ICS-211 Remote Check-In URL ────────────────────────────────────
+function show211RemoteLink() {
+  if (!INC_ID) { alert('Select an incident first'); return; }
+  const url = `http://192.168.50.1/checkin.html?incident=${INC_ID}&period=${PERIOD}`;
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;display:flex;align-items:center;justify-content:center';
+  modal.innerHTML = `
+    <div style="background:var(--panel);border:1px solid var(--amber);border-radius:10px;
+                padding:22px;width:480px;max-width:95vw">
+      <div style="font-family:var(--font-hd);font-size:13px;color:var(--amber);
+                  letter-spacing:1px;margin-bottom:12px">🔗 REMOTE CHECK-IN URL</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.6">
+        Share this URL with arriving personnel. Any device connected to
+        <strong>EMCOMM-NET</strong> can open it in a browser to self-check in.
+        Check-ins appear in this form after you click Pull Remote Check-Ins.
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:12px">
+        <input type="text" value="${url}" readonly
+          onclick="this.select()"
+          style="flex:1;font-family:var(--font-mono);font-size:11px;
+                 background:var(--panel2);border:1px solid var(--line);
+                 color:var(--txt);padding:8px 10px;border-radius:4px">
+        <button onclick="navigator.clipboard.writeText('${url}').then(()=>{this.textContent='✓ Copied';setTimeout(()=>this.textContent='Copy',1500)})"
+          style="padding:8px 14px;font-size:12px">Copy</button>
+      </div>
+      <!-- QR code using free public API — works when WAN is up, degrades gracefully -->
+      <div style="text-align:center;margin-bottom:12px">
+        <div style="font-size:10px;color:var(--dim);margin-bottom:6px">QR CODE (requires internet)</div>
+        <img src="https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(url)}"
+          alt="QR code for check-in URL" width="180" height="180"
+          style="border:1px solid var(--line);border-radius:4px"
+          onerror="this.parentElement.innerHTML='<div style=\'font-size:11px;color:var(--dim)\'>QR code unavailable offline — share URL above</div>'">
+      </div>
+      <div style="display:flex;justify-content:flex-end">
+        <button onclick="this.closest('[style*=fixed]').remove()" style="padding:7px 16px">Close</button>
+      </div>
+    </div>`;
+  modal.onclick = e => { if (e.target === modal) modal.remove(); };
+  document.body.appendChild(modal);
+}
+
+// Pull entries submitted via the remote check-in URL into the ICS-211 table
+async function pull211Remote() {
+  if (!INC_ID) { alert('Select an incident first'); return; }
+  const statusEl = document.getElementById('ci211ImportStatus');
+  statusEl.style.display = 'block';
+  statusEl.textContent = 'Checking for remote check-ins…';
+  try {
+    const r = await fetch(
+      `${ICS_API}/api/ics/checkin?incident_id=${INC_ID}&period=${PERIOD}&synced=0`
+    );
+    if (!r.ok) { statusEl.textContent = 'Server error'; return; }
+    const entries = await r.json();
+    if (!entries.length) {
+      statusEl.textContent = 'No new remote check-ins.';
+      return;
+    }
+
+    // Add each entry as a new 211 row
+    const tbody = document.getElementById('ci211Body');
+    let added = 0;
+    entries.forEach(e => {
+      const i   = ci211Count++;
+      const tr  = document.createElement('tr');
+      tr.innerHTML = FORMS['211']._ciRow(i);
+      if (tbody) tbody.appendChild(tr);
+      // Fill fields
+      const set = (key, val) => {
+        formData[`ci211_${key}_${i}`] = val;
+        const el = document.querySelector(`[data-key="ci211_${key}_${i}"]`);
+        if (el) el.value = val;
+      };
+      set('name',   e.name || '');
+      set('id',     e.callsign_id || '');
+      set('agency', e.agency || '');
+      set('pos',    e.ics_position || '');
+      set('rtype',  e.resource_type || '');
+      set('in',     (e.check_in_time||'').slice(11,16));
+      set('equip',  e.equipment || '');
+      added++;
+    });
+
+    // Mark as synced on server
+    const ids = entries.map(e => e.id);
+    await fetch(`${ICS_API}/api/ics/checkin/sync`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ ids })
+    });
+
+    markDirty();
+    statusEl.style.color = 'var(--green)';
+    statusEl.textContent = `✓ Pulled ${added} remote check-in${added!==1?'s':''} into ICS-211.`;
+    setTimeout(() => { statusEl.style.display = 'none'; }, 5000);
+  } catch(e) {
+    statusEl.textContent = 'Error: ' + e.message;
+  }
+}
 
 // ══════════════════════════════════════════════════════════════════
 // ICS-213 GENERAL MESSAGE

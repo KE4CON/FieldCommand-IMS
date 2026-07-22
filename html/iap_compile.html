@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>IAP Compile — FieldCommand IMS</title>
+<link rel="stylesheet" href="theme.css">
+<style>
+.form-row {
+  display:flex;align-items:center;gap:12px;padding:8px 12px;
+  border-bottom:1px solid var(--line-lt);font-size:12px;
+  cursor:pointer;
+}
+.form-row:hover { background:var(--panel2); }
+.form-row.has-data { }
+.form-row.no-data  { opacity:.45;cursor:default; }
+.form-row.in-iap   { border-left:3px solid var(--eoc); }
+.form-row.not-iap  { border-left:3px solid var(--line); }
+
+.form-badge {
+  font-size:10px;padding:2px 7px;border-radius:4px;font-weight:700;
+  font-family:var(--font-hd);letter-spacing:.04em;
+  background:var(--eoc);color:#fff;min-width:72px;text-align:center;
+}
+.form-badge.missing {
+  background:var(--panel2);color:var(--dim);border:1px solid var(--line);
+}
+
+.check-wrap {
+  width:18px;height:18px;border:2px solid var(--line);border-radius:3px;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.check-wrap.checked { background:var(--eoc);border-color:var(--eoc); }
+.check-wrap.checked::after { content:'✓';color:#fff;font-size:11px;font-weight:700; }
+.check-wrap.disabled { background:var(--panel2); }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <span class="page-header-badge">IAP</span>
+  <span class="page-header-title">IAP PDF Compile</span>
+  <div class="page-header-sub">Merge completed ICS forms into a single printable PDF</div>
+  <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+    <select id="incidentSel"
+      style="background:var(--input-bg);border:1px solid var(--input-border);
+             color:var(--txt);padding:5px 10px;font-size:12px;border-radius:var(--r-sm)"
+      onchange="loadStatus()">
+      <option value="">Select incident...</option>
+    </select>
+    <select id="periodSel"
+      style="background:var(--input-bg);border:1px solid var(--input-border);
+             color:var(--txt);padding:5px 10px;font-size:12px;border-radius:var(--r-sm)"
+      onchange="loadStatus()">
+      <option value="1">Period 1</option>
+      <option value="2">Period 2</option>
+      <option value="3">Period 3</option>
+      <option value="4">Period 4</option>
+      <option value="5">Period 5</option>
+      <option value="0">All Periods</option>
+    </select>
+    <a href="index.html" class="back-link">← Dashboard</a>
+  </div>
+</div>
+
+<div class="page-wrap" style="max-width:820px">
+
+  <!-- Select incident prompt -->
+  <div id="selectPrompt" style="text-align:center;padding:40px;color:var(--muted)">
+    Select an incident above to begin.
+  </div>
+
+  <!-- Main UI -->
+  <div id="mainUI" style="display:none">
+
+    <!-- PDF unavailable warning -->
+    <div id="pdfWarning" style="display:none;background:var(--red-bg);border:1px solid #fca5a5;
+         border-radius:var(--r-md);padding:10px 16px;margin-bottom:12px;font-size:12px;color:var(--red)">
+      ⚠ PDF compiler not available on this server.
+      Run <code style="font-family:var(--font-mono)">pip install reportlab pypdf --break-system-packages</code>
+      on the Pi and restart the ICS service.
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 280px;gap:14px">
+
+      <!-- Form list -->
+      <div class="section-card" style="margin:0;padding:0;overflow:hidden">
+        <div style="padding:12px 16px;border-bottom:1px solid var(--line);
+                    display:flex;align-items:center;justify-content:space-between">
+          <h2 style="margin:0">Forms for This IAP</h2>
+          <div style="display:flex;gap:8px">
+            <button onclick="selectAll(true)"
+              style="font-size:11px;padding:3px 10px">All</button>
+            <button onclick="selectAll(false)"
+              style="font-size:11px;padding:3px 10px">None</button>
+          </div>
+        </div>
+        <div id="formList">
+          <div style="padding:20px;text-align:center;color:var(--muted);font-size:12px">
+            Loading forms...
+          </div>
+        </div>
+      </div>
+
+      <!-- Compile options + button -->
+      <div>
+        <div class="section-card" style="margin:0 0 10px">
+          <h2>Compile Options</h2>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <label style="font-size:12px;text-transform:none;letter-spacing:0;
+                           font-weight:normal;display:flex;align-items:center;gap:7px">
+              <input type="checkbox" id="opt_title" checked>
+              Include title page
+            </label>
+            <label style="font-size:12px;text-transform:none;letter-spacing:0;
+                           font-weight:normal;display:flex;align-items:center;gap:7px">
+              <input type="checkbox" id="opt_iap_order" checked>
+              IAP order (202→203→204→205→206...)
+            </label>
+          </div>
+          <div class="fg" style="margin-top:10px">
+            <label>Prepared By</label>
+            <input type="text" id="opt_prepared_by"
+              placeholder="Planning Section Chief name">
+          </div>
+        </div>
+
+        <!-- Summary counts -->
+        <div class="section-card" style="margin:0 0 10px">
+          <h2>Summary</h2>
+          <div style="font-size:12px;line-height:1.9" id="summaryText">
+            <span style="color:var(--muted)">No forms loaded</span>
+          </div>
+        </div>
+
+        <!-- Compile button -->
+        <button onclick="compilePDF()"
+          id="compileBtn" disabled
+          style="width:100%;background:var(--eoc);border-color:var(--eoc);
+                 color:#fff;padding:11px;font-weight:700;font-size:14px;
+                 letter-spacing:.05em;opacity:.5">
+          📄 Download IAP PDF
+        </button>
+        <div id="compileStatus" style="margin-top:8px;font-size:12px;
+             text-align:center;display:none"></div>
+      </div>
+
+    </div>
+
+  </div><!-- /mainUI -->
+
+</div>
+
+<script>
+const API     = 'http://192.168.50.1:5050';
+const ICS_API = 'http://192.168.50.1:5051';
+
+// All form types in IAP order with labels
+const ALL_FORMS = [
+  { type:'ics201', label:'ICS-201 Incident Briefing',        iap:false },
+  { type:'ics202', label:'ICS-202 Incident Objectives',      iap:true  },
+  { type:'ics203', label:'ICS-203 Org Assignment List',      iap:true  },
+  { type:'ics204', label:'ICS-204 Assignment Lists',         iap:true  },
+  { type:'ics205', label:'ICS-205 Radio Comm Plan',          iap:true  },
+  { type:'ics205a',label:'ICS-205A Comm List',               iap:false },
+  { type:'ics206', label:'ICS-206 Medical Plan',             iap:true  },
+  { type:'ics207', label:'ICS-207 Org Chart',                iap:false },
+  { type:'ics208', label:'ICS-208 Site Safety Plan',         iap:false },
+  { type:'ics209', label:'ICS-209 Situation Report',         iap:false },
+  { type:'ics210', label:'ICS-210 Resource Status',          iap:false },
+  { type:'ics211', label:'ICS-211 Incident Check-In',        iap:false },
+  { type:'ics213', label:'ICS-213 General Message',          iap:false },
+  { type:'ics214', label:'ICS-214 Activity Log',             iap:false },
+  { type:'ics220', label:'ICS-220 Air Ops Summary',          iap:false },
+  { type:'ics221', label:'ICS-221 Demobilization',           iap:false },
+  { type:'ics230', label:'ICS-230 Meeting Schedule',         iap:false },
+  { type:'ics233', label:'ICS-233 Open Action Tracker',      iap:false },
+];
+
+let savedForms   = {};   // {form_type: [{...},...]}
+let selectedTypes = new Set();
+let pdfAvailable = false;
+
+async function loadIncidents() {
+  try {
+    const r = await fetch(`${API}/api/incidents`);
+    const incs = r.ok ? await r.json() : [];
+    const sel = document.getElementById('incidentSel');
+    sel.innerHTML = '<option value="">Select incident...</option>' +
+      incs.map(i => `<option value="${i.id}">${i.name}</option>`).join('');
+    const saved = localStorage.getItem('selectedIncident');
+    if (saved) { sel.value = saved; loadStatus(); }
+  } catch(e) {}
+}
+
+async function loadStatus() {
+  const incId  = document.getElementById('incidentSel').value;
+  const period = document.getElementById('periodSel').value;
+  if (!incId) {
+    document.getElementById('selectPrompt').style.display = '';
+    document.getElementById('mainUI').style.display       = 'none';
+    return;
+  }
+  localStorage.setItem('selectedIncident', incId);
+  document.getElementById('selectPrompt').style.display = 'none';
+  document.getElementById('mainUI').style.display       = '';
+
+  try {
+    const r = await fetch(
+      `${ICS_API}/api/ics/iap_status?incident_id=${incId}&period=${period}`
+    );
+    const d = await r.json();
+    savedForms   = d.forms || {};
+    pdfAvailable = d.pdf_available !== false;
+
+    document.getElementById('pdfWarning').style.display = pdfAvailable ? 'none' : '';
+
+    // Pre-select all saved forms that are in IAP order
+    selectedTypes = new Set(
+      Object.keys(savedForms).filter(t =>
+        ALL_FORMS.find(f => f.type === t && f.iap)
+      )
+    );
+
+    renderFormList();
+    updateSummary();
+  } catch(e) {
+    document.getElementById('formList').innerHTML =
+      `<div style="padding:20px;color:var(--red);font-size:12px">Error: ${e.message}</div>`;
+  }
+}
+
+function renderFormList() {
+  const list = document.getElementById('formList');
+  list.innerHTML = ALL_FORMS.map(f => {
+    const forms  = savedForms[f.type] || [];
+    const count  = forms.length;
+    const hasData= count > 0;
+    const sel    = selectedTypes.has(f.type);
+
+    return `
+      <div class="form-row ${hasData?'has-data':'no-data'} ${f.iap?'in-iap':'not-iap'}"
+        onclick="${hasData?`toggleForm('${f.type}')`:''}" >
+        <div class="check-wrap ${hasData&&sel?'checked':!hasData?'disabled':''}"></div>
+        <span class="form-badge ${hasData?'':'missing'}">${f.type.toUpperCase()}</span>
+        <div style="flex:1">
+          <div style="font-weight:${hasData?'600':'400'}">${f.label}</div>
+          ${f.iap ? '<span style="font-size:9px;color:var(--eoc)">Standard IAP</span>' : ''}
+        </div>
+        <div style="font-size:11px;color:var(--muted);text-align:right">
+          ${hasData
+            ? `${count} form${count!==1?'s':''}`
+            : '<span style="color:var(--dim)">not saved</span>'}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function toggleForm(type) {
+  if (selectedTypes.has(type)) selectedTypes.delete(type);
+  else selectedTypes.add(type);
+  renderFormList();
+  updateSummary();
+}
+
+function selectAll(state) {
+  if (state) {
+    ALL_FORMS.forEach(f => { if (savedForms[f.type]?.length) selectedTypes.add(f.type); });
+  } else {
+    selectedTypes.clear();
+  }
+  renderFormList();
+  updateSummary();
+}
+
+function updateSummary() {
+  const total = [...selectedTypes].reduce((n,t) => n + (savedForms[t]?.length||0), 0);
+  const types = selectedTypes.size;
+  const el    = document.getElementById('summaryText');
+  const btn   = document.getElementById('compileBtn');
+
+  el.innerHTML = `
+    <div><strong style="color:var(--eoc)">${types}</strong> form types selected</div>
+    <div><strong style="color:var(--eoc)">${total}</strong> total form page${total!==1?'s':''}</div>
+    ${document.getElementById('opt_title').checked
+      ? '<div style="color:var(--muted)">+ Title page</div>' : ''}
+    <div style="color:var(--dim);font-size:11px;margin-top:4px">
+      ${[...selectedTypes].map(t => t.toUpperCase()).join(' · ') || 'None selected'}
+    </div>`;
+
+  const canCompile = total > 0 && pdfAvailable;
+  btn.disabled = !canCompile;
+  btn.style.opacity = canCompile ? '1' : '.5';
+}
+
+async function compilePDF() {
+  const incId   = document.getElementById('incidentSel').value;
+  const period  = document.getElementById('periodSel').value;
+  const prepBy  = document.getElementById('opt_prepared_by').value.trim();
+  const title   = document.getElementById('opt_title').checked;
+
+  if (!incId || !selectedTypes.size) return;
+
+  const statusEl = document.getElementById('compileStatus');
+  const btn      = document.getElementById('compileBtn');
+  statusEl.style.display = 'block';
+  statusEl.style.color   = 'var(--amber)';
+  statusEl.textContent   = 'Compiling PDF…';
+  btn.disabled = true;
+  btn.textContent = '⏳ Compiling…';
+
+  try {
+    const r = await fetch(`${ICS_API}/api/ics/iap_compile`, {
+      method:  'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        incident_id:   incId,
+        period:        parseInt(period) || 1,
+        form_types:    [...selectedTypes],
+        include_title: title,
+        prepared_by:   prepBy,
+        date_str:      new Date().toISOString().slice(0,10),
+      })
+    });
+
+    if (!r.ok) {
+      const err = await r.json();
+      throw new Error(err.error || `Server error ${r.status}`);
+    }
+
+    // Download the PDF
+    const blob     = await r.blob();
+    const filename = r.headers.get('Content-Disposition')
+                      ?.match(/filename="([^"]+)"/)?.[1]
+                   || 'IAP.pdf';
+    const url = URL.createObjectURL(blob);
+    const a   = document.createElement('a');
+    a.href = url; a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+
+    statusEl.style.color = 'var(--green)';
+    statusEl.textContent = `✓ ${filename} downloaded`;
+    btn.textContent = '📄 Download IAP PDF';
+    btn.disabled    = false;
+  } catch(e) {
+    statusEl.style.color = 'var(--red)';
+    statusEl.textContent = 'Error: ' + e.message;
+    btn.textContent = '📄 Download IAP PDF';
+    btn.disabled    = false;
+  }
+}
+
+// Update summary when title checkbox changes
+document.getElementById('opt_title').addEventListener('change', updateSummary);
+
+loadIncidents();
+</script>
+</body>
+</html>

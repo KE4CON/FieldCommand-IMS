@@ -5,6 +5,41 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>ICS Form — FieldCommand IMS</title>
 <link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.min.css">
+<style>
+/* Map picker modal */
+.map-picker-modal {
+  display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7);
+  z-index:500; align-items:center; justify-content:center;
+}
+.map-picker-modal.open { display:flex; }
+.map-picker-box {
+  background:var(--panel); border:1px solid var(--eoc); border-radius:10px;
+  width:92vw; max-width:1100px; height:88vh; display:flex; flex-direction:column;
+}
+.map-picker-toolbar {
+  padding:10px 14px; border-bottom:1px solid var(--line);
+  display:flex; gap:8px; align-items:center; flex-wrap:wrap; flex-shrink:0;
+}
+.map-picker-toolbar .tool-group {
+  display:flex; gap:4px; align-items:center;
+}
+.map-picker-toolbar .tool-sep {
+  width:1px; height:20px; background:var(--line); margin:0 4px;
+}
+#mapPickerContainer { flex:1; position:relative; }
+#mapPickerLeaflet { width:100%; height:100%; }
+.map-picker-footer {
+  padding:10px 14px; border-top:1px solid var(--line);
+  display:flex; gap:8px; align-items:center; flex-shrink:0;
+}
+.annotation-label {
+  font-size:10px; font-weight:bold; color:#fff;
+  background:rgba(0,0,0,0.6); padding:2px 5px; border-radius:3px;
+  white-space:nowrap;
+}
+</style>
 <style>
 .form-header {
   background: linear-gradient(135deg,#001428,#002858);
@@ -1445,5 +1480,360 @@ FORMS['203'] = {
   }
 };
 </script>
-</body>
-</html>
+<!-- Map Picker Modal -->
+<div class="map-picker-modal" id="mapPickerModal">
+  <div class="map-picker-box">
+
+    <div class="map-picker-toolbar">
+      <span style="font-family:var(--font-hd);font-size:13px;letter-spacing:1px;color:var(--amber)">
+        🗺 SELECT MAP AREA
+      </span>
+      <div class="tool-sep"></div>
+
+      <!-- Tile source -->
+      <div class="tool-group">
+        <span style="font-size:11px;color:var(--muted)">Map:</span>
+        <select id="mpTileSource" onchange="mpSetTile(this.value)"
+          style="font-size:12px;background:var(--input-bg);border:1px solid var(--line);color:var(--txt);padding:4px 8px;border-radius:4px">
+          <option value="offline_auto">Auto (offline first)</option>
+          <option value="osm">OpenStreetMap (online)</option>
+          <option value="esri_sat">ESRI Satellite (online)</option>
+          <option value="esri_topo">ESRI Topo (online)</option>
+          <option value="usgs_topo">USGS Topo (offline)</option>
+          <option value="usgs_imagery">USGS Imagery (offline)</option>
+          <option value="usgs_imgtopo">USGS Imagery+Topo (offline)</option>
+        </select>
+      </div>
+      <div class="tool-sep"></div>
+
+      <!-- Annotation tools -->
+      <div class="tool-group">
+        <span style="font-size:11px;color:var(--muted)">Draw:</span>
+        <button onclick="mpDraw('marker')" title="Add marker" style="font-size:13px;padding:3px 7px">📍</button>
+        <button onclick="mpDraw('polyline')" title="Draw line/route" style="font-size:13px;padding:3px 7px">〰</button>
+        <button onclick="mpDraw('polygon')" title="Draw area/zone" style="font-size:13px;padding:3px 7px">⬡</button>
+        <button onclick="mpDraw('rectangle')" title="Draw rectangle" style="font-size:13px;padding:3px 7px">▭</button>
+        <button onclick="mpDraw('circle')" title="Draw circle" style="font-size:13px;padding:3px 7px">⭕</button>
+        <button onclick="mpClearAnnotations()" title="Clear all annotations"
+          style="font-size:11px;padding:3px 8px;background:var(--panel2)">✕ Clear</button>
+      </div>
+      <div class="tool-sep"></div>
+
+      <!-- Color picker for annotations -->
+      <div class="tool-group">
+        <span style="font-size:11px;color:var(--muted)">Color:</span>
+        <div id="mpColorBtns" style="display:flex;gap:3px">
+          <button onclick="mpSetColor('#e63946')" style="background:#e63946;width:22px;height:22px;border:2px solid transparent;border-radius:3px" title="Red — hot zone / danger"></button>
+          <button onclick="mpSetColor('#f4a261')" style="background:#f4a261;width:22px;height:22px;border:2px solid transparent;border-radius:3px" title="Orange — warm zone"></button>
+          <button onclick="mpSetColor('#2a9d8f')" style="background:#2a9d8f;width:22px;height:22px;border:2px solid transparent;border-radius:3px" title="Teal — cold zone / safe"></button>
+          <button onclick="mpSetColor('#e9c46a')" style="background:#e9c46a;width:22px;height:22px;border:2px solid transparent;border-radius:3px" title="Yellow — caution"></button>
+          <button onclick="mpSetColor('#264653')" style="background:#264653;width:22px;height:22px;border:2px solid transparent;border-radius:3px" title="Dark — perimeter"></button>
+          <button onclick="mpSetColor('#1a3a6b')" style="background:#1a3a6b;width:22px;height:22px;border:2px solid transparent;border-radius:3px" title="Blue — command post"></button>
+          <button onclick="mpSetColor('#ffffff')" style="background:#fff;width:22px;height:22px;border:2px solid #888;border-radius:3px" title="White"></button>
+        </div>
+      </div>
+      <div class="tool-sep"></div>
+
+      <!-- Label -->
+      <div class="tool-group">
+        <input type="text" id="mpLabel" placeholder="Label text"
+          style="width:120px;font-size:12px;background:var(--input-bg);border:1px solid var(--line);color:var(--txt);padding:4px 8px;border-radius:4px">
+        <button onclick="mpAddLabel()" style="font-size:11px;padding:4px 8px">+ Label</button>
+      </div>
+      <div class="tool-sep"></div>
+
+      <!-- NWS Radar overlay -->
+      <div class="tool-group">
+        <label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;cursor:pointer">
+          <input type="checkbox" id="mpRadarToggle" onchange="mpToggleRadar()"> NWS Radar
+        </label>
+      </div>
+
+      <button onclick="closeMapPicker()" style="margin-left:auto;background:var(--panel2);font-size:12px;padding:4px 12px">✕ Cancel</button>
+    </div>
+
+    <div id="mapPickerContainer">
+      <div id="mapPickerLeaflet"></div>
+    </div>
+
+    <div class="map-picker-footer">
+      <div style="font-size:11px;color:var(--muted)" id="mpStatus">
+        Pan and zoom to your area of interest, add annotations, then click Capture.
+      </div>
+      <input type="text" id="mpCaption" placeholder="Map caption / title (e.g. 'Incident Area — Division A')"
+        style="flex:1;font-size:12px;background:var(--input-bg);border:1px solid var(--line);color:var(--txt);padding:5px 10px;border-radius:4px">
+      <button onclick="mpCapture()"
+        style="background:var(--eoc);border-color:var(--eoc);color:#fff;font-weight:bold;padding:7px 20px;white-space:nowrap">
+        📷 Capture This View
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.min.js"></script>
+<script src="https://unpkg.com/leaflet-image@0.4.0/leaflet-image.js"></script>
+<script src="/lib/tiles.js"></script>
+
+<script>
+// ── Map Picker ────────────────────────────────────────────────────────
+let mpMap = null;
+let mpDrawLayer = null;
+let mpDrawControl = null;
+let mpRadarLayer = null;
+let mpCurrentColor = '#e63946';
+let mpTargetKey = null;
+let mpTileLayer = null;
+let mpLabels = [];
+
+const TILE_SERVER = 'http://localhost:8083';
+const TILE_SOURCES = {
+  offline_auto:   null, // handled by FC_TILES
+  osm:            { url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png', attr:'© OpenStreetMap contributors', crossOrigin:true },
+  esri_sat:       { url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', attr:'© Esri', crossOrigin:false },
+  esri_topo:      { url:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Topo_Map/MapServer/tile/{z}/{y}/{x}', attr:'© Esri', crossOrigin:false },
+  usgs_topo:      { url:`${TILE_SERVER}/tiles/usgs_topo/{z}/{x}/{y}.png`, attr:'USGS', crossOrigin:true },
+  usgs_imagery:   { url:`${TILE_SERVER}/tiles/usgs_imagery/{z}/{x}/{y}.png`, attr:'USGS', crossOrigin:true },
+  usgs_imgtopo:   { url:`${TILE_SERVER}/tiles/usgs_imgtopo/{z}/{x}/{y}.png`, attr:'USGS', crossOrigin:true },
+};
+
+function openMapPicker(key) {
+  mpTargetKey = key;
+  document.getElementById('mapPickerModal').classList.add('open');
+  document.getElementById('mpCaption').value = formData[key+'_caption'] || '';
+
+  // Initialize map on first open
+  setTimeout(() => {
+    if (!mpMap) {
+      mpMap = L.map('mapPickerLeaflet', { preferCanvas: true });
+
+      // Default view — use incident location or org coords
+      const lat = parseFloat(orgData.lat) || 42.3247;
+      const lon = parseFloat(orgData.lon) || -88.3822;
+      mpMap.setView([lat, lon], 13);
+
+      // Default tile layer
+      mpSetTile('offline_auto');
+
+      // Draw layer
+      mpDrawLayer = new L.FeatureGroup();
+      mpMap.addLayer(mpDrawLayer);
+
+      // Draw control
+      mpDrawControl = new L.Control.Draw({
+        draw: {
+          marker: { icon: L.divIcon({className:'', html:'<div style="font-size:20px">📍</div>'}) },
+          polyline: { shapeOptions: { color: mpCurrentColor, weight: 3 } },
+          polygon:  { shapeOptions: { color: mpCurrentColor, weight: 2, fillOpacity: 0.2 } },
+          rectangle:{ shapeOptions: { color: mpCurrentColor, weight: 2, fillOpacity: 0.15 } },
+          circle:   { shapeOptions: { color: mpCurrentColor, weight: 2, fillOpacity: 0.15 } },
+          circlemarker: false,
+        },
+        edit: { featureGroup: mpDrawLayer }
+      });
+      mpMap.addControl(mpDrawControl);
+
+      // Scale
+      L.control.scale({ imperial: true, metric: true }).addTo(mpMap);
+
+      // Handle drawn items
+      mpMap.on(L.Draw.Event.CREATED, e => {
+        const layer = e.layer;
+        // Apply current color
+        if (layer.setStyle) {
+          layer.setStyle({ color: mpCurrentColor, fillColor: mpCurrentColor, fillOpacity: 0.2, weight: 3 });
+        }
+        // Add label if set
+        const label = document.getElementById('mpLabel').value.trim();
+        if (label && layer.bindTooltip) {
+          layer.bindTooltip(label, { permanent: true, className:'annotation-label', direction:'center' });
+        }
+        mpDrawLayer.addLayer(layer);
+      });
+    } else {
+      mpMap.invalidateSize();
+    }
+  }, 100);
+}
+
+function closeMapPicker() {
+  document.getElementById('mapPickerModal').classList.remove('open');
+}
+
+function mpSetTile(source) {
+  if (mpTileLayer) { mpMap.removeLayer(mpTileLayer); mpTileLayer = null; }
+  if (source === 'offline_auto') {
+    // Use FC_TILES auto detection
+    FC_TILES.buildLayerControl(mpMap, {}).then(result => {
+      mpTileLayer = result.baseLayer;
+    }).catch(() => {
+      // Fallback to OSM online
+      mpTileLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution:'© OpenStreetMap contributors', crossOrigin: true
+      });
+      mpTileLayer.addTo(mpMap);
+    });
+  } else {
+    const s = TILE_SOURCES[source];
+    if (s) {
+      mpTileLayer = L.tileLayer(s.url, {
+        attribution: s.attr,
+        crossOrigin: s.crossOrigin ? 'anonymous' : false,
+        maxZoom: 19
+      });
+      mpTileLayer.addTo(mpMap);
+    }
+  }
+}
+
+function mpSetColor(color) {
+  mpCurrentColor = color;
+  document.querySelectorAll('#mpColorBtns button').forEach(b => {
+    b.style.border = b.style.background === color.replace('#','') ?
+      '3px solid #fff' : '2px solid transparent';
+  });
+  // Update draw control options
+  if (mpDrawControl) {
+    mpDrawControl.setDrawingOptions({
+      polyline:  { shapeOptions: { color, weight: 3 } },
+      polygon:   { shapeOptions: { color, weight: 2, fillColor: color, fillOpacity: 0.2 } },
+      rectangle: { shapeOptions: { color, weight: 2, fillColor: color, fillOpacity: 0.15 } },
+      circle:    { shapeOptions: { color, weight: 2, fillColor: color, fillOpacity: 0.15 } },
+    });
+  }
+}
+
+function mpDraw(type) {
+  if (!mpMap) return;
+  // Programmatically activate draw tool
+  const tools = mpDrawControl._toolbars.draw._modes;
+  if (tools[type]) tools[type].handler.enable();
+}
+
+function mpAddLabel() {
+  const txt = document.getElementById('mpLabel').value.trim();
+  if (!txt || !mpMap) return;
+  const center = mpMap.getCenter();
+  const marker = L.marker(center, {
+    icon: L.divIcon({
+      className: '',
+      html: `<div class="annotation-label">${txt}</div>`,
+      iconAnchor: [0, 0]
+    })
+  });
+  mpDrawLayer.addLayer(marker);
+  mpLabels.push({text: txt, lat: center.lat, lng: center.lng});
+  document.getElementById('mpLabel').value = '';
+}
+
+function mpClearAnnotations() {
+  if (mpDrawLayer) mpDrawLayer.clearLayers();
+  mpLabels = [];
+}
+
+function mpToggleRadar() {
+  const on = document.getElementById('mpRadarToggle').checked;
+  if (!mpMap) return;
+  if (on) {
+    // Iowa Mesonet NEXRAD (same as radar.html)
+    mpRadarLayer = L.tileLayer(
+      'https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/{z}/{x}/{y}.png',
+      { opacity: 0.6, attribution: 'Iowa State Mesonet' }
+    );
+    mpRadarLayer.addTo(mpMap);
+  } else {
+    if (mpRadarLayer) { mpMap.removeLayer(mpRadarLayer); mpRadarLayer = null; }
+  }
+}
+
+function mpCapture() {
+  if (!mpMap) return;
+  const caption = document.getElementById('mpCaption').value.trim() || 'Map';
+  const status = document.getElementById('mpStatus');
+  status.textContent = '📷 Capturing map...';
+
+  leafletImage(mpMap, (err, canvas) => {
+    if (err) {
+      // Fallback: try html2canvas approach or show error
+      status.textContent = '⚠ Capture failed — try switching to offline tiles (CORS restriction on online tiles). ' + err;
+      // Try canvas-based fallback
+      mpCaptureFallback(caption);
+      return;
+    }
+    const dataUrl = canvas.toDataURL('image/png');
+    setImg(mpTargetKey, dataUrl, caption);
+    // Also set caption
+    const captEl = document.getElementById('imgCaption_' + mpTargetKey);
+    if (captEl) captEl.value = caption;
+    formData[mpTargetKey + '_caption'] = caption;
+    closeMapPicker();
+    status.textContent = 'Pan and zoom to your area of interest, add annotations, then click Capture.';
+  });
+}
+
+function mpCaptureFallback(caption) {
+  // When CORS blocks tile capture, capture just the draw layer as SVG
+  // and offer it as an overlay on a blank canvas with coordinate info
+  if (!mpMap) return;
+  const bounds = mpMap.getBounds();
+  const zoom   = mpMap.getZoom();
+  const center = mpMap.getCenter();
+
+  // Build an informational image showing the map extent
+  const canvas = document.createElement('canvas');
+  canvas.width  = 800;
+  canvas.height = 600;
+  const ctx = canvas.getContext('2d');
+
+  // Background
+  ctx.fillStyle = '#f0f4f8';
+  ctx.fillRect(0, 0, 800, 600);
+
+  // Border
+  ctx.strokeStyle = '#1a3a6b';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(2, 2, 796, 596);
+
+  // Title
+  ctx.fillStyle = '#1a3a6b';
+  ctx.font = 'bold 18px Arial';
+  ctx.fillText(caption, 20, 40);
+
+  // Map info
+  ctx.fillStyle = '#333';
+  ctx.font = '13px Arial';
+  ctx.fillText(`Center: ${center.lat.toFixed(5)}, ${center.lng.toFixed(5)}`, 20, 70);
+  ctx.fillText(`Zoom Level: ${zoom}`, 20, 92);
+  ctx.fillText(`NW: ${bounds.getNorthWest().lat.toFixed(4)}, ${bounds.getNorthWest().lng.toFixed(4)}`, 20, 114);
+  ctx.fillText(`SE: ${bounds.getSouthEast().lat.toFixed(4)}, ${bounds.getSouthEast().lng.toFixed(4)}`, 20, 136);
+
+  // Note
+  ctx.fillStyle = '#c07010';
+  ctx.font = 'italic 11px Arial';
+  ctx.fillText('Note: Switch to offline tiles to capture full map image.', 20, 570);
+
+  const dataUrl = canvas.toDataURL('image/png');
+  setImg(mpTargetKey, dataUrl, caption);
+  const captEl = document.getElementById('imgCaption_' + mpTargetKey);
+  if (captEl) captEl.value = caption;
+  formData[mpTargetKey + '_caption'] = caption;
+  closeMapPicker();
+}
+
+// ── Update imageField to add map picker button ─────────────────────────
+// Patch the existing imageField calls to show a "Use Map" button
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.img-drop-zone').forEach(zone => {
+    const key = zone.id.replace('imgZone_', '');
+    if (!key) return;
+    // Add "Use Map" button below drop zone
+    const mapBtn = document.createElement('button');
+    mapBtn.textContent = '🗺 Select Map Area';
+    mapBtn.style.cssText = 'font-size:11px;padding:4px 12px;margin-top:6px;background:var(--eoc);border-color:var(--eoc);color:#fff';
+    mapBtn.onclick = (e) => { e.stopPropagation(); openMapPicker(key); };
+    // Insert after the drop zone
+    zone.parentElement.insertBefore(mapBtn, zone.nextSibling);
+  });
+});
+</script>

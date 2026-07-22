@@ -1479,6 +1479,230 @@ FORMS['203'] = {
     </div>`;
   }
 };
+
+// ══════════════════════════════════════════════════════════════════
+// ICS-204 ASSIGNMENT LIST
+// ══════════════════════════════════════════════════════════════════
+FORMS['204'] = {
+  title: 'ICS-204 Assignment List',
+  badge: 'ICS-204',
+  variants: { FEMA:'FEMA 010-0-4', USCG:'CG-5213', NWCG:'ICS-204 (NWCG Fire)' },
+
+  render() {
+    document.getElementById('formTitle').textContent = 'ICS-204 \u2014 Assignment List';
+    document.getElementById('formBadge').textContent = 'ICS-204';
+    document.getElementById('formMeta').textContent =
+      `${this.variants[VARIANT]} \u00b7 Period ${PERIOD} \u00b7 ${incData.name||'No incident'}`;
+    const nwcgNote = VARIANT==='NWCG'?
+      `<div style="background:rgba(200,118,10,0.1);border:1px solid var(--amber);border-radius:5px;padding:7px 12px;margin-bottom:10px;font-size:11px;color:var(--amber)">
+        NWCG variant: adds fire behavior, weather, escape routes, and safety zones.</div>`:'';
+    return `${nwcgNote}
+    <div class="section-card">
+      <h2>1. Incident & Period Information</h2>
+      <div class="grid-3">
+        ${field('incident_name','Incident Name','text',incData.name||'')}
+        ${field('operational_period_number','Op Period #','text',String(PERIOD))}
+        ${field('date_prepared','Date Prepared','date',todayDate())}
+      </div>
+      <div class="grid-2">
+        ${field('operational_period_from','Op Period From','datetime-local','')}
+        ${field('operational_period_to','Op Period To','datetime-local','')}
+      </div>
+    </div>
+    <div class="section-card">
+      <h2>2. Branch / Division / Group</h2>
+      <div class="grid-3">
+        ${field('branch','Branch','text','')}
+        ${field('division_group','Division / Group','text','')}
+        ${field('staging_area','Staging Area','text','')}
+      </div>
+      <div class="grid-3">
+        ${field('ops_section_chief','Operations Section Chief','text',formData.ops_section_chief||incData.ops_section_chief||'')}
+        ${field('branch_director','Branch Director','text',formData.branch1_dir||'')}
+        ${field('division_group_supervisor','Division / Group Supervisor','text','')}
+      </div>
+    </div>
+    <div class="section-card">
+      <h2>3. Resources Assigned</h2>
+      <p style="font-size:11px;color:var(--muted);margin:0 0 8px">List all resources assigned to this Division/Group for this operational period.</p>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="background:var(--panel2)">
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:130px">Resource ID / Designator</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:100px">Leader</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">Type</th>
+            <th style="padding:6px 8px;text-align:center;border:1px solid var(--line);min-width:50px"># Persons</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:90px">Contact / Freq</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">Report Time</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:100px">Report Location</th>
+            ${VARIANT==='NWCG'?'<th style="padding:6px 8px;border:1px solid var(--line);min-width:60px">ETD</th>':''}
+          </tr></thead>
+          <tbody id="res204Body">
+            ${[...Array(8)].map((_,i)=>FORMS['204']._resRow(i)).join('')}
+          </tbody>
+        </table>
+      </div>
+      <button onclick="add204Row()" style="margin-top:8px;font-size:11px;padding:4px 12px">+ Add Row</button>
+    </div>
+    <div class="section-card">
+      <h2>4. Work Assignments</h2>
+      ${field('work_assignments','Work Assignments / Tactical Objectives','textarea','Specific tasks, objectives, and priorities for this operational period...',{rows:5})}
+    </div>
+    <div class="section-card">
+      <h2>5. Special Instructions</h2>
+      ${field('special_instructions','Special Instructions','textarea','Safety concerns, access restrictions, communications procedures...',{rows:3})}
+      <div class="grid-2" style="margin-top:8px">
+        ${field('ppe_required','PPE / Equipment Required','text','Hard hat, high-vis vest, safety glasses')}
+        ${field('med_unit_location','Medical Unit Location','text','')}
+      </div>
+    </div>
+    <div class="section-card">
+      <h2>6. Communications</h2>
+      <div class="grid-3">
+        ${field('primary_freq','Primary Frequency / Channel','text','')}
+        ${field('secondary_freq','Secondary Frequency / Channel','text','')}
+        ${field('command_freq','Command Net Frequency','text','')}
+      </div>
+      <div class="grid-3">
+        ${field('medical_freq','Medical / EMS Frequency','text','')}
+        ${field('air_to_ground_freq','Air-to-Ground Frequency','text','')}
+        ${field('cell_contact','Cell / Satellite Contact','text','')}
+      </div>
+    </div>
+    ${VARIANT==='NWCG'?`
+    <div class="section-card">
+      <h2>7. Fire Behavior / Weather (NWCG)</h2>
+      <div class="grid-3">
+        ${field('nwcg_fire_behavior','Fire Behavior','text','e.g. Surface fire, isolated torching')}
+        ${field('nwcg_weather','Weather (temp / RH / wind)','text','')}
+        ${field('nwcg_escape_routes','Escape Routes','text','')}
+      </div>
+      <div class="grid-2">
+        ${field('nwcg_safety_zones','Safety Zones','text','')}
+        ${field('nwcg_trigger_points','Trigger Points / Lookouts','text','')}
+      </div>
+    </div>`:''}
+    <div class="section-card">
+      <h2>${VARIANT==='NWCG'?'8':'7'}. Division/Group Map Sketch</h2>
+      ${imageField('ics204_map','Division/Group Area Map','Upload or select from map: assignment area, boundaries, access routes, hazards')}
+    </div>
+    <div class="section-card">
+      <h2>${VARIANT==='NWCG'?'9':'8'}. Prepared By</h2>
+      <div class="grid-2">
+        ${field('prepared_by','Prepared By (Resources Unit Leader)','text',orgData.personal_call?`${orgData.personal_call} \u2014 Resources Unit Leader`:'')}
+        ${field('date_time_prepared','Date / Time','datetime-local','')}
+      </div>
+      <div class="grid-2">
+        ${field('approved_by_osc','Approved By (Operations Section Chief)','text',formData.ops_section_chief||incData.ops_section_chief||'')}
+        ${field('date_time_approved','Date / Time Approved','datetime-local','')}
+      </div>
+    </div>`;
+  },
+
+  _resRow(i) {
+    const nwcg = VARIANT==='NWCG'
+      ?`<td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="res204_etd_${i}" style="width:60px;font-size:11px;padding:3px 4px"></td>`:'';
+    return `<tr id="res204row_${i}">
+      <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="res204_id_${i}" placeholder="Resource ID" style="width:100%;font-size:11px;padding:3px 4px"></td>
+      <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="res204_leader_${i}" placeholder="Name" style="width:100%;font-size:11px;padding:3px 4px"></td>
+      <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="res204_type_${i}" placeholder="Type" style="width:100%;font-size:11px;padding:3px 4px"></td>
+      <td style="border:1px solid var(--line);padding:3px;text-align:center"><input type="number" data-key="res204_personnel_${i}" placeholder="#" style="width:46px;font-size:11px;padding:3px 4px;text-align:center"></td>
+      <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="res204_contact_${i}" placeholder="Freq/Phone" style="width:100%;font-size:11px;padding:3px 4px"></td>
+      <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="res204_time_${i}" placeholder="Time" style="width:100%;font-size:11px;padding:3px 4px"></td>
+      <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="res204_location_${i}" placeholder="Location" style="width:100%;font-size:11px;padding:3px 4px"></td>
+      ${nwcg}
+    </tr>`;
+  },
+
+  buildPrint() {
+    const fd = collectFormData();
+    Object.assign(formData, fd);
+    const variant = FORMS['204'].variants[VARIANT];
+    let resRows = '';
+    for (let i=0; i<res204Count; i++) {
+      if (!fd[`res204_id_${i}`] && !fd[`res204_leader_${i}`]) continue;
+      resRows += `<tr>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`res204_id_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`res204_leader_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`res204_type_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc;text-align:center">${fd[`res204_personnel_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`res204_contact_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`res204_time_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`res204_location_${i}`]||''}</td>
+      </tr>`;
+    }
+    return `
+    <div class="ics-print-header">
+      <div class="logo-cell">${logoHtml()}</div>
+      <div class="title-cell"><h1>ICS-204 ASSIGNMENT LIST</h1><div class="sub">${variant} \u00b7 FieldCommand IMS</div></div>
+      <div class="meta-cell">
+        <div class="ml">Incident Name</div><div class="mv" style="font-size:10px">${fd.incident_name||'\u2014'}</div>
+        <div class="ml">Op Period</div><div class="mv">${fd.operational_period_number||PERIOD}</div>
+        <div class="ml">Date</div><div class="mv">${fd.date_prepared||'\u2014'}</div>
+      </div>
+    </div>
+    <div class="pr">
+      <div class="pc w2"><div class="pl">Op Period From</div><div class="pv">${fd.operational_period_from||''}</div></div>
+      <div class="pc w2"><div class="pl">Op Period To</div><div class="pv">${fd.operational_period_to||''}</div></div>
+    </div>
+    <div class="pr">
+      <div class="pc"><div class="pl">Branch</div><div class="pv">${fd.branch||''}</div></div>
+      <div class="pc"><div class="pl">Division / Group</div><div class="pv">${fd.division_group||''}</div></div>
+      <div class="pc"><div class="pl">OSC</div><div class="pv">${fd.ops_section_chief||''}</div></div>
+      <div class="pc"><div class="pl">Div/Grp Supervisor</div><div class="pv">${fd.division_group_supervisor||''}</div></div>
+    </div>
+    <div class="pr"><div class="pc" style="flex:4">
+      <div class="pl">3. Resources Assigned</div>
+      <table style="width:100%;border-collapse:collapse;font-size:10px;margin-top:3px">
+        <thead><tr style="background:#e8eef7">
+          <th style="padding:3px 5px;border:1px solid #ccc;text-align:left">Resource ID</th>
+          <th style="padding:3px 5px;border:1px solid #ccc;text-align:left">Leader</th>
+          <th style="padding:3px 5px;border:1px solid #ccc">Type</th>
+          <th style="padding:3px 5px;border:1px solid #ccc">#</th>
+          <th style="padding:3px 5px;border:1px solid #ccc;text-align:left">Contact/Freq</th>
+          <th style="padding:3px 5px;border:1px solid #ccc">Report Time</th>
+          <th style="padding:3px 5px;border:1px solid #ccc;text-align:left">Report Location</th>
+        </tr></thead>
+        <tbody>${resRows||'<tr><td colspan="7" style="padding:6px;color:#888;text-align:center">No resources entered</td></tr>'}</tbody>
+      </table>
+    </div></div>
+    <div class="pr"><div class="pc w4"><div class="pl">4. Work Assignments / Tactical Objectives</div><div class="pv pw">${fd.work_assignments||''}</div></div></div>
+    <div class="pr">
+      <div class="pc w3"><div class="pl">5. Special Instructions</div><div class="pv" style="min-height:40px">${fd.special_instructions||''}</div></div>
+      <div class="pc"><div class="pl">PPE Required</div><div class="pv">${fd.ppe_required||''}</div></div>
+    </div>
+    <div class="pr">
+      <div class="pc"><div class="pl">Primary Freq</div><div class="pv">${fd.primary_freq||''}</div></div>
+      <div class="pc"><div class="pl">Secondary Freq</div><div class="pv">${fd.secondary_freq||''}</div></div>
+      <div class="pc"><div class="pl">Command Net</div><div class="pv">${fd.command_freq||''}</div></div>
+      <div class="pc"><div class="pl">Medical Freq</div><div class="pv">${fd.medical_freq||''}</div></div>
+    </div>
+    ${fd.ics204_map_img?`<div style="border-top:2px solid #000;padding:8px">
+      <div style="font-size:9px;text-transform:uppercase;color:#555;margin-bottom:4px">Division/Group Map \u2014 ${fd.ics204_map_caption||'Assignment Area'}</div>
+      <img src="${fd.ics204_map_img}" style="max-width:100%;max-height:350px;object-fit:contain">
+    </div>`:''}
+    <div class="sig-row">
+      <div class="sig-cell"><div class="sl">Prepared By (RESL)</div><div class="ss">${fd.prepared_by||''}</div><div class="sl">Date/Time: ${fd.date_time_prepared||''}</div></div>
+      <div class="sig-cell"><div class="sl">Signature</div><div class="ss"></div></div>
+      <div class="sig-cell"><div class="sl">Approved By (OSC)</div><div class="ss">${fd.approved_by_osc||''}</div><div class="sl">Date/Time: ${fd.date_time_approved||''}</div></div>
+      <div class="sig-cell"><div class="sl">OSC Signature</div><div class="ss"></div></div>
+    </div>
+    <div class="print-footer">
+      <span>${variant} \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
+      <span>Printed: ${new Date().toLocaleString()}</span>
+    </div>`;
+  }
+};
+
+let res204Count = 8;
+function add204Row() {
+  const tbody = document.getElementById('res204Body');
+  if (!tbody) return;
+  const tr = document.createElement('tr');
+  tr.innerHTML = FORMS['204']._resRow(res204Count++).replace(/^<tr[^>]*>/,'').replace(/<\/tr>$/,'');
+  tbody.appendChild(tr);
+}
+
 </script>
 <!-- Map Picker Modal -->
 <div class="map-picker-modal" id="mapPickerModal">

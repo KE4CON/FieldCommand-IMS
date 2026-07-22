@@ -1699,6 +1699,227 @@ FORMS['203'] = {
 // ══════════════════════════════════════════════════════════════════
 // ICS-204 ASSIGNMENT LIST
 // ══════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════
+// ICS-203A ADDITIONAL OPERATIONAL ASSIGNMENTS
+// ══════════════════════════════════════════════════════════════════
+FORMS['203A'] = {
+  title: 'ICS-203A Additional Operational Assignments',
+  badge: 'ICS-203A',
+  variants: { FEMA:'203A Additional Ops', USCG:'203A Additional Ops', NWCG:'203A Additional Ops' },
+
+  // Roman numeral branch labels — starts at III to continue from 203 which covers I-II
+  _romanOf(n) {
+    const map = ['','I','II','III','IV','V','VI','VII','VIII','IX','X',
+                 'XI','XII','XIII','XIV','XV','XVI','XVII','XVIII','XIX','XX'];
+    return map[n] || String(n);
+  },
+
+  // Branch color — matches 204A convention
+  _branchColor(n) {
+    const colors = ['#c0392b','#e67e22','#f1c40f','#27ae60','#2980b9','#8e44ad'];
+    return colors[(n-1) % colors.length];
+  },
+
+  // Render a single branch block (branchNum = 3+ continuing from 203)
+  _branchBlock(bn) {
+    const rom   = FORMS['203A']._romanOf(bn);
+    const color = FORMS['203A']._branchColor(bn);
+    const prefix = `b${bn}`;
+    // 5 division/group slots per branch on 203A (same as 203A standard)
+    const divSlots = [1,2,3,4,5].map(d => `
+          <div class="fg">
+            <label style="font-size:10px;color:var(--muted)">
+              Division / Group ${String.fromCharCode(64 + (bn-3)*5 + d)}
+            </label>
+            <input type="text" data-key="${prefix}_div${d}_sup"
+              value="${formData[prefix+'_div'+d+'_sup']||''}"
+              placeholder="Supervisor name"
+              style="width:100%;box-sizing:border-box;background:var(--input-bg);
+                     border:1px solid var(--line);color:var(--txt);
+                     padding:6px 8px;font-size:12px;border-radius:3px"
+              oninput="formData['${prefix}_div${d}_sup']=this.value;markDirty()">
+          </div>`).join('');
+    return `
+      <div class="section-card" style="border-left:4px solid ${color}">
+        <h2 style="color:${color}">Branch ${rom}</h2>
+        <div class="grid-2" style="margin-bottom:8px">
+          <div class="fg">
+            <label style="font-size:10px;color:var(--muted)">Branch ${rom} Director</label>
+            <input type="text" data-key="${prefix}_dir"
+              value="${formData[prefix+'_dir']||''}"
+              placeholder="Branch Director name"
+              style="width:100%;box-sizing:border-box;background:var(--input-bg);
+                     border:1px solid var(--line);color:var(--txt);
+                     padding:6px 8px;font-size:12px;border-radius:3px"
+              oninput="formData['${prefix}_dir']=this.value;markDirty()">
+          </div>
+          <div class="fg">
+            <label style="font-size:10px;color:var(--muted)">Location / Frequency</label>
+            <input type="text" data-key="${prefix}_loc"
+              value="${formData[prefix+'_loc']||''}"
+              placeholder="Location or tactical frequency"
+              style="width:100%;box-sizing:border-box;background:var(--input-bg);
+                     border:1px solid var(--line);color:var(--txt);
+                     padding:6px 8px;font-size:12px;border-radius:3px"
+              oninput="formData['${prefix}_loc']=this.value;markDirty()">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px">
+          ${divSlots}
+        </div>
+      </div>`;
+  },
+
+  render() {
+    document.getElementById('formTitle').textContent = 'ICS-203A — Additional Operational Assignments';
+    document.getElementById('formBadge').textContent = 'ICS-203A';
+    document.getElementById('formMeta').textContent =
+      `Additional Ops · Period ${PERIOD} · ${incData.name||'No incident'}`;
+
+    const numBranches = parseInt(formData._203a_branch_count || 4);
+
+    // Build branch blocks starting at III (3) — 203 covers I and II
+    let branchHtml = '';
+    for (let bn = 3; bn <= numBranches + 2; bn++) {
+      branchHtml += FORMS['203A']._branchBlock(bn);
+    }
+
+    return `
+    <div class="section-card">
+      <h2>1. Incident & Period Information</h2>
+      <div style="background:rgba(200,118,10,0.08);border:1px solid rgba(200,118,10,0.25);
+                  border-radius:5px;padding:8px 12px;margin-bottom:10px;font-size:11px;color:var(--amber)">
+        ℹ ICS-203A extends the ICS-203 for incidents requiring more than 2 branches.
+        Branches I and II are on the standard ICS-203. This form adds Branches III onward.
+        <a href="ics-form.html?form=203&incident=${INC_ID}&period=${PERIOD}"
+          style="color:var(--amber);margin-left:8px">← Back to ICS-203</a>
+      </div>
+      <div class="grid-3">
+        ${field('incident_name','Incident Name','text',incData.incident_name||incData.name||'')}
+        ${field('operational_period_number','Op Period #','text',String(PERIOD))}
+        ${field('date_prepared','Date Prepared','date',todayDate())}
+      </div>
+      <div class="grid-2">
+        ${field('operational_period_from','Op Period From','datetime-local','')}
+        ${field('operational_period_to','Op Period To','datetime-local','')}
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>2. Additional Branches</h2>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px">
+        <label style="font-size:12px;color:var(--muted)">Number of additional branches:</label>
+        <input type="number" id="branchCountInput" min="1" max="18"
+          value="${numBranches}"
+          style="width:60px;background:var(--input-bg);border:1px solid var(--line);
+                 color:var(--txt);padding:5px 8px;font-size:13px;border-radius:4px"
+          onchange="formData._203a_branch_count=this.value;renderForm()">
+        <span style="font-size:11px;color:var(--dim)">
+          (Branches III–${FORMS['203A']._romanOf(numBranches+2)})
+        </span>
+      </div>
+      ${branchHtml}
+    </div>
+
+    <div class="section-card">
+      <h2>3. Prepared By</h2>
+      <div class="grid-2">
+        ${field('prepared_by_psc','Prepared By (Planning Section Chief)','text',
+                formData.planning_section_chief||incData.planning_section_chief||'')}
+        ${field('date_time_prepared','Date / Time','datetime-local','')}
+      </div>
+    </div>`;
+  },
+
+  buildPrint() {
+    const fd = { ...formData };
+    const numBranches = parseInt(fd._203a_branch_count || 4);
+    const variant = FORMS['203A'].variants[VARIANT];
+    const incName = fd.incident_name || incData.name || '—';
+
+    let branchRows = '';
+    for (let bn = 3; bn <= numBranches + 2; bn++) {
+      const rom    = FORMS['203A']._romanOf(bn);
+      const color  = FORMS['203A']._branchColor(bn);
+      const prefix = `b${bn}`;
+      const dir    = fd[prefix+'_dir'] || '';
+      const loc    = fd[prefix+'_loc'] || '';
+      const divs   = [1,2,3,4,5].map(d => {
+        const letter = String.fromCharCode(64 + (bn-3)*5 + d);
+        const sup    = fd[`${prefix}_div${d}_sup`] || '';
+        return `<td style="padding:4px 6px;border:1px solid #ccc;font-size:10px">
+          <span style="color:#888;font-size:9px">Div ${letter}: </span>${sup}
+        </td>`;
+      }).join('');
+      branchRows += `
+        <tr style="background:${color}18">
+          <td style="padding:4px 8px;border:1px solid #ccc;font-weight:bold;
+                     color:${color};white-space:nowrap;font-size:11px">
+            Branch ${rom}
+          </td>
+          <td style="padding:4px 8px;border:1px solid #ccc;font-size:10px">${dir}</td>
+          <td style="padding:4px 8px;border:1px solid #ccc;font-size:10px">${loc}</td>
+          ${divs}
+        </tr>`;
+    }
+
+    return `
+    <div class="ics-print-header">
+      <div class="logo-cell">${logoHtml()}</div>
+      <div class="title-cell">
+        <h1>ICS-203A — ADDITIONAL OPERATIONAL ASSIGNMENTS</h1>
+        <div class="sub">${variant} · FieldCommand IMS</div>
+      </div>
+      <div class="meta-cell">
+        <div class="ml">Incident</div><div class="mv" style="font-size:10px">${incName}</div>
+        <div class="ml">Op Period</div><div class="mv">${fd.operational_period_number||PERIOD}</div>
+        <div class="ml">Date</div><div class="mv">${fd.date_prepared||'—'}</div>
+      </div>
+    </div>
+    <div class="pr">
+      <div class="pc w2">
+        <div class="pl">Op Period From</div>
+        <div class="pv">${fd.operational_period_from||''}</div>
+      </div>
+      <div class="pc w2">
+        <div class="pl">Op Period To</div>
+        <div class="pv">${fd.operational_period_to||''}</div>
+      </div>
+    </div>
+    <div class="pr"><div class="pc" style="flex:4">
+      <div class="pl">Additional Operations Branches (continuing from ICS-203 Branches I–II)</div>
+      <table style="width:100%;border-collapse:collapse;margin-top:6px">
+        <thead>
+          <tr style="background:#1a3a6b;color:#fff">
+            <th style="padding:5px 8px;border:1px solid #ccc;text-align:left;font-size:10px">Branch</th>
+            <th style="padding:5px 8px;border:1px solid #ccc;text-align:left;font-size:10px">Director</th>
+            <th style="padding:5px 8px;border:1px solid #ccc;text-align:left;font-size:10px">Location/Freq</th>
+            <th style="padding:5px 8px;border:1px solid #ccc;text-align:center;font-size:10px">Div 1</th>
+            <th style="padding:5px 8px;border:1px solid #ccc;text-align:center;font-size:10px">Div 2</th>
+            <th style="padding:5px 8px;border:1px solid #ccc;text-align:center;font-size:10px">Div 3</th>
+            <th style="padding:5px 8px;border:1px solid #ccc;text-align:center;font-size:10px">Div 4</th>
+            <th style="padding:5px 8px;border:1px solid #ccc;text-align:center;font-size:10px">Div 5</th>
+          </tr>
+        </thead>
+        <tbody>${branchRows}</tbody>
+      </table>
+    </div></div>
+    <div class="sig-row">
+      <div class="sig-cell">
+        <div class="sl">Prepared By (PSC)</div>
+        <div class="ss">${fd.prepared_by_psc||''}</div>
+        <div class="sl">Date/Time: ${fd.date_time_prepared||''}</div>
+      </div>
+      <div class="sig-cell"><div class="sl">Signature</div><div class="ss"></div></div>
+    </div>
+    <div class="print-footer">
+      <span>${variant} · FieldCommand IMS · © 2026 James Rospopo KE4CON · CC BY-SA 4.0</span>
+      <span>Printed: ${new Date().toLocaleString()}</span>
+    </div>`;
+  }
+};
+
+
 FORMS['204'] = {
   title: 'ICS-204 Assignment List',
   badge: 'ICS-204',
@@ -1923,6 +2144,512 @@ function add204Row() {
 // ══════════════════════════════════════════════════════════════════
 // ICS-204A BRIEFING SHEET (non-standard, widely used)
 // ══════════════════════════════════════════════════════════════════
+// ══════════════════════════════════════════════════════════════════
+// ICS-203S BRANCH SAFETY OFFICER ROTATION
+// ══════════════════════════════════════════════════════════════════
+FORMS['203S'] = {
+  title: 'ICS-203S Branch Safety Officer Rotation',
+  badge: 'ICS-203S',
+  variants: { FEMA:'203S SOFR Rotation', USCG:'203S SOFR Rotation', NWCG:'203S SOFR Rotation' },
+
+  _branchColor(n) {
+    const colors = ['#c0392b','#e67e22','#f1c40f','#27ae60','#2980b9','#8e44ad',
+                    '#c0392b','#e67e22','#f1c40f','#27ae60'];
+    return colors[(n-1) % colors.length];
+  },
+
+  _romanOf(n) {
+    const map = ['','I','II','III','IV','V','VI','VII','VIII','IX','X'];
+    return map[n] || String(n);
+  },
+
+  // Calculate whether an operational period date is ODD or EVEN day
+  _isOddPeriod() {
+    const dtStr = formData.operational_period_from || incData.operational_period_from || '';
+    if (!dtStr) return true; // default odd
+    try {
+      const d = new Date(dtStr);
+      return d.getDate() % 2 === 1;
+    } catch(e) { return true; }
+  },
+
+  render() {
+    document.getElementById('formTitle').textContent = 'ICS-203S — Branch Safety Officer Rotation';
+    document.getElementById('formBadge').textContent = 'ICS-203S';
+    document.getElementById('formMeta').textContent =
+      `SOFR Rotation · Period ${PERIOD} · ${incData.name||'No incident'}`;
+
+    const numBranches = parseInt(formData._203s_branch_count || 5);
+    const isOdd = FORMS['203S']._isOddPeriod();
+    const periodDay = isOdd ? 'ODD' : 'EVEN';
+    const activeCol = isOdd ? 'odd' : 'even';
+
+    let branchRows = '';
+    for (let bn = 1; bn <= numBranches; bn++) {
+      const rom   = FORMS['203S']._romanOf(bn);
+      const color = FORMS['203S']._branchColor(bn);
+      const pfx   = `s203_b${bn}`;
+      const oddVal  = formData[pfx+'_odd']  || '';
+      const evenVal = formData[pfx+'_even'] || '';
+      const activeVal = isOdd ? oddVal : evenVal;
+
+      branchRows += `
+        <tr>
+          <td style="padding:8px 12px;border-bottom:1px solid var(--line);
+                     font-family:var(--font-hd);color:${color};font-size:12px;
+                     white-space:nowrap">
+            Branch ${rom}
+          </td>
+          <td style="padding:6px 10px;border-bottom:1px solid var(--line)">
+            <input type="text" data-key="${pfx}_odd"
+              value="${oddVal}"
+              placeholder="SOFR name — ODD days"
+              style="width:100%;background:var(--input-bg);border:1px solid var(--line);
+                     color:var(--txt);padding:5px 8px;font-size:12px;border-radius:3px;
+                     ${isOdd?'border-color:var(--green);box-shadow:0 0 0 1px var(--green)':''}"
+              oninput="formData['${pfx}_odd']=this.value;markDirty()">
+          </td>
+          <td style="padding:6px 10px;border-bottom:1px solid var(--line)">
+            <input type="text" data-key="${pfx}_even"
+              value="${evenVal}"
+              placeholder="SOFR name — EVEN days"
+              style="width:100%;background:var(--input-bg);border:1px solid var(--line);
+                     color:var(--txt);padding:5px 8px;font-size:12px;border-radius:3px;
+                     ${!isOdd?'border-color:var(--green);box-shadow:0 0 0 1px var(--green)':''}"
+              oninput="formData['${pfx}_even']=this.value;markDirty()">
+          </td>
+          <td style="padding:8px 12px;border-bottom:1px solid var(--line);
+                     font-weight:bold;color:var(--green);font-size:12px">
+            ${activeVal || '<span style="color:var(--dim);font-weight:normal">—</span>'}
+          </td>
+        </tr>`;
+    }
+
+    return `
+    <div class="section-card">
+      <h2>1. Incident & Period Information</h2>
+      <div style="background:rgba(200,118,10,0.08);border:1px solid rgba(200,118,10,0.25);
+                  border-radius:5px;padding:8px 12px;margin-bottom:10px;font-size:11px;color:var(--amber)">
+        ℹ ICS-203S assigns Safety Officers (SOFRs) to branches on alternating ODD/EVEN day
+        schedules — standard for 24-hour extended operations. The active column shows which SOFR
+        is on duty for the current operational period based on the start date.
+      </div>
+      <div class="grid-3">
+        ${field('incident_name','Incident Name','text',incData.incident_name||incData.name||'')}
+        ${field('operational_period_number','Op Period #','text',String(PERIOD))}
+        ${field('date_prepared','Date Prepared','date',todayDate())}
+      </div>
+      <div class="grid-2">
+        ${field('operational_period_from','Op Period From','datetime-local','')}
+        ${field('operational_period_to','Op Period To','datetime-local','')}
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>2. Branch Safety Officer Assignments</h2>
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;flex-wrap:wrap">
+        <div>
+          <label style="font-size:11px;color:var(--muted)">Number of branches:</label>
+          <input type="number" min="1" max="10" value="${numBranches}"
+            style="width:56px;background:var(--input-bg);border:1px solid var(--line);
+                   color:var(--txt);padding:4px 7px;font-size:13px;border-radius:4px;
+                   margin-left:6px"
+            onchange="formData._203s_branch_count=this.value;renderForm()">
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;
+                    background:rgba(30,132,73,0.1);border:1px solid rgba(30,132,73,0.3);
+                    border-radius:5px;padding:6px 12px">
+          <span style="font-size:11px;color:var(--muted)">Current period:</span>
+          <span style="font-family:var(--font-hd);font-size:13px;color:var(--green)">
+            ${periodDay} DAY
+          </span>
+          <span style="font-size:10px;color:var(--dim)">— active column highlighted in green</span>
+        </div>
+      </div>
+
+      <table style="width:100%;border-collapse:collapse">
+        <thead>
+          <tr style="background:var(--panel2)">
+            <th style="padding:8px 12px;text-align:left;border-bottom:2px solid var(--line);
+                       font-size:10px;text-transform:uppercase;letter-spacing:1px;
+                       color:var(--muted);width:120px">Branch</th>
+            <th style="padding:8px 12px;text-align:left;border-bottom:2px solid var(--line);
+                       font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted)">
+              SOFR — ODD Days ${isOdd?'<span style="color:var(--green)">★ ACTIVE</span>':''}
+            </th>
+            <th style="padding:8px 12px;text-align:left;border-bottom:2px solid var(--line);
+                       font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted)">
+              SOFR — EVEN Days ${!isOdd?'<span style="color:var(--green)">★ ACTIVE</span>':''}
+            </th>
+            <th style="padding:8px 12px;text-align:left;border-bottom:2px solid var(--line);
+                       font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--green)">
+              On Duty This Period
+            </th>
+          </tr>
+        </thead>
+        <tbody>${branchRows}</tbody>
+      </table>
+
+      <div style="margin-top:12px;font-size:11px;color:var(--dim)">
+        Note: The SOFR for each branch auto-populates to the corresponding ICS-204 Safety block
+        based on the active day column.
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>3. Prepared By</h2>
+      <div class="grid-2">
+        ${field('prepared_by_so','Prepared By (Safety Officer)','text',
+                formData.safety_officer||incData.safety_officer||'')}
+        ${field('date_time_prepared','Date / Time','datetime-local','')}
+      </div>
+    </div>`;
+  },
+
+  buildPrint() {
+    const fd = { ...formData };
+    const numBranches = parseInt(fd._203s_branch_count || 5);
+    const isOdd = FORMS['203S']._isOddPeriod();
+    const periodDay = isOdd ? 'ODD' : 'EVEN';
+    const variant = FORMS['203S'].variants[VARIANT];
+
+    let rows = '';
+    for (let bn = 1; bn <= numBranches; bn++) {
+      const rom  = FORMS['203S']._romanOf(bn);
+      const pfx  = `s203_b${bn}`;
+      const odd  = fd[pfx+'_odd']  || '';
+      const even = fd[pfx+'_even'] || '';
+      const active = isOdd ? odd : even;
+      rows += `<tr>
+        <td style="padding:5px 8px;border:1px solid #ccc;font-weight:bold">Branch ${rom}</td>
+        <td style="padding:5px 8px;border:1px solid #ccc;${isOdd?'background:#e8f8ee':''}">${odd}</td>
+        <td style="padding:5px 8px;border:1px solid #ccc;${!isOdd?'background:#e8f8ee':''}">${even}</td>
+        <td style="padding:5px 8px;border:1px solid #ccc;font-weight:bold;color:#1e8449">${active}</td>
+      </tr>`;
+    }
+
+    return `
+    <div class="ics-print-header">
+      <div class="logo-cell">${logoHtml()}</div>
+      <div class="title-cell">
+        <h1>ICS-203S — BRANCH SAFETY OFFICER ROTATION</h1>
+        <div class="sub">${variant} · FieldCommand IMS</div>
+      </div>
+      <div class="meta-cell">
+        <div class="ml">Incident</div>
+        <div class="mv" style="font-size:10px">${fd.incident_name||incData.name||'—'}</div>
+        <div class="ml">Op Period</div>
+        <div class="mv">${fd.operational_period_number||PERIOD} (${periodDay} DAY)</div>
+        <div class="ml">Date</div><div class="mv">${fd.date_prepared||'—'}</div>
+      </div>
+    </div>
+    <div class="pr"><div class="pc" style="flex:4">
+      <table style="width:100%;border-collapse:collapse;font-size:11px">
+        <thead>
+          <tr style="background:#1a3a6b;color:#fff">
+            <th style="padding:5px 8px;border:1px solid #ccc;text-align:left">Branch</th>
+            <th style="padding:5px 8px;border:1px solid #ccc;text-align:left">
+              SOFR — ODD Days${isOdd?' ★':''}</th>
+            <th style="padding:5px 8px;border:1px solid #ccc;text-align:left">
+              SOFR — EVEN Days${!isOdd?' ★':''}</th>
+            <th style="padding:5px 8px;border:1px solid #ccc;text-align:left;color:#90ee90">
+              ON DUTY THIS PERIOD</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div></div>
+    <div class="sig-row">
+      <div class="sig-cell">
+        <div class="sl">Prepared By (Safety Officer)</div>
+        <div class="ss">${fd.prepared_by_so||''}</div>
+        <div class="sl">Date/Time: ${fd.date_time_prepared||''}</div>
+      </div>
+      <div class="sig-cell"><div class="sl">Signature</div><div class="ss"></div></div>
+    </div>
+    <div class="print-footer">
+      <span>${variant} · FieldCommand IMS · © 2026 James Rospopo KE4CON · CC BY-SA 4.0</span>
+      <span>Printed: ${new Date().toLocaleString()}</span>
+    </div>`;
+  }
+};
+
+// ══════════════════════════════════════════════════════════════════
+// ICS-230 MEETING SCHEDULE / AGENDA
+// ══════════════════════════════════════════════════════════════════
+FORMS['230'] = {
+  title: 'ICS-230 Meeting Schedule / Agenda',
+  badge: 'ICS-230',
+  variants: { FEMA:'FEMA ICS-230', USCG:'ICS-230', NWCG:'ICS-230' },
+
+  // Standard Planning-P meeting sequence
+  _defaultMeetings: [
+    { time:'06:00', name:'Incident Briefing / Initial Operational Period Briefing',
+      location:'ICP Briefing Area', lead:'IC', attendees:'All Section Chiefs, Division/Group Supervisors' },
+    { time:'08:00', name:'Tactics Meeting',
+      location:'Planning Section', lead:'OSC / PSC',
+      attendees:'OSC, PSC, RESL, SO, COML, GIS Specialist' },
+    { time:'10:00', name:'Planning Meeting',
+      location:'Planning Section', lead:'PSC',
+      attendees:'IC, Command Staff, Section Chiefs, RESL, SITL, Technical Specialists' },
+    { time:'12:00', name:'Command and General Staff Meeting',
+      location:'ICP Conference', lead:'IC',
+      attendees:'IC, Command Staff, All Section Chiefs' },
+    { time:'14:00', name:'Finance / Admin Meeting',
+      location:'Finance Section', lead:'FSC',
+      attendees:'FSC, TIME, PROC, COMP, COST' },
+    { time:'16:00', name:'Logistics Meeting',
+      location:'Logistics Section', lead:'LSC',
+      attendees:'LSC, Service Branch, Support Branch, COML, MEDL, SPUL, GSUL' },
+    { time:'18:00', name:'Operational Period Briefing (Shift Change)',
+      location:'ICP Briefing Area', lead:'OSC',
+      attendees:'All incoming Division/Group Supervisors, Section Chiefs' },
+    { time:'20:00', name:'Night Shift Coordination',
+      location:'ICP', lead:'OSC Night',
+      attendees:'Night shift supervisors, On-call section chiefs' },
+  ],
+
+  _rowHtml(i, m) {
+    const pfx = `m230_${i}`;
+    const get = k => formData[`${pfx}_${k}`] ?? (m ? m[k] : '');
+    return `
+      <tr id="m230row_${i}">
+        <td style="padding:4px 6px;border:1px solid var(--line)">
+          <input type="time" data-key="${pfx}_time" value="${get('time')}"
+            style="width:80px;background:var(--input-bg);border:1px solid var(--line);
+                   color:var(--txt);padding:4px 6px;font-size:12px;border-radius:3px"
+            oninput="formData['${pfx}_time']=this.value;markDirty()">
+        </td>
+        <td style="padding:4px 6px;border:1px solid var(--line)">
+          <input type="text" data-key="${pfx}_name" value="${get('name')}"
+            placeholder="Meeting name"
+            style="width:100%;background:var(--input-bg);border:1px solid var(--line);
+                   color:var(--txt);padding:4px 6px;font-size:12px;border-radius:3px"
+            oninput="formData['${pfx}_name']=this.value;markDirty()">
+        </td>
+        <td style="padding:4px 6px;border:1px solid var(--line)">
+          <input type="text" data-key="${pfx}_location" value="${get('location')}"
+            placeholder="Location"
+            style="width:100%;background:var(--input-bg);border:1px solid var(--line);
+                   color:var(--txt);padding:4px 6px;font-size:12px;border-radius:3px"
+            oninput="formData['${pfx}_location']=this.value;markDirty()">
+        </td>
+        <td style="padding:4px 6px;border:1px solid var(--line)">
+          <input type="text" data-key="${pfx}_lead" value="${get('lead')}"
+            placeholder="Lead"
+            style="width:100%;background:var(--input-bg);border:1px solid var(--line);
+                   color:var(--txt);padding:4px 6px;font-size:12px;border-radius:3px"
+            oninput="formData['${pfx}_lead']=this.value;markDirty()">
+        </td>
+        <td style="padding:4px 6px;border:1px solid var(--line)">
+          <input type="text" data-key="${pfx}_attendees" value="${get('attendees')}"
+            placeholder="Required attendees"
+            style="width:100%;background:var(--input-bg);border:1px solid var(--line);
+                   color:var(--txt);padding:4px 6px;font-size:11px;border-radius:3px"
+            oninput="formData['${pfx}_attendees']=this.value;markDirty()">
+        </td>
+        <td style="padding:4px 6px;border:1px solid var(--line);text-align:center">
+          <button onclick="del230Row(${i})"
+            style="font-size:10px;padding:2px 7px;background:rgba(192,32,32,0.1);
+                   border-color:rgba(192,32,32,0.3);color:var(--red)">✕</button>
+        </td>
+      </tr>`;
+  },
+
+  render() {
+    document.getElementById('formTitle').textContent = 'ICS-230 — Meeting Schedule / Agenda';
+    document.getElementById('formBadge').textContent = 'ICS-230';
+    document.getElementById('formMeta').textContent =
+      `${this.variants[VARIANT]} · Period ${PERIOD} · ${incData.name||'No incident'}`;
+
+    // Initialize with defaults on first load
+    const count = parseInt(formData._230_count ?? -1);
+    const defaults = FORMS['230']._defaultMeetings;
+    if (count < 0) {
+      defaults.forEach((m, i) => {
+        formData[`m230_${i}_time`]      = formData[`m230_${i}_time`]     || m.time;
+        formData[`m230_${i}_name`]      = formData[`m230_${i}_name`]     || m.name;
+        formData[`m230_${i}_location`]  = formData[`m230_${i}_location`] || m.location;
+        formData[`m230_${i}_lead`]      = formData[`m230_${i}_lead`]     || m.lead;
+        formData[`m230_${i}_attendees`] = formData[`m230_${i}_attendees`]|| m.attendees;
+      });
+      formData._230_count = defaults.length;
+    }
+
+    const n = parseInt(formData._230_count || defaults.length);
+    let rows = '';
+    for (let i = 0; i < n; i++) {
+      rows += FORMS['230']._rowHtml(i, defaults[i] || null);
+    }
+
+    return `
+    <div class="section-card">
+      <h2>1. Incident & Period Information</h2>
+      <div class="grid-3">
+        ${field('incident_name','Incident Name','text',incData.incident_name||incData.name||'')}
+        ${field('operational_period_number','Op Period #','text',String(PERIOD))}
+        ${field('date_prepared','Date Prepared','date',todayDate())}
+      </div>
+      <div class="grid-2">
+        ${field('operational_period_from','Op Period From','datetime-local','')}
+        ${field('operational_period_to','Op Period To','datetime-local','')}
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>2. Meeting Schedule</h2>
+      <div style="background:rgba(26,58,107,0.08);border:1px solid rgba(26,58,107,0.2);
+                  border-radius:5px;padding:8px 12px;margin-bottom:10px;font-size:11px;color:var(--blue)">
+        ℹ Pre-loaded with standard Planning-P meeting sequence. Edit times, locations, and
+        attendees for this incident. The schedule prints as part of the IAP.
+      </div>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:12px" id="t230">
+          <thead>
+            <tr style="background:var(--panel2)">
+              <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);
+                         width:90px;font-size:10px;text-transform:uppercase;letter-spacing:1px;
+                         color:var(--muted)">Time</th>
+              <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);
+                         font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted)">
+                Meeting / Activity</th>
+              <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);
+                         width:160px;font-size:10px;text-transform:uppercase;letter-spacing:1px;
+                         color:var(--muted)">Location</th>
+              <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);
+                         width:120px;font-size:10px;text-transform:uppercase;letter-spacing:1px;
+                         color:var(--muted)">Lead</th>
+              <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);
+                         font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted)">
+                Required Attendees</th>
+              <th style="padding:6px 8px;border:1px solid var(--line);width:40px"></th>
+            </tr>
+          </thead>
+          <tbody id="t230body">${rows}</tbody>
+        </table>
+      </div>
+      <button onclick="add230Row()"
+        style="margin-top:8px;font-size:11px;padding:5px 14px">
+        + Add Meeting
+      </button>
+    </div>
+
+    <div class="section-card">
+      <h2>3. Agenda Notes</h2>
+      ${field('agenda_notes','General Agenda Notes / Instructions','textarea',
+              '',{rows:4,placeholder:'Any standing agenda items, notes for all meetings, or special instructions...'})}
+    </div>
+
+    <div class="section-card">
+      <h2>4. Prepared By</h2>
+      <div class="grid-2">
+        ${field('prepared_by_psc','Prepared By (Planning Section Chief)','text',
+                formData.planning_section_chief||incData.planning_section_chief||'')}
+        ${field('date_time_prepared','Date / Time','datetime-local','')}
+      </div>
+    </div>`;
+  },
+
+  buildPrint() {
+    const fd = { ...formData };
+    const n  = parseInt(fd._230_count || 8);
+    const variant = FORMS['230'].variants[VARIANT];
+
+    let rows = '';
+    for (let i = 0; i < n; i++) {
+      const time = fd[`m230_${i}_time`]     || '';
+      const name = fd[`m230_${i}_name`]     || '';
+      const loc  = fd[`m230_${i}_location`] || '';
+      const lead = fd[`m230_${i}_lead`]     || '';
+      const att  = fd[`m230_${i}_attendees`]|| '';
+      if (!name && !time) continue;
+      rows += `<tr>
+        <td style="padding:4px 8px;border:1px solid #ccc;white-space:nowrap;font-weight:bold">${time}</td>
+        <td style="padding:4px 8px;border:1px solid #ccc">${name}</td>
+        <td style="padding:4px 8px;border:1px solid #ccc">${loc}</td>
+        <td style="padding:4px 8px;border:1px solid #ccc">${lead}</td>
+        <td style="padding:4px 8px;border:1px solid #ccc;font-size:10px">${att}</td>
+      </tr>`;
+    }
+
+    return `
+    <div class="ics-print-header">
+      <div class="logo-cell">${logoHtml()}</div>
+      <div class="title-cell">
+        <h1>ICS-230 — MEETING SCHEDULE / AGENDA</h1>
+        <div class="sub">${variant} · FieldCommand IMS</div>
+      </div>
+      <div class="meta-cell">
+        <div class="ml">Incident</div>
+        <div class="mv" style="font-size:10px">${fd.incident_name||incData.name||'—'}</div>
+        <div class="ml">Op Period</div><div class="mv">${fd.operational_period_number||PERIOD}</div>
+        <div class="ml">Date</div><div class="mv">${fd.date_prepared||'—'}</div>
+      </div>
+    </div>
+    <div class="pr">
+      <div class="pc w2">
+        <div class="pl">Op Period From</div><div class="pv">${fd.operational_period_from||''}</div>
+      </div>
+      <div class="pc w2">
+        <div class="pl">Op Period To</div><div class="pv">${fd.operational_period_to||''}</div>
+      </div>
+    </div>
+    <div class="pr"><div class="pc" style="flex:4">
+      <div class="pl">Meeting Schedule</div>
+      <table style="width:100%;border-collapse:collapse;margin-top:6px;font-size:11px">
+        <thead>
+          <tr style="background:#1a3a6b;color:#fff">
+            <th style="padding:5px 8px;border:1px solid #ccc;text-align:left;width:70px">Time</th>
+            <th style="padding:5px 8px;border:1px solid #ccc;text-align:left">Meeting / Activity</th>
+            <th style="padding:5px 8px;border:1px solid #ccc;text-align:left;width:150px">Location</th>
+            <th style="padding:5px 8px;border:1px solid #ccc;text-align:left;width:100px">Lead</th>
+            <th style="padding:5px 8px;border:1px solid #ccc;text-align:left">Required Attendees</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div></div>
+    ${fd.agenda_notes ? `<div class="pr"><div class="pc w4">
+      <div class="pl">Agenda Notes</div>
+      <div class="pv pw">${fd.agenda_notes}</div>
+    </div></div>` : ''}
+    <div class="sig-row">
+      <div class="sig-cell">
+        <div class="sl">Prepared By (PSC)</div>
+        <div class="ss">${fd.prepared_by_psc||''}</div>
+        <div class="sl">Date/Time: ${fd.date_time_prepared||''}</div>
+      </div>
+      <div class="sig-cell"><div class="sl">Signature</div><div class="ss"></div></div>
+    </div>
+    <div class="print-footer">
+      <span>${variant} · FieldCommand IMS · © 2026 James Rospopo KE4CON · CC BY-SA 4.0</span>
+      <span>Printed: ${new Date().toLocaleString()}</span>
+    </div>`;
+  }
+};
+
+let _230count = 8;
+function add230Row() {
+  const n = parseInt(formData._230_count || 8);
+  const tbody = document.getElementById('t230body');
+  if (!tbody) return;
+  const tr = document.createElement('tr');
+  tr.id = `m230row_${n}`;
+  tr.innerHTML = FORMS['230']._rowHtml(n, null)
+    .replace(/^<tr[^>]*>/,'').replace(/<\/tr>$/,'');
+  tbody.appendChild(tr);
+  formData._230_count = n + 1;
+  markDirty();
+}
+function del230Row(i) {
+  const row = document.getElementById(`m230row_${i}`);
+  if (row) row.remove();
+  ['time','name','location','lead','attendees'].forEach(k => {
+    delete formData[`m230_${i}_${k}`];
+  });
+  markDirty();
+}
+
 FORMS['204A'] = {
   title: 'ICS-204A Assignment Briefing Sheet',
   badge: 'ICS-204A',

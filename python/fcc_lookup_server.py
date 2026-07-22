@@ -327,6 +327,17 @@ class Handler(BaseHTTPRequestHandler):
             if srch: rows=[r for r in rows if srch in json.dumps(r).lower()]
             return self.send_json(rows)
 
+        elif path == "/api/resource_types":
+            cat    = qs.get("category",[None])[0]
+            kind   = qs.get("kind",[None])[0]
+            srch   = qs.get("q",[""])[0].lower()
+            sql    = "SELECT * FROM resource_types WHERE active=1"; params=[]
+            if cat:  sql+=" AND UPPER(category)=?"; params.append(cat.upper())
+            if kind: sql+=" AND UPPER(kind) LIKE ?"; params.append(f"%{kind.upper()}%")
+            rows = rows_to_list(c.execute(sql+" ORDER BY category,kind,type_level",params).fetchall())
+            if srch: rows=[r for r in rows if srch in json.dumps(r).lower()]
+            return self.send_json(rows)
+
         elif path == "/api/repeaters":
             band  = qs.get("band",[None])[0]
             state = qs.get("state",[None])[0]
@@ -408,6 +419,25 @@ class Handler(BaseHTTPRequestHandler):
         body   = self.read_body()
         c      = get_conn()
         now    = utcnow()
+
+        if path == "/api/resource_types":
+            rid = body.get("id")
+            fields = ['kind','type_level','category','mission_area','description',
+                      'min_personnel','capabilities','metric_notes','custom','active']
+            if rid:
+                sets = [f"{f}=?" for f in fields if f in body]
+                vals = [body[f] for f in fields if f in body] + [rid]
+                if sets:
+                    c.execute(f"UPDATE resource_types SET {','.join(sets)} WHERE id=?", vals)
+                    c.commit()
+                return self.send_json({"ok":True,"id":rid})
+            else:
+                cols = [f for f in fields if f in body]
+                vals = [body[f] for f in cols]
+                c.execute(f"INSERT INTO resource_types ({','.join(cols)}) VALUES ({','.join(['?']*len(cols))})", vals)
+                c.commit()
+                new_id = c.execute("SELECT last_insert_rowid()").fetchone()[0]
+                return self.send_json({"ok":True,"id":new_id})
 
         if path == "/api/hospitals":
             hid = body.get("id")

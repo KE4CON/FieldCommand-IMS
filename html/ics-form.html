@@ -462,6 +462,173 @@ const FORMS = {};
 // ══════════════════════════════════════════════════════════════════
 // ICS-201 INCIDENT BRIEFING
 // ══════════════════════════════════════════════════════════════════
+
+// ══════════════════════════════════════════════════════════════════
+// NIMS RESOURCE TYPE PICKER — reusable across all forms
+// ══════════════════════════════════════════════════════════════════
+let _rtCache = null;
+
+async function loadResourceTypes(forceRefresh=false) {
+  if (_rtCache && !forceRefresh) return _rtCache;
+  try {
+    const r = await fetch(`${MAIN_API}/api/resource_types`);
+    _rtCache = await r.json();
+  } catch(e) { _rtCache = []; }
+  return _rtCache;
+}
+
+// Show picker — onSelect(type) called with selected resource type object
+async function showResourceTypePicker(onSelect, filterCategory='') {
+  const types = await loadResourceTypes();
+  if (!types.length) {
+    alert('Resource type library not available. Check API connection.');
+    return;
+  }
+  const cats = [...new Set(types.map(t=>t.category))].sort();
+  const catColors = {
+    'Fire':'#c0392b','Search and Rescue':'#e67e22','Medical':'#e91e8c',
+    'Law Enforcement':'#1a5276','Public Works':'#7d6608','Mass Care':'#1e8449',
+    'Communications':'#6c3483','Incident Management':'#1a3a6b',
+    'Transportation':'#0e6655','Logistics':'#784212','UAS':'#2980b9','Other':'#555'
+  };
+
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:500;display:flex;align-items:center;justify-content:center';
+
+  let activeCat = filterCategory || '';
+  let searchQ = '';
+
+  function renderPicker() {
+    let filtered = types;
+    if (activeCat) filtered = filtered.filter(t => t.category === activeCat);
+    if (searchQ) filtered = filtered.filter(t =>
+      JSON.stringify(t).toLowerCase().includes(searchQ.toLowerCase()));
+
+    const groups = {};
+    filtered.forEach(t => {
+      if (!groups[t.category]) groups[t.category] = [];
+      groups[t.category].push(t);
+    });
+
+    overlay.innerHTML = `
+      <div style="background:var(--panel,#161b22);border:2px solid var(--amber,#c8760a);
+                  border-radius:10px;width:800px;max-width:96vw;max-height:85vh;
+                  display:flex;flex-direction:column;overflow:hidden">
+        <div style="background:linear-gradient(135deg,#001428,#002858);padding:12px 16px;
+                    display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+          <div>
+            <div style="font-family:var(--font-hd,monospace);font-size:14px;color:#f5a623;letter-spacing:1px">
+              NIMS RESOURCE TYPE PICKER
+            </div>
+            <div style="font-size:10px;color:rgba(255,255,255,0.5);margin-top:2px">
+              FEMA Resource Typing Library \u00b7 Select a resource type
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input type="text" id="rtPickerSearch" placeholder="Search..." value="${searchQ}"
+              style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);
+                     color:#fff;padding:5px 10px;border-radius:4px;font-size:12px;width:160px">
+            <button onclick="this.closest('[style]').remove()"
+              style="background:transparent;border:1px solid rgba(255,255,255,0.3);
+                     color:rgba(255,255,255,0.6);padding:4px 10px;border-radius:4px">✕</button>
+          </div>
+        </div>
+        <!-- Category filters -->
+        <div style="padding:8px 16px;background:rgba(0,0,0,0.2);flex-shrink:0;
+                    display:flex;gap:4px;flex-wrap:wrap">
+          <button onclick="document.getElementById('rtActiveCat').value='';rerenderPicker()"
+            style="font-size:10px;padding:3px 8px;border-radius:10px;cursor:pointer;
+                   background:${!activeCat?'var(--amber,#c8760a)':'transparent'};
+                   border:1px solid ${!activeCat?'var(--amber,#c8760a)':'rgba(255,255,255,0.2)'};
+                   color:${!activeCat?'#001428':'rgba(255,255,255,0.6)'}">All</button>
+          ${cats.map(c=>`
+            <button onclick="document.getElementById('rtActiveCat').value='${c}';rerenderPicker()"
+              style="font-size:10px;padding:3px 8px;border-radius:10px;cursor:pointer;
+                     background:${c===activeCat?catColors[c]||'#555':'transparent'};
+                     border:1px solid ${c===activeCat?catColors[c]||'#555':'rgba(255,255,255,0.2)'};
+                     color:${c===activeCat?'#fff':'rgba(255,255,255,0.6)'}">
+              ${c}
+            </button>`).join('')}
+        </div>
+        <input type="hidden" id="rtActiveCat" value="${activeCat}">
+        <!-- Results -->
+        <div style="overflow-y:auto;flex:1;padding:8px 12px">
+          <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-bottom:6px">
+            ${filtered.length} resource type${filtered.length!==1?'s':''} found
+          </div>
+          ${Object.entries(groups).map(([cat, items]) => `
+            <div style="margin-bottom:12px">
+              <div style="font-size:10px;font-weight:bold;text-transform:uppercase;letter-spacing:1px;
+                          color:${catColors[cat]||'#888'};margin-bottom:4px;padding-bottom:3px;
+                          border-bottom:1px solid ${catColors[cat]||'#888'}">${cat}</div>
+              ${items.map(t => `
+                <div onclick="selectRT(${JSON.stringify(t).replace(/"/g,'&quot;')})"
+                  style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);
+                         border-radius:5px;padding:7px 10px;margin-bottom:4px;cursor:pointer;
+                         transition:all 0.1s;border-left:3px solid ${catColors[cat]||'#888'}"
+                  onmouseover="this.style.background='rgba(200,118,10,0.1)'"
+                  onmouseout="this.style.background='rgba(255,255,255,0.03)'">
+                  <div style="display:flex;align-items:center;gap:6px;color:#fff">
+                    <strong style="font-size:12px">${t.kind}</strong>
+                    ${t.type_level?`<span style="font-size:11px;color:#f5a623">${t.type_level}</span>`:''}
+                    ${t.nims_id?`<span style="font-size:9px;color:rgba(255,255,255,0.3);font-family:monospace">${t.nims_id}</span>`:''}
+                    ${t.custom?`<span style="font-size:9px;color:#f5a623;border:1px solid #f5a623;padding:0 4px;border-radius:2px">CUSTOM</span>`:''}
+                  </div>
+                  <div style="font-size:10px;color:rgba(255,255,255,0.5);margin-top:2px">${t.capabilities||''}</div>
+                  ${t.min_personnel?`<div style="font-size:9px;color:rgba(255,255,255,0.3)">👥 ${t.min_personnel} min personnel</div>`:''}
+                </div>`).join('')}
+            </div>`).join('')}
+          ${!filtered.length?'<div style="color:rgba(255,255,255,0.3);text-align:center;padding:30px">No resource types match filter.</div>':''}
+        </div>
+        <div style="padding:8px 16px;border-top:1px solid rgba(255,255,255,0.1);font-size:10px;
+                    color:rgba(255,255,255,0.3);flex-shrink:0;display:flex;justify-content:space-between">
+          <span>FEMA NIMS Resource Typing Library \u00b7 rtlt.preptoolkit.fema.gov</span>
+          <a href="resource_types.html" target="_blank"
+            style="color:rgba(200,118,10,0.7);font-size:10px">Manage Library →</a>
+        </div>
+      </div>`;
+
+    // Wire up search and re-render
+    const searchEl = document.getElementById('rtPickerSearch');
+    if (searchEl) {
+      searchEl.addEventListener('input', () => {
+        searchQ = searchEl.value;
+        rerenderPicker();
+      });
+      searchEl.focus();
+    }
+  }
+
+  function rerenderPicker() {
+    const catEl = document.getElementById('rtActiveCat');
+    if (catEl) activeCat = catEl.value;
+    renderPicker();
+  }
+
+  window.rerenderPicker = rerenderPicker;
+
+  window.selectRT = function(t) {
+    overlay.remove();
+    delete window.rerenderPicker;
+    delete window.selectRT;
+    onSelect(t);
+  };
+
+  document.body.appendChild(overlay);
+  renderPicker();
+}
+
+// Convenience: fill a resource name + type field pair
+function pickResourceTypeIntoFields(nameKey, typeKey, categoryHint='') {
+  showResourceTypePicker(t => {
+    const typeStr = t.type_level ? `${t.kind} \u2013 ${t.type_level}` : t.kind;
+    const nameEl = document.querySelector(`[data-key="${nameKey}"]`);
+    const typeEl = document.querySelector(`[data-key="${typeKey}"]`);
+    if (nameEl) nameEl.value = typeStr;
+    if (typeEl) typeEl.value = t.type_level || '';
+  }, categoryHint);
+}
+
 FORMS['201'] = {
   title: 'ICS-201 Incident Briefing',
   badge: 'ICS-201',
@@ -3099,6 +3266,18 @@ FORMS['213RR'] = {
             <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:100px">Suggested Source</th>
           </tr></thead>
           <tbody id="rr213Body">
+            <tr style="background:rgba(200,118,10,0.06)">
+              <td colspan="6" style="padding:4px 8px;font-size:10px;color:var(--amber)">
+                <button onclick="add213RRFromNIMS()"
+                  style="font-size:10px;padding:3px 10px;background:var(--amber);
+                         border-color:var(--amber);color:#001428;font-weight:bold">
+                  📋 Pick NIMS Resource Type
+                </button>
+                <span style="margin-left:8px;color:var(--dim)">
+                  Select from FEMA NIMS resource typing library — or type directly below
+                </span>
+              </td>
+            </tr>
             ${[...Array(6)].map((_,i)=>`<tr>
               <td style="border:1px solid var(--line);padding:3px"><input type="number" data-key="rr_qty_${i}" style="width:50px;font-size:11px;padding:3px 4px;text-align:center"></td>
               <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="rr_type_${i}" placeholder="e.g. Type I Engine" style="width:100%;font-size:11px;padding:3px 4px"></td>
@@ -3228,6 +3407,19 @@ function addRR213Row() {
     <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="rr_source_${rr213Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>`;
   tbody.appendChild(tr);
   rr213Count++;
+}
+
+async function add213RRFromNIMS() {
+  await showResourceTypePicker(t => {
+    const typeStr = t.type_level ? `${t.kind} – ${t.type_level}` : t.kind;
+    // Find next empty row
+    let idx = 0;
+    while (document.querySelector(`[data-key="rr_type_${idx}"]`)?.value) idx++;
+    const set = (key,val) => { const el=document.querySelector(`[data-key="${key}"]`); if(el) el.value=val; };
+    set(`rr_type_${idx}`, typeStr);
+    set(`rr_cat_${idx}`, t.category||'');
+    if (t.min_personnel) set(`rr_qty_${idx}`, t.min_personnel);
+  });
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -3462,7 +3654,14 @@ FORMS['215'] = {
           </tbody>
         </table>
       </div>
-      <button onclick="add215Row()" style="margin-top:6px;font-size:11px;padding:4px 12px">+ Add Division/Group</button>
+      <div style="display:flex;gap:8px;margin-top:6px">
+        <button onclick="add215Row()" style="font-size:11px;padding:4px 12px">+ Add Division/Group</button>
+        <button onclick="add215FromNIMS()"
+          style="font-size:11px;padding:4px 12px;background:var(--amber);
+                 border-color:var(--amber);color:#001428">
+          📋 Pick NIMS Resource Type for Equipment Column
+        </button>
+      </div>
     </div>
 
     <div class="section-card">
@@ -3548,6 +3747,21 @@ FORMS['215'] = {
     </div>`;
   }
 };
+
+async function add215FromNIMS() {
+  await showResourceTypePicker(t => {
+    const typeStr = t.type_level ? `${t.kind} – ${t.type_level}` : t.kind;
+    // Find next row with empty equipment field
+    let idx = 0;
+    while (document.querySelector(`[data-key="ops215_equip_${idx}"]`)?.value && idx < ops215Count) idx++;
+    const el = document.querySelector(`[data-key="ops215_equip_${idx}"]`);
+    if (el) el.value = typeStr;
+    if (t.min_personnel) {
+      const pEl = document.querySelector(`[data-key="ops215_pers_${idx}"]`);
+      if (pEl) pEl.value = t.min_personnel;
+    }
+  });
+}
 
 let ops215Count = 8;
 function add215Row() {
@@ -4662,6 +4876,10 @@ FORMS['219'] = {
     <div class="section-card">
       <h2>Resource Status Board</h2>
       <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+        <button onclick="addTCardFromNIMS()"
+          style="background:var(--amber);border-color:var(--amber);color:#001428;font-weight:bold">
+          📋 Add from NIMS Library
+        </button>
         <button onclick="showAddTCard()"
           style="background:var(--eoc);border-color:var(--eoc);color:#fff;font-weight:bold">
           + Add Resource
@@ -4790,6 +5008,22 @@ const TC_STATUS_COLORS = {
   'Staging':      {bg:'rgba(200,118,10,0.1)',  border:'var(--amber)',  dot:'var(--amber)'},
   'En Route':     {bg:'rgba(155,89,182,0.1)',  border:'#9b59b6',      dot:'#9b59b6'},
 };
+
+async function addTCardFromNIMS() {
+  if (!INC_ID) { alert('Open from an incident to add resources.'); return; }
+  await showResourceTypePicker(async t => {
+    const typeStr = t.type_level ? `${t.kind} – ${t.type_level}` : t.kind;
+    // Pre-fill the add modal with NIMS type data
+    document.getElementById('tc_name').value = typeStr;
+    document.getElementById('tc_rtype').value = t.kind;
+    document.getElementById('tc_category').value = t.category||'';
+    document.getElementById('tc_type').value = t.type_level||'';
+    if (t.min_personnel) document.getElementById('tc_personnel').value = t.min_personnel;
+    document.getElementById('tc_status').value = 'Available';
+    document.getElementById('addTCardModal').style.display = 'flex';
+    document.getElementById('tc_name').focus();
+  });
+}
 
 async function loadTCards219() {
   if (!INC_ID) return;
@@ -5409,7 +5643,14 @@ FORMS['218'] = {
           </tbody>
         </table>
       </div>
-      <button onclick="add218Row()" style="margin-top:6px;font-size:11px;padding:4px 12px">+ Add Item</button>
+      <div style="display:flex;gap:8px;margin-top:6px">
+        <button onclick="add218Row()" style="font-size:11px;padding:4px 12px">+ Add Item</button>
+        <button onclick="add218FromNIMS()"
+          style="font-size:11px;padding:4px 12px;background:var(--amber);
+                 border-color:var(--amber);color:#001428">
+          📋 Pick from NIMS Resource Library
+        </button>
+      </div>
     </div>
 
     <div class="section-card">
@@ -5490,6 +5731,18 @@ FORMS['218'] = {
     </div>`;
   }
 };
+
+async function add218FromNIMS() {
+  await showResourceTypePicker(t => {
+    const typeStr = t.type_level ? `${t.kind} – ${t.type_level}` : t.kind;
+    // Find next empty row
+    let idx = 0;
+    while (document.querySelector(`[data-key="inv218_desc_${idx}"]`)?.value && idx < inv218Count) idx++;
+    const set = (key,val) => { const el=document.querySelector(`[data-key="${key}"]`); if(el) el.value=val; };
+    set(`inv218_desc_${idx}`, typeStr);
+    set(`inv218_cat_${idx}`, t.category||'');
+  });
+}
 
 let inv218Count = 12;
 function add218Row() {

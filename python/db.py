@@ -284,6 +284,24 @@ CREATE TABLE IF NOT EXISTS hospitals (
 CREATE INDEX IF NOT EXISTS idx_hosp_state ON hospitals(state);
 CREATE INDEX IF NOT EXISTS idx_hosp_county ON hospitals(county);
 
+-- ── NIMS Resource Typing Library ────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS resource_types (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    nims_id         TEXT DEFAULT '',    -- FEMA RTLT identifier e.g. "1-508-1001"
+    kind            TEXT NOT NULL,      -- Engine, Crew, Helicopter, Personnel, etc.
+    type_level      TEXT DEFAULT '',    -- Type I, II, III, IV, N (no type), varies
+    category        TEXT NOT NULL,      -- Fire, SAR, Medical, Public Works, etc.
+    mission_area    TEXT DEFAULT '',    -- FEMA mission area
+    description     TEXT DEFAULT '',    -- Full NIMS name/description
+    min_personnel   INTEGER DEFAULT 0,
+    capabilities    TEXT DEFAULT '',    -- Key capability summary
+    metric_notes    TEXT DEFAULT '',    -- Specific metrics (speed, capacity, etc.)
+    custom          INTEGER DEFAULT 0,  -- 1 = user-added, 0 = NIMS standard
+    active          INTEGER DEFAULT 1
+);
+CREATE INDEX IF NOT EXISTS idx_rt_category ON resource_types(category);
+CREATE INDEX IF NOT EXISTS idx_rt_kind     ON resource_types(kind);
+
 -- ── ICS Operational Periods ───────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS ics_periods (
     id          TEXT PRIMARY KEY,
@@ -583,6 +601,7 @@ def init_db():
         "ALTER TABLE ics_tcards ADD COLUMN notes TEXT DEFAULT ''",
         "ALTER TABLE ics_tcards ADD COLUMN order_number TEXT DEFAULT ''",
         "ALTER TABLE ics_tcards ADD COLUMN home_agency TEXT DEFAULT ''",
+        """CREATE TABLE IF NOT EXISTS resource_types (id INTEGER PRIMARY KEY AUTOINCREMENT, nims_id TEXT DEFAULT '', kind TEXT NOT NULL, type_level TEXT DEFAULT '', category TEXT NOT NULL, mission_area TEXT DEFAULT '', description TEXT DEFAULT '', min_personnel INTEGER DEFAULT 0, capabilities TEXT DEFAULT '', metric_notes TEXT DEFAULT '', custom INTEGER DEFAULT 0, active INTEGER DEFAULT 1)""",
         """CREATE TABLE IF NOT EXISTS hospitals (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL DEFAULT '', address TEXT DEFAULT '', city TEXT DEFAULT '', state TEXT DEFAULT '', county TEXT DEFAULT '', phone TEXT DEFAULT '', phone2 TEXT DEFAULT '', fax TEXT DEFAULT '', lat REAL, lon REAL, trauma_level TEXT DEFAULT '', burn_center INTEGER DEFAULT 0, helipad INTEGER DEFAULT 1, icu INTEGER DEFAULT 0, peds_trauma INTEGER DEFAULT 0, stroke_center INTEGER DEFAULT 0, cardiac_center INTEGER DEFAULT 0, travel_time_min INTEGER DEFAULT 0, notes TEXT DEFAULT '', active INTEGER DEFAULT 1)""",
         """CREATE TABLE IF NOT EXISTS ics_meetings (id TEXT PRIMARY KEY, incident_id TEXT NOT NULL DEFAULT '', period INTEGER NOT NULL DEFAULT 1, meeting_type TEXT NOT NULL, title TEXT NOT NULL DEFAULT '', scheduled_time TEXT, location TEXT DEFAULT '', chair TEXT DEFAULT '', attendees TEXT DEFAULT '[]', agenda_items TEXT DEFAULT '[]', status TEXT DEFAULT 'scheduled', notes TEXT DEFAULT '', created TEXT NOT NULL, updated TEXT NOT NULL)""",
     ]
@@ -593,9 +612,26 @@ def init_db():
             pass  # column already exists
     conn.commit()
     seed_hospitals(conn)
+    seed_resource_types(conn)
     log.info(f"Database initialised: {DB_PATH}")
 
 
+
+
+# ── NIMS Resource Type seeding ────────────────────────────────────────────────
+def seed_resource_types(conn):
+    try:
+        existing = conn.execute("SELECT COUNT(*) FROM resource_types").fetchone()[0]
+        if existing == 0:
+            from nims_resource_types import NIMS_RESOURCE_TYPES
+            conn.executemany("""INSERT INTO resource_types
+                (nims_id,kind,type_level,category,mission_area,description,
+                 min_personnel,capabilities,metric_notes,custom)
+                VALUES(?,?,?,?,?,?,?,?,?,0)""", NIMS_RESOURCE_TYPES)
+            conn.commit()
+            log.info(f"Seeded {len(NIMS_RESOURCE_TYPES)} NIMS resource types")
+    except Exception as e:
+        log.warning(f"Resource type seeding skipped: {e}")
 
 # ── JSON migration ─────────────────────────────────────────────────────────────
 def _migrate_json_file(path: Path, label: str, fn):

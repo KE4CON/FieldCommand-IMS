@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NIMS Resource Typing Library — FieldCommand IMS</title>
+<link rel="stylesheet" href="theme.css">
+<style>
+.rt-header {
+  background:linear-gradient(135deg,#001428,#002858);
+  border-bottom:2px solid var(--amber);padding:10px 16px;
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+}
+.rt-badge {
+  background:var(--amber);color:#001428;font-family:var(--font-hd);
+  font-size:12px;padding:4px 12px;border-radius:4px;letter-spacing:2px;font-weight:bold;
+}
+.rt-card {
+  background:var(--panel);border:1px solid var(--line);border-radius:6px;
+  padding:10px 14px;margin-bottom:6px;
+}
+.rt-card:hover { border-color:var(--amber); }
+.rt-kind { font-family:var(--font-hd);font-size:13px;color:var(--txt); }
+.rt-type { font-size:11px;font-family:var(--font-hd);color:var(--amber);margin-left:6px; }
+.rt-nims { font-size:10px;color:var(--dim);font-family:monospace; }
+.cat-pill {
+  font-size:10px;padding:1px 8px;border-radius:8px;
+  background:rgba(200,118,10,0.1);color:var(--amber);border:1px solid rgba(200,118,10,0.3);
+}
+.modal-overlay {
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);
+  z-index:200;align-items:center;justify-content:center;
+}
+.modal-overlay.open { display:flex; }
+.modal-box {
+  background:var(--panel);border:1px solid var(--amber);border-radius:10px;
+  padding:24px;width:560px;max-width:96vw;max-height:90vh;overflow-y:auto;
+}
+.cat-filter-btn {
+  font-size:11px;padding:4px 10px;border-radius:12px;cursor:pointer;
+  border:1px solid var(--line);background:var(--panel);color:var(--muted);
+  transition:all 0.15s;
+}
+.cat-filter-btn.active {
+  background:var(--amber);border-color:var(--amber);color:#001428;font-weight:bold;
+}
+</style>
+</head>
+<body>
+
+<div class="rt-header">
+  <span class="rt-badge">NIMS</span>
+  <span style="font-family:var(--font-hd);font-size:14px;letter-spacing:2px">
+    RESOURCE TYPING LIBRARY
+  </span>
+  <div style="font-size:11px;color:var(--muted)">
+    FEMA NIMS Resource Typing Definitions — Offline Reference
+  </div>
+  <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+    <button onclick="showAddModal(null)"
+      style="background:var(--amber);border-color:var(--amber);color:#001428;font-weight:bold">
+      + Add Custom Type
+    </button>
+    <a href="index.html" style="color:var(--muted);font-size:12px">← Dashboard</a>
+  </div>
+</div>
+
+<!-- Info bar -->
+<div style="background:rgba(200,118,10,0.06);border-bottom:1px solid rgba(200,118,10,0.2);
+            padding:8px 16px;font-size:11px;color:var(--muted);display:flex;gap:16px;flex-wrap:wrap">
+  <span>📋 NIMS resource types are used for NIMS-compliant resource requests (ICS-213RR),
+    T-card board (ICS-219), assignment lists (ICS-204), and planning worksheets (ICS-215).</span>
+  <span style="margin-left:auto;color:var(--amber)">
+    Source: FEMA RTLT — rtlt.preptoolkit.fema.gov
+  </span>
+</div>
+
+<!-- Filter bar -->
+<div style="background:var(--panel);border-bottom:1px solid var(--line);
+            padding:10px 16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+  <input type="text" id="filterText" placeholder="Search by name, kind, capability..."
+    oninput="filterTypes()"
+    style="width:240px;background:var(--input-bg);border:1px solid var(--line);
+           border-radius:4px;color:var(--txt);padding:6px 10px;font-size:12px">
+  <div style="font-size:11px;color:var(--muted)">Filter:</div>
+  <div id="catFilters" style="display:flex;gap:4px;flex-wrap:wrap"></div>
+  <div style="font-size:11px;color:var(--muted);margin-left:auto" id="rtCount"></div>
+</div>
+
+<div class="page-wrap" style="padding:16px">
+  <div id="rtList">
+    <div style="color:var(--muted);text-align:center;padding:30px">Loading...</div>
+  </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal-overlay" id="addModal" onclick="if(event.target===this)closeModal()">
+<div class="modal-box">
+  <div style="font-family:var(--font-hd);font-size:14px;color:var(--amber);
+              letter-spacing:1px;margin-bottom:14px" id="modalTitle">+ ADD CUSTOM RESOURCE TYPE</div>
+  <input type="hidden" id="rt_edit_id">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">
+    <div class="fg"><label style="font-size:11px;color:var(--muted)">Kind *</label>
+      <input type="text" id="rt_kind" placeholder="Engine, Crew, Helicopter..."
+        style="background:var(--input-bg);border:1px solid var(--line);color:var(--txt);
+               padding:7px 10px;font-size:13px;border-radius:4px;width:100%;box-sizing:border-box">
+    </div>
+    <div class="fg"><label style="font-size:11px;color:var(--muted)">Type Level</label>
+      <input type="text" id="rt_type_level" placeholder="Type I, Type II, N/A..."
+        style="background:var(--input-bg);border:1px solid var(--line);color:var(--txt);
+               padding:7px 10px;font-size:13px;border-radius:4px;width:100%;box-sizing:border-box">
+    </div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:8px">
+    <div class="fg"><label style="font-size:11px;color:var(--muted)">Category *</label>
+      <select id="rt_category"
+        style="background:var(--input-bg);border:1px solid var(--line);color:var(--txt);
+               padding:7px 10px;font-size:13px;border-radius:4px;width:100%">
+        <option value="Fire">Fire / HazMat</option>
+        <option value="Search and Rescue">Search and Rescue</option>
+        <option value="Medical">Medical / EMS</option>
+        <option value="Law Enforcement">Law Enforcement</option>
+        <option value="Public Works">Public Works / Engineering</option>
+        <option value="Mass Care">Mass Care / Shelter</option>
+        <option value="Communications">Communications</option>
+        <option value="Incident Management">Incident Management</option>
+        <option value="Transportation">Transportation</option>
+        <option value="Logistics">Logistics</option>
+        <option value="UAS">UAS / Unmanned</option>
+        <option value="Other">Other</option>
+      </select>
+    </div>
+    <div class="fg"><label style="font-size:11px;color:var(--muted)">Min Personnel</label>
+      <input type="number" id="rt_min_personnel" placeholder="0" min="0"
+        style="background:var(--input-bg);border:1px solid var(--line);color:var(--txt);
+               padding:7px 10px;font-size:13px;border-radius:4px;width:100%;box-sizing:border-box">
+    </div>
+  </div>
+  <div class="fg" style="margin-bottom:8px">
+    <label style="font-size:11px;color:var(--muted)">Full Description</label>
+    <input type="text" id="rt_description" placeholder="NIMS full resource name..."
+      style="background:var(--input-bg);border:1px solid var(--line);color:var(--txt);
+             padding:7px 10px;font-size:13px;border-radius:4px;width:100%;box-sizing:border-box">
+  </div>
+  <div class="fg" style="margin-bottom:8px">
+    <label style="font-size:11px;color:var(--muted)">Capability Summary</label>
+    <input type="text" id="rt_capabilities" placeholder="Key capabilities..."
+      style="background:var(--input-bg);border:1px solid var(--line);color:var(--txt);
+             padding:7px 10px;font-size:13px;border-radius:4px;width:100%;box-sizing:border-box">
+  </div>
+  <div class="fg" style="margin-bottom:12px">
+    <label style="font-size:11px;color:var(--muted)">Metrics / Specifications</label>
+    <input type="text" id="rt_metric_notes" placeholder="Specific metrics, capacities, specs..."
+      style="background:var(--input-bg);border:1px solid var(--line);color:var(--txt);
+             padding:7px 10px;font-size:13px;border-radius:4px;width:100%;box-sizing:border-box">
+  </div>
+  <div style="display:flex;gap:8px">
+    <button onclick="saveResourceType()"
+      style="flex:1;background:var(--amber);border-color:var(--amber);color:#001428;
+             font-weight:bold;padding:9px">SAVE</button>
+    <button onclick="closeModal()" style="padding:9px 16px">Cancel</button>
+  </div>
+</div>
+</div>
+
+<script>
+const API = 'http://192.168.50.1:5050';
+let allTypes = [];
+let activeCategory = '';
+
+const CATEGORY_COLORS = {
+  'Fire':                '#c0392b',
+  'Search and Rescue':   '#e67e22',
+  'Medical':             '#e91e8c',
+  'Law Enforcement':     '#1a5276',
+  'Public Works':        '#7d6608',
+  'Mass Care':           '#1e8449',
+  'Communications':      '#6c3483',
+  'Incident Management': '#1a3a6b',
+  'Transportation':      '#0e6655',
+  'Logistics':           '#784212',
+  'UAS':                 '#2980b9',
+  'Other':               '#555',
+};
+
+async function loadTypes() {
+  try {
+    const r = await fetch(`${API}/api/resource_types`);
+    allTypes = await r.json();
+    buildCategoryFilters();
+    renderTypes(allTypes);
+  } catch(e) {
+    document.getElementById('rtList').innerHTML =
+      '<div style="color:var(--red);padding:20px">⚠ Could not load resource types — API offline</div>';
+  }
+}
+
+function buildCategoryFilters() {
+  const cats = [...new Set(allTypes.map(r=>r.category))].sort();
+  const container = document.getElementById('catFilters');
+  container.innerHTML = `
+    <button class="cat-filter-btn active" onclick="setCatFilter('')">All</button>
+    ${cats.map(c=>`
+      <button class="cat-filter-btn" onclick="setCatFilter('${c}')"
+        style="border-color:${CATEGORY_COLORS[c]||'var(--line)'}">
+        ${c}
+      </button>`).join('')}`;
+}
+
+function setCatFilter(cat) {
+  activeCategory = cat;
+  document.querySelectorAll('.cat-filter-btn').forEach(btn => {
+    btn.classList.toggle('active',
+      cat === '' ? btn.textContent.trim() === 'All'
+                 : btn.textContent.trim() === cat);
+  });
+  filterTypes();
+}
+
+function filterTypes() {
+  const q = document.getElementById('filterText').value.toLowerCase();
+  let filtered = activeCategory
+    ? allTypes.filter(r => r.category === activeCategory)
+    : allTypes;
+  if (q) filtered = filtered.filter(r =>
+    JSON.stringify(r).toLowerCase().includes(q));
+  renderTypes(filtered);
+}
+
+function renderTypes(types) {
+  document.getElementById('rtCount').textContent =
+    `${types.length} resource type${types.length!==1?'s':''}`;
+
+  if (!types.length) {
+    document.getElementById('rtList').innerHTML =
+      '<div style="color:var(--muted);text-align:center;padding:30px">No resource types match filter.</div>';
+    return;
+  }
+
+  // Group by category
+  const groups = {};
+  types.forEach(t => {
+    if (!groups[t.category]) groups[t.category] = [];
+    groups[t.category].push(t);
+  });
+
+  document.getElementById('rtList').innerHTML = Object.entries(groups).map(([cat, items]) => {
+    const color = CATEGORY_COLORS[cat] || 'var(--muted)';
+    return `
+      <div style="margin-bottom:16px">
+        <div style="font-family:var(--font-hd);font-size:11px;letter-spacing:2px;
+                    color:${color};text-transform:uppercase;padding:6px 0 8px;
+                    border-bottom:2px solid ${color};margin-bottom:8px;
+                    display:flex;align-items:center;justify-content:space-between">
+          <span>${cat}</span>
+          <span style="font-size:10px;color:var(--muted);letter-spacing:0">${items.length} types</span>
+        </div>
+        ${items.map(t => renderTypeCard(t, color)).join('')}
+      </div>`;
+  }).join('');
+}
+
+function renderTypeCard(t, color) {
+  return `<div class="rt-card" style="border-left:3px solid ${color}">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between">
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px">
+          <span class="rt-kind">${t.kind}</span>
+          ${t.type_level?`<span class="rt-type">${t.type_level}</span>`:''}
+          ${t.custom?'<span style="font-size:9px;padding:1px 6px;background:rgba(200,118,10,0.15);color:var(--amber);border-radius:3px">CUSTOM</span>':''}
+          ${t.nims_id?`<span class="rt-nims">${t.nims_id}</span>`:''}
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:3px">${t.description||''}</div>
+        ${t.capabilities?`<div style="font-size:11px;color:var(--dim)">📋 ${t.capabilities}</div>`:''}
+        ${t.metric_notes?`<div style="font-size:10px;color:var(--dim);margin-top:2px">📐 ${t.metric_notes}</div>`:''}
+        ${t.min_personnel?`<div style="font-size:10px;color:var(--dim)">👥 Min personnel: ${t.min_personnel}</div>`:''}
+      </div>
+      <div style="display:flex;gap:4px;flex-shrink:0;margin-left:10px">
+        <button onclick="useResourceType(${t.id})"
+          style="font-size:10px;padding:3px 8px;background:${color};border-color:${color};
+                 color:#fff">Use</button>
+        ${t.custom?`
+        <button onclick="showAddModal(${t.id})"
+          style="font-size:10px;padding:3px 6px">✏</button>
+        <button onclick="deleteType(${t.id})"
+          style="font-size:10px;padding:3px 6px;color:var(--red)">✕</button>`:''}
+      </div>
+    </div>
+  </div>`;
+}
+
+function useResourceType(id) {
+  const t = allTypes.find(x=>x.id===id);
+  if (!t) return;
+  // Store selected type for picker usage — copy to clipboard as well
+  const typeStr = t.type_level ? `${t.kind} – ${t.type_level}` : t.kind;
+  navigator.clipboard?.writeText(typeStr).catch(()=>{});
+  alert(`✓ "${typeStr}" copied to clipboard.\n\nUse the resource type picker in ICS forms (ICS-213RR, ICS-215, ICS-219) to select this type directly.`);
+}
+
+function showAddModal(id) {
+  const modal = document.getElementById('addModal');
+  if (id) {
+    const t = allTypes.find(x=>x.id===id);
+    if (!t) return;
+    document.getElementById('modalTitle').textContent = '✏ EDIT CUSTOM TYPE';
+    document.getElementById('rt_edit_id').value = id;
+    document.getElementById('rt_kind').value = t.kind||'';
+    document.getElementById('rt_type_level').value = t.type_level||'';
+    document.getElementById('rt_category').value = t.category||'Other';
+    document.getElementById('rt_description').value = t.description||'';
+    document.getElementById('rt_capabilities').value = t.capabilities||'';
+    document.getElementById('rt_metric_notes').value = t.metric_notes||'';
+    document.getElementById('rt_min_personnel').value = t.min_personnel||'';
+  } else {
+    document.getElementById('modalTitle').textContent = '+ ADD CUSTOM RESOURCE TYPE';
+    document.getElementById('rt_edit_id').value = '';
+    ['rt_kind','rt_type_level','rt_description','rt_capabilities','rt_metric_notes'].forEach(id=>{
+      document.getElementById(id).value='';
+    });
+    document.getElementById('rt_min_personnel').value='';
+    document.getElementById('rt_category').value='Other';
+  }
+  modal.classList.add('open');
+  document.getElementById('rt_kind').focus();
+}
+
+async function saveResourceType() {
+  const kind = document.getElementById('rt_kind').value.trim();
+  if (!kind) { alert('Kind is required'); return; }
+  const payload = {
+    id:            document.getElementById('rt_edit_id').value||undefined,
+    kind,
+    type_level:    document.getElementById('rt_type_level').value.trim(),
+    category:      document.getElementById('rt_category').value,
+    mission_area:  document.getElementById('rt_category').value,
+    description:   document.getElementById('rt_description').value.trim(),
+    capabilities:  document.getElementById('rt_capabilities').value.trim(),
+    metric_notes:  document.getElementById('rt_metric_notes').value.trim(),
+    min_personnel: parseInt(document.getElementById('rt_min_personnel').value)||0,
+    custom:        1,
+    active:        1,
+  };
+  if (!payload.id) delete payload.id;
+  try {
+    await fetch(`${API}/api/resource_types`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
+    });
+    closeModal();
+    await loadTypes();
+  } catch(e) { alert('Save failed: '+e); }
+}
+
+async function deleteType(id) {
+  if (!confirm('Remove this custom resource type?')) return;
+  await fetch(`${API}/api/resource_types`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({id, active:0})
+  });
+  await loadTypes();
+}
+
+function closeModal() {
+  document.getElementById('addModal').classList.remove('open');
+}
+
+loadTypes();
+</script>
+</body>
+</html>

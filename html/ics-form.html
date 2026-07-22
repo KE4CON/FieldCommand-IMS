@@ -1040,6 +1040,11 @@ function renderForm() {
   });
   // Restore any saved images
   restoreImages();
+  // Post-render hooks
+  if (FORM_NUM === '202') setTimeout(refreshIAPChecklist, 300);
+  if (FORM_NUM === '204') {
+    setTimeout(() => { apply204BranchColor(); autofill204Signatures(); check204PageCount(); }, 300);
+  }
 }
 
 function buildPrintView() {
@@ -1270,6 +1275,24 @@ FORMS['202'] = {
         <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
           <input type="radio" name="site_safety_req" data-key="site_safety_req" value="No" checked> No
         </label>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>5B. IAP Component Checklist</h2>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;line-height:1.6">
+        Check each component when it is complete and approved for inclusion in the IAP.
+        Status is read from saved forms for this incident and period.
+      </div>
+      <div id="iapChecklist202" style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <div style="font-size:11px;color:var(--dim)">Loading form status…</div>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:8px">
+        <button onclick="refreshIAPChecklist()"
+          style="font-size:11px;padding:4px 12px">↺ Refresh Status</button>
+        <span style="font-size:10px;color:var(--dim);align-self:center">
+          Auto-refreshes when you open this form
+        </span>
       </div>
     </div>
 
@@ -1684,6 +1707,25 @@ FORMS['203'] = {
         ${field('cost_unit_ldr','Cost Unit Leader (COST)','')}
       </div>
     </div>
+    <div class="section-card" style="background:rgba(26,58,107,0.04);border-color:rgba(26,58,107,0.2)">
+      <h2>Auto-Generate ICS-204 Assignment Lists</h2>
+      <div style="font-size:12px;color:var(--muted);line-height:1.6;margin-bottom:10px">
+        Creates one ICS-204 Assignment List for each Division/Group defined in this form.
+        Supervisor names from this 203 are pre-filled. Save this form first, then click below.
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <button onclick="generate204sFrom203()"
+          style="background:var(--eoc);border-color:var(--eoc);color:#fff;
+                 font-weight:600;padding:8px 20px;font-size:13px">
+          ⚡ Generate All ICS-204s from This 203
+        </button>
+        <span style="font-size:11px;color:var(--dim)">
+          Existing 204s for this incident/period are not overwritten
+        </span>
+      </div>
+      <div id="gen204Status" style="margin-top:8px;font-size:12px;display:none"></div>
+    </div>
+
     <div class="section-card">
       <h2>7. Prepared By</h2>
       <div class="grid-2">
@@ -1777,6 +1819,281 @@ FORMS['203'] = {
 // ══════════════════════════════════════════════════════════════════
 // ICS-204 ASSIGNMENT LIST
 // ══════════════════════════════════════════════════════════════════
+
+// ── Item 23: Auto-generate ICS-204s from ICS-203 ──────────────────
+async function generate204sFrom203() {
+  if (!INC_ID) { alert('Select an incident first'); return; }
+
+  const fd  = collectFormData();
+  const statusEl = document.getElementById('gen204Status');
+  statusEl.style.display = 'block';
+  statusEl.style.color   = 'var(--amber)';
+  statusEl.textContent   = 'Generating ICS-204 forms…';
+
+  // Build list of divisions from 203 data
+  // Standard 203: Branch I (divs A,B,C) and Branch II (divs D,E,F)
+  const divisions = [
+    { branch:'I',  div:'Division A', sup: fd.div_a_sup || '', loc: fd.branch1_loc || '' },
+    { branch:'I',  div:'Division B', sup: fd.div_b_sup || '', loc: fd.branch1_loc || '' },
+    { branch:'I',  div:'Division C', sup: fd.div_c_sup || '', loc: fd.branch1_loc || '' },
+    { branch:'II', div:'Division D', sup: fd.div_d_sup || '', loc: fd.branch2_loc || '' },
+    { branch:'II', div:'Division E', sup: fd.div_e_sup || '', loc: fd.branch2_loc || '' },
+    { branch:'II', div:'Division F', sup: fd.div_f_sup || '', loc: fd.branch2_loc || '' },
+  ];
+
+  // Also pull from 203A if it was saved
+  const numBranches203a = parseInt(fd._203a_branch_count || 0);
+  for (let bn = 3; bn <= numBranches203a + 2; bn++) {
+    const rom = FORMS['203A']._romanOf(bn);
+    const pfx = `b${bn}`;
+    for (let d = 1; d <= 5; d++) {
+      const sup = fd[`${pfx}_div${d}_sup`] || '';
+      const letter = String.fromCharCode(64 + (bn - 3) * 5 + d);
+      divisions.push({
+        branch: rom,
+        div:    `Division ${letter}`,
+        sup,
+        loc:    fd[`${pfx}_loc`] || '',
+      });
+    }
+  }
+
+  // Filter to only divisions that have a name or supervisor (skip empty)
+  const activeDivs = divisions.filter(d =>
+    d.sup.trim() || d.div.trim()
+  );
+
+  if (!activeDivs.length) {
+    statusEl.style.color = 'var(--red)';
+    statusEl.textContent = 'No divisions found. Fill in Division/Group supervisor names on this 203 first.';
+    return;
+  }
+
+  // Check which 204s already exist for this incident/period
+  let existingDivs = new Set();
+  try {
+    const r = await fetch(`${ICS_API}/api/ics/forms/ics204?incident_id=${INC_ID}&period=${PERIOD}`);
+    if (r.ok) {
+      const existing = await r.json();
+      existing.forEach(f => {
+        try {
+          const d = JSON.parse(f.data || '{}');
+          if (d.division_group) existingDivs.add(d.division_group.trim().toLowerCase());
+        } catch(e) {}
+      });
+    }
+  } catch(e) {}
+
+  let created = 0, skipped = 0;
+
+  for (const d of activeDivs) {
+    // Skip if a 204 already exists for this division
+    if (existingDivs.has(d.div.trim().toLowerCase())) {
+      skipped++;
+      continue;
+    }
+
+    const formData204 = {
+      incident_id:               INC_ID,
+      period:                    PERIOD,
+      incident_name:             fd.incident_name || incData.name || '',
+      operational_period_number: String(PERIOD),
+      operational_period_from:   fd.operational_period_from || '',
+      operational_period_to:     fd.operational_period_to   || '',
+      date_prepared:             fd.date_prepared || todayDate(),
+      branch:                    d.branch,
+      division_group:            d.div,
+      division_group_supervisor: d.sup,
+      ops_section_chief:         fd.ops_section_chief || '',
+      branch_director:           d.branch === 'I'  ? (fd.branch1_dir || '') :
+                                 d.branch === 'II' ? (fd.branch2_dir || '') : '',
+      primary_freq:              d.loc,
+      safety_officer:            fd.safety_officer || '',
+      prepared_by:               fd.prepared_by || '',
+    };
+
+    try {
+      const r = await fetch(`${ICS_API}/api/ics/forms/ics204`, {
+        method:  'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+          incident_id: INC_ID,
+          period:      PERIOD,
+          summary:     `204 · ${d.div} (Br ${d.branch}) · P${PERIOD}`,
+          data:        JSON.stringify(formData204),
+        })
+      });
+      if (r.ok) created++;
+    } catch(e) {}
+  }
+
+  statusEl.style.color = created > 0 ? 'var(--green)' : 'var(--muted)';
+  statusEl.innerHTML = `
+    ✓ Created ${created} ICS-204${created!==1?'s':''}.
+    ${skipped ? `${skipped} already existed (not overwritten).` : ''}
+    <a href="briefing_204a.html?incident=${INC_ID}&period=${PERIOD}"
+      style="color:var(--amber);margin-left:8px">→ Open 204A Briefing Sheet</a>
+    <a href="ics-form.html?form=204&incident=${INC_ID}&period=${PERIOD}"
+      style="color:var(--blue);margin-left:8px">→ Edit a 204</a>`;
+}
+
+
+// ── Item 24: Multi-page 204 indicator ────────────────────────────
+// Shows warning when resource count exceeds a printable page (~18 rows)
+// and offers to split into pages via a naming convention (204-A, 204-B)
+function check204PageCount() {
+  const fd = collectFormData();
+  let count = 0;
+  for (let i = 0; i < res204Count; i++) {
+    if (fd[`res204_id_${i}`] || fd[`res204_leader_${i}`]) count++;
+  }
+  const PAGE_LIMIT = 18;
+  const existingBanner = document.getElementById('page204Banner');
+  if (existingBanner) existingBanner.remove();
+  if (count > PAGE_LIMIT) {
+    const pages = Math.ceil(count / PAGE_LIMIT);
+    const banner = document.createElement('div');
+    banner.id = 'page204Banner';
+    banner.style.cssText = 'background:var(--amber-bg);border:1px solid #fcd34d;border-radius:6px;padding:8px 14px;margin-bottom:10px;font-size:12px;color:var(--amber)';
+    banner.innerHTML = `
+      ⚠ <strong>${count} resources</strong> exceed one printable page (~${PAGE_LIMIT} per page).
+      This division will need <strong>${pages} pages</strong> of ICS-204.
+      Consider splitting into multiple 204 forms using names like
+      "<strong>${fd.division_group || 'Division A'}-1</strong>" and
+      "<strong>${fd.division_group || 'Division A'}-2</strong>".`;
+    const resSection = document.querySelector('#res204Body')?.closest('.section-card');
+    if (resSection) resSection.insertAdjacentElement('beforebegin', banner);
+  }
+}
+
+// ── Item 25: IAP component checklist on ICS-202 ───────────────────
+// Reads saved form status for this incident/period to show real completion
+const IAP_COMPONENTS = [
+  { form:'ics201', label:'ICS-201 Incident Briefing',    required:false },
+  { form:'ics202', label:'ICS-202 Incident Objectives',  required:true  },
+  { form:'ics203', label:'ICS-203 Org Assignment List',  required:true  },
+  { form:'ics204', label:'ICS-204 Assignment Lists',     required:true  },
+  { form:'ics205', label:'ICS-205 Radio Comm Plan',      required:true  },
+  { form:'ics205a',label:'ICS-205A Comm List',           required:false },
+  { form:'ics206', label:'ICS-206 Medical Plan',         required:true  },
+  { form:'ics207', label:'ICS-207 Org Chart',            required:false },
+  { form:'ics208', label:'ICS-208 Site Safety Plan',     required:false },
+  { form:'ics220', label:'ICS-220 Air Ops Summary',      required:false },
+  { form:'ics230', label:'ICS-230 Meeting Schedule',     required:false },
+];
+
+async function refreshIAPChecklist() {
+  const el = document.getElementById('iapChecklist202');
+  if (!el) return;
+  if (!INC_ID) {
+    el.innerHTML = '<div style="font-size:11px;color:var(--dim)">Select an incident to check form status.</div>';
+    return;
+  }
+  el.innerHTML = '<div style="font-size:11px;color:var(--dim)">Checking saved forms…</div>';
+  try {
+    // Fetch all forms for this incident/period
+    const r = await fetch(`${ICS_API}/api/ics/forms?incident_id=${INC_ID}&period=${PERIOD}`);
+    const allForms = r.ok ? await r.json() : [];
+    const savedTypes = new Set(allForms.map(f => f.form_type));
+
+    el.innerHTML = IAP_COMPONENTS.map(comp => {
+      const saved   = savedTypes.has(comp.form);
+      const dot     = saved ? '✓' : comp.required ? '○' : '·';
+      const color   = saved ? 'var(--green)' : comp.required ? 'var(--red)' : 'var(--dim)';
+      const bg      = saved ? 'var(--green-bg)' : comp.required ? 'var(--red-bg)' : 'transparent';
+      const border  = saved ? '#86efac' : comp.required ? '#fca5a5' : 'var(--line)';
+      return `
+        <div style="display:flex;align-items:center;gap:8px;padding:5px 8px;
+                    background:${bg};border:1px solid ${border};border-radius:4px;font-size:11px">
+          <span style="color:${color};font-weight:700;font-size:13px;width:16px">${dot}</span>
+          <span style="flex:1;color:${saved?'var(--txt)':'var(--muted)'}">${comp.label}</span>
+          ${comp.required && !saved
+            ? '<span style="font-size:9px;color:var(--red);font-weight:600">REQUIRED</span>'
+            : saved
+            ? '<span style="font-size:9px;color:var(--green)">SAVED</span>'
+            : ''}
+        </div>`;
+    }).join('');
+  } catch(e) {
+    el.innerHTML = '<div style="font-size:11px;color:var(--dim)">Could not check form status.</div>';
+  }
+}
+
+// ── Item 26: Branch color-coding on ICS-204 ───────────────────────
+const BRANCH_COLORS_204 = {
+  'I':'#c0392b','II':'#e67e22','III':'#f1c40f','IV':'#27ae60',
+  'V':'#2980b9','VI':'#8e44ad','A':'#c0392b','B':'#e67e22',
+  'C':'#f1c40f','D':'#27ae60','E':'#2980b9','F':'#8e44ad',
+};
+
+function apply204BranchColor() {
+  const branchEl = document.querySelector('[data-key="branch"]');
+  const branch   = branchEl?.value?.trim().toUpperCase().replace('BRANCH','').trim() || '';
+  const color    = BRANCH_COLORS_204[branch] || '';
+  const card     = document.querySelector('.section-card');
+  if (card && color) {
+    card.style.borderLeft = `5px solid ${color}`;
+    const h2 = card.querySelector('h2');
+    if (h2) h2.style.color = color;
+  }
+  // Also update the form badge
+  if (color) {
+    const badge = document.getElementById('formBadge');
+    if (badge) badge.style.background = color;
+  }
+}
+
+// Hook into the branch field input
+document.addEventListener('input', e => {
+  if (e.target?.dataset?.key === 'branch') {
+    apply204BranchColor();
+    check204PageCount();
+  }
+  if (e.target?.dataset?.key?.startsWith('res204_')) {
+    check204PageCount();
+  }
+});
+
+// ── Item 27: Signature auto-fill from 203 assignments ─────────────
+// When a 204 is rendered, try to auto-fill the signature blocks
+// from saved 203 data for this incident/period
+async function autofill204Signatures() {
+  if (!INC_ID || FORM_NUM !== '204') return;
+  try {
+    const r = await fetch(
+      `${ICS_API}/api/ics/forms/ics203?incident_id=${INC_ID}&period=${PERIOD}`
+    );
+    if (!r.ok) return;
+    const forms = await r.json();
+    if (!forms.length) return;
+
+    // Use most recently updated 203
+    const form203Data = JSON.parse(forms[0].data || '{}');
+
+    const fill = (key, val) => {
+      if (!formData[key] && val) {
+        formData[key] = val;
+        const el = document.querySelector(`[data-key="${key}"]`);
+        if (el) el.value = val;
+      }
+    };
+
+    // Auto-fill ops section chief and branch director from 203
+    fill('ops_section_chief', form203Data.ops_section_chief);
+
+    // Match branch director based on current branch field
+    const branch = (formData.branch || '').trim().toUpperCase();
+    if (branch === 'I' || branch === '1') {
+      fill('branch_director', form203Data.branch1_dir);
+    } else if (branch === 'II' || branch === '2') {
+      fill('branch_director', form203Data.branch2_dir);
+    }
+
+    // Apply branch color
+    apply204BranchColor();
+  } catch(e) { /* non-critical */ }
+}
+
 // ══════════════════════════════════════════════════════════════════
 // ICS-203A ADDITIONAL OPERATIONAL ASSIGNMENTS
 // ══════════════════════════════════════════════════════════════════

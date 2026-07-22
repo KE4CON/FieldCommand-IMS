@@ -2091,6 +2091,23 @@ def _alter_existing_tables():
             except Exception as e:
                 log.warning(f"Could not add column {col}: {e}")
 
+    # ics_tcards — GPS tracking fields
+    tc2_existing = {r[1] for r in conn.execute("PRAGMA table_info(ics_tcards)").fetchall()}
+    gps_additions = [
+        ("lat",           "REAL DEFAULT NULL"),   -- current GPS latitude
+        ("lon",           "REAL DEFAULT NULL"),   -- current GPS longitude
+        ("gps_updated",   "TEXT DEFAULT ''"),     -- timestamp of last GPS update
+        ("gps_source",    "TEXT DEFAULT ''"),     -- 'device','manual','aprs'
+        ("location_label","TEXT DEFAULT ''"),     -- human label e.g. 'Division Alpha staging'
+    ]
+    for col, defn in gps_additions:
+        if col not in tc2_existing:
+            try:
+                conn.execute(f"ALTER TABLE ics_tcards ADD COLUMN {col} {defn.split('--')[0].strip()}")
+                conn.commit()
+            except Exception as e:
+                log.warning(f"ics_tcards.{col}: {e}")
+
     # ics_tcards — cost rate fields for cost dashboard
     tc_existing = {r[1] for r in conn.execute("PRAGMA table_info(ics_tcards)").fetchall()}
     tc_additions = [

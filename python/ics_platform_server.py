@@ -488,6 +488,23 @@ class ICSHandler(BaseHTTPRequestHandler):
                 "source_url":  "https://www.fema.gov/assistance/public/tools-resources/schedule-equipment-rates",
             })
 
+
+        # ── Resource GPS Update ─────────────────────────────────────────────
+        # GET  /api/ics/resources/gps?incident_id=X  → all resource positions
+        # POST /api/ics/resources/gps                → update position for one resource
+        elif path == "/api/ics/resources/gps":
+            inc_id = qs.get("incident_id",[""])[0]
+            rows = rows_to_list(c.execute(
+                """SELECT id, resource_name, resource_type, status, assignment,
+                          lat, lon, gps_updated, gps_source, location_label,
+                          num_personnel, leader, category
+                   FROM ics_tcards
+                   WHERE incident_id=? AND lat IS NOT NULL AND lon IS NOT NULL
+                   ORDER BY resource_type, resource_name""",
+                (inc_id,)
+            ).fetchall())
+            return self.send_json(rows)
+
         # ── Cost Dashboard API ──────────────────────────────────────────────
         # GET /api/ics/cost_summary?incident_id=X
         # Returns aggregated cost by category + burn rate
@@ -1097,6 +1114,38 @@ class ICSHandler(BaseHTTPRequestHandler):
             n = c.execute("SELECT changes()").fetchone()[0]
             c.commit()
             return self.send_json({"ok":True,"updated":n,"year":new_year})
+
+
+        # ── Resource GPS Position POST ───────────────────────────────────────
+        elif path == "/api/ics/resources/gps":
+            card_id = body.get("id")
+            lat     = body.get("lat")
+            lon     = body.get("lon")
+            if not card_id or lat is None or lon is None:
+                return self.send_json({"error":"id, lat, lon required"},400)
+            c.execute(
+                """UPDATE ics_tcards SET lat=?, lon=?, gps_updated=?,
+                   gps_source=?, location_label=?, updated=?
+                   WHERE id=?""",
+                (lat, lon, now,
+                 body.get("gps_source","manual"),
+                 body.get("location_label",""),
+                 now, card_id)
+            )
+            c.commit()
+            return self.send_json({"ok":True})
+
+        # ── Clear GPS for a resource ─────────────────────────────────────────
+        elif path == "/api/ics/resources/gps/clear":
+            card_id = body.get("id")
+            if not card_id:
+                return self.send_json({"error":"id required"},400)
+            c.execute(
+                "UPDATE ics_tcards SET lat=NULL, lon=NULL, gps_source='', location_label='' WHERE id=?",
+                (card_id,)
+            )
+            c.commit()
+            return self.send_json({"ok":True})
 
         # ── FEMA PA Cost Tracking POST ───────────────────────────────────────
         elif path == "/api/ics/fema/labor":
@@ -1899,6 +1948,23 @@ class ICSHandler(BaseHTTPRequestHandler):
                 "source_url":  "https://www.fema.gov/assistance/public/tools-resources/schedule-equipment-rates",
             })
 
+
+        # ── Resource GPS Update ─────────────────────────────────────────────
+        # GET  /api/ics/resources/gps?incident_id=X  → all resource positions
+        # POST /api/ics/resources/gps                → update position for one resource
+        elif path == "/api/ics/resources/gps":
+            inc_id = qs.get("incident_id",[""])[0]
+            rows = rows_to_list(c.execute(
+                """SELECT id, resource_name, resource_type, status, assignment,
+                          lat, lon, gps_updated, gps_source, location_label,
+                          num_personnel, leader, category
+                   FROM ics_tcards
+                   WHERE incident_id=? AND lat IS NOT NULL AND lon IS NOT NULL
+                   ORDER BY resource_type, resource_name""",
+                (inc_id,)
+            ).fetchall())
+            return self.send_json(rows)
+
         # ── Cost Dashboard API ──────────────────────────────────────────────
         # GET /api/ics/cost_summary?incident_id=X
         # Returns aggregated cost by category + burn rate
@@ -2508,6 +2574,38 @@ class ICSHandler(BaseHTTPRequestHandler):
             n = c.execute("SELECT changes()").fetchone()[0]
             c.commit()
             return self.send_json({"ok":True,"updated":n,"year":new_year})
+
+
+        # ── Resource GPS Position POST ───────────────────────────────────────
+        elif path == "/api/ics/resources/gps":
+            card_id = body.get("id")
+            lat     = body.get("lat")
+            lon     = body.get("lon")
+            if not card_id or lat is None or lon is None:
+                return self.send_json({"error":"id, lat, lon required"},400)
+            c.execute(
+                """UPDATE ics_tcards SET lat=?, lon=?, gps_updated=?,
+                   gps_source=?, location_label=?, updated=?
+                   WHERE id=?""",
+                (lat, lon, now,
+                 body.get("gps_source","manual"),
+                 body.get("location_label",""),
+                 now, card_id)
+            )
+            c.commit()
+            return self.send_json({"ok":True})
+
+        # ── Clear GPS for a resource ─────────────────────────────────────────
+        elif path == "/api/ics/resources/gps/clear":
+            card_id = body.get("id")
+            if not card_id:
+                return self.send_json({"error":"id required"},400)
+            c.execute(
+                "UPDATE ics_tcards SET lat=NULL, lon=NULL, gps_source='', location_label='' WHERE id=?",
+                (card_id,)
+            )
+            c.commit()
+            return self.send_json({"ok":True})
 
         # ── FEMA PA Cost Tracking POST ───────────────────────────────────────
         elif path == "/api/ics/fema/labor":

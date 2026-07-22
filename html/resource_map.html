@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Resource Map — FieldCommand IMS</title>
+<link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+html,body { height:100%;margin:0;padding:0; }
+#layout { display:flex;flex-direction:column;height:100vh; }
+#mapArea { display:flex;flex:1;min-height:0; }
+#map { flex:1; }
+
+/* Sidebar */
+#sidebar {
+  width:290px;flex-shrink:0;background:var(--panel);
+  border-left:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden;
+}
+.sb-header {
+  padding:10px 14px;border-bottom:1px solid var(--line);flex-shrink:0;
+  font-family:var(--font-hd);font-size:11px;letter-spacing:1px;color:var(--eoc);
+  display:flex;align-items:center;gap:8px;
+}
+.sb-body { flex:1;overflow-y:auto; }
+
+/* Resource list items */
+.res-item {
+  padding:9px 12px;border-bottom:1px solid var(--line-lt);
+  cursor:pointer;transition:background .1s;
+}
+.res-item:hover { background:var(--panel2); }
+.res-item.has-gps { border-left:3px solid var(--green); }
+.res-item.no-gps  { border-left:3px solid var(--dim); }
+.res-name { font-size:12px;font-weight:600;color:var(--txt); }
+.res-meta { font-size:10px;color:var(--muted);margin-top:2px; }
+.res-gps  { font-size:10px;font-family:var(--font-mono);color:var(--green);margin-top:2px; }
+
+/* Status colors */
+.dot {
+  width:8px;height:8px;border-radius:50%;flex-shrink:0;
+  display:inline-block;margin-right:4px;
+}
+.dot-available { background:var(--green); }
+.dot-assigned  { background:var(--eoc); }
+.dot-oos       { background:var(--red); }
+.dot-staging   { background:var(--blue); }
+
+/* Top bar */
+#topBar {
+  background:var(--panel);border-bottom:1px solid var(--line);
+  padding:7px 14px;flex-shrink:0;display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+}
+
+/* Set position modal */
+#setPosModal {
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;
+  align-items:center;justify-content:center;
+}
+
+/* Legend */
+#legend {
+  position:absolute;bottom:40px;left:10px;z-index:400;
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--r-md);
+  padding:8px 12px;font-size:11px;min-width:130px;
+}
+</style>
+</head>
+<body>
+<div id="layout">
+
+<!-- Top bar -->
+<div id="topBar">
+  <span style="font-family:var(--font-hd);font-size:11px;letter-spacing:2px;color:var(--eoc)">
+    📍 RESOURCE MAP
+  </span>
+  <select id="incidentSel"
+    style="background:var(--input-bg);border:1px solid var(--input-border);
+           color:var(--txt);padding:4px 9px;font-size:12px;border-radius:var(--r-sm)"
+    onchange="loadResources()">
+    <option value="">Select incident...</option>
+  </select>
+  <button onclick="locateMe()"
+    style="font-size:11px;padding:4px 10px">📍 My Location</button>
+  <button onclick="loadResources()"
+    style="font-size:11px;padding:4px 10px">↺ Refresh</button>
+  <label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px">
+    <input type="checkbox" id="autoRefresh" onchange="toggleAutoRefresh()">
+    Auto-refresh 30s
+  </label>
+  <div style="margin-left:auto">
+    <a href="ics/operations.html" style="font-size:11px;color:var(--muted);margin-right:10px">
+      T-Cards</a>
+    <a href="index.html" style="font-size:11px;color:var(--muted)">← Dashboard</a>
+  </div>
+</div>
+
+<!-- Map + Sidebar -->
+<div id="mapArea">
+  <div id="map"></div>
+
+  <!-- Legend -->
+  <div id="legend">
+    <div style="font-size:9px;text-transform:uppercase;letter-spacing:.08em;
+                color:var(--muted);margin-bottom:6px">Resources</div>
+    <div style="margin-bottom:3px"><span class="dot dot-available"></span>Available</div>
+    <div style="margin-bottom:3px"><span class="dot dot-assigned"></span>Assigned</div>
+    <div style="margin-bottom:3px"><span class="dot dot-staging"></span>Staging</div>
+    <div><span class="dot dot-oos"></span>Out of Service</div>
+    <div style="margin-top:8px;font-size:9px;color:var(--dim)">
+      ✕ = no GPS yet<br>Click any pin to edit
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <div class="sb-header">
+      <span>🚒 RESOURCES</span>
+      <span id="resourceCount" style="color:var(--muted);font-weight:normal;font-size:10px"></span>
+      <button onclick="setAllPositions()" style="margin-left:auto;font-size:10px;padding:2px 8px">
+        Set All…
+      </button>
+    </div>
+    <div class="sb-body" id="resourceList">
+      <div style="padding:20px;text-align:center;color:var(--muted);font-size:12px">
+        Select an incident above.
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /layout -->
+
+<!-- Set Position Modal -->
+<div id="setPosModal" onclick="if(event.target===this)closePosModal()">
+<div style="background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);
+            padding:22px;width:440px;max-width:96vw">
+  <div style="font-family:var(--font-hd);font-size:12px;color:var(--eoc);
+              letter-spacing:1px;margin-bottom:12px" id="posModalTitle">SET RESOURCE POSITION</div>
+
+  <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.7">
+    Enter coordinates manually, click the map to place, or use GPS from a device at the resource location.
+  </div>
+
+  <div class="grid-2" style="gap:10px;margin-bottom:10px">
+    <div class="fg">
+      <label>Latitude</label>
+      <input type="number" id="pos_lat" step="0.00001" placeholder="42.3089">
+    </div>
+    <div class="fg">
+      <label>Longitude</label>
+      <input type="number" id="pos_lon" step="0.00001" placeholder="-88.4356">
+    </div>
+    <div class="fg" style="grid-column:1/-1">
+      <label>Location Label (optional)</label>
+      <input type="text" id="pos_label" placeholder="e.g. Division Alpha staging area">
+    </div>
+  </div>
+
+  <div style="display:flex;gap:8px;margin-bottom:12px">
+    <button onclick="useDeviceGPS()"
+      style="flex:1;font-size:12px;padding:7px;background:var(--green-bg);
+             border-color:#86efac;color:var(--green)">
+      📍 Use Device GPS
+    </button>
+    <button onclick="enableMapClick()"
+      style="flex:1;font-size:12px;padding:7px;background:var(--blue-bg);
+             border-color:#93c5fd;color:var(--blue)">
+      🗺 Click Map to Place
+    </button>
+  </div>
+  <div id="posStatus" style="font-size:11px;color:var(--muted);margin-bottom:10px"></div>
+
+  <div style="display:flex;gap:8px">
+    <button onclick="savePosition()"
+      style="flex:1;background:var(--eoc);border-color:var(--eoc);
+             color:#fff;padding:8px;font-weight:600">
+      Save Position
+    </button>
+    <button onclick="clearPosition()"
+      style="padding:8px 14px;background:var(--red-bg);
+             border-color:#fca5a5;color:var(--red)" id="clearPosBtn">
+      Clear GPS
+    </button>
+    <button onclick="closePosModal()" style="padding:8px 14px">Cancel</button>
+  </div>
+</div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const API     = 'http://192.168.50.1:5050';
+const ICS_API = 'http://192.168.50.1:5051';
+
+let map, markersLayer;
+let allTCards    = [];   // all tcards for incident (with and without GPS)
+let editingCard  = null;
+let mapClickMode = false;
+let autoRefreshTimer = null;
+
+// ── Status → colour/dot ────────────────────────────────────────────
+const STATUS_COLOR = {
+  'Available':    '#22c55e',
+  'Assigned':     '#2558a0',
+  'Staging':      '#3b82f6',
+  'Out of Service':'#ef4444',
+  'En Route':     '#f59e0b',
+};
+const STATUS_DOT = {
+  'Available':    'dot-available',
+  'Assigned':     'dot-assigned',
+  'Staging':      'dot-staging',
+  'Out of Service':'dot-oos',
+  'En Route':     'dot-oos',
+};
+
+function statusColor(s) {
+  return STATUS_COLOR[s] || '#6b7280';
+}
+
+// ── Custom marker icon ─────────────────────────────────────────────
+function makeIcon(card) {
+  const color = statusColor(card.status);
+  const letter= (card.resource_type||'R')[0].toUpperCase();
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="40" viewBox="0 0 32 40">
+    <path d="M16 0 C7.16 0 0 7.16 0 16 C0 27 16 40 16 40 C16 40 32 27 32 16 C32 7.16 24.84 0 16 0Z"
+      fill="${color}" stroke="white" stroke-width="1.5"/>
+    <circle cx="16" cy="16" r="10" fill="white" opacity="0.9"/>
+    <text x="16" y="21" text-anchor="middle" font-family="Arial" font-weight="bold"
+      font-size="12" fill="${color}">${letter}</text>
+  </svg>`;
+  return L.divIcon({
+    html: svg,
+    iconSize:   [32,40],
+    iconAnchor: [16,40],
+    popupAnchor:[0,-42],
+    className:  '',
+  });
+}
+
+function makeNoGpsIcon(card) {
+  const color = statusColor(card.status);
+  const letter= (card.resource_type||'R')[0].toUpperCase();
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 28 28">
+    <circle cx="14" cy="14" r="13" fill="${color}" opacity="0.3"
+      stroke="${color}" stroke-width="1.5" stroke-dasharray="3,2"/>
+    <text x="14" y="19" text-anchor="middle" font-family="Arial" font-weight="bold"
+      font-size="11" fill="${color}">${letter}</text>
+  </svg>`;
+  return L.divIcon({
+    html: svg,
+    iconSize:   [28,28],
+    iconAnchor: [14,14],
+    popupAnchor:[0,-16],
+    className:  '',
+  });
+}
+
+// ── Init map ──────────────────────────────────────────────────────
+function initMap() {
+  map = L.map('map', { center:[42.31,-88.44], zoom:10 });
+  L.tileLayer(
+    'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    { attribution:'© OpenStreetMap · © CARTO', subdomains:'abcd', maxZoom:18 }
+  ).addTo(map);
+  markersLayer = L.layerGroup().addTo(map);
+}
+
+// ── Load incidents ─────────────────────────────────────────────────
+async function loadIncidents() {
+  try {
+    const r = await fetch(`${API}/api/incidents`);
+    const incs = r.ok ? await r.json() : [];
+    const sel = document.getElementById('incidentSel');
+    sel.innerHTML = '<option value="">Select incident...</option>' +
+      incs.map(i => `<option value="${i.id}">${i.name}</option>`).join('');
+    const saved = localStorage.getItem('selectedIncident');
+    if (saved) { sel.value = saved; loadResources(); }
+  } catch(e) {}
+}
+
+// ── Load resources ─────────────────────────────────────────────────
+async function loadResources() {
+  const incId = document.getElementById('incidentSel').value;
+  if (!incId) return;
+  localStorage.setItem('selectedIncident', incId);
+
+  try {
+    // Load all tcards for this incident (whether or not they have GPS)
+    const r = await fetch(`${ICS_API}/api/ics/tcards?incident_id=${incId}`);
+    allTCards = r.ok ? await r.json() : [];
+    renderAll();
+  } catch(e) {
+    document.getElementById('resourceList').innerHTML =
+      `<div style="padding:20px;color:var(--red);font-size:12px">Error: ${e.message}</div>`;
+  }
+}
+
+function renderAll() {
+  markersLayer.clearLayers();
+  renderSidebar();
+  renderMarkers();
+}
+
+// ── Sidebar ────────────────────────────────────────────────────────
+function renderSidebar() {
+  const total   = allTCards.length;
+  const withGPS = allTCards.filter(c => c.lat && c.lon).length;
+  document.getElementById('resourceCount').textContent =
+    `${withGPS}/${total} have GPS`;
+
+  if (!total) {
+    document.getElementById('resourceList').innerHTML =
+      '<div style="padding:20px;text-align:center;color:var(--muted);font-size:12px">No resources on T-card board.</div>';
+    return;
+  }
+
+  document.getElementById('resourceList').innerHTML = allTCards.map(card => {
+    const hasGPS = !!(card.lat && card.lon);
+    const dot    = STATUS_DOT[card.status] || 'dot-available';
+    return `
+      <div class="res-item ${hasGPS?'has-gps':'no-gps'}"
+        onclick="openPosModal('${card.id}')">
+        <div class="res-name">
+          <span class="dot ${dot}"></span>${card.resource_name}
+        </div>
+        <div class="res-meta">
+          ${card.resource_type||'Resource'} · ${card.status||'Unknown'}
+          ${card.assignment ? ' · <em>' + card.assignment + '</em>' : ''}
+          ${card.num_personnel>0 ? ` · ${card.num_personnel} personnel` : ''}
+        </div>
+        ${hasGPS ? `
+          <div class="res-gps">
+            📍 ${parseFloat(card.lat).toFixed(4)}, ${parseFloat(card.lon).toFixed(4)}
+            ${card.location_label ? ` · ${card.location_label}` : ''}
+            ${card.gps_updated ? `<br><span style="color:var(--dim);font-size:9px">
+              Updated ${new Date(card.gps_updated).toLocaleTimeString()}</span>` : ''}
+          </div>` : `
+          <div style="font-size:10px;color:var(--dim);margin-top:2px">
+            No GPS — click to set position
+          </div>`}
+      </div>`;
+  }).join('');
+}
+
+// ── Map markers ────────────────────────────────────────────────────
+function renderMarkers() {
+  const bounds = [];
+  allTCards.forEach(card => {
+    const hasGPS = !!(card.lat && card.lon);
+
+    if (hasGPS) {
+      const lat = parseFloat(card.lat);
+      const lon = parseFloat(card.lon);
+      const icon = makeIcon(card);
+      const marker = L.marker([lat, lon], {icon})
+        .bindPopup(makePopup(card))
+        .addTo(markersLayer);
+      bounds.push([lat, lon]);
+    }
+    // No-GPS resources: show a dashed-circle near ICP if known
+    // (We skip placing them with no coords)
+  });
+
+  // Fit map to all positioned resources
+  if (bounds.length === 1) {
+    map.setView(bounds[0], 13);
+  } else if (bounds.length > 1) {
+    map.fitBounds(bounds, { padding:[40,40] });
+  }
+}
+
+function makePopup(card) {
+  const ts = card.gps_updated
+    ? new Date(card.gps_updated).toLocaleTimeString()
+    : 'Unknown';
+  return `
+    <div style="min-width:200px;font-family:sans-serif">
+      <div style="font-weight:700;font-size:13px;margin-bottom:4px">${card.resource_name}</div>
+      <div style="font-size:11px;color:#666;margin-bottom:4px">
+        ${card.resource_type||''} · <strong>${card.status||''}</strong>
+        ${card.assignment ? '<br>Assignment: ' + card.assignment : ''}
+        ${card.num_personnel>0 ? '<br>Personnel: ' + card.num_personnel : ''}
+      </div>
+      ${card.location_label
+        ? `<div style="font-size:11px;margin-bottom:4px">📍 ${card.location_label}</div>` : ''}
+      <div style="font-size:10px;color:#888;margin-bottom:8px">
+        GPS: ${parseFloat(card.lat).toFixed(5)}, ${parseFloat(card.lon).toFixed(5)}<br>
+        Updated: ${ts} · Source: ${card.gps_source||'manual'}
+      </div>
+      <button onclick="openPosModal('${card.id}')"
+        style="width:100%;padding:5px;background:#1a3a6b;border:none;
+               color:#fff;border-radius:4px;cursor:pointer;font-size:11px">
+        ✏ Update Position
+      </button>
+    </div>`;
+}
+
+// ── Set position modal ─────────────────────────────────────────────
+function openPosModal(cardId) {
+  editingCard = allTCards.find(c => c.id === cardId);
+  if (!editingCard) return;
+  mapClickMode = false;
+
+  document.getElementById('posModalTitle').textContent =
+    `📍 ${editingCard.resource_name}`;
+  document.getElementById('pos_lat').value   = editingCard.lat   || '';
+  document.getElementById('pos_lon').value   = editingCard.lon   || '';
+  document.getElementById('pos_label').value = editingCard.location_label || '';
+  document.getElementById('posStatus').textContent = '';
+  document.getElementById('clearPosBtn').style.display =
+    (editingCard.lat && editingCard.lon) ? '' : 'none';
+
+  document.getElementById('setPosModal').style.display = 'flex';
+}
+
+function closePosModal() {
+  document.getElementById('setPosModal').style.display = 'none';
+  disableMapClick();
+  editingCard = null;
+}
+
+function useDeviceGPS() {
+  const statusEl = document.getElementById('posStatus');
+  statusEl.textContent = 'Getting GPS…';
+  if (!navigator.geolocation) {
+    statusEl.textContent = 'GPS not available on this device.';
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      document.getElementById('pos_lat').value = pos.coords.latitude.toFixed(6);
+      document.getElementById('pos_lon').value = pos.coords.longitude.toFixed(6);
+      statusEl.textContent = `✓ GPS: ±${Math.round(pos.coords.accuracy)}m accuracy`;
+    },
+    err => { statusEl.textContent = 'GPS error: ' + err.message; }
+  );
+}
+
+function enableMapClick() {
+  mapClickMode = true;
+  document.getElementById('posStatus').textContent = '← Click on the map to place this resource';
+  document.getElementById('setPosModal').style.display = 'none';
+  map.getContainer().style.cursor = 'crosshair';
+  map.once('click', e => {
+    document.getElementById('pos_lat').value = e.latlng.lat.toFixed(6);
+    document.getElementById('pos_lon').value = e.latlng.lng.toFixed(6);
+    document.getElementById('setPosModal').style.display = 'flex';
+    document.getElementById('posStatus').textContent =
+      `✓ ${e.latlng.lat.toFixed(5)}, ${e.latlng.lng.toFixed(5)}`;
+    disableMapClick();
+  });
+}
+
+function disableMapClick() {
+  mapClickMode = false;
+  map.getContainer().style.cursor = '';
+}
+
+async function savePosition() {
+  const lat   = parseFloat(document.getElementById('pos_lat').value);
+  const lon   = parseFloat(document.getElementById('pos_lon').value);
+  const label = document.getElementById('pos_label').value.trim();
+
+  if (!editingCard || isNaN(lat) || isNaN(lon)) {
+    document.getElementById('posStatus').textContent = 'Enter valid coordinates.';
+    return;
+  }
+  if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+    document.getElementById('posStatus').textContent = 'Coordinates out of range.';
+    return;
+  }
+
+  try {
+    const r = await fetch(`${ICS_API}/api/ics/resources/gps`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        id: editingCard.id, lat, lon,
+        gps_source: 'manual', location_label: label,
+      })
+    });
+    if (r.ok) {
+      closePosModal();
+      await loadResources();
+    } else {
+      document.getElementById('posStatus').textContent = 'Save failed.';
+    }
+  } catch(e) {
+    document.getElementById('posStatus').textContent = 'Error: ' + e.message;
+  }
+}
+
+async function clearPosition() {
+  if (!editingCard) return;
+  await fetch(`${ICS_API}/api/ics/resources/gps/clear`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ id: editingCard.id })
+  });
+  closePosModal();
+  await loadResources();
+}
+
+// ── Set all positions modal ────────────────────────────────────────
+function setAllPositions() {
+  alert('Click any resource in the sidebar to set its position, or use the map-click feature to place it by clicking the map.');
+}
+
+// ── "My location" button ───────────────────────────────────────────
+function locateMe() {
+  if (!navigator.geolocation) { alert('GPS not available'); return; }
+  navigator.geolocation.getCurrentPosition(pos => {
+    map.setView([pos.coords.latitude, pos.coords.longitude], 13);
+    L.circleMarker([pos.coords.latitude, pos.coords.longitude], {
+      radius:8, color:'#f59e0b', fillColor:'#fbbf24',
+      fillOpacity:.8, weight:2,
+    }).addTo(map).bindPopup('Your location').openPopup();
+  });
+}
+
+// ── Auto-refresh ───────────────────────────────────────────────────
+function toggleAutoRefresh() {
+  const on = document.getElementById('autoRefresh').checked;
+  if (on) {
+    autoRefreshTimer = setInterval(loadResources, 30000);
+  } else {
+    clearInterval(autoRefreshTimer);
+    autoRefreshTimer = null;
+  }
+}
+
+// ── Init ───────────────────────────────────────────────────────────
+initMap();
+loadIncidents();
+</script>
+</body>
+</html>

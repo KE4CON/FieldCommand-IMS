@@ -232,6 +232,11 @@
   .form-header, .action-bar, .form-wrap,
   .no-print, .variant-pills { display: none !important; }
   .ics-print { display: block !important; margin: 0; border: none; }
+  /* Show signature images in print */
+  #sigModal { display: none !important; }
+  [id^="sigPreview_"] { display: block !important; }
+  button[onclick^="openSigPad"],
+  button[onclick^="clearSig"] { display: none !important; }
 }
 </style>
 </head>
@@ -530,6 +535,98 @@ function rotateImg(key, deg) {
   const el = document.getElementById('imgEl_'+key);
   if (el) el.style.transform = `rotate(${imgRotations[key]}deg)`;
 }
+
+// ── Digital Signature Capture ──────────────────────────────────────
+let _sigKey = null, _sigCanvas = null, _sigCtx = null;
+let _sigDrawing = false, _sigHasData = false;
+
+function openSigPad(key) {
+  _sigKey = key; _sigHasData = false;
+  document.getElementById('sigModal')?.remove();
+  const modal = document.createElement('div');
+  modal.id = 'sigModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:800;display:flex;align-items:center;justify-content:center';
+  const signer = (formData[key]||'').trim();
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:10px;padding:20px;width:520px;max-width:97vw;box-shadow:0 8px 32px rgba(0,0,0,.4)">
+      <div style="font-size:11px;font-weight:700;color:#333;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">✍ ELECTRONIC SIGNATURE</div>
+      ${signer?`<div style="font-size:11px;color:#666;margin-bottom:10px">Signing as: <strong>${signer}</strong></div>`:''}
+      <canvas id="sigCanvas" width="476" height="160"
+        style="border:1px solid #ccc;border-radius:4px;cursor:crosshair;touch-action:none;display:block;background:#fff;width:100%"></canvas>
+      <div style="font-size:10px;color:#999;margin-top:4px;margin-bottom:12px">Sign above with mouse, touch, or stylus</div>
+      <div style="display:flex;gap:8px">
+        <button onclick="acceptSig()"
+          style="flex:1;padding:9px;background:#1a3a6b;border:none;color:#fff;border-radius:4px;font-weight:600;cursor:pointer;font-size:13px">
+          ✓ Accept Signature</button>
+        <button onclick="clearSigPad()" style="padding:9px 14px;background:#f0f0f0;border:1px solid #ccc;border-radius:4px;cursor:pointer">Clear</button>
+        <button onclick="document.getElementById('sigModal').remove()" style="padding:9px 14px;background:#f0f0f0;border:1px solid #ccc;border-radius:4px;cursor:pointer">Cancel</button>
+      </div>
+    </div>`;
+  modal.onclick = e => { if (e.target===modal) modal.remove(); };
+  document.body.appendChild(modal);
+  requestAnimationFrame(() => {
+    _sigCanvas = document.getElementById('sigCanvas');
+    _sigCtx = _sigCanvas.getContext('2d');
+    _sigCtx.strokeStyle='#1a1a1a'; _sigCtx.lineWidth=2.2;
+    _sigCtx.lineCap='round'; _sigCtx.lineJoin='round';
+    _sigCanvas.addEventListener('mousedown',  sigStart);
+    _sigCanvas.addEventListener('mousemove',  sigDraw);
+    _sigCanvas.addEventListener('mouseup',    sigEnd);
+    _sigCanvas.addEventListener('mouseleave', sigEnd);
+    _sigCanvas.addEventListener('touchstart', sigTouchStart, {passive:false});
+    _sigCanvas.addEventListener('touchmove',  sigTouchMove,  {passive:false});
+    _sigCanvas.addEventListener('touchend',   sigEnd);
+  });
+}
+
+function sigPos(e) {
+  const r=_sigCanvas.getBoundingClientRect();
+  return {x:(e.clientX-r.left)*(_sigCanvas.width/r.width),
+          y:(e.clientY-r.top)*(_sigCanvas.height/r.height)};
+}
+function sigStart(e) { _sigDrawing=true; const p=sigPos(e); _sigCtx.beginPath(); _sigCtx.moveTo(p.x,p.y); }
+function sigDraw(e)  { if(!_sigDrawing) return; const p=sigPos(e); _sigCtx.lineTo(p.x,p.y); _sigCtx.stroke(); _sigHasData=true; }
+function sigEnd()    { _sigDrawing=false; _sigCtx?.beginPath(); }
+function sigTouchStart(e) { e.preventDefault(); const t=e.touches[0]; sigStart({clientX:t.clientX,clientY:t.clientY}); }
+function sigTouchMove(e)  { e.preventDefault(); const t=e.touches[0]; sigDraw({clientX:t.clientX,clientY:t.clientY}); }
+function clearSigPad() { if(_sigCtx) { _sigCtx.clearRect(0,0,_sigCanvas.width,_sigCanvas.height); _sigHasData=false; } }
+
+function acceptSig() {
+  if (!_sigHasData) { alert('Please sign before accepting.'); return; }
+  const off = document.createElement('canvas');
+  off.width=_sigCanvas.width; off.height=_sigCanvas.height;
+  const ctx=off.getContext('2d');
+  ctx.fillStyle='#ffffff'; ctx.fillRect(0,0,off.width,off.height);
+  ctx.drawImage(_sigCanvas,0,0);
+  const dataUrl = off.toDataURL('image/png');
+  formData[_sigKey+'_sig'] = dataUrl;
+  markDirty();
+  updateSigPreview(_sigKey, dataUrl);
+  document.getElementById('sigModal').remove();
+}
+
+function updateSigPreview(key, dataUrl) {
+  const preview = document.getElementById('sigPreview_'+key);
+  if (!preview) return;
+  preview.style.display='';
+  preview.innerHTML=`<img src="${dataUrl}" alt="Signature" style="max-width:100%;height:auto;display:block">`;
+}
+
+function clearSig(key) {
+  delete formData[key+'_sig'];
+  markDirty();
+  const p=document.getElementById('sigPreview_'+key);
+  if (p) { p.style.display='none'; p.innerHTML=''; }
+}
+
+function restoreSignatures() {
+  Object.keys(formData).forEach(k => {
+    if (k.endsWith('_sig') && formData[k]) {
+      updateSigPreview(k.replace('_sig',''), formData[k]);
+    }
+  });
+}
+
 // Restore saved images on form load
 function restoreImages() {
   Object.keys(formData).forEach(k => {
@@ -550,6 +647,33 @@ function field(key, label, type='text', placeholder='', opts={}) {
   const inner = type === 'textarea'
     ? `<textarea data-key="${key}" rows="${rows}" placeholder="${placeholder}">${v}</textarea>`
     : `<input type="${type}" data-key="${key}" value="${v}" placeholder="${placeholder}">`;
+
+  // Signature-eligible fields get a Sign button and a sig preview area
+  const isSigField = /^(prepared_by|approved_by|signed_by)/.test(key) && type === 'text';
+  if (isSigField) {
+    const sigData = formData[key + '_sig'] || '';
+    return `<div class="fg">
+      <label>${label}</label>
+      <div style="display:flex;gap:6px;align-items:center">
+        ${inner}
+        <button type="button" onclick="openSigPad('${key}')"
+          style="flex-shrink:0;font-size:10px;padding:3px 9px;
+                 background:rgba(26,58,107,0.1);border:1px solid rgba(26,58,107,0.3);
+                 color:var(--blue);border-radius:3px;white-space:nowrap">
+          ✍ Sign
+        </button>
+      </div>
+      <div id="sigPreview_${key}"
+        style="${sigData ? '' : 'display:none;'}margin-top:4px;border:1px solid var(--line);
+               border-radius:3px;background:#fff;padding:2px;max-width:240px">
+        ${sigData ? `<img src="${sigData}" alt="Signature" style="max-width:100%;height:auto;display:block">` : ''}
+      </div>
+      ${sigData ? `<button type="button" onclick="clearSig('${key}')"
+        style="font-size:9px;color:var(--red);background:none;border:none;
+               cursor:pointer;margin-top:2px;padding:0">✕ Clear signature</button>` : ''}
+    </div>`;
+  }
+
   return `<div class="fg"><label>${label}</label>${inner}</div>`;
 }
 
@@ -1045,6 +1169,8 @@ function renderForm() {
   if (FORM_NUM === '204') {
     setTimeout(() => { apply204BranchColor(); autofill204Signatures(); check204PageCount(); }, 300);
   }
+  // Always restore signatures on any form load
+  setTimeout(restoreSignatures, 150);
 }
 
 function buildPrintView() {

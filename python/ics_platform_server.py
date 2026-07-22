@@ -396,6 +396,33 @@ class ICSHandler(BaseHTTPRequestHandler):
 
 
 
+
+        # ── Incident Templates API ──────────────────────────────────────────
+        # GET  /api/ics/templates              → list all enabled templates
+        # GET  /api/ics/templates/<id>         → get single template
+        # POST /api/ics/templates              → create or update template
+        # POST /api/ics/templates/import       → import JSON array of templates
+        # DELETE via do_DELETE /api/ics/templates/<id>
+
+        elif path == "/api/ics/templates":
+            rows = rows_to_list(
+                c.execute("SELECT * FROM incident_templates WHERE enabled=1 ORDER BY sort_order,name").fetchall()
+            )
+            for r in rows:
+                try: r["data"] = json.loads(r.get("data","{}"))
+                except Exception: r["data"] = {}
+            return self.send_json(rows)
+
+        elif path.startswith("/api/ics/templates/") and path != "/api/ics/templates/import":
+            tid = path.split("/api/ics/templates/")[1]
+            row = c.execute("SELECT * FROM incident_templates WHERE id=?", (tid,)).fetchone()
+            if not row:
+                return self.send_json({"error":"Not found"},404)
+            r = dict(row)
+            try: r["data"] = json.loads(r.get("data","{}"))
+            except Exception: r["data"] = {}
+            return self.send_json(r)
+
         # ── FEMA Equipment Rates API ─────────────────────────────────────────
         elif path == "/api/ics/fema/rates":
             import datetime as _dt
@@ -894,6 +921,51 @@ class ICSHandler(BaseHTTPRequestHandler):
                              "resource_types","repeaters","net_entries"]})
 
 
+
+        # ── Incident Templates POST (create / update) ────────────────────────
+        elif path == "/api/ics/templates":
+            tid = body.get("id") or f"tmpl-{int(time.time()*1000)}"
+            data_str = json.dumps(body.get("data", {}))
+            existing = c.execute("SELECT id FROM incident_templates WHERE id=?", (tid,)).fetchone()
+            if existing:
+                c.execute("""UPDATE incident_templates SET
+                    name=?,icon=?,type=?,summary=?,sort_order=?,enabled=?,data=?,updated=?
+                    WHERE id=?""",
+                    (body.get("name","Untitled"), body.get("icon","📋"),
+                     body.get("type",""), body.get("summary",""),
+                     body.get("sort_order",99), body.get("enabled",1),
+                     data_str, now, tid))
+            else:
+                c.execute("""INSERT INTO incident_templates
+                    (id,name,icon,type,summary,sort_order,is_builtin,enabled,data,created,updated)
+                    VALUES (?,?,?,?,?,?,0,1,?,?,?)""",
+                    (tid, body.get("name","Untitled"), body.get("icon","📋"),
+                     body.get("type",""), body.get("summary",""),
+                     body.get("sort_order",99), data_str, now, now))
+            c.commit()
+            return self.send_json({"ok":True,"id":tid})
+
+        # ── Import templates from JSON ────────────────────────────────────────
+        elif path == "/api/ics/templates/import":
+            templates = body if isinstance(body, list) else body.get("templates", [])
+            imported = 0
+            for t in templates:
+                tid = t.get("id") or f"tmpl-{int(time.time()*1000)}-{imported}"
+                # Check for ID collision — append _imported if needed
+                existing = c.execute("SELECT id FROM incident_templates WHERE id=?", (tid,)).fetchone()
+                if existing:
+                    tid = tid + "_imported"
+                c.execute("""INSERT OR REPLACE INTO incident_templates
+                    (id,name,icon,type,summary,sort_order,is_builtin,enabled,data,created,updated)
+                    VALUES (?,?,?,?,?,?,0,1,?,?,?)""",
+                    (tid, t.get("name","Imported"), t.get("icon","📋"),
+                     t.get("type",""), t.get("summary",""),
+                     t.get("sort_order",99),
+                     json.dumps(t.get("data",{})), now, now))
+                imported += 1
+            c.commit()
+            return self.send_json({"ok":True,"imported":imported})
+
         # ── FEMA Equipment Rates POST (add/update custom rate) ──────────────
         elif path == "/api/ics/fema/rates":
             rid = body.get("id")
@@ -1204,6 +1276,12 @@ class ICSHandler(BaseHTTPRequestHandler):
         elif path.startswith("/api/ics/incidents/"):
             inc_id=path.split("/api/ics/incidents/")[1]
             c.execute("DELETE FROM incidents WHERE id=?",(inc_id,))
+        elif path.startswith("/api/ics/templates/"):
+            tid = path.split("/api/ics/templates/")[1]
+            c.execute("UPDATE incident_templates SET enabled=0 WHERE id=?", (tid,))
+            c.commit()
+            return self.send_json({"ok":True})
+
         elif path.startswith("/api/ics/fema/labor/"):
             c.execute("DELETE FROM fema_labor WHERE id=?",
                       (path.split("/api/ics/fema/labor/")[1],))

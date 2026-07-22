@@ -1,3 +1,4 @@
+import json
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # FieldCommand IMS — Copyright (C) 2026 James Rospopo KE4CON
 # Developed for McHenry County Emergency Services Volunteers (K9ESV)
@@ -520,6 +521,27 @@ CREATE TABLE IF NOT EXISTS checkin_entries (
 );
 CREATE INDEX IF NOT EXISTS idx_ci_incident ON checkin_entries(incident_id);
 CREATE INDEX IF NOT EXISTS idx_ci_status   ON checkin_entries(status);
+-- ── Incident Event Templates ────────────────────────────────────────────────────
+-- User-editable pre-planned event templates. Agencies can edit the built-in
+-- templates, add their own, delete ones they don't use, and import/export JSON.
+-- The 'data' column holds the full template definition as JSON.
+-- Built-in templates are seeded on first run; is_builtin=1 distinguishes them
+-- from agency-created ones (cosmetic only — both are fully editable/deletable).
+
+CREATE TABLE IF NOT EXISTS incident_templates (
+    id          TEXT PRIMARY KEY,           -- e.g. 'shelter', 'sar', or uuid for custom
+    name        TEXT NOT NULL DEFAULT '',   -- display name
+    icon        TEXT DEFAULT '📋',
+    type        TEXT DEFAULT '',            -- incident type label
+    summary     TEXT DEFAULT '',
+    sort_order  INTEGER DEFAULT 99,
+    is_builtin  INTEGER DEFAULT 0,          -- 1 = seeded with system, 0 = agency-created
+    enabled     INTEGER DEFAULT 1,
+    data        TEXT NOT NULL DEFAULT '{}', -- full JSON: objectives, resources, channels, org
+    created     TEXT NOT NULL,
+    updated     TEXT NOT NULL
+);
+
 -- ── FEMA Schedule of Equipment Rates ──────────────────────────────────────────
 -- Pre-populated with common emergency management equipment from the current
 -- FEMA Schedule of Equipment Rates. These are eligible reimbursement rates
@@ -1436,6 +1458,499 @@ def startup():
     _seed_defaults()
 
 
+
+
+BUILTIN_TEMPLATES = [
+  {
+    "id": "shelter",
+    "name": "Shelter Activation",
+    "icon": "\ud83c\udfe0",
+    "type": "Mass Care \u2014 Shelter",
+    "sort_order": 1,
+    "is_builtin": 1,
+    "summary": "Emergency shelter activation for displaced residents.",
+    "data": {
+      "objectives": [
+        "Open and staff emergency shelter within 2 hours of notification.",
+        "Register all shelter occupants using ARC or agency registration system.",
+        "Provide cots, blankets, food, and water to all occupants.",
+        "Screen all occupants for medical needs; refer to medical unit.",
+        "Establish security perimeter and check-in/check-out procedure.",
+        "Coordinate with Red Cross / voluntary agencies for feeding and supplies.",
+        "Provide daily situation reports to EOC every 12 hours."
+      ],
+      "safety_message": "Ensure all shelter workers complete sign-in. No media access to shelter floor without PIO escort. Report any security concerns immediately to the Shelter Manager.",
+      "resources": [
+        {
+          "name": "Shelter Manager",
+          "type": "Personnel",
+          "qty": 1
+        },
+        {
+          "name": "Registration Team",
+          "type": "Personnel",
+          "qty": 4
+        },
+        {
+          "name": "Medical Screener",
+          "type": "Personnel",
+          "qty": 2
+        },
+        {
+          "name": "Security Personnel",
+          "type": "Personnel",
+          "qty": 2
+        },
+        {
+          "name": "Cots (sets of 50)",
+          "type": "Equipment",
+          "qty": 4
+        },
+        {
+          "name": "Blanket Packs",
+          "type": "Equipment",
+          "qty": 200
+        }
+      ],
+      "channels": [
+        {
+          "name": "Shelter Command",
+          "rx": "155.3400",
+          "tx": "155.3400",
+          "tone": "",
+          "mode": "FM",
+          "function": "Command"
+        },
+        {
+          "name": "Medical",
+          "rx": "155.3400",
+          "tx": "155.3400",
+          "tone": "",
+          "mode": "FM",
+          "function": "Medical"
+        }
+      ],
+      "org": {
+        "ops_section_chief": "Shelter Manager",
+        "safety_officer": "Safety Officer",
+        "public_info_officer": "PIO \u2014 coordinate all media at EOC",
+        "branch1_label": "Shelter Operations",
+        "div_a_label": "Registration / Check-In",
+        "div_b_label": "Feeding / Supplies",
+        "div_c_label": "Medical Screening",
+        "div_d_label": "Security"
+      }
+    }
+  },
+  {
+    "id": "sar",
+    "name": "Search & Rescue",
+    "icon": "\ud83d\udd26",
+    "type": "SAR",
+    "sort_order": 2,
+    "is_builtin": 1,
+    "summary": "Search and Rescue operation for missing subject(s).",
+    "data": {
+      "objectives": [
+        "Establish ICP and communications within 30 minutes of activation.",
+        "Obtain all available information on missing subject(s): description, last known point (LKP), travel plans.",
+        "Assign search teams to high-probability areas first.",
+        "Maintain radio contact with all field teams at minimum 30-minute intervals.",
+        "Establish medical staging area and coordinate with receiving hospital.",
+        "Preserve evidence integrity in all search areas.",
+        "Brief family liaison every hour on search progress.",
+        "Document all negative search areas with GPS track logs."
+      ],
+      "safety_message": "All field teams must check in and check out with Base Camp. No solo searchers. All personnel must have personal locator beacon or GPS tracker. Establish STOP protocol if searcher is overdue.",
+      "resources": [
+        {
+          "name": "SAR Team Alpha",
+          "type": "Crew",
+          "qty": 6
+        },
+        {
+          "name": "SAR Team Bravo",
+          "type": "Crew",
+          "qty": 6
+        },
+        {
+          "name": "K9 Unit",
+          "type": "Crew",
+          "qty": 2
+        },
+        {
+          "name": "Medical Unit",
+          "type": "Personnel",
+          "qty": 2
+        },
+        {
+          "name": "Family Liaison",
+          "type": "Personnel",
+          "qty": 1
+        },
+        {
+          "name": "Base Camp ATV",
+          "type": "Vehicle",
+          "qty": 2
+        }
+      ],
+      "channels": [
+        {
+          "name": "SAR Command",
+          "rx": "155.3400",
+          "tx": "155.3400",
+          "tone": "",
+          "mode": "FM",
+          "function": "Command"
+        },
+        {
+          "name": "SAR Tactical",
+          "rx": "155.3400",
+          "tx": "155.3400",
+          "tone": "",
+          "mode": "FM",
+          "function": "Tactical"
+        },
+        {
+          "name": "Medical",
+          "rx": "155.3400",
+          "tx": "155.3400",
+          "tone": "",
+          "mode": "FM",
+          "function": "Medical"
+        }
+      ],
+      "org": {
+        "ops_section_chief": "Operations Section Chief",
+        "safety_officer": "SAR Safety Officer",
+        "public_info_officer": "PIO \u2014 no subject info to media without IC approval",
+        "branch1_label": "Field Search",
+        "div_a_label": "Grid Search Alpha (High Probability Area)",
+        "div_b_label": "Grid Search Bravo",
+        "div_c_label": "K9 Search",
+        "div_d_label": "Medical / Base Camp"
+      }
+    }
+  },
+  {
+    "id": "severe_weather",
+    "name": "Severe Weather",
+    "icon": "\u26c8",
+    "type": "Severe Weather Response",
+    "sort_order": 3,
+    "is_builtin": 1,
+    "summary": "Response to severe weather event \u2014 tornado, flooding, or winter storm.",
+    "data": {
+      "objectives": [
+        "Activate EOC to Level 2 / Level 3 as warranted by NWS warnings.",
+        "Monitor NWS alerts continuously; brief IC on all new watches and warnings.",
+        "Coordinate shelter-in-place or evacuation orders with jurisdiction leadership.",
+        "Establish damage assessment teams for post-event windshield survey.",
+        "Coordinate road closures with Public Works and law enforcement.",
+        "Assess utility outages; coordinate with electric, gas, and water utilities.",
+        "Activate warming / cooling centers as weather dictates.",
+        "Submit initial damage report to state EM within 4 hours of event."
+      ],
+      "safety_message": "No personnel in the field during tornado warning. All outdoor operations suspend during lightning within 10 miles. Use Wireless Emergency Alerts as primary public warning system.",
+      "resources": [
+        {
+          "name": "EOC Team",
+          "type": "Personnel",
+          "qty": 6
+        },
+        {
+          "name": "Damage Assessment",
+          "type": "Personnel",
+          "qty": 4
+        },
+        {
+          "name": "Field Liaison",
+          "type": "Vehicle",
+          "qty": 2
+        },
+        {
+          "name": "Generator (50kW)",
+          "type": "Equipment",
+          "qty": 1
+        }
+      ],
+      "channels": [
+        {
+          "name": "EOC Command",
+          "rx": "155.3400",
+          "tx": "155.3400",
+          "tone": "",
+          "mode": "FM",
+          "function": "Command"
+        },
+        {
+          "name": "Field Ops",
+          "rx": "155.3400",
+          "tx": "155.3400",
+          "tone": "",
+          "mode": "FM",
+          "function": "Tactical"
+        }
+      ],
+      "org": {
+        "ops_section_chief": "Operations Chief",
+        "safety_officer": "Safety Officer",
+        "public_info_officer": "PIO \u2014 coordinate with NWS for public messaging",
+        "branch1_label": "Field Operations",
+        "div_a_label": "Damage Assessment North",
+        "div_b_label": "Damage Assessment South",
+        "div_c_label": "Road Closures / Traffic",
+        "div_d_label": "Utilities Coordination"
+      }
+    }
+  },
+  {
+    "id": "mass_gathering",
+    "name": "Mass Gathering / Event",
+    "icon": "\ud83d\udc65",
+    "type": "Mass Gathering \u2014 Planned Event",
+    "sort_order": 4,
+    "is_builtin": 1,
+    "summary": "Medical and safety coverage for a planned mass gathering event.",
+    "data": {
+      "objectives": [
+        "Establish first aid stations at designated locations prior to event start.",
+        "Maintain adequate EMS staffing for anticipated crowd size.",
+        "Coordinate with venue security and law enforcement on crowd management plan.",
+        "Establish direct communication link with receiving hospitals.",
+        "Conduct patient transport to hospital when first aid capacity is exceeded.",
+        "Monitor crowd density and advise IC on ingress / egress issues.",
+        "Brief all medical personnel on mass casualty protocol prior to event."
+      ],
+      "safety_message": "Know the MCI activation threshold for this event. All first aid personnel must have valid CPR and first aid certification. Identify nearest AED locations at event start.",
+      "resources": [
+        {
+          "name": "First Aid Station Alpha",
+          "type": "Personnel",
+          "qty": 3
+        },
+        {
+          "name": "First Aid Station Bravo",
+          "type": "Personnel",
+          "qty": 3
+        },
+        {
+          "name": "Roving Medical",
+          "type": "Personnel",
+          "qty": 2
+        },
+        {
+          "name": "EMS Unit",
+          "type": "Vehicle",
+          "qty": 1
+        },
+        {
+          "name": "Security Liaison",
+          "type": "Personnel",
+          "qty": 1
+        }
+      ],
+      "channels": [
+        {
+          "name": "Medical Command",
+          "rx": "155.3400",
+          "tx": "155.3400",
+          "tone": "",
+          "mode": "FM",
+          "function": "Command"
+        },
+        {
+          "name": "Venue Security",
+          "rx": "",
+          "tx": "",
+          "tone": "",
+          "mode": "FM",
+          "function": "Liaison"
+        }
+      ],
+      "org": {
+        "ops_section_chief": "Event Medical Director",
+        "safety_officer": "Safety Officer",
+        "public_info_officer": "Venue PIO (coordinate)",
+        "branch1_label": "Medical Operations",
+        "div_a_label": "First Aid Stations",
+        "div_b_label": "EMS Transport",
+        "div_c_label": "Security Liaison"
+      }
+    }
+  },
+  {
+    "id": "hazmat",
+    "name": "HazMat / Spill",
+    "icon": "\u2623",
+    "type": "HazMat Response",
+    "sort_order": 5,
+    "is_builtin": 1,
+    "summary": "Hazardous materials release \u2014 chemical, biological, or radiological.",
+    "data": {
+      "objectives": [
+        "Identify material(s) involved using placards, shipping papers, MSDS, or CHEMTREC.",
+        "Establish hot / warm / cold zones; keep all non-HazMat personnel out of hot zone.",
+        "Establish decontamination corridor before any entry team deployment.",
+        "Notify CHEMTREC (1-800-424-9300), state environmental agency, and EPA as required.",
+        "Coordinate evacuation or shelter-in-place for affected area.",
+        "Establish medical monitoring for all entry personnel.",
+        "Document all personnel entries into hot zone on ICS-214."
+      ],
+      "safety_message": "Level A / B / C PPE required in hot and warm zones as determined by HazMat Group Supervisor. No personnel enter hot zone without buddy system and backup team staged. Decon all personnel before leaving warm zone.",
+      "resources": [
+        {
+          "name": "HazMat Entry Team",
+          "type": "Crew",
+          "qty": 4
+        },
+        {
+          "name": "Decon Team",
+          "type": "Crew",
+          "qty": 4
+        },
+        {
+          "name": "Medical Monitor",
+          "type": "Personnel",
+          "qty": 2
+        },
+        {
+          "name": "HazMat Unit",
+          "type": "Vehicle",
+          "qty": 1
+        },
+        {
+          "name": "Decon Trailer",
+          "type": "Vehicle",
+          "qty": 1
+        }
+      ],
+      "channels": [
+        {
+          "name": "HazMat Command",
+          "rx": "155.3400",
+          "tx": "155.3400",
+          "tone": "",
+          "mode": "FM",
+          "function": "Command"
+        },
+        {
+          "name": "Entry Team",
+          "rx": "155.3400",
+          "tx": "155.3400",
+          "tone": "",
+          "mode": "FM",
+          "function": "Tactical"
+        },
+        {
+          "name": "Medical",
+          "rx": "155.3400",
+          "tx": "155.3400",
+          "tone": "",
+          "mode": "FM",
+          "function": "Medical"
+        }
+      ],
+      "org": {
+        "ops_section_chief": "HazMat Group Supervisor",
+        "safety_officer": "HazMat Safety Officer",
+        "public_info_officer": "PIO \u2014 no material ID to media without IC clearance",
+        "branch1_label": "HazMat Operations",
+        "div_a_label": "Entry Team",
+        "div_b_label": "Decontamination",
+        "div_c_label": "Medical Monitoring",
+        "div_d_label": "Evacuation / Perimeter"
+      }
+    }
+  },
+  {
+    "id": "planned_exercise",
+    "name": "Planned Exercise / Drill",
+    "icon": "\ud83c\udfaf",
+    "type": "Exercise / Training",
+    "sort_order": 6,
+    "is_builtin": 1,
+    "summary": "Training exercise or tabletop drill with scenario objectives.",
+    "data": {
+      "objectives": [
+        "EXERCISE \u2014 THIS IS AN EXERCISE \u2014 ALL TRANSMISSIONS ARE EXERCISE TRAFFIC ONLY.",
+        "Evaluate capability: [specify capability being tested].",
+        "Identify gaps in plans, procedures, or equipment.",
+        "Test interoperability with partner agencies.",
+        "Complete all exercise injects on schedule.",
+        "Conduct hot wash with all participants within 1 hour of exercise conclusion.",
+        "Submit After-Action Report (AAR) within 30 days of exercise."
+      ],
+      "safety_message": "EXERCISE \u2014 THIS IS AN EXERCISE. All radio traffic must include EXERCISE at beginning and end. If a real emergency occurs during the exercise, use code word REAL WORLD and all exercise activity ceases immediately.",
+      "resources": [
+        {
+          "name": "Exercise Director",
+          "type": "Personnel",
+          "qty": 1
+        },
+        {
+          "name": "Evaluators",
+          "type": "Personnel",
+          "qty": 3
+        },
+        {
+          "name": "Players",
+          "type": "Personnel",
+          "qty": 10
+        },
+        {
+          "name": "Safety Officer",
+          "type": "Personnel",
+          "qty": 1
+        }
+      ],
+      "channels": [
+        {
+          "name": "Exercise Command",
+          "rx": "155.3400",
+          "tx": "155.3400",
+          "tone": "",
+          "mode": "FM",
+          "function": "Command"
+        },
+        {
+          "name": "Control Net",
+          "rx": "155.3400",
+          "tx": "155.3400",
+          "tone": "",
+          "mode": "FM",
+          "function": "Other"
+        }
+      ],
+      "org": {
+        "ops_section_chief": "Exercise Director",
+        "safety_officer": "Safety Officer",
+        "public_info_officer": "Exercise Controller",
+        "branch1_label": "Exercise Play",
+        "div_a_label": "Functional Area Alpha",
+        "div_b_label": "Functional Area Bravo"
+      },
+      "is_scenario": true
+    }
+  }
+]
+
+
+def seed_incident_templates(conn):
+    """Seed built-in event templates if table is empty."""
+    if conn.execute("SELECT COUNT(*) FROM incident_templates").fetchone()[0] > 0:
+        return
+    now = datetime.utcnow().isoformat()
+    for t in BUILTIN_TEMPLATES:
+        conn.execute(
+            "INSERT INTO incident_templates "
+            "(id,name,icon,type,summary,sort_order,is_builtin,enabled,data,created,updated) "
+            "VALUES (?,?,?,?,?,?,1,1,?,?,?)",
+            (t["id"], t["name"], t["icon"], t["type"], t["summary"],
+             t.get("sort_order",99), json.dumps(t["data"]), now, now)
+        )
+    conn.commit()
+    log.info(f"Seeded {len(BUILTIN_TEMPLATES)} built-in event templates")
 
 def seed_fema_equipment_rates(conn):
     """

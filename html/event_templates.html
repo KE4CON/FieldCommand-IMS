@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Event Templates — FieldCommand IMS</title>
+<link rel="stylesheet" href="theme.css">
+<style>
+.template-card {
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--r-md);
+  padding:16px 18px;cursor:pointer;box-shadow:var(--shadow-sm);
+  border-left:4px solid var(--line);transition:border-color .15s;
+  display:flex;align-items:flex-start;gap:14px;
+}
+.template-card:hover { border-left-color:var(--eoc); }
+.template-card.selected { border-left-color:var(--eoc);background:var(--eoc-tint); }
+.template-icon { font-size:28px;flex-shrink:0; }
+.template-name { font-family:var(--font-hd);font-size:13px;color:var(--txt);margin-bottom:3px; }
+.template-sub { font-size:11px;color:var(--muted);line-height:1.5; }
+.builtin-tag {
+  font-size:9px;padding:1px 6px;border-radius:8px;font-weight:600;
+  background:var(--panel2);color:var(--dim);border:1px solid var(--line);
+  vertical-align:middle;margin-left:6px;
+}
+
+.obj-row {
+  display:flex;gap:8px;align-items:flex-start;margin-bottom:6px;
+}
+.obj-num {
+  font-family:var(--font-hd);font-size:11px;color:var(--eoc);
+  width:20px;flex-shrink:0;padding-top:2px;
+}
+.obj-input {
+  flex:1;background:var(--input-bg);border:1px solid var(--input-border);
+  color:var(--txt);padding:5px 8px;font-size:12px;border-radius:var(--r-sm);
+  resize:none;min-height:36px;
+}
+.obj-del {
+  background:none;border:none;color:var(--red);cursor:pointer;
+  font-size:14px;padding:3px 6px;flex-shrink:0;
+}
+
+.res-row, .ch-row {
+  display:grid;gap:6px;margin-bottom:5px;align-items:center;
+}
+.res-row { grid-template-columns:1fr 120px 60px 32px; }
+.ch-row  { grid-template-columns:1fr 100px 100px 70px 60px 100px 32px; }
+
+.preview-box {
+  background:var(--panel2);border-radius:var(--r-sm);
+  padding:10px 14px;margin-bottom:8px;font-size:12px;
+}
+.preview-lbl {
+  font-size:10px;text-transform:uppercase;letter-spacing:.08em;
+  color:var(--muted);font-weight:600;margin-bottom:4px;
+}
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <span class="page-header-badge">PLAN</span>
+  <span class="page-header-title">Event Templates</span>
+  <div class="page-header-sub">Pre-planned incident templates — editable, customizable, shareable</div>
+  <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+    <button onclick="showEditModal(null)"
+      style="background:var(--eoc);border-color:var(--eoc);color:#fff;font-size:12px;padding:5px 14px">
+      + New Template
+    </button>
+    <button onclick="document.getElementById('importInput').click()"
+      style="font-size:12px;padding:5px 12px">📥 Import JSON</button>
+    <button onclick="exportAllTemplates()"
+      style="font-size:12px;padding:5px 12px">📤 Export All</button>
+    <input type="file" id="importInput" accept=".json" style="display:none"
+      onchange="importTemplates(this)">
+    <a href="index.html" class="back-link">← Dashboard</a>
+  </div>
+</div>
+
+<div class="page-wrap">
+
+  <!-- View tabs -->
+  <div style="display:flex;gap:0;border-bottom:2px solid var(--line);margin-bottom:14px">
+    <button class="sort-btn active" id="view-activate" onclick="setView('activate')"
+      style="padding:7px 16px;font-size:12px">⚡ Activate</button>
+    <button class="sort-btn" id="view-manage" onclick="setView('manage')"
+      style="padding:7px 16px;font-size:12px">✏ Manage Templates</button>
+  </div>
+
+  <!-- ── ACTIVATE VIEW ──────────────────────────────────────────── -->
+  <div id="viewActivate">
+
+    <!-- Step 1: Choose -->
+    <div id="step1">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:12px">
+        Select a template to activate. All values are editable after selection.
+        Manage and customize templates in the <strong>Manage Templates</strong> tab.
+      </div>
+      <div id="templateGallery"
+        style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:10px">
+        <div style="color:var(--muted);font-size:12px;grid-column:1/-1">Loading templates...</div>
+      </div>
+    </div>
+
+    <!-- Step 2: Configure -->
+    <div id="step2" style="display:none">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+        <button onclick="goBack()" style="font-size:12px;padding:5px 12px">← Back</button>
+        <div style="font-family:var(--font-hd);font-size:14px;color:var(--eoc)" id="s2Title"></div>
+      </div>
+
+      <div class="section-card">
+        <h2>Incident Details</h2>
+        <div class="grid-2" style="gap:10px">
+          <div class="fg"><label>Incident Name *</label>
+            <input type="text" id="t_name" placeholder="e.g. Shelter Alpha — Lincoln School"></div>
+          <div class="fg"><label>Incident Commander</label>
+            <input type="text" id="t_ic" placeholder="Name or TBD"></div>
+          <div class="fg"><label>Location / Facility</label>
+            <input type="text" id="t_location"></div>
+          <div class="fg"><label>Jurisdiction</label>
+            <input type="text" id="t_jurisdiction"></div>
+          <div class="fg"><label>Op Period Start</label>
+            <input type="datetime-local" id="t_start"></div>
+          <div class="fg"><label>Op Period End</label>
+            <input type="datetime-local" id="t_end"></div>
+          <div class="fg" style="grid-column:1/-1">
+            <label style="display:flex;align-items:center;gap:8px;text-transform:none;letter-spacing:0;font-weight:normal">
+              <input type="checkbox" id="t_scenario">
+              <span style="font-size:12px;color:var(--muted)">
+                Mark as training scenario 🧪 (safe to wipe with beta reset)
+              </span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Preview -->
+      <div class="section-card">
+        <h2>What Will Be Created</h2>
+        <div id="templatePreview"></div>
+      </div>
+
+      <div style="display:flex;gap:10px;align-items:center">
+        <button onclick="activateTemplate()"
+          style="background:var(--eoc);border-color:var(--eoc);color:#fff;
+                 padding:10px 28px;font-weight:700;font-size:14px">
+          ⚡ Activate Template
+        </button>
+        <button onclick="goBack()" style="padding:10px 16px">Cancel</button>
+      </div>
+      <div id="activateStatus" style="margin-top:10px;font-size:12px;display:none"></div>
+    </div>
+
+  </div><!-- /viewActivate -->
+
+  <!-- ── MANAGE VIEW ────────────────────────────────────────────── -->
+  <div id="viewManage" style="display:none">
+    <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.7">
+      Edit, reorder, or delete templates. Built-in templates are fully editable — changes
+      are saved to the local database and not overwritten by updates.
+      Export your customized templates as JSON to share with other agencies or back up.
+    </div>
+    <div id="manageList"></div>
+  </div>
+
+</div><!-- /page-wrap -->
+
+<!-- ── Edit Template Modal ──────────────────────────────────────── -->
+<div id="editModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);
+     z-index:300;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto"
+     onclick="if(event.target===this)closeEditModal()">
+<div style="background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);
+            padding:22px;width:780px;max-width:98vw;margin:auto">
+
+  <div style="font-family:var(--font-hd);font-size:13px;color:var(--eoc);
+              letter-spacing:1px;margin-bottom:14px" id="editModalTitle">
+    + CREATE TEMPLATE
+  </div>
+
+  <!-- Basic info -->
+  <div class="grid-2" style="gap:10px;margin-bottom:14px">
+    <div class="fg"><label>Template Name *</label>
+      <input type="text" id="e_name" placeholder="e.g. Flood Response"></div>
+    <div class="fg"><label>Incident Type Label</label>
+      <input type="text" id="e_type" placeholder="e.g. Flood — Water Rescue"></div>
+    <div class="fg"><label>Icon (emoji)</label>
+      <input type="text" id="e_icon" value="📋" style="width:60px"></div>
+    <div class="fg"><label>Sort Order</label>
+      <input type="number" id="e_sort" value="99" min="1" style="width:80px"></div>
+    <div class="fg" style="grid-column:1/-1"><label>Summary / Description</label>
+      <input type="text" id="e_summary"
+        placeholder="Brief description shown on the template card"></div>
+  </div>
+
+  <!-- Objectives -->
+  <div style="margin-bottom:14px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;
+                  letter-spacing:.08em">ICS-202 Objectives</div>
+      <button onclick="addObjective()"
+        style="font-size:11px;padding:3px 10px">+ Add Objective</button>
+    </div>
+    <div id="objectivesList"></div>
+  </div>
+
+  <!-- Safety message -->
+  <div class="fg" style="margin-bottom:14px">
+    <label>ICS-202 Safety Message</label>
+    <textarea id="e_safety" rows="3" style="width:100%;font-size:12px;
+      resize:vertical;background:var(--input-bg);border:1px solid var(--input-border);
+      color:var(--txt);padding:7px 10px;border-radius:var(--r-sm)"></textarea>
+  </div>
+
+  <!-- Resources -->
+  <div style="margin-bottom:14px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;
+                  letter-spacing:.08em">Pre-loaded Resources</div>
+      <button onclick="addResource()" style="font-size:11px;padding:3px 10px">+ Add</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 120px 60px 32px;gap:6px;
+                margin-bottom:4px;font-size:10px;color:var(--dim);font-weight:600;
+                text-transform:uppercase;letter-spacing:.06em;padding:0 2px">
+      <div>Name</div><div>Type</div><div>Qty</div><div></div>
+    </div>
+    <div id="resourcesList"></div>
+  </div>
+
+  <!-- Channels -->
+  <div style="margin-bottom:14px">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+      <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;
+                  letter-spacing:.08em">ICS-205 Default Channels</div>
+      <button onclick="addChannel()" style="font-size:11px;padding:3px 10px">+ Add</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 90px 90px 70px 50px 90px 32px;
+                gap:4px;margin-bottom:4px;font-size:10px;color:var(--dim);font-weight:600;
+                text-transform:uppercase;letter-spacing:.06em;padding:0 2px">
+      <div>Channel Name</div><div>RX Freq</div><div>TX Freq</div>
+      <div>Tone</div><div>Mode</div><div>Function</div><div></div>
+    </div>
+    <div id="channelsList"></div>
+  </div>
+
+  <!-- Org -->
+  <div style="margin-bottom:14px">
+    <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;
+                letter-spacing:.08em;margin-bottom:8px">ICS-203 Default Org</div>
+    <div class="grid-2" style="gap:8px">
+      <div class="fg"><label style="font-size:10px">Ops Section Chief</label>
+        <input type="text" id="org_osc" placeholder="Position or TBD"></div>
+      <div class="fg"><label style="font-size:10px">Safety Officer</label>
+        <input type="text" id="org_so"></div>
+      <div class="fg"><label style="font-size:10px">Public Info Officer</label>
+        <input type="text" id="org_pio"></div>
+      <div class="fg"><label style="font-size:10px">Branch I Label</label>
+        <input type="text" id="org_b1" placeholder="Operations Branch"></div>
+      <div class="fg"><label style="font-size:10px">Division A Label</label>
+        <input type="text" id="org_da"></div>
+      <div class="fg"><label style="font-size:10px">Division B Label</label>
+        <input type="text" id="org_db"></div>
+      <div class="fg"><label style="font-size:10px">Division C Label</label>
+        <input type="text" id="org_dc"></div>
+      <div class="fg"><label style="font-size:10px">Division D Label</label>
+        <input type="text" id="org_dd"></div>
+    </div>
+  </div>
+
+  <!-- Scenario flag -->
+  <div style="margin-bottom:16px">
+    <label style="display:flex;align-items:center;gap:8px;font-size:12px;
+                   text-transform:none;letter-spacing:0;font-weight:normal">
+      <input type="checkbox" id="e_scenario">
+      Default to marking incidents from this template as training scenarios 🧪
+    </label>
+  </div>
+
+  <div style="display:flex;gap:8px">
+    <button onclick="saveTemplate()"
+      style="flex:1;background:var(--eoc);border-color:var(--eoc);
+             color:#fff;padding:9px;font-weight:600">SAVE TEMPLATE</button>
+    <button onclick="exportTemplate()"
+      style="padding:9px 14px;font-size:12px">📤 Export JSON</button>
+    <button onclick="if(confirm('Delete this template?'))deleteTemplate()"
+      id="e_delBtn" style="display:none;padding:9px 14px;
+      background:var(--red-bg);border-color:#fca5a5;color:var(--red)">Delete</button>
+    <button onclick="closeEditModal()" style="padding:9px 14px">Cancel</button>
+  </div>
+
+</div>
+</div><!-- /editModal -->
+
+<script>
+const API     = 'http://192.168.50.1:5050';
+const ICS_API = 'http://192.168.50.1:5051';
+
+let allTemplates = [];
+let selectedTemplate = null;
+let editingId = null;
+let currentView = 'activate';
+
+// ── Input helper ───────────────────────────────────────────────────
+const inp = (id,val='') => { const el=document.getElementById(id); if(el) el.value=val; };
+const chk = (id,val)    => { const el=document.getElementById(id); if(el) el.checked=!!val; };
+const val = id           => document.getElementById(id)?.value?.trim() || '';
+const checked = id       => document.getElementById(id)?.checked || false;
+
+// ── View switching ─────────────────────────────────────────────────
+function setView(v) {
+  currentView = v;
+  document.getElementById('viewActivate').style.display = v === 'activate' ? '' : 'none';
+  document.getElementById('viewManage').style.display   = v === 'manage'   ? '' : 'none';
+  document.getElementById('view-activate').classList.toggle('active', v === 'activate');
+  document.getElementById('view-manage').classList.toggle('active',   v === 'manage');
+  if (v === 'manage') renderManage();
+}
+
+// ── Load templates ─────────────────────────────────────────────────
+async function loadTemplates() {
+  try {
+    const r = await fetch(`${ICS_API}/api/ics/templates`);
+    allTemplates = r.ok ? await r.json() : [];
+    renderGallery();
+  } catch(e) {
+    document.getElementById('templateGallery').innerHTML =
+      `<div style="color:var(--red);font-size:12px">Error: ${e.message}</div>`;
+  }
+}
+
+// ── Gallery (activate view) ────────────────────────────────────────
+function renderGallery() {
+  const el = document.getElementById('templateGallery');
+  if (!allTemplates.length) {
+    el.innerHTML = `<div style="color:var(--muted);font-size:12px;grid-column:1/-1">
+      No templates yet. <button onclick="setView('manage')" style="font-size:12px;
+      padding:3px 8px;margin-left:6px">Manage Templates</button></div>`;
+    return;
+  }
+  el.innerHTML = allTemplates.map(t => `
+    <div class="template-card" onclick="selectTemplate('${t.id}')">
+      <div class="template-icon">${t.icon || '📋'}</div>
+      <div style="flex:1">
+        <div class="template-name">
+          ${t.name}
+          ${t.is_builtin ? '<span class="builtin-tag">built-in</span>' : ''}
+        </div>
+        <div class="template-sub">${t.summary || ''}</div>
+        <div style="font-size:10px;color:var(--dim);margin-top:4px">
+          ${(t.data?.objectives?.length||0)} objectives ·
+          ${(t.data?.resources?.length||0)} resources ·
+          ${(t.data?.channels?.length||0)} channels
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+// ── Manage view ────────────────────────────────────────────────────
+function renderManage() {
+  const el = document.getElementById('manageList');
+  if (!allTemplates.length) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:12px">No templates. Click + New Template.</div>';
+    return;
+  }
+  el.innerHTML = allTemplates.map(t => `
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;
+                background:var(--panel);border:1px solid var(--line);border-radius:var(--r-md);
+                margin-bottom:6px;box-shadow:var(--shadow-sm)">
+      <span style="font-size:22px">${t.icon||'📋'}</span>
+      <div style="flex:1">
+        <div style="font-family:var(--font-hd);font-size:13px">
+          ${t.name}
+          ${t.is_builtin ? '<span class="builtin-tag">built-in</span>' : ''}
+        </div>
+        <div style="font-size:11px;color:var(--muted)">${t.type||''} · ${t.summary||''}</div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button onclick="showEditModal('${t.id}')"
+          style="font-size:11px;padding:4px 12px">✏ Edit</button>
+        <button onclick="exportTemplate('${t.id}')"
+          style="font-size:11px;padding:4px 10px">📤</button>
+        <button onclick="setView('activate');selectTemplate('${t.id}')"
+          style="font-size:11px;padding:4px 12px;background:var(--eoc);
+                 border-color:var(--eoc);color:#fff">⚡ Activate</button>
+      </div>
+    </div>`).join('');
+}
+
+// ── Select template for activation ────────────────────────────────
+function selectTemplate(id) {
+  selectedTemplate = allTemplates.find(t => t.id === id);
+  if (!selectedTemplate) return;
+
+  document.getElementById('step1').style.display = 'none';
+  document.getElementById('step2').style.display = '';
+  document.getElementById('s2Title').textContent =
+    (selectedTemplate.icon||'') + '  ' + selectedTemplate.name;
+
+  // Set defaults
+  const now = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const dt  = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  const end = new Date(now.getTime() + 12*60*60*1000);
+
+  inp('t_name',''); inp('t_ic',''); inp('t_location',''); inp('t_jurisdiction','');
+  inp('t_start', dt(now)); inp('t_end', dt(end));
+  chk('t_scenario', selectedTemplate.data?.is_scenario);
+
+  buildPreview(selectedTemplate);
+  document.getElementById('activateStatus').style.display = 'none';
+}
+
+function buildPreview(t) {
+  const d  = t.data || {};
+  const el = document.getElementById('templatePreview');
+  const objs = d.objectives || [];
+  el.innerHTML = `
+    <div class="preview-box">
+      <div class="preview-lbl">ICS-202 Objectives (${objs.length})</div>
+      ${objs.map((o,i)=>`<div style="font-size:11px;color:var(--muted);margin-bottom:2px">
+        <strong style="color:var(--eoc)">${i+1}.</strong> ${o}</div>`).join('')}
+    </div>
+    ${d.safety_message?`<div class="preview-box">
+      <div class="preview-lbl">Safety Message</div>
+      <div style="font-size:11px;color:var(--muted)">${d.safety_message}</div>
+    </div>`:''}
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="preview-box">
+        <div class="preview-lbl">Resources (${(d.resources||[]).length})</div>
+        ${(d.resources||[]).map(r=>`<div style="font-size:11px;color:var(--muted)">
+          ${r.qty>1?`<strong>${r.qty}×</strong> `:''}${r.name}
+          <span style="color:var(--dim)">(${r.type})</span></div>`).join('')}
+      </div>
+      <div class="preview-box">
+        <div class="preview-lbl">Channels (${(d.channels||[]).length})</div>
+        ${(d.channels||[]).map(c=>`<div style="font-size:11px;color:var(--muted)">
+          <strong>${c.name}</strong> <span style="color:var(--dim)">— ${c.function}</span>
+          </div>`).join('')}
+      </div>
+    </div>
+    <div style="font-size:10px;color:var(--dim);margin-top:4px">
+      All values editable after activation. Update channel frequencies in ICS-205.
+    </div>`;
+}
+
+function goBack() {
+  document.getElementById('step2').style.display = 'none';
+  document.getElementById('step1').style.display = '';
+  selectedTemplate = null;
+  document.getElementById('activateStatus').style.display = 'none';
+}
+
+// ── Activate ──────────────────────────────────────────────────────
+async function activateTemplate() {
+  const name = val('t_name');
+  if (!name) { alert('Incident name is required'); return; }
+  const t     = selectedTemplate;
+  const d     = t?.data || {};
+  const ic    = val('t_ic');
+  const loc   = val('t_location');
+  const jur   = val('t_jurisdiction');
+  const start = val('t_start');
+  const end_  = val('t_end');
+  const scenar= checked('t_scenario') ? 1 : 0;
+  const now   = new Date().toISOString();
+  const incId = 'inc-' + Date.now();
+  const statusEl = document.getElementById('activateStatus');
+  statusEl.style.display='block'; statusEl.style.color='var(--amber)';
+  statusEl.textContent='Creating incident...';
+
+  const saveForm = async (formType, extra) => {
+    await fetch(`${ICS_API}/api/ics/forms/${formType}`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        incident_id:incId, period:1,
+        summary:`${formType.toUpperCase()} · ${name} · P1`,
+        data: JSON.stringify({
+          incident_id:incId, incident_name:name,
+          incident_commander:ic, location:loc,
+          operational_period_from:start,
+          operational_period_to:end_,
+          date_prepared:now.slice(0,10),
+          ...extra
+        })
+      })
+    });
+  };
+
+  try {
+    // 1. Create incident
+    const r1 = await fetch(`${API}/api/incidents`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        id:incId, name, type:t.type, status:'active',
+        jurisdiction:jur, incident_commander:ic,
+        location:loc, summary:t.summary,
+        current_period:1, is_scenario:scenar, started:now,
+      })
+    });
+    if (!r1.ok) throw new Error('Failed to create incident');
+
+    // 2. ICS-202
+    await saveForm('ics202', {
+      objectives: (d.objectives||[]).map((o,i)=>`${i+1}. ${o}`).join('\n'),
+      safety_message: d.safety_message||'',
+      operational_period_number:'1', approved_by:ic,
+    });
+
+    // 3. ICS-203
+    const org = d.org || {};
+    await saveForm('ics203', {
+      incident_commander:ic,
+      ops_section_chief:   org.ops_section_chief||'',
+      safety_officer:      org.safety_officer||'',
+      public_info_officer: org.public_info_officer||'',
+      branch1_dir:         org.branch1_label||'',
+      div_a_label:         org.div_a_label||'',
+      div_b_label:         org.div_b_label||'',
+      div_c_label:         org.div_c_label||'',
+      div_d_label:         org.div_d_label||'',
+    });
+
+    // 4. ICS-205
+    const ch205 = {};
+    (d.channels||[]).forEach((c,i) => {
+      ch205[`ch205_name_${i}`]     = c.name;
+      ch205[`ch205_rx_${i}`]       = c.rx||'';
+      ch205[`ch205_tx_${i}`]       = c.tx||'';
+      ch205[`ch205_tone_${i}`]     = c.tone||'';
+      ch205[`ch205_mode_${i}`]     = c.mode||'FM';
+      ch205[`ch205_function_${i}`] = c.function||'';
+    });
+    await saveForm('ics205', ch205);
+
+    // 5. T-cards
+    for (const res of (d.resources||[])) {
+      await fetch(`${ICS_API}/api/ics/tcards`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          incident_id:incId, resource_name:res.name,
+          resource_type:res.type, num_personnel:res.type==='Personnel'?res.qty:0,
+          status:'Available', category:res.type, created:now, updated:now,
+        })
+      });
+    }
+
+    localStorage.setItem('selectedIncident', incId);
+    statusEl.style.color='var(--green)';
+    statusEl.innerHTML = `
+      ✓ Incident created — ${(d.objectives||[]).length} objectives,
+      ${(d.resources||[]).length} resources, ${(d.channels||[]).length} channels.
+      ${scenar?'<span style="color:var(--amber)"> 🧪 Scenario</span>':''}
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+        ${[
+          ['ics-form.html?form=202&incident='+incId+'&period=1','→ ICS-202',true],
+          ['ics-form.html?form=203&incident='+incId+'&period=1','→ ICS-203',false],
+          ['ics-form.html?form=205&incident='+incId+'&period=1','→ ICS-205',false],
+          ['ics/operations.html?incident='+incId,'→ T-Cards',false],
+          ['index.html','→ Dashboard',false],
+        ].map(([href,label,primary])=>`
+          <a href="${href}" style="padding:6px 14px;border-radius:4px;text-decoration:none;
+             font-size:12px;${primary
+               ?'background:var(--eoc);color:#fff'
+               :'background:var(--panel);border:1px solid var(--line);color:var(--txt)'}">
+            ${label}</a>`).join('')}
+      </div>`;
+  } catch(e) {
+    statusEl.style.color='var(--red)';
+    statusEl.textContent='Error: ' + e.message;
+  }
+}
+
+// ── Edit modal ────────────────────────────────────────────────────
+function showEditModal(id) {
+  editingId = id;
+  const t   = id ? allTemplates.find(x=>x.id===id) : null;
+  const d   = t?.data || {};
+
+  document.getElementById('editModalTitle').textContent = t ? '✏ EDIT TEMPLATE' : '+ CREATE TEMPLATE';
+  document.getElementById('e_delBtn').style.display     = t ? '' : 'none';
+
+  inp('e_name',    t?.name    || '');
+  inp('e_type',    t?.type    || '');
+  inp('e_icon',    t?.icon    || '📋');
+  inp('e_sort',    t?.sort_order ?? 99);
+  inp('e_summary', t?.summary || '');
+  inp('e_safety',  d.safety_message || '');
+  inp('org_osc',   d.org?.ops_section_chief   || '');
+  inp('org_so',    d.org?.safety_officer       || '');
+  inp('org_pio',   d.org?.public_info_officer  || '');
+  inp('org_b1',    d.org?.branch1_label        || '');
+  inp('org_da',    d.org?.div_a_label          || '');
+  inp('org_db',    d.org?.div_b_label          || '');
+  inp('org_dc',    d.org?.div_c_label          || '');
+  inp('org_dd',    d.org?.div_d_label          || '');
+  chk('e_scenario', d.is_scenario);
+
+  // Objectives
+  document.getElementById('objectivesList').innerHTML = '';
+  (d.objectives||['']).forEach(o => addObjective(o));
+
+  // Resources
+  document.getElementById('resourcesList').innerHTML = '';
+  (d.resources||[]).forEach(r => addResource(r));
+
+  // Channels
+  document.getElementById('channelsList').innerHTML = '';
+  (d.channels||[]).forEach(c => addChannel(c));
+
+  document.getElementById('editModal').style.display = 'flex';
+  document.getElementById('e_name').focus();
+}
+
+function closeEditModal() {
+  document.getElementById('editModal').style.display = 'none';
+  editingId = null;
+}
+
+// ── Dynamic lists ─────────────────────────────────────────────────
+function addObjective(text='') {
+  const list = document.getElementById('objectivesList');
+  const idx  = list.children.length;
+  const row  = document.createElement('div');
+  row.className = 'obj-row';
+  row.innerHTML = `
+    <span class="obj-num">${idx+1}.</span>
+    <textarea class="obj-input" rows="2" placeholder="Enter objective...">${text}</textarea>
+    <button class="obj-del" onclick="this.parentElement.remove();renumberObjectives()">✕</button>`;
+  list.appendChild(row);
+}
+
+function renumberObjectives() {
+  document.querySelectorAll('.obj-num').forEach((el,i) => el.textContent = (i+1) + '.');
+}
+
+function addResource(r={}) {
+  const list = document.getElementById('resourcesList');
+  const row  = document.createElement('div');
+  row.className = 'res-row';
+  row.innerHTML = `
+    <input type="text" value="${r.name||''}" placeholder="Resource name"
+      style="background:var(--input-bg);border:1px solid var(--input-border);
+             color:var(--txt);padding:4px 8px;font-size:11px;border-radius:3px">
+    <select style="background:var(--input-bg);border:1px solid var(--input-border);
+                   color:var(--txt);padding:4px 6px;font-size:11px;border-radius:3px">
+      ${['Personnel','Crew','Engine','Vehicle','Equipment','Helicopter','Other']
+        .map(t=>`<option${t===r.type?' selected':''}>${t}</option>`).join('')}
+    </select>
+    <input type="number" value="${r.qty||1}" min="1"
+      style="background:var(--input-bg);border:1px solid var(--input-border);
+             color:var(--txt);padding:4px 6px;font-size:11px;border-radius:3px;text-align:center">
+    <button onclick="this.parentElement.remove()"
+      style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px">✕</button>`;
+  list.appendChild(row);
+}
+
+function addChannel(c={}) {
+  const list = document.getElementById('channelsList');
+  const row  = document.createElement('div');
+  row.className = 'ch-row';
+  row.innerHTML = `
+    <input type="text" value="${c.name||''}" placeholder="Name"
+      style="background:var(--input-bg);border:1px solid var(--input-border);
+             color:var(--txt);padding:4px 7px;font-size:11px;border-radius:3px">
+    <input type="text" value="${c.rx||''}" placeholder="RX Freq"
+      style="background:var(--input-bg);border:1px solid var(--input-border);
+             color:var(--txt);padding:4px 7px;font-size:11px;border-radius:3px;font-family:var(--font-mono)">
+    <input type="text" value="${c.tx||''}" placeholder="TX Freq"
+      style="background:var(--input-bg);border:1px solid var(--input-border);
+             color:var(--txt);padding:4px 7px;font-size:11px;border-radius:3px;font-family:var(--font-mono)">
+    <input type="text" value="${c.tone||''}" placeholder="Tone"
+      style="background:var(--input-bg);border:1px solid var(--input-border);
+             color:var(--txt);padding:4px 7px;font-size:11px;border-radius:3px;font-family:var(--font-mono)">
+    <select style="background:var(--input-bg);border:1px solid var(--input-border);
+                   color:var(--txt);padding:4px 5px;font-size:10px;border-radius:3px">
+      ${['FM','NFM','AM','USB','LSB','DIG'].map(m=>`<option${m===c.mode?' selected':''}>${m}</option>`).join('')}
+    </select>
+    <select style="background:var(--input-bg);border:1px solid var(--input-border);
+                   color:var(--txt);padding:4px 5px;font-size:10px;border-radius:3px">
+      ${['Command','Tactical','Medical','Logistics','Liaison','Other']
+        .map(f=>`<option${f===c.function?' selected':''}>${f}</option>`).join('')}
+    </select>
+    <button onclick="this.parentElement.remove()"
+      style="background:none;border:none;color:var(--red);cursor:pointer;font-size:14px">✕</button>`;
+  list.appendChild(row);
+}
+
+// ── Save template ─────────────────────────────────────────────────
+async function saveTemplate() {
+  const name = val('e_name');
+  if (!name) { alert('Template name required'); return; }
+
+  const objectives = [...document.querySelectorAll('.obj-input')]
+    .map(el => el.value.trim()).filter(Boolean);
+
+  const resources = [...document.getElementById('resourcesList').children].map(row => {
+    const inputs = row.querySelectorAll('input,select');
+    return { name: inputs[0].value.trim(), type: inputs[1].value, qty: parseInt(inputs[2].value)||1 };
+  }).filter(r => r.name);
+
+  const channels = [...document.getElementById('channelsList').children].map(row => {
+    const inputs = row.querySelectorAll('input,select');
+    return {
+      name:     inputs[0].value.trim(),
+      rx:       inputs[1].value.trim(),
+      tx:       inputs[2].value.trim(),
+      tone:     inputs[3].value.trim(),
+      mode:     inputs[4].value,
+      function: inputs[5].value,
+    };
+  }).filter(c => c.name);
+
+  const payload = {
+    id:         editingId || undefined,
+    name,
+    icon:       val('e_icon') || '📋',
+    type:       val('e_type'),
+    summary:    val('e_summary'),
+    sort_order: parseInt(val('e_sort')) || 99,
+    data: {
+      objectives,
+      safety_message: document.getElementById('e_safety').value.trim(),
+      resources,
+      channels,
+      org: {
+        ops_section_chief:  val('org_osc'),
+        safety_officer:     val('org_so'),
+        public_info_officer:val('org_pio'),
+        branch1_label:      val('org_b1'),
+        div_a_label:        val('org_da'),
+        div_b_label:        val('org_db'),
+        div_c_label:        val('org_dc'),
+        div_d_label:        val('org_dd'),
+      },
+      is_scenario: checked('e_scenario'),
+    }
+  };
+
+  const r = await fetch(`${ICS_API}/api/ics/templates`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(payload)
+  });
+  const d = await r.json();
+  if (d.ok) {
+    closeEditModal();
+    await loadTemplates();
+    if (currentView === 'manage') renderManage();
+  } else {
+    alert('Save failed: ' + (d.error||'Unknown error'));
+  }
+}
+
+// ── Delete ────────────────────────────────────────────────────────
+async function deleteTemplate() {
+  if (!editingId) return;
+  await fetch(`${ICS_API}/api/ics/templates/${editingId}`, { method:'DELETE' });
+  closeEditModal();
+  await loadTemplates();
+  if (currentView === 'manage') renderManage();
+}
+
+// ── Export ────────────────────────────────────────────────────────
+function exportTemplate(id) {
+  const tid = id || editingId;
+  const t   = tid ? allTemplates.find(x=>x.id===tid) : null;
+  if (!t) return;
+  const blob = new Blob([JSON.stringify([t], null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `template-${(t.name||'template').replace(/\s+/g,'_').toLowerCase()}.json`;
+  a.click();
+}
+
+function exportAllTemplates() {
+  const blob = new Blob([JSON.stringify(allTemplates, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `fieldcommand-templates-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+}
+
+// ── Import ────────────────────────────────────────────────────────
+async function importTemplates(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const text = await file.text();
+  input.value = '';
+  let templates;
+  try { templates = JSON.parse(text); }
+  catch(e) { alert('Invalid JSON: ' + e.message); return; }
+  if (!Array.isArray(templates)) templates = [templates];
+
+  const r = await fetch(`${ICS_API}/api/ics/templates/import`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(templates)
+  });
+  const d = await r.json();
+  if (d.ok) {
+    alert(`✓ Imported ${d.imported} template${d.imported!==1?'s':''}.`);
+    await loadTemplates();
+    if (currentView === 'manage') renderManage();
+  } else {
+    alert('Import failed: ' + (d.error||'Unknown'));
+  }
+}
+
+loadTemplates();
+</script>
+</body>
+</html>

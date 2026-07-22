@@ -1470,6 +1470,22 @@ def _alter_existing_tables():
             except Exception as e:
                 log.warning(f"Could not add column {col}: {e}")
 
+    # incidents — archive support
+    inc_existing = {r[1] for r in conn.execute("PRAGMA table_info(incidents)").fetchall()}
+    inc_additions = [
+        ("archived",      "INTEGER NOT NULL DEFAULT 0"),
+        ("archive_path",  "TEXT DEFAULT ''"),
+        ("archived_at",   "TEXT DEFAULT ''"),
+        ("is_scenario",   "INTEGER NOT NULL DEFAULT 0"),  -- beta/training scenario flag
+    ]
+    for col, defn in inc_additions:
+        if col not in inc_existing:
+            try:
+                conn.execute(f"ALTER TABLE incidents ADD COLUMN {col} {defn.split('--')[0].strip()}")
+                conn.commit()
+            except Exception as e:
+                log.warning(f"incidents.{col}: {e}")
+
     # net_entries new columns
     ne_existing = {r[1] for r in conn.execute("PRAGMA table_info(net_entries)").fetchall()}
     ne_additions = [

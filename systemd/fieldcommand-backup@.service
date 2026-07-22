@@ -6,7 +6,7 @@ Requires=media-fieldcommand.mount
 [Service]
 Type=oneshot
 User=root
-ExecStart=/bin/bash -c 'DEST=/media/fieldcommand/backup/$(date +%%Y%%m%%d_%%H%%M%%S) && mkdir -p "$DEST" && rsync -a /opt/fieldcommand/data/ "$DEST/data/" && rsync -a /opt/fieldcommand/html/ "$DEST/html/" && echo "Backup complete: $DEST"'
+ExecStart=/bin/bash -c 'DEST=/media/fieldcommand/backup/$(date +%%Y%%m%%d_%%H%%M%%S) && mkdir -p "$DEST/data" "$DEST/incidents" && rsync -a /opt/fieldcommand/data/ "$DEST/data/" && sqlite3 /opt/fieldcommand/data/fieldcommand.db ".backup $DEST/data/fieldcommand_backup.db" && echo "Backup complete: $DEST"'
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=fieldcommand-backup

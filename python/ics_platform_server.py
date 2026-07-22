@@ -338,6 +338,45 @@ class ICSHandler(BaseHTTPRequestHandler):
             })
 
 
+
+        # ── Incident Archive / Restore / Delete ─────────────────────────────
+        # GET  /api/ics/incidents/archived     → list archived incidents on Pi
+        # GET  /api/ics/incidents/lacie        → list archives on LaCie USB
+        # POST /api/ics/incidents/archive      → archive incident to LaCie + mark Pi DB
+        # POST /api/ics/incidents/restore      → restore from LaCie back to Pi DB
+        # POST /api/ics/incidents/delete       → hard-delete incident from Pi DB
+        # POST /api/ics/reset                  → beta reset: wipe all scenario data
+
+        elif path == "/api/ics/incidents/archived":
+            rows = c.execute(
+                "SELECT * FROM incidents WHERE archived=1 ORDER BY archived_at DESC"
+            ).fetchall()
+            return self.send_json(rows_to_list(rows))
+
+        elif path == "/api/ics/incidents/lacie":
+            # List incident archives on the LaCie drive
+            import os, json as _json
+            lacie_base = "/media/fieldcommand/backup/incidents"
+            archives = []
+            if os.path.isdir(lacie_base):
+                for folder in sorted(os.listdir(lacie_base), reverse=True):
+                    folder_path = os.path.join(lacie_base, folder)
+                    meta_path   = os.path.join(folder_path, "incident_meta.json")
+                    if os.path.isfile(meta_path):
+                        try:
+                            with open(meta_path) as f:
+                                meta = _json.load(f)
+                            meta["folder"] = folder
+                            meta["path"]   = folder_path
+                            archives.append(meta)
+                        except Exception:
+                            archives.append({"folder":folder,"path":folder_path,"name":folder})
+            return self.send_json({
+                "lacie_mounted": os.path.isdir(lacie_base),
+                "archives":      archives,
+                "lacie_path":    lacie_base,
+            })
+
         # ── ICS-211 Remote Check-In ─────────────────────────────────────────
         # GET: fetch pending entries for an incident/period
 
@@ -550,6 +589,160 @@ class ICSHandler(BaseHTTPRequestHandler):
 
 
         # ── ICS-211 Remote Check-In POST ────────────────────────────────────
+
+
+        # ── Incident Archive POST ────────────────────────────────────────────
+        elif path == "/api/ics/incidents/archive":
+            import os, json as _json, shutil, sqlite3 as _sq
+            inc_id = body.get("incident_id","")
+            if not inc_id:
+                return self.send_json({"error":"incident_id required"},400)
+
+            lacie_base = "/media/fieldcommand/backup/incidents"
+            if not os.path.isdir("/media/fieldcommand"):
+                return self.send_json({"error":"LaCie not mounted — label drive FIELDCOMMAND and connect"},503)
+
+            # Fetch incident from DB
+            row = c.execute("SELECT * FROM incidents WHERE id=?", (inc_id,)).fetchone()
+            if not row:
+                return self.send_json({"error":"Incident not found"},404)
+            inc = dict(row)
+
+            # Create archive folder
+            slug    = "".join(c2 if c2.isalnum() else "_" for c2 in inc["name"])[:30]
+            folder  = f"{now[:10]}_{slug}_{inc_id[:8]}"
+            dest    = os.path.join(lacie_base, folder)
+            os.makedirs(dest, exist_ok=True)
+
+            # Dump all related data to JSON
+            tables = {
+                "incident":  [inc],
+                "forms":     rows_to_list(c.execute("SELECT * FROM ics_forms WHERE incident_id=?",    (inc_id,)).fetchall()),
+                "labor":     rows_to_list(c.execute("SELECT * FROM fema_labor WHERE incident_id=?",   (inc_id,)).fetchall()),
+                "equipment": rows_to_list(c.execute("SELECT * FROM fema_equipment WHERE incident_id=?",(inc_id,)).fetchall()),
+                "materials": rows_to_list(c.execute("SELECT * FROM fema_materials WHERE incident_id=?",(inc_id,)).fetchall()),
+                "checkins":  rows_to_list(c.execute("SELECT * FROM checkin_entries WHERE incident_id=?",(inc_id,)).fetchall()),
+                "tcards":    rows_to_list(c.execute("SELECT * FROM ics_tcards WHERE incident_id=?",    (inc_id,)).fetchall()),
+                "meetings":  rows_to_list(c.execute("SELECT * FROM ics_meetings WHERE incident_id=?",  (inc_id,)).fetchall()),
+            }
+
+            # Write full archive JSON
+            archive_path = os.path.join(dest, "incident_data.json")
+            with open(archive_path, "w") as f:
+                _json.dump(tables, f, indent=2, default=str)
+
+            # Write human-readable metadata
+            meta_path = os.path.join(dest, "incident_meta.json")
+            with open(meta_path, "w") as f:
+                _json.dump({
+                    "incident_id":   inc_id,
+                    "name":          inc["name"],
+                    "type":          inc.get("type",""),
+                    "status":        inc.get("status",""),
+                    "started":       inc.get("started",""),
+                    "closed":        inc.get("closed",""),
+                    "archived_at":   now,
+                    "folder":        folder,
+                    "form_count":    len(tables["forms"]),
+                    "labor_count":   len(tables["labor"]),
+                    "equip_count":   len(tables["equipment"]),
+                    "mat_count":     len(tables["materials"]),
+                    "checkin_count": len(tables["checkins"]),
+                }, f, indent=2)
+
+            # Mark incident as archived in Pi DB (keeps data, just flagged)
+            c.execute(
+                "UPDATE incidents SET archived=1, archive_path=?, archived_at=?, status=? WHERE id=?",
+                (dest, now, "archived", inc_id)
+            )
+            c.commit()
+            return self.send_json({"ok":True,"archive_path":dest,"folder":folder})
+
+        # ── Restore archived incident from LaCie ────────────────────────────
+        elif path == "/api/ics/incidents/restore":
+            import os, json as _json
+            folder = body.get("folder","")
+            lacie_base = "/media/fieldcommand/backup/incidents"
+            archive_path = os.path.join(lacie_base, folder)
+            data_file    = os.path.join(archive_path, "incident_data.json")
+            if not os.path.isfile(data_file):
+                return self.send_json({"error":"Archive not found"},404)
+
+            with open(data_file) as f:
+                data = _json.load(f)
+
+            # Restore incident row first
+            for inc in data.get("incident",[]):
+                inc["archived"] = 0  # mark as active again
+                inc["status"]   = inc.get("status","active") if inc.get("status") != "archived" else "closed"
+                cols = ",".join(inc.keys())
+                ph   = ",".join("?"*len(inc))
+                c.execute(f"INSERT OR REPLACE INTO incidents ({cols}) VALUES ({ph})",
+                          list(inc.values()))
+
+            # Restore forms
+            for row in data.get("forms",[]):
+                cols = ",".join(row.keys()); ph = ",".join("?"*len(row))
+                c.execute(f"INSERT OR REPLACE INTO ics_forms ({cols}) VALUES ({ph})", list(row.values()))
+
+            # Restore cost data
+            for table, key in [("fema_labor","labor"),("fema_equipment","equipment"),("fema_materials","materials")]:
+                for row in data.get(key,[]):
+                    cols = ",".join(row.keys()); ph = ",".join("?"*len(row))
+                    c.execute(f"INSERT OR REPLACE INTO {table} ({cols}) VALUES ({ph})", list(row.values()))
+
+            # Restore check-ins, tcards, meetings
+            for table, key in [("checkin_entries","checkins"),("ics_tcards","tcards"),("ics_meetings","meetings")]:
+                for row in data.get(key,[]):
+                    cols = ",".join(row.keys()); ph = ",".join("?"*len(row))
+                    try:
+                        c.execute(f"INSERT OR REPLACE INTO {table} ({cols}) VALUES ({ph})", list(row.values()))
+                    except Exception: pass
+
+            c.commit()
+            inc_id = data.get("incident",[{}])[0].get("id","")
+            return self.send_json({"ok":True,"incident_id":inc_id,
+                "restored_forms": len(data.get("forms",[]))})
+
+        # ── Hard-delete incident from Pi DB ─────────────────────────────────
+        elif path == "/api/ics/incidents/delete":
+            inc_id = body.get("incident_id","")
+            if not inc_id:
+                return self.send_json({"error":"incident_id required"},400)
+            for table in ["ics_forms","fema_labor","fema_equipment","fema_materials",
+                          "checkin_entries","ics_tcards","ics_meetings","general_info"]:
+                try:
+                    c.execute(f"DELETE FROM {table} WHERE incident_id=?", (inc_id,))
+                except Exception: pass
+            c.execute("DELETE FROM incidents WHERE id=?", (inc_id,))
+            c.commit()
+            return self.send_json({"ok":True,"deleted":inc_id})
+
+        # ── Beta / Scenario Reset ────────────────────────────────────────────
+        # Wipes all incident data, forms, costs, check-ins, T-cards.
+        # Leaves intact: roster, hospitals, channel_library, resource_types,
+        # repeaters, system config. Requires confirm="RESET" in body.
+        elif path == "/api/ics/reset":
+            if body.get("confirm") != "RESET":
+                return self.send_json({"error":"Send confirm='RESET' to proceed"},400)
+            wipe_tables = [
+                "incidents","ics_forms","general_info",
+                "fema_labor","fema_equipment","fema_materials",
+                "checkin_entries","ics_tcards","ics_meetings",
+                "resource_history","ics_periods",
+            ]
+            counts = {}
+            for table in wipe_tables:
+                try:
+                    n = c.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+                    c.execute(f"DELETE FROM {table}")
+                    counts[table] = n
+                except Exception as e:
+                    counts[table] = f"error: {e}"
+            c.commit()
+            return self.send_json({"ok":True,"wiped":counts,
+                "preserved":["roster","hospitals","channel_library",
+                             "resource_types","repeaters","net_entries"]})
 
         # ── FEMA PA Cost Tracking POST ───────────────────────────────────────
         elif path == "/api/ics/fema/labor":

@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Incident Management — FieldCommand IMS</title>
+<link rel="stylesheet" href="theme.css">
+<style>
+.inc-card {
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--r-md);
+  padding:14px 16px;margin-bottom:8px;box-shadow:var(--shadow-sm);
+  display:grid;grid-template-columns:1fr auto;gap:12px;align-items:start;
+}
+.inc-name { font-family:var(--font-hd);font-size:14px;color:var(--txt);margin-bottom:3px; }
+.inc-meta { font-size:11px;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap; }
+.inc-actions { display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end; }
+
+.status-badge {
+  font-size:10px;padding:2px 8px;border-radius:10px;font-weight:600;
+  display:inline-block;margin-left:8px;
+}
+.status-active   { background:var(--green-bg);color:var(--green);border:1px solid #86efac; }
+.status-closed   { background:var(--blue-bg);color:var(--blue);border:1px solid #93c5fd; }
+.status-archived { background:var(--panel2);color:var(--dim);border:1px solid var(--line); }
+
+.section-hdr {
+  font-family:var(--font-hd);font-size:11px;letter-spacing:1.5px;
+  text-transform:uppercase;color:var(--muted);margin:20px 0 8px;
+  display:flex;align-items:center;gap:10px;
+}
+.section-hdr::after { content:'';flex:1;height:1px;background:var(--line); }
+
+.lacie-status {
+  display:flex;align-items:center;gap:8px;padding:10px 14px;
+  border-radius:var(--r-md);margin-bottom:14px;font-size:12px;
+}
+.lacie-ok  { background:var(--green-bg);border:1px solid #86efac;color:var(--green); }
+.lacie-off { background:var(--amber-bg);border:1px solid #fcd34d;color:var(--amber); }
+
+.reset-zone {
+  background:var(--red-bg);border:2px solid #fca5a5;border-radius:var(--r-md);
+  padding:20px;margin-top:20px;
+}
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <span class="page-header-badge" style="background:var(--red)">DATA</span>
+  <span class="page-header-title">Incident Management</span>
+  <div class="page-header-sub">Archive to LaCie · Restore · Delete · Beta Reset</div>
+  <a href="index.html" class="back-link">← Dashboard</a>
+</div>
+
+<div class="page-wrap" style="max-width:820px">
+
+  <!-- LaCie status -->
+  <div id="lacieStatus" class="lacie-status lacie-off">
+    <span style="font-size:18px">💾</span>
+    <div>
+      <div style="font-weight:600">LaCie — Checking...</div>
+      <div style="font-size:10px;opacity:.8">Drive must be labelled FIELDCOMMAND and mounted</div>
+    </div>
+  </div>
+
+  <!-- Active incidents -->
+  <div class="section-hdr">Active Incidents</div>
+  <div id="activeList">
+    <div style="color:var(--muted);font-size:12px">Loading...</div>
+  </div>
+
+  <!-- Archived on Pi (not yet deleted) -->
+  <div class="section-hdr">Archived on Pi SSD — awaiting deletion</div>
+  <div style="font-size:11px;color:var(--muted);margin-bottom:8px;line-height:1.6">
+    These incidents have been archived to the LaCie but still occupy space on the Pi SSD.
+    Verify the LaCie backup is complete before deleting from the Pi.
+  </div>
+  <div id="piArchivedList">
+    <div style="color:var(--muted);font-size:12px">Loading...</div>
+  </div>
+
+  <!-- Archives on LaCie -->
+  <div class="section-hdr">Archives on LaCie Drive</div>
+  <div id="lacieList">
+    <div style="color:var(--muted);font-size:12px">
+      Connect and mount LaCie drive to see archives.
+    </div>
+  </div>
+
+  <!-- Beta / Scenario Reset -->
+  <div class="reset-zone">
+    <div style="font-family:var(--font-hd);font-size:13px;color:var(--red);
+                letter-spacing:1px;margin-bottom:8px">⚠ BETA / SCENARIO RESET</div>
+    <div style="font-size:12px;color:var(--txt);line-height:1.7;margin-bottom:14px">
+      Wipes <strong>all incident data</strong> from the Pi SSD:
+      incidents, ICS forms, FEMA cost entries, check-ins, T-cards, meetings, and resource history.
+      <br><br>
+      <strong>Preserved:</strong> roster, hospitals, channel library, resource types, repeaters,
+      and net logger entries. System configuration is not affected.
+      <br><br>
+      <strong>Archive first</strong> if any real incidents are present.
+      This cannot be undone from the UI.
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+      <input type="text" id="resetConfirm" placeholder="Type RESET to confirm"
+        style="width:200px;background:var(--input-bg);border:1px solid #fca5a5;
+               color:var(--txt);padding:7px 12px;font-size:13px;border-radius:var(--r-sm)">
+      <button onclick="performReset()"
+        style="background:var(--red);border-color:var(--red);color:#fff;
+               padding:8px 20px;font-weight:600;font-size:13px">
+        🗑 Reset All Scenario Data
+      </button>
+      <span style="font-size:11px;color:var(--dim)">No undo from this screen</span>
+    </div>
+    <div id="resetStatus" style="margin-top:10px;font-size:12px;display:none"></div>
+  </div>
+
+</div><!-- /page-wrap -->
+
+<script>
+const ICS_API = 'http://192.168.50.1:5051';
+const API     = 'http://192.168.50.1:5050';
+
+let allIncidents = [], lacieArchives = [], lacieOk = false;
+
+// ── Helpers ────────────────────────────────────────────────────────
+function fmt(dt) {
+  if (!dt) return '—';
+  return dt.slice(0,10);
+}
+function statBadge(status) {
+  const cls = status === 'active'   ? 'status-active'   :
+              status === 'archived' ? 'status-archived' : 'status-closed';
+  return `<span class="status-badge ${cls}">${status}</span>`;
+}
+
+// ── Load everything ────────────────────────────────────────────────
+async function loadAll() {
+  try {
+    // Active incidents from main API
+    const r1 = await fetch(`${API}/api/incidents`);
+    const all = r1.ok ? await r1.json() : [];
+    allIncidents = all;
+
+    // Archived on Pi (flagged archived but not deleted)
+    const r2 = await fetch(`${ICS_API}/api/ics/incidents/archived`);
+    const piArchived = r2.ok ? await r2.json() : [];
+
+    // LaCie archives
+    const r3 = await fetch(`${ICS_API}/api/ics/incidents/lacie`);
+    const lacieData = r3.ok ? await r3.json() : { lacie_mounted: false, archives: [] };
+    lacieOk = lacieData.lacie_mounted;
+    lacieArchives = lacieData.archives || [];
+
+    // Update LaCie status badge
+    const lacieEl = document.getElementById('lacieStatus');
+    if (lacieOk) {
+      lacieEl.className = 'lacie-status lacie-ok';
+      lacieEl.innerHTML = `
+        <span style="font-size:18px">💾</span>
+        <div>
+          <div style="font-weight:600">LaCie Connected ✓</div>
+          <div style="font-size:10px">${lacieArchives.length} incident archive${lacieArchives.length!==1?'s':''} found · /media/fieldcommand/backup/incidents</div>
+        </div>`;
+    } else {
+      lacieEl.className = 'lacie-status lacie-off';
+      lacieEl.innerHTML = `
+        <span style="font-size:18px">⚠</span>
+        <div>
+          <div style="font-weight:600">LaCie Not Detected</div>
+          <div style="font-size:10px">Connect LaCie drive labelled FIELDCOMMAND to enable archiving</div>
+        </div>`;
+    }
+
+    renderActive(all.filter(i => i.status !== 'archived'));
+    renderPiArchived(piArchived);
+    renderLacie(lacieArchives);
+  } catch(e) {
+    document.getElementById('activeList').innerHTML =
+      `<div style="color:var(--red);font-size:12px">Server error: ${e.message}</div>`;
+  }
+}
+
+// ── Render active incidents ────────────────────────────────────────
+function renderActive(list) {
+  const el = document.getElementById('activeList');
+  if (!list.length) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:10px 0">No active incidents.</div>';
+    return;
+  }
+  el.innerHTML = list.map(inc => `
+    <div class="inc-card">
+      <div>
+        <div class="inc-name">
+          ${inc.name}${statBadge(inc.status)}
+        </div>
+        <div class="inc-meta">
+          <span>${inc.type || 'Unknown type'}</span>
+          <span>IC: ${inc.incident_commander || '—'}</span>
+          <span>Started: ${fmt(inc.started)}</span>
+          <span>Period ${inc.current_period}</span>
+          ${inc.is_scenario ? '<span style="color:var(--amber);font-weight:600">🧪 SCENARIO</span>' : ''}
+        </div>
+      </div>
+      <div class="inc-actions">
+        <button onclick="archiveIncident('${inc.id}','${inc.name.replace(/'/g,"\\'")}',false)"
+          style="font-size:11px;padding:4px 12px;background:var(--blue-bg);
+                 border-color:#93c5fd;color:var(--blue)"
+          ${lacieOk?'':'disabled title="LaCie not connected"'}>
+          💾 Archive to LaCie
+        </button>
+        <button onclick="markScenario('${inc.id}',${inc.is_scenario?0:1})"
+          style="font-size:11px;padding:4px 12px;background:var(--amber-bg);
+                 border-color:#fcd34d;color:var(--amber)">
+          ${inc.is_scenario ? '✓ Scenario' : '🧪 Mark Scenario'}
+        </button>
+        <button onclick="hardDelete('${inc.id}','${inc.name.replace(/'/g,"\\'")}',false)"
+          style="font-size:11px;padding:4px 10px;background:var(--red-bg);
+                 border-color:#fca5a5;color:var(--red)">
+          Delete
+        </button>
+      </div>
+    </div>`).join('');
+}
+
+// ── Render Pi-archived (awaiting deletion) ────────────────────────
+function renderPiArchived(list) {
+  const el = document.getElementById('piArchivedList');
+  if (!list.length) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:10px 0">None — Pi SSD is clean.</div>';
+    return;
+  }
+  el.innerHTML = list.map(inc => `
+    <div class="inc-card" style="border-color:var(--dim)">
+      <div>
+        <div class="inc-name" style="color:var(--muted)">
+          ${inc.name}${statBadge('archived')}
+        </div>
+        <div class="inc-meta">
+          <span>Archived: ${fmt(inc.archived_at)}</span>
+          <span>LaCie: ${inc.archive_path ? inc.archive_path.split('/').slice(-1)[0] : '—'}</span>
+        </div>
+      </div>
+      <div class="inc-actions">
+        <button onclick="hardDelete('${inc.id}','${inc.name.replace(/'/g,"\\'")}',true)"
+          style="font-size:11px;padding:4px 14px;background:var(--red);
+                 border-color:var(--red);color:#fff;font-weight:600">
+          🗑 Delete from Pi
+        </button>
+      </div>
+    </div>`).join('');
+}
+
+// ── Render LaCie archives ─────────────────────────────────────────
+function renderLacie(list) {
+  const el = document.getElementById('lacieList');
+  if (!lacieOk) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:10px 0">LaCie not mounted.</div>';
+    return;
+  }
+  if (!list.length) {
+    el.innerHTML = '<div style="color:var(--muted);font-size:12px;padding:10px 0">No archives on LaCie yet.</div>';
+    return;
+  }
+  el.innerHTML = list.map(a => `
+    <div class="inc-card">
+      <div>
+        <div class="inc-name">${a.name || a.folder}</div>
+        <div class="inc-meta">
+          <span>Archived: ${fmt(a.archived_at)}</span>
+          <span>${a.form_count ?? '?'} forms</span>
+          ${a.labor_count ? `<span>${a.labor_count} labor entries</span>` : ''}
+          ${a.checkin_count ? `<span>${a.checkin_count} check-ins</span>` : ''}
+          <span style="font-family:var(--font-mono);font-size:10px">${a.folder}</span>
+        </div>
+      </div>
+      <div class="inc-actions">
+        <button onclick="restoreFromLacie('${a.folder}','${(a.name||a.folder).replace(/'/g,"\\'")}' )"
+          style="font-size:11px;padding:4px 12px;background:var(--green-bg);
+                 border-color:#86efac;color:var(--green)">
+          ↩ Restore to Pi
+        </button>
+      </div>
+    </div>`).join('');
+}
+
+// ── Archive to LaCie ──────────────────────────────────────────────
+async function archiveIncident(id, name, silent) {
+  if (!lacieOk && !silent) {
+    alert('LaCie not connected. Connect the LaCie drive labelled FIELDCOMMAND first.');
+    return;
+  }
+  if (!silent && !confirm(`Archive "${name}" to LaCie?\n\nThe incident stays on the Pi until you delete it.`)) return;
+  try {
+    const r = await fetch(`${ICS_API}/api/ics/incidents/archive`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ incident_id: id })
+    });
+    const d = await r.json();
+    if (d.ok) {
+      alert(`✓ Archived to LaCie:\n${d.folder}`);
+      await loadAll();
+    } else {
+      alert('Archive failed: ' + (d.error || 'Unknown error'));
+    }
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+// ── Restore from LaCie ────────────────────────────────────────────
+async function restoreFromLacie(folder, name) {
+  if (!confirm(`Restore "${name}" from LaCie back to Pi?\n\nExisting data for this incident will be overwritten.`)) return;
+  try {
+    const r = await fetch(`${ICS_API}/api/ics/incidents/restore`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ folder })
+    });
+    const d = await r.json();
+    if (d.ok) {
+      alert(`✓ Restored ${d.restored_forms} form(s). Incident is now active.`);
+      await loadAll();
+    } else {
+      alert('Restore failed: ' + (d.error || 'Unknown error'));
+    }
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+// ── Hard delete from Pi ───────────────────────────────────────────
+async function hardDelete(id, name, isArchived) {
+  const warn = isArchived
+    ? `Delete "${name}" from Pi SSD?\n\nIt is already backed up to LaCie. This frees Pi storage.`
+    : `Delete "${name}" from Pi SSD?\n\n⚠ WARNING: This incident has NOT been archived to LaCie.\nAll data will be permanently lost.`;
+  if (!confirm(warn)) return;
+  try {
+    const r = await fetch(`${ICS_API}/api/ics/incidents/delete`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ incident_id: id })
+    });
+    const d = await r.json();
+    if (d.ok) { await loadAll(); }
+    else { alert('Delete failed: ' + (d.error||'Unknown error')); }
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+// ── Mark/unmark as scenario ───────────────────────────────────────
+async function markScenario(id, flag) {
+  try {
+    await fetch(`${API}/api/incidents`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ id, is_scenario: flag })
+    });
+    await loadAll();
+  } catch(e) {}
+}
+
+// ── Beta reset ────────────────────────────────────────────────────
+async function performReset() {
+  const confirm_val = document.getElementById('resetConfirm').value.trim();
+  if (confirm_val !== 'RESET') {
+    alert('Type RESET in the box to confirm.');
+    return;
+  }
+  if (!confirm('This will permanently delete ALL incident data from the Pi.\n\nRoster, hospitals, channels, and system config will be preserved.\n\nContinue?')) return;
+
+  const statusEl = document.getElementById('resetStatus');
+  statusEl.style.display = 'block';
+  statusEl.style.color   = 'var(--amber)';
+  statusEl.textContent   = 'Resetting...';
+
+  try {
+    const r = await fetch(`${ICS_API}/api/ics/reset`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ confirm: 'RESET' })
+    });
+    const d = await r.json();
+    if (d.ok) {
+      const totals = Object.entries(d.wiped)
+        .map(([k,v]) => `${k}: ${v}`)
+        .join(', ');
+      statusEl.style.color = 'var(--green)';
+      statusEl.textContent = `✓ Reset complete. Cleared: ${totals}`;
+      document.getElementById('resetConfirm').value = '';
+      await loadAll();
+    } else {
+      statusEl.style.color = 'var(--red)';
+      statusEl.textContent = 'Reset failed: ' + (d.error||'Unknown error');
+    }
+  } catch(e) {
+    statusEl.style.color = 'var(--red)';
+    statusEl.textContent = 'Error: ' + e.message;
+  }
+}
+
+loadAll();
+</script>
+</body>
+</html>

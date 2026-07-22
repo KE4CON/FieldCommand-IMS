@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Incident Management — FieldCommand IMS</title>
+<link rel="stylesheet" href="theme.css">
+<style>
+.inc-header {
+  background: linear-gradient(135deg,#001428,#002858);
+  border-bottom: 2px solid var(--eoc); padding: 10px 16px;
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+}
+.inc-badge {
+  background: var(--eoc); color: #fff; font-family: var(--font-hd);
+  font-size: 12px; padding: 4px 12px; border-radius: 4px; letter-spacing: 2px;
+}
+.inc-card {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 8px; padding: 16px; margin-bottom: 10px;
+  cursor: pointer; transition: border-color 0.15s;
+  border-left: 4px solid var(--line);
+}
+.inc-card.active { border-left-color: var(--green); }
+.inc-card.closed { border-left-color: var(--dim); opacity: 0.6; }
+.inc-card:hover { border-color: var(--eoc); }
+.inc-name { font-family: var(--font-hd); font-size: 16px; margin-bottom: 4px; }
+.inc-meta { font-size: 11px; color: var(--muted); display: flex; gap: 16px; flex-wrap: wrap; }
+.inc-badge-type {
+  font-size: 10px; padding: 2px 8px; border-radius: 10px;
+  background: rgba(26,58,107,0.4); border: 1px solid var(--eoc);
+  color: var(--blue); font-family: var(--font-hd); letter-spacing: 1px;
+}
+.period-bar {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 6px; padding: 10px 14px; margin-bottom: 12px;
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+}
+.period-num {
+  font-family: var(--font-hd); font-size: 20px; color: var(--amber);
+  letter-spacing: 2px;
+}
+.form-nav {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(160px,1fr)); gap: 8px;
+  margin-bottom: 16px;
+}
+.form-btn {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 6px; padding: 10px 12px; cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  text-align: left; color: var(--txt); text-decoration: none;
+  display: block;
+}
+.form-btn:hover { border-color: var(--eoc); background: var(--panel2); }
+.form-btn.complete { border-left: 3px solid var(--green); }
+.form-btn .fb-num { font-size: 10px; color: var(--dim); font-family: var(--font-hd); }
+.form-btn .fb-name { font-size: 12px; font-weight: bold; margin-top: 2px; }
+.form-btn .fb-variant { font-size: 10px; color: var(--muted); margin-top: 2px; }
+.form-btn .fb-status { font-size: 10px; color: var(--green); margin-top: 4px; }
+.section-divider {
+  font-family: var(--font-hd); font-size: 10px; letter-spacing: 2px;
+  color: var(--eoc); text-transform: uppercase; padding: 12px 0 6px;
+  border-bottom: 1px solid var(--line); margin-bottom: 10px;
+}
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6); z-index: 200;
+  align-items: center; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal-box {
+  background: var(--panel); border: 1px solid var(--eoc);
+  border-radius: 10px; padding: 24px; width: 560px; max-width: 95vw;
+  max-height: 90vh; overflow-y: auto;
+}
+.modal-title {
+  font-family: var(--font-hd); font-size: 15px; color: var(--amber);
+  letter-spacing: 2px; margin-bottom: 16px;
+}
+.form-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+.form-group label { font-size: 11px; color: var(--muted); text-transform: uppercase; }
+.form-group input, .form-group select, .form-group textarea {
+  background: var(--input-bg); border: 1px solid var(--line);
+  border-radius: 4px; color: var(--txt); padding: 8px 10px; font-size: 13px;
+  width: 100%; box-sizing: border-box;
+}
+.form-group textarea { resize: vertical; min-height: 60px; }
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+  border-color: var(--eoc); outline: none;
+}
+.form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.variant-select {
+  display: flex; gap: 6px; flex-wrap: wrap;
+}
+.variant-pill {
+  padding: 4px 12px; border-radius: 12px; font-size: 11px;
+  border: 1px solid var(--line); cursor: pointer; font-family: var(--font-hd);
+  transition: all 0.1s;
+}
+.variant-pill.sel { background: var(--eoc); border-color: var(--eoc); color: #fff; }
+.status-dot {
+  width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex-shrink: 0;
+}
+.activity-item {
+  padding: 6px 0; border-bottom: 1px solid var(--line);
+  font-size: 11px; display: flex; gap: 10px;
+}
+.activity-time { color: var(--dim); min-width: 55px; }
+.activity-section { color: var(--blue); min-width: 70px; }
+</style>
+</head>
+<body>
+
+<div class="inc-header">
+  <span class="inc-badge">ICS</span>
+  <span style="font-family:var(--font-hd);font-size:14px;letter-spacing:2px">INCIDENT MANAGEMENT</span>
+  <div style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+    <button onclick="showNewIncident()"
+      style="background:var(--eoc);border-color:var(--eoc);color:#fff;font-weight:bold">
+      + New Incident
+    </button>
+    <a href="index.html" style="color:var(--muted);font-size:12px">← Dashboard</a>
+  </div>
+</div>
+
+<div class="page-wrap" style="display:grid;grid-template-columns:280px 1fr;gap:16px;padding:16px">
+
+<!-- Left: incident list -->
+<div>
+  <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px">
+    Active Incidents
+  </div>
+  <div id="incidentList">
+    <div style="color:var(--muted);font-size:12px;padding:12px">Loading...</div>
+  </div>
+  <div style="font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin:16px 0 8px">
+    Closed Incidents
+  </div>
+  <div id="closedList">
+    <div style="color:var(--dim);font-size:11px;padding:8px">None</div>
+  </div>
+</div>
+
+<!-- Right: incident workspace -->
+<div id="workspace">
+  <div style="color:var(--muted);text-align:center;padding:60px 20px">
+    <div style="font-size:48px;margin-bottom:12px">📋</div>
+    <div style="font-family:var(--font-hd);font-size:16px;letter-spacing:2px;margin-bottom:8px">
+      NO INCIDENT SELECTED
+    </div>
+    <div style="font-size:12px">Select an incident from the list or create a new one</div>
+    <button onclick="showNewIncident()"
+      style="margin-top:16px;background:var(--eoc);border-color:var(--eoc);color:#fff">
+      + Create New Incident
+    </button>
+  </div>
+</div>
+
+</div>
+
+<!-- New Incident Modal -->
+<div class="modal-overlay" id="newIncModal" onclick="if(event.target===this)closeModal('newIncModal')">
+<div class="modal-box">
+  <div class="modal-title">📋 CREATE NEW INCIDENT</div>
+
+  <div class="form-group">
+    <label>Incident Name *</label>
+    <input type="text" id="ni-name" placeholder="e.g. McHenry County Winter Storm Response 2026">
+  </div>
+
+  <div class="form-grid-2">
+    <div class="form-group">
+      <label>Incident Type *</label>
+      <select id="ni-type">
+        <option value="">— Select Type —</option>
+        <optgroup label="Natural Hazards">
+          <option>Winter Storm</option>
+          <option>Flooding</option>
+          <option>Tornado / Severe Weather</option>
+          <option>Earthquake</option>
+          <option>Wildfire</option>
+          <option>Heat Emergency</option>
+          <option>Drought</option>
+        </optgroup>
+        <optgroup label="Technological">
+          <option>Hazmat / Chemical Spill</option>
+          <option>Transportation Accident</option>
+          <option>Structure Fire</option>
+          <option>Power Outage / Infrastructure</option>
+          <option>Dam Failure</option>
+          <option>Nuclear / Radiological</option>
+        </optgroup>
+        <optgroup label="Human-Caused">
+          <option>Mass Casualty Incident</option>
+          <option>Active Threat</option>
+          <option>Civil Disturbance</option>
+          <option>Terrorism</option>
+        </optgroup>
+        <optgroup label="Search & Rescue">
+          <option>Search and Rescue — Wilderness</option>
+          <option>Search and Rescue — Urban</option>
+          <option>Search and Rescue — Water</option>
+          <option>Missing Person — Dementia / Memory</option>
+          <option>Missing Person — Child</option>
+        </optgroup>
+        <optgroup label="Public Health">
+          <option>Disease Outbreak / Pandemic</option>
+          <option>Mass Casualty — Medical</option>
+          <option>Public Health Emergency</option>
+        </optgroup>
+        <optgroup label="Planned Events">
+          <option>Planned Event — Public Safety</option>
+          <option>Planned Event — EMCOMM Exercise</option>
+          <option>Drill / Training Exercise</option>
+        </optgroup>
+        <optgroup label="Other">
+          <option>Mutual Aid Request</option>
+          <option>EOC Activation</option>
+          <option>Other / All-Hazards</option>
+        </optgroup>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Jurisdiction</label>
+      <input type="text" id="ni-jurisdiction" placeholder="e.g. McHenry County, IL">
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label>Incident Location / Address</label>
+    <input type="text" id="ni-location" placeholder="e.g. 2200 N Seminary Ave, Woodstock IL or GPS coords">
+  </div>
+
+  <div class="form-grid-2">
+    <div class="form-group">
+      <label>Incident Commander</label>
+      <input type="text" id="ni-ic" placeholder="Name / Callsign">
+    </div>
+    <div class="form-group">
+      <label>Operational Period Duration</label>
+      <select id="ni-period-hours">
+        <option value="12">12 hours (standard)</option>
+        <option value="8">8 hours</option>
+        <option value="24">24 hours</option>
+        <option value="6">6 hours</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label>ICS Form Variant (for this incident)</label>
+    <div class="variant-select" id="ni-variant">
+      <div class="variant-pill sel" onclick="selVariant('FEMA')">FEMA</div>
+      <div class="variant-pill" onclick="selVariant('USCG')">USCG</div>
+      <div class="variant-pill" onclick="selVariant('NWCG')">NWCG</div>
+    </div>
+    <div style="font-size:10px;color:var(--dim);margin-top:4px">
+      Default from setup. Can be overridden per form.
+    </div>
+  </div>
+
+  <div class="form-group">
+    <label>Initial Situation Summary</label>
+    <textarea id="ni-summary" placeholder="Brief description of the incident situation..."></textarea>
+  </div>
+
+  <div style="display:flex;gap:8px;margin-top:4px">
+    <button onclick="createIncident()"
+      style="flex:1;background:var(--eoc);border-color:var(--eoc);color:#fff;font-weight:bold;padding:10px">
+      CREATE INCIDENT
+    </button>
+    <button onclick="closeModal('newIncModal')">Cancel</button>
+  </div>
+</div>
+</div>
+
+<!-- Advance Period Modal -->
+<div class="modal-overlay" id="periodModal" onclick="if(event.target===this)closeModal('periodModal')">
+<div class="modal-box">
+  <div class="modal-title">⏭ ADVANCE OPERATIONAL PERIOD</div>
+  <div class="form-group">
+    <label>Objectives carried forward to next period</label>
+    <textarea id="ap-objectives" rows="4" placeholder="List objectives for the next operational period..."></textarea>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:8px">
+    <button onclick="advancePeriod()"
+      style="background:var(--amber);border-color:var(--amber);color:#fff;font-weight:bold">
+      Advance Period
+    </button>
+    <button onclick="closeModal('periodModal')">Cancel</button>
+  </div>
+</div>
+</div>
+
+<script>
+const ICS_API = 'http://192.168.50.1:5051';
+const MAIN_API = 'http://192.168.50.1:5050';
+let currentInc = null;
+let incVariant = 'FEMA';
+
+// ── Load org config for defaults ─────────────────────────────────────
+async function loadOrgDefaults() {
+  try {
+    const r = await fetch(`${MAIN_API}/api/config`);
+    const cfg = await r.json();
+    if (cfg.ics_form_variant) selVariant(cfg.ics_form_variant);
+    if (cfg.jurisdiction) document.getElementById('ni-jurisdiction').value = cfg.jurisdiction || '';
+    if (cfg.city || cfg.county) {
+      const j = [cfg.county, cfg.state].filter(Boolean).join(', ');
+      if (j) document.getElementById('ni-jurisdiction').value = j;
+    }
+  } catch(e) {}
+}
+
+function selVariant(v) {
+  incVariant = v;
+  document.querySelectorAll('#ni-variant .variant-pill').forEach(el => {
+    el.classList.toggle('sel', el.textContent === v);
+  });
+}
+
+// ── Incident list ─────────────────────────────────────────────────────
+async function loadIncidents() {
+  try {
+    const r = await fetch(`${ICS_API}/api/ics/incidents`);
+    const incs = await r.json();
+    const active = incs.filter(i => i.status === 'active');
+    const closed = incs.filter(i => i.status === 'closed');
+
+    const listEl = document.getElementById('incidentList');
+    listEl.innerHTML = active.length ? active.map(inc => incCard(inc)).join('') :
+      '<div style="color:var(--muted);font-size:12px;padding:12px">No active incidents</div>';
+
+    const closedEl = document.getElementById('closedList');
+    closedEl.innerHTML = closed.length ? closed.map(inc => incCard(inc)).join('') :
+      '<div style="color:var(--dim);font-size:11px;padding:8px">None</div>';
+  } catch(e) {
+    document.getElementById('incidentList').innerHTML =
+      '<div style="color:var(--red);font-size:11px;padding:8px">⚠ ICS platform offline</div>';
+  }
+}
+
+function incCard(inc) {
+  const cls = inc.status === 'active' ? 'active' : 'closed';
+  const dot = inc.status === 'active' ? 'var(--green)' : 'var(--dim)';
+  const started = inc.started ? inc.started.slice(0,10) : '';
+  return `<div class="inc-card ${cls}" onclick="selectIncident('${inc.id}')">
+    <div class="inc-name">
+      <span class="status-dot" style="background:${dot};margin-right:6px"></span>
+      ${inc.name || 'Unnamed Incident'}
+    </div>
+    <div class="inc-meta">
+      <span class="inc-badge-type">${inc.type || 'Unknown'}</span>
+      <span>Period ${inc.current_period || 1}</span>
+      <span>${started}</span>
+      ${inc.incident_commander ? `<span>IC: ${inc.incident_commander}</span>` : ''}
+    </div>
+  </div>`;
+}
+
+// ── Select incident ────────────────────────────────────────────────────
+async function selectIncident(incId) {
+  try {
+    const r = await fetch(`${ICS_API}/api/ics/incidents/${incId}`);
+    currentInc = await r.json();
+    renderWorkspace();
+    // Load activity
+    loadActivity(incId);
+  } catch(e) { alert('Failed to load incident: ' + e); }
+}
+
+function renderWorkspace() {
+  if (!currentInc) return;
+  const inc = currentInc.incident || currentInc;
+  const periods = currentInc.periods || [];
+  const curPeriod = inc.current_period || 1;
+  const isActive = inc.status === 'active';
+
+  // Get form completions from ics_forms
+  const forms = currentInc.forms || {};
+
+  document.getElementById('workspace').innerHTML = `
+    <!-- Incident header -->
+    <div style="background:var(--panel);border:1px solid var(--line);border-radius:8px;
+                padding:14px 16px;margin-bottom:14px;border-left:4px solid ${isActive?'var(--green)':'var(--dim)'}">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px">
+        <div>
+          <div style="font-family:var(--font-hd);font-size:20px">${inc.name}</div>
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:4px;font-size:11px;color:var(--muted)">
+            <span class="inc-badge-type">${inc.type || 'Unknown'}</span>
+            <span>📍 ${inc.location || 'No location set'}</span>
+            <span>⚖ ${inc.jurisdiction || 'No jurisdiction'}</span>
+            ${inc.incident_commander?`<span>👤 IC: ${inc.incident_commander}</span>`:''}
+            <span>Started: ${(inc.started||'').slice(0,16).replace('T',' ')} UTC</span>
+          </div>
+          ${inc.summary?`<div style="font-size:12px;color:var(--muted);margin-top:6px;
+            max-width:600px">${inc.summary}</div>`:''}
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          ${isActive?`
+          <button onclick="showPeriodModal()" style="font-size:11px;padding:5px 10px">⏭ Next Period</button>
+          <button onclick="editIncident('${inc.id}')" style="font-size:11px;padding:5px 10px">✏ Edit</button>
+          <button onclick="closeIncident('${inc.id}')"
+            style="font-size:11px;padding:5px 10px;background:var(--red);border-color:var(--red)">
+            ✕ Close Incident
+          </button>`:'<span style="color:var(--dim);font-size:12px">CLOSED</span>'}
+        </div>
+      </div>
+    </div>
+
+    <!-- Operational period bar -->
+    <div class="period-bar">
+      <span class="period-num">OP ${curPeriod}</span>
+      <span style="font-size:12px;color:var(--muted)">Operational Period ${curPeriod}</span>
+      ${periods.length ? `<span style="font-size:11px;color:var(--dim)">
+        Started: ${(periods[periods.length-1].started||'').slice(0,16).replace('T',' ')} UTC
+      </span>` : ''}
+      <div style="margin-left:auto">
+        <button onclick="exportIAP('${inc.id}')"
+          style="background:var(--eoc);border-color:var(--eoc);color:#fff;font-size:11px;padding:5px 14px">
+          📄 Export IAP
+        </button>
+      </div>
+    </div>
+
+    <!-- ICS Form Navigation -->
+    <div class="section-divider">📋 ICS Forms — Operational Period ${curPeriod}</div>
+    <div style="font-size:11px;color:var(--dim);margin-bottom:10px">
+      Click any form to open it. Forms are saved automatically. Variant:
+      <strong style="color:var(--amber)">${inc.ics_variant || 'FEMA'}</strong>
+      <span style="margin-left:8px;cursor:pointer;color:var(--blue)"
+        onclick="changeVariant('${inc.id}')">Change →</span>
+    </div>
+
+    <div class="section-divider" style="color:var(--amber)">COMMAND</div>
+    <div class="form-nav">
+      ${formBtn('201','Incident Briefing','Command',inc.id,'All-hazards')}
+      ${formBtn('202','Incident Objectives','Command',inc.id,'All-hazards')}
+      ${formBtn('207','Organization Chart','Command',inc.id,'All-hazards')}
+      ${formBtn('208','Safety Message/Plan','Command',inc.id,'All-hazards')}
+    </div>
+
+    <div class="section-divider" style="color:var(--blue)">OPERATIONS</div>
+    <div class="form-nav">
+      ${formBtn('204','Assignment List','Operations',inc.id,'FEMA + NWCG')}
+      ${formBtn('211','Check-In List','Operations',inc.id,'See Net Logger')}
+      ${formBtn('219','Resource Status (T-Cards)','Operations',inc.id,'All-hazards')}
+      ${formBtn('210','Resource Status Change','Operations',inc.id,'All-hazards')}
+    </div>
+
+    <div class="section-divider" style="color:var(--green)">PLANNING</div>
+    <div class="form-nav">
+      ${formBtn('203','Organization Assignment','Planning',inc.id,'All-hazards')}
+      ${formBtn('209','Incident Status Summary','Planning',inc.id,'All-hazards')}
+      ${formBtn('215','Operational Planning Worksheet','Planning',inc.id,'Fire + Non-Fire')}
+      ${formBtn('215A','IAP Safety Analysis','Planning',inc.id,'All-hazards')}
+    </div>
+
+    <div class="section-divider" style="color:var(--amber)">LOGISTICS</div>
+    <div class="form-nav">
+      ${formBtn('205','Radio Communications Plan','Logistics',inc.id,'FEMA / USCG / NWCG')}
+      ${formBtn('205A','Communications List','Logistics',inc.id,'All-hazards')}
+      ${formBtn('206','Medical Plan','Logistics',inc.id,'FEMA / USCG')}
+      ${formBtn('213RR','Resource Request','Logistics',inc.id,'All-hazards')}
+    </div>
+
+    <div class="section-divider" style="color:var(--muted)">FINANCE / ADMIN</div>
+    <div class="form-nav">
+      ${formBtn('214','Activity Log','Finance',inc.id,'All-hazards')}
+      ${formBtn('220','Air Operations Summary','Finance',inc.id,'All-hazards')}
+      ${formBtn('221','Demobilization Check-Out','Finance',inc.id,'All-hazards')}
+    </div>
+
+    <div class="section-divider" style="color:var(--blue)">COMMUNICATIONS UNIT</div>
+    <div class="form-nav">
+      ${formBtn('213','General Message','Comms',inc.id,'All-hazards')}
+      ${formBtn('309','Communications Log','Comms',inc.id,'See Net Logger')}
+    </div>
+
+    <!-- Activity feed -->
+    <div class="section-divider" style="margin-top:16px">📜 ACTIVITY LOG</div>
+    <div id="activityFeed" style="max-height:200px;overflow-y:auto">
+      <div style="color:var(--dim);font-size:11px">Loading...</div>
+    </div>
+  `;
+}
+
+function formBtn(num, name, section, incId, variants) {
+  const url = formUrl(num, incId);
+  return `<a class="form-btn" href="${url}">
+    <div class="fb-num">ICS-${num}</div>
+    <div class="fb-name">${name}</div>
+    <div class="fb-variant">${variants}</div>
+  </a>`;
+}
+
+function formUrl(num, incId) {
+  // Map form numbers to HTML pages
+  const map = {
+    '213': `ics213.html?incident=${incId}`,
+    '214': `ics214.html?incident=${incId}`,
+    '309': `starcom.html`,
+  };
+  return map[num] || `ics-form.html?form=${num}&incident=${incId}`;
+}
+
+async function loadActivity(incId) {
+  try {
+    const r = await fetch(`${ICS_API}/api/ics/activity?incident_id=${incId}&limit=20`);
+    const items = await r.json();
+    const el = document.getElementById('activityFeed');
+    if (!el) return;
+    el.innerHTML = items.length ? items.map(a =>
+      `<div class="activity-item">
+        <span class="activity-time">${(a.timestamp||'').slice(11,16)}</span>
+        <span class="activity-section">${a.section||''}</span>
+        <span>${a.action||''} ${a.detail ? '— '+a.detail : ''}</span>
+      </div>`
+    ).join('') : '<div style="color:var(--dim);font-size:11px">No activity yet</div>';
+  } catch(e) {}
+}
+
+// ── Create incident ───────────────────────────────────────────────────
+function showNewIncident() {
+  document.getElementById('newIncModal').classList.add('open');
+  document.getElementById('ni-name').focus();
+}
+
+async function createIncident() {
+  const name = document.getElementById('ni-name').value.trim();
+  const type = document.getElementById('ni-type').value;
+  if (!name) { alert('Incident name is required'); return; }
+  if (!type) { alert('Select an incident type'); return; }
+
+  const payload = {
+    name,
+    type,
+    jurisdiction:         document.getElementById('ni-jurisdiction').value.trim(),
+    location:             document.getElementById('ni-location').value.trim(),
+    incident_commander:   document.getElementById('ni-ic').value.trim(),
+    summary:              document.getElementById('ni-summary').value.trim(),
+    ics_variant:          incVariant,
+    period_hours:         parseInt(document.getElementById('ni-period-hours').value) || 12,
+  };
+
+  try {
+    const r = await fetch(`${ICS_API}/api/ics/incidents`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const data = await r.json();
+    if (data.ok) {
+      closeModal('newIncModal');
+      clearNewIncForm();
+      await loadIncidents();
+      if (data.incident) selectIncident(data.incident.id);
+    }
+  } catch(e) { alert('Failed to create incident: ' + e); }
+}
+
+function clearNewIncForm() {
+  ['ni-name','ni-jurisdiction','ni-location','ni-ic','ni-summary'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  document.getElementById('ni-type').value = '';
+  selVariant('FEMA');
+}
+
+// ── Close incident ─────────────────────────────────────────────────────
+async function closeIncident(incId) {
+  if (!confirm('Close this incident? This cannot be undone.')) return;
+  await fetch(`${ICS_API}/api/ics/incidents/${incId}/close`, {method:'POST'});
+  await loadIncidents();
+  document.getElementById('workspace').innerHTML =
+    '<div style="color:var(--muted);text-align:center;padding:40px;font-size:13px">Incident closed.</div>';
+}
+
+// ── Advance period ─────────────────────────────────────────────────────
+function showPeriodModal() {
+  document.getElementById('periodModal').classList.add('open');
+}
+
+async function advancePeriod() {
+  if (!currentInc) return;
+  const inc = currentInc.incident || currentInc;
+  const objectives = document.getElementById('ap-objectives').value.trim();
+  try {
+    await fetch(`${ICS_API}/api/ics/incidents/${inc.id}/advance_period`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({objectives})
+    });
+    closeModal('periodModal');
+    await selectIncident(inc.id);
+    await loadIncidents();
+  } catch(e) { alert('Failed: ' + e); }
+}
+
+// ── Export IAP (placeholder — full build in IAP assembly step) ──────────
+function exportIAP(incId) {
+  alert('IAP export will be available once ICS forms are completed.\n\nThis will compile all completed forms for this incident into a single PDF with cover page and organization logo.');
+}
+
+function changeVariant(incId) {
+  const v = prompt('Enter form variant for this incident (FEMA / USCG / NWCG):');
+  if (v && ['FEMA','USCG','NWCG'].includes(v.toUpperCase())) {
+    fetch(`${ICS_API}/api/ics/incidents/${incId}`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ics_variant: v.toUpperCase()})
+    }).then(() => selectIncident(incId));
+  }
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+// ── Init ──────────────────────────────────────────────────────────────
+loadOrgDefaults();
+loadIncidents();
+
+// Auto-select if ?incident= in URL
+const urlInc = new URLSearchParams(location.search).get('incident');
+if (urlInc) selectIncident(urlInc);
+</script>
+</body>
+</html>

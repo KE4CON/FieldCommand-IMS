@@ -249,6 +249,7 @@ CREATE TABLE IF NOT EXISTS incidents (
     location            TEXT DEFAULT '',
     summary             TEXT DEFAULT '',
     current_period      INTEGER NOT NULL DEFAULT 1,
+    ics_variant         TEXT DEFAULT 'FEMA',    -- FEMA, USCG, NWCG
     started             TEXT NOT NULL,
     updated             TEXT,
     closed              TEXT
@@ -516,6 +517,7 @@ def init_db():
         "ALTER TABLE station_config ADD COLUMN ps_system2_type TEXT DEFAULT ''",
         "ALTER TABLE station_config ADD COLUMN ps_member_id_label TEXT DEFAULT 'EMA ID'",
         "ALTER TABLE station_config ADD COLUMN ps_member_lookup TEXT DEFAULT 'radio_id'",
+        "ALTER TABLE incidents ADD COLUMN ics_variant TEXT DEFAULT 'FEMA'",
     ]
     for sql in migrations:
         try:

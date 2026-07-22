@@ -968,6 +968,100 @@ function renderObjectives202() {
   formData['objectives_json'] = JSON.stringify(state202.objectives);
 }
 
+// ── ICS-203 assignment auto-populate ────────────────────────────────
+// Maps ICS position strings to form field keys
+const POSITION_MAP = {
+  'Incident Commander':              'incident_commander',
+  'Deputy IC — Operations':          'deputy_ic_1',
+  'Deputy IC — Other':               'deputy_ic_2',
+  'IC Assistant / Aide':             'ic_assistant',
+  'Safety Officer':                  'safety_officer',
+  'Assistant Safety Officer':        'asst_safety_officer',
+  'Public Information Officer':      'public_info_officer',
+  'Assistant PIO':                   'asst_pio',
+  'Liaison Officer':                 'liaison_officer',
+  'Agency Representative':           'agency_reps',
+  'Operations Section Chief':        'ops_section_chief',
+  'Deputy Operations Section Chief': 'deputy_osc',
+  'Branch I Director':               'branch1_dir',
+  'Branch II Director':              'branch2_dir',
+  'Division A Supervisor':           'div_a_sup',
+  'Division B Supervisor':           'div_b_sup',
+  'Division C Supervisor':           'div_c_sup',
+  'Division D Supervisor':           'div_d_sup',
+  'Division E Supervisor':           'div_e_sup',
+  'Division F Supervisor':           'div_f_sup',
+  'Task Force Leader':               'taskforce1_ldr',
+  'Air Operations Branch Director':  'air_ops_branch_dir',
+  'Staging Area Manager':            'staging_area_mgr',
+  'Planning Section Chief':          'planning_section_chief',
+  'Resources Unit Leader':           'resources_unit_ldr',
+  'Situation Unit Leader':           'situation_unit_ldr',
+  'Documentation Unit Leader':       'documentation_unit_ldr',
+  'Demobilization Unit Leader':      'demob_unit_ldr',
+  'Technical Specialist':            'tech_specialist_1',
+  'Logistics Section Chief':         'logistics_section_chief',
+  'Service Branch Director':         'service_branch_dir',
+  'Communications Unit Leader':      'comms_unit_ldr',
+  'Medical Unit Leader':             'medical_unit_ldr',
+  'Food Unit Leader':                'food_unit_ldr',
+  'Support Branch Director':         'support_branch_dir',
+  'Supply Unit Leader':              'supply_unit_ldr',
+  'Facilities Unit Leader':          'facilities_unit_ldr',
+  'Ground Support Unit Leader':      'ground_support_unit_ldr',
+  'Finance/Admin Section Chief':     'finance_section_chief',
+  'Time Unit Leader':                'time_unit_ldr',
+  'Procurement Unit Leader':         'procurement_unit_ldr',
+  'Comp/Claims Unit Leader':         'comp_claims_unit_ldr',
+  'Cost Unit Leader':                'cost_unit_ldr',
+};
+
+async function loadAssignments203() {
+  if (!INC_ID) return;
+  try {
+    const r = await fetch(`${ICS_API}/api/ics/assignments?incident_id=${INC_ID}`);
+    const data = await r.json();
+    let populated = 0;
+
+    // From check-in assignments (authoritative)
+    (data.assignments || []).forEach(a => {
+      const key = POSITION_MAP[a.ics_position];
+      if (key && !formData[key]) {
+        const display = a.name ? `${a.name} (${a.callsign})` : a.callsign;
+        formData[key] = display;
+        const el = document.querySelector(`[data-key="${key}"]`);
+        if (el) { el.value = display; el.style.background='rgba(26,122,58,0.1)'; }
+        populated++;
+      }
+    });
+
+    // From roster roles (fallback for positions not yet checked in)
+    (data.roster_roles || []).forEach(r => {
+      const key = POSITION_MAP[r.role];
+      if (key && !formData[key]) {
+        const display = r.name ? `${r.name} (${r.callsign||r.radio_id||''})`.trim() : r.callsign||'';
+        if (display) {
+          formData[key] = display;
+          const el = document.querySelector(`[data-key="${key}"]`);
+          if (el) { el.value = display; el.style.background='rgba(26,58,107,0.1)'; }
+          populated++;
+        }
+      }
+    });
+
+    formData._203_loaded = true;
+    if (populated > 0) {
+      const banner = document.createElement('div');
+      banner.style.cssText = 'background:rgba(26,122,58,0.15);border:1px solid var(--green);border-radius:5px;padding:8px 12px;margin-bottom:12px;font-size:11px;color:var(--green)';
+      banner.innerHTML = `✓ Auto-populated ${populated} field${populated!==1?'s':''} from check-in assignments and roster. <span style="color:var(--amber)">(Green = from check-in · Blue = from roster)</span> Edit any field as needed.`;
+      const wrap = document.getElementById('formWrap');
+      if (wrap) wrap.prepend(banner);
+    }
+  } catch(e) {
+    console.log('Assignment load failed (offline?):', e);
+  }
+}
+
 // Override collectFormData to include objectives
 const _origCollect = collectFormData;
 // Patch saveForm to include 202 objectives
@@ -986,6 +1080,10 @@ FORMS['203'] = {
     document.getElementById('formBadge').textContent = 'ICS-203';
     document.getElementById('formMeta').textContent =
       `${this.variants[VARIANT]} · Period ${PERIOD} · ${incData.name||'No incident'}`;
+    // Auto-populate from assignments if incident linked
+    if (INC_ID && !formData._203_loaded) {
+      loadAssignments203();
+    }
     const ic  = formData.incident_commander || incData.incident_commander || '';
     const osc = formData.ops_section_chief  || incData.ops_section_chief  || '';
     const psc = formData.planning_section_chief || incData.planning_section_chief || '';

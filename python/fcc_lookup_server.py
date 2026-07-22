@@ -456,8 +456,8 @@ class Handler(BaseHTTPRequestHandler):
                 c.execute("""INSERT OR REPLACE INTO net_entries
                     (id,net_id,callsign,member_id,radio_id,visitor_agency,
                      name,city,state,precedence,traffic,remarks,
-                     walk_in,visitor,timestamp,ema_id)
-                    VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                     walk_in,visitor,timestamp,ema_id,ics_position)
+                    VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                     (eid,net_id,
                      body.get("callsign",""),
                      body.get("member_id",""),
@@ -469,7 +469,7 @@ class Handler(BaseHTTPRequestHandler):
                      body.get("traffic",""),body.get("remarks",""),
                      1 if body.get("walk_in") else 0,
                      1 if body.get("visitor") else 0,
-                     now,ema_id))
+                     now,ema_id,body.get("ics_position","")))
                 c.execute("UPDATE dms_state SET last_activity=? WHERE id=1",(now,))
                 c.commit()
                 return self.send_json({"ok":True,"entry":{**body,"id":eid,"timestamp":now,"ema_id":ema_id}})

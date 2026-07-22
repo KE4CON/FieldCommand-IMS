@@ -145,6 +145,30 @@ class ICSHandler(BaseHTTPRequestHandler):
             return self.send_json({"service":"ics-platform","version":"2.0.0",
                 "utc":utcnow(),"incidents":incs,"active":active,"db":str(db.DB_PATH)})
 
+        elif path == "/api/ics/assignments":
+            inc_id=qs.get("incident_id",[None])[0]
+            if not inc_id:
+                return self.send_json({"error":"incident_id required"},400)
+            rows=c.execute("""
+                SELECT e.callsign,e.name,e.ics_position,e.ema_id,
+                       e.timestamp,e.checkout_time,n.name as net_name
+                FROM net_entries e
+                JOIN nets n ON e.net_id=n.id
+                WHERE e.incident_id=? AND e.ics_position!=''
+                ORDER BY e.timestamp
+            """,(inc_id,)).fetchall()
+            roster_rows=c.execute("""
+                SELECT callsign,radio_id,
+                       first_name||' '||last_name as name,
+                       role,member_id
+                FROM roster WHERE role!='' AND role!='Operator'
+                ORDER BY role
+            """).fetchall()
+            return self.send_json({
+                "assignments":rows_to_list(rows),
+                "roster_roles":rows_to_list(roster_rows)
+            })
+
         elif path == "/api/ics/meetings":
             inc_id=qs.get("incident_id",[None])[0]
             period=qs.get("period",[None])[0]

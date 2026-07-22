@@ -136,7 +136,8 @@ CREATE TABLE IF NOT EXISTS net_entries (
     promoted    INTEGER NOT NULL DEFAULT 0,  -- 1 = promoted to roster
     timestamp   TEXT NOT NULL,
     checkout_time TEXT,                       -- NULL = still on net; set when checked out
-    ema_id      TEXT DEFAULT ''              -- EMA/ESV member ID if found in roster
+    ema_id      TEXT DEFAULT '',              -- EMA/ESV member ID if found in roster
+    ics_position TEXT DEFAULT ''              -- ICS position assigned at check-in
 );
 CREATE INDEX IF NOT EXISTS idx_ne_net    ON net_entries(net_id);
 CREATE INDEX IF NOT EXISTS idx_ne_call   ON net_entries(callsign);
@@ -538,6 +539,7 @@ def init_db():
         "ALTER TABLE station_config ADD COLUMN ps_member_id_label TEXT DEFAULT 'EMA ID'",
         "ALTER TABLE station_config ADD COLUMN ps_member_lookup TEXT DEFAULT 'radio_id'",
         "ALTER TABLE incidents ADD COLUMN ics_variant TEXT DEFAULT 'FEMA'",
+        "ALTER TABLE net_entries ADD COLUMN ics_position TEXT DEFAULT ''",
         """CREATE TABLE IF NOT EXISTS ics_meetings (id TEXT PRIMARY KEY, incident_id TEXT NOT NULL DEFAULT '', period INTEGER NOT NULL DEFAULT 1, meeting_type TEXT NOT NULL, title TEXT NOT NULL DEFAULT '', scheduled_time TEXT, location TEXT DEFAULT '', chair TEXT DEFAULT '', attendees TEXT DEFAULT '[]', agenda_items TEXT DEFAULT '[]', status TEXT DEFAULT 'scheduled', notes TEXT DEFAULT '', created TEXT NOT NULL, updated TEXT NOT NULL)""",
     ]
     for sql in migrations:

@@ -175,6 +175,21 @@
     </select>
     <input type="text" id="remarksInput" placeholder="Remarks / Traffic">
   </div>
+  <div class="form-row" style="align-items:center">
+    <div style="flex:1">
+      <select id="icsPositionSel" style="width:100%;background:var(--input-bg);border:1px solid var(--line);border-radius:4px;color:var(--txt);padding:6px 8px;font-size:12px">
+        <option value="">— ICS Position for this incident (optional) —</option>
+        <optgroup label="Command"><option>Incident Commander</option><option>Deputy IC — Operations</option><option>Deputy IC — Other</option></optgroup>
+        <optgroup label="Command Staff"><option>Safety Officer</option><option>Assistant Safety Officer</option><option>Public Information Officer</option><option>Assistant PIO</option><option>Liaison Officer</option><option>Agency Representative</option></optgroup>
+        <optgroup label="Operations Section"><option>Operations Section Chief</option><option>Deputy Operations Section Chief</option><option>Branch I Director</option><option>Branch II Director</option><option>Branch III Director</option><option>Division A Supervisor</option><option>Division B Supervisor</option><option>Division C Supervisor</option><option>Division D Supervisor</option><option>Division E Supervisor</option><option>Division F Supervisor</option><option>Group Supervisor</option><option>Task Force Leader</option><option>Strike Team Leader</option><option>Air Operations Branch Director</option><option>Staging Area Manager</option></optgroup>
+        <optgroup label="Planning Section"><option>Planning Section Chief</option><option>Resources Unit Leader</option><option>Situation Unit Leader</option><option>Documentation Unit Leader</option><option>Demobilization Unit Leader</option><option>Technical Specialist</option><option>Field Observer</option></optgroup>
+        <optgroup label="Logistics Section"><option>Logistics Section Chief</option><option>Service Branch Director</option><option>Communications Unit Leader</option><option>Medical Unit Leader</option><option>Food Unit Leader</option><option>Support Branch Director</option><option>Supply Unit Leader</option><option>Facilities Unit Leader</option><option>Ground Support Unit Leader</option></optgroup>
+        <optgroup label="Finance / Admin"><option>Finance/Admin Section Chief</option><option>Time Unit Leader</option><option>Procurement Unit Leader</option><option>Comp/Claims Unit Leader</option><option>Cost Unit Leader</option></optgroup>
+        <optgroup label="General"><option>Net Control Station</option><option>Operator / General</option><option>Observer</option><option>Mutual Aid</option></optgroup>
+      </select>
+    </div>
+    <input type="text" id="incidentIdInput" placeholder="Incident ID (optional)" style="max-width:180px;font-size:12px">
+  </div>
   <div style="display:flex;gap:8px">
     <button onclick="logEntry()" style="background:var(--green);border-color:var(--green);color:#000;font-weight:bold;padding:8px 24px">LOG ENTRY</button>
     <button onclick="clearEntryForm()">Clear</button>
@@ -503,12 +518,14 @@ async function logEntry() {
   if (!call) { alert("Enter a callsign"); return; }
 
   const entry = {
-    callsign:   call,
-    name:       document.getElementById("nameInput").value.trim(),
-    status:     document.getElementById("statusSel").value,
-    location:   document.getElementById("locationInput").value.trim(),
-    precedence: document.getElementById("precSel").value,
-    remarks:    document.getElementById("remarksInput").value.trim(),
+    callsign:     call,
+    name:         document.getElementById("nameInput").value.trim(),
+    status:       document.getElementById("statusSel").value,
+    location:     document.getElementById("locationInput").value.trim(),
+    precedence:   document.getElementById("precSel").value,
+    remarks:      document.getElementById("remarksInput").value.trim(),
+    ics_position: document.getElementById("icsPositionSel")?.value || "",
+    incident_id:  document.getElementById("incidentIdInput")?.value.trim() || "",
   };
 
   try {
@@ -550,6 +567,8 @@ function clearEntryForm() {
     document.getElementById(id).value = "");
   document.getElementById("statusSel").value = "Check-In";
   document.getElementById("precSel").value   = "ROUTINE";
+  const posSel = document.getElementById("icsPositionSel");
+  if (posSel) posSel.value = "";
   document.getElementById("fccCard").classList.remove("show");
 }
 

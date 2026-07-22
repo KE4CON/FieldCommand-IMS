@@ -394,6 +394,129 @@ class ICSHandler(BaseHTTPRequestHandler):
         # ── ICS-211 Remote Check-In ─────────────────────────────────────────
         # GET: fetch pending entries for an incident/period
 
+
+
+        # ── FEMA Equipment Rates API ─────────────────────────────────────────
+        elif path == "/api/ics/fema/rates":
+            import datetime as _dt
+            category = qs.get("category",[""])[0]
+            q        = qs.get("q",[""])[0].lower()
+            sql      = "SELECT * FROM fema_equipment_rates WHERE active=1"
+            params   = []
+            if category:
+                sql += " AND category=?"; params.append(category)
+            rows = rows_to_list(c.execute(sql + " ORDER BY category,description", params).fetchall())
+            if q:
+                rows = [r for r in rows if q in r.get("description","").lower()
+                        or q in r.get("code","").lower() or q in r.get("category","").lower()]
+
+            # Compute reminder: how old are the rates?
+            max_year = max((r.get("rate_year",0) for r in rows), default=0)
+            current_year = _dt.datetime.utcnow().year
+            years_old    = current_year - max_year if max_year else None
+            reminder     = None
+            if years_old and years_old >= 1:
+                reminder = (
+                    f"Your FEMA equipment rates are from {max_year} — now {years_old} year(s) old. "
+                    f"FEMA typically updates rates annually. Check "
+                    f"fema.gov/assistance/public/tools-resources/schedule-equipment-rates "
+                    f"and update if a newer schedule applies to your incident."
+                )
+
+            categories = sorted(set(r.get("category","") for r in rows))
+            return self.send_json({
+                "rates":       rows,
+                "categories":  categories,
+                "rate_year":   max_year,
+                "years_old":   years_old,
+                "reminder":    reminder,
+                "source":      "FEMA Schedule of Equipment Rates",
+                "source_url":  "https://www.fema.gov/assistance/public/tools-resources/schedule-equipment-rates",
+            })
+
+        # ── Cost Dashboard API ──────────────────────────────────────────────
+        # GET /api/ics/cost_summary?incident_id=X
+        # Returns aggregated cost by category + burn rate
+        elif path == "/api/ics/cost_summary":
+            inc_id = qs.get("incident_id",[""])[0]
+            if not inc_id:
+                return self.send_json({"error":"incident_id required"},400)
+
+            # Pull FEMA entered costs
+            labor_rows  = rows_to_list(c.execute(
+                "SELECT * FROM fema_labor WHERE incident_id=?", (inc_id,)).fetchall())
+            equip_rows  = rows_to_list(c.execute(
+                "SELECT * FROM fema_equipment WHERE incident_id=?", (inc_id,)).fetchall())
+            mat_rows    = rows_to_list(c.execute(
+                "SELECT * FROM fema_materials WHERE incident_id=?", (inc_id,)).fetchall())
+
+            # Labor cost
+            def labor_cost(r):
+                base = (r.get("hours_reg",0) or 0)*(r.get("rate_reg",0) or 0) +                        (r.get("hours_ot",0) or 0)*(r.get("rate_ot",0) or 0)
+                return base * (1 + (r.get("fringe_pct",0) or 0)/100)
+
+            total_labor  = sum(labor_cost(r) for r in labor_rows)
+            total_equip  = sum((r.get("hours_used",0) or 0)*(r.get("rate_hr",0) or 0)
+                               for r in equip_rows)
+            total_mat    = sum(r.get("total_cost",0) or 0 for r in mat_rows)
+            total_fema   = total_labor + total_equip + total_mat
+
+            # T-card resource counts by category
+            tcards = rows_to_list(c.execute(
+                "SELECT * FROM ics_tcards WHERE incident_id=?", (inc_id,)).fetchall())
+
+            by_type = {}
+            for t in tcards:
+                rtype = t.get("resource_type") or t.get("category") or "Unknown"
+                by_type.setdefault(rtype, {"count":0, "personnel":0, "daily_cost":0})
+                by_type[rtype]["count"] += 1
+                by_type[rtype]["personnel"] += t.get("num_personnel",0) or 0
+                by_type[rtype]["daily_cost"] += t.get("daily_cost",0) or 0
+
+            # Pull incident start time for elapsed time calculation
+            inc_row = c.execute("SELECT started, current_period FROM incidents WHERE id=?",
+                                (inc_id,)).fetchone()
+            started = inc_row["started"] if inc_row else None
+            current_period = inc_row["current_period"] if inc_row else 1
+
+            import datetime
+            elapsed_hours = None
+            if started:
+                try:
+                    start_dt = datetime.datetime.fromisoformat(started.replace("Z",""))
+                    elapsed  = datetime.datetime.utcnow() - start_dt
+                    elapsed_hours = round(elapsed.total_seconds() / 3600, 1)
+                except Exception:
+                    pass
+
+            # Burn rate: total costs / elapsed hours
+            burn_per_hour = round(total_fema / elapsed_hours, 2)                 if elapsed_hours and elapsed_hours > 0 else None
+
+            return self.send_json({
+                "incident_id":    inc_id,
+                "elapsed_hours":  elapsed_hours,
+                "current_period": current_period,
+                "totals": {
+                    "labor":       round(total_labor, 2),
+                    "equipment":   round(total_equip, 2),
+                    "materials":   round(total_mat,   2),
+                    "total":       round(total_fema,  2),
+                },
+                "burn_rate": {
+                    "per_hour": burn_per_hour,
+                    "per_day":  round(burn_per_hour * 24, 2) if burn_per_hour else None,
+                    "per_period": round(burn_per_hour * 12, 2) if burn_per_hour else None,
+                },
+                "resources_by_type": by_type,
+                "counts": {
+                    "labor_entries":    len(labor_rows),
+                    "equipment_entries":len(equip_rows),
+                    "material_entries": len(mat_rows),
+                    "tcards":           len(tcards),
+                    "total_personnel":  sum(t.get("num_personnel",0) or 0 for t in tcards),
+                },
+            })
+
         # ── FEMA PA Cost Tracking API ────────────────────────────────────────
         elif path == "/api/ics/fema/labor":
             inc_id = qs.get("incident_id",[""])[0]
@@ -769,6 +892,39 @@ class ICSHandler(BaseHTTPRequestHandler):
             return self.send_json({"ok":True,"wiped":counts,
                 "preserved":["roster","hospitals","channel_library",
                              "resource_types","repeaters","net_entries"]})
+
+
+        # ── FEMA Equipment Rates POST (add/update custom rate) ──────────────
+        elif path == "/api/ics/fema/rates":
+            rid = body.get("id")
+            if rid:
+                # Update existing
+                fields = ["code","category","description","unit","rate","rate_year","notes","active"]
+                sets   = [f"{f}=?" for f in fields if f in body]
+                vals   = [body[f] for f in fields if f in body] + [rid]
+                if sets:
+                    c.execute(f"UPDATE fema_equipment_rates SET {','.join(sets)} WHERE id=?", vals)
+            else:
+                c.execute(
+                    "INSERT INTO fema_equipment_rates (code,category,description,unit,rate,rate_year,notes) "
+                    "VALUES (?,?,?,?,?,?,?)",
+                    (body.get("code",""), body.get("category",""), body.get("description",""),
+                     body.get("unit","hour"), body.get("rate",0),
+                     body.get("rate_year",2025), body.get("notes",""))
+                )
+                rid = c.lastrowid
+            c.commit()
+            return self.send_json({"ok":True,"id":rid})
+
+        # ── FEMA Rates bulk year update ──────────────────────────────────────
+        elif path == "/api/ics/fema/rates/update_year":
+            new_year = body.get("year")
+            if not new_year:
+                return self.send_json({"error":"year required"},400)
+            c.execute("UPDATE fema_equipment_rates SET rate_year=? WHERE active=1", (new_year,))
+            n = c.execute("SELECT changes()").fetchone()[0]
+            c.commit()
+            return self.send_json({"ok":True,"updated":n,"year":new_year})
 
         # ── FEMA PA Cost Tracking POST ───────────────────────────────────────
         elif path == "/api/ics/fema/labor":

@@ -99,6 +99,16 @@
     </div>
   </div>
 
+  <!-- FEMA rate reminder (shown when rates are outdated) -->
+  <div id="femaRateReminder" style="display:none;background:var(--amber-bg);
+       border:1px solid #fcd34d;border-radius:var(--r-md);padding:10px 16px;
+       margin-bottom:10px;font-size:12px;color:var(--amber);line-height:1.6">
+    ⚠ <span id="femaRateReminderText"></span>
+    <a href="fema_rates.html" style="color:var(--amber);font-weight:600;margin-left:8px">
+      → Review Rates
+    </a>
+  </div>
+
   <!-- Tabs -->
   <div class="cost-tabs">
     <div class="cost-tab active" onclick="showTab('labor')">👷 Force Account Labor</div>
@@ -373,8 +383,16 @@
       <input type="number" id="eq_hours" step="0.25" min="0" placeholder="4.0"
         oninput="calcEquipPreview()"></div>
     <div class="fg"><label>FEMA Rate ($/hr)</label>
-      <input type="number" id="eq_rate" step="0.01" min="0" placeholder="35.00"
-        oninput="calcEquipPreview()"></div>
+      <div style="display:flex;gap:6px">
+        <input type="number" id="eq_rate" step="0.01" min="0" placeholder="35.00"
+          oninput="calcEquipPreview()" style="flex:1">
+        <button onclick="showRatePicker()" type="button"
+          style="font-size:10px;padding:4px 8px;white-space:nowrap;
+                 background:var(--eoc-tint);border-color:var(--eoc);color:var(--eoc)">
+          📋 Lookup
+        </button>
+      </div>
+    </div>
     <div class="fg"><label>Operator Name</label>
       <input type="text" id="eq_operator" placeholder="Last, First"></div>
     <div class="fg" style="background:var(--amber-bg);border-radius:var(--r-sm);padding:8px">
@@ -897,6 +915,99 @@ function exportPW() {
 }
 
 loadIncidents();
-</script>
+
+// ── FEMA Rate Picker ──────────────────────────────────────────────
+let _allRates = [];
+
+async function showRatePicker() {
+  if (!_allRates.length) {
+    try {
+      const r = await fetch(`${ICS_API}/api/ics/fema/rates`);
+      const d = await r.json();
+      _allRates = d.rates || [];
+      if (d.reminder) showRateReminder(d.reminder);
+    } catch(e) { alert('Cannot load rates'); return; }
+  }
+  const modal = document.createElement('div');
+  modal.id = 'ratePickerModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;display:flex;align-items:center;justify-content:center';
+  modal.innerHTML = `
+    <div style="background:var(--panel);border:1px solid var(--line);border-radius:10px;
+                padding:20px;width:560px;max-width:96vw;max-height:84vh;display:flex;flex-direction:column">
+      <div style="font-family:var(--font-hd);font-size:12px;color:var(--eoc);
+                  letter-spacing:1px;margin-bottom:10px">FEMA EQUIPMENT RATE LOOKUP</div>
+      <input type="text" id="ratePickerSearch" placeholder="Search equipment..."
+        oninput="filterRatePicker()"
+        style="width:100%;background:var(--input-bg);border:1px solid var(--input-border);
+               color:var(--txt);padding:7px 10px;font-size:12px;border-radius:4px;margin-bottom:10px">
+      <div style="flex:1;overflow-y:auto;border:1px solid var(--line);border-radius:4px">
+        <table style="width:100%;border-collapse:collapse;font-size:11px">
+          <thead style="position:sticky;top:0;background:var(--panel2)">
+            <tr>
+              <th style="padding:5px 8px;text-align:left">Equipment</th>
+              <th style="padding:5px 8px;text-align:right">Rate</th>
+              <th style="padding:5px 8px;text-align:center">Unit</th>
+              <th style="padding:5px 8px;width:50px"></th>
+            </tr>
+          </thead>
+          <tbody id="ratePickerBody"></tbody>
+        </table>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:10px;align-items:center">
+        <a href="fema_rates.html" style="font-size:11px;color:var(--blue)">Manage rates →</a>
+        <button onclick="document.getElementById('ratePickerModal').remove()"
+          style="padding:7px 16px">Close</button>
+      </div>
+    </div>`;
+  modal.onclick = e => { if (e.target === modal) modal.remove(); };
+  document.body.appendChild(modal);
+  filterRatePicker();
+  document.getElementById('ratePickerSearch').focus();
+}
+
+function filterRatePicker() {
+  const q = (document.getElementById('ratePickerSearch')?.value || '').toLowerCase();
+  const list = _allRates.filter(r =>
+    !q || `${r.description} ${r.code} ${r.category}`.toLowerCase().includes(q)
+  );
+  const tbody = document.getElementById('ratePickerBody');
+  if (!tbody) return;
+  tbody.innerHTML = list.map(r => `
+    <tr>
+      <td style="padding:5px 8px">
+        <strong>${r.description}</strong>
+        <span style="font-size:9px;color:var(--dim);margin-left:4px">${r.category||''}</span>
+      </td>
+      <td style="padding:5px 8px;text-align:right;font-family:var(--font-mono);
+                  font-weight:700;color:var(--green)">$${(r.rate||0).toFixed(2)}</td>
+      <td style="padding:5px 8px;text-align:center;color:var(--muted)">${r.unit}</td>
+      <td style="padding:5px 8px">
+        <button onclick="selectRate(${r.rate},'${r.description.replace(/'/g,"\\'")}','${r.code||''}')"
+          style="font-size:10px;padding:2px 8px;background:var(--green);
+                 border-color:var(--green);color:#fff">Use</button>
+      </td>
+    </tr>`).join('');
+}
+
+function selectRate(rate, desc, code) {
+  document.getElementById('eq_rate').value = rate;
+  if (!document.getElementById('eq_equip').value) document.getElementById('eq_equip').value = desc;
+  if (!document.getElementById('eq_code').value && code) document.getElementById('eq_code').value = code;
+  calcEquipPreview();
+  document.getElementById('ratePickerModal')?.remove();
+}
+
+function showRateReminder(msg) {
+  const el = document.getElementById('femaRateReminder');
+  if (!el) return;
+  el.style.display = '';
+  document.getElementById('femaRateReminderText').textContent = msg;
+}
+
+// Auto-check rate reminder
+fetch(`${ICS_API}/api/ics/fema/rates`).then(r=>r.json()).then(d=>{
+  _allRates = d.rates || [];
+  if (d.reminder) showRateReminder(d.reminder);
+}).catch(()=>{});</script>
 </body>
 </html>

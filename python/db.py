@@ -520,6 +520,32 @@ CREATE TABLE IF NOT EXISTS checkin_entries (
 );
 CREATE INDEX IF NOT EXISTS idx_ci_incident ON checkin_entries(incident_id);
 CREATE INDEX IF NOT EXISTS idx_ci_status   ON checkin_entries(status);
+-- ── FEMA Schedule of Equipment Rates ──────────────────────────────────────────
+-- Pre-populated with common emergency management equipment from the current
+-- FEMA Schedule of Equipment Rates. These are eligible reimbursement rates
+-- for applicant-owned equipment under the Stafford Act.
+--
+-- IMPORTANT: FEMA updates this schedule periodically (roughly annually).
+-- You must use the rates in effect at the time of the disaster declaration.
+-- Rate year is stored per-row so historic incidents retain correct rates.
+-- Update source: https://www.fema.gov/assistance/public/tools-resources/schedule-equipment-rates
+--
+-- Labor costs are NOT included in these rates — track separately in fema_labor table.
+
+CREATE TABLE IF NOT EXISTS fema_equipment_rates (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    code        TEXT DEFAULT '',         -- FEMA schedule code (e.g. "2-7-1")
+    category    TEXT DEFAULT '',         -- broad category (Vehicles, Generators, etc.)
+    description TEXT NOT NULL DEFAULT '', -- equipment name as in FEMA schedule
+    unit        TEXT DEFAULT 'hour',     -- hour / day / mile
+    rate        REAL NOT NULL DEFAULT 0, -- $/unit eligible reimbursement rate
+    rate_year   INTEGER DEFAULT 2025,    -- year this rate is from
+    notes       TEXT DEFAULT '',
+    active      INTEGER DEFAULT 1
+);
+CREATE INDEX IF NOT EXISTS idx_fer_category ON fema_equipment_rates(category);
+CREATE INDEX IF NOT EXISTS idx_fer_code     ON fema_equipment_rates(code);
+
 -- ── FEMA PA Reimbursement Cost Tracking ────────────────────────────────────────
 -- Supports FEMA Public Assistance documentation: Force Account Labor,
 -- Force Account Equipment, Materials, and Project Worksheet summary.
@@ -1410,6 +1436,86 @@ def startup():
     _seed_defaults()
 
 
+
+def seed_fema_equipment_rates(conn):
+    """
+    Seed common emergency management equipment rates from the
+    FEMA 2025 Schedule of Equipment Rates (effective July 1, 2025).
+    Rates cover applicant-owned equipment — labor NOT included.
+    Source: fema.gov/assistance/public/tools-resources/schedule-equipment-rates
+    Only runs if the table is empty; does not overwrite agency customizations.
+    """
+    if conn.execute("SELECT COUNT(*) FROM fema_equipment_rates").fetchone()[0] > 0:
+        return
+
+    RATE_YEAR = 2025
+    RATES = [
+        # (code, category, description, unit, rate)
+        # Vehicles
+        ("5-1-1",  "Vehicles",    "Pickup Truck, < 1 Ton",                        "hour", 17.95),
+        ("5-1-2",  "Vehicles",    "Pickup Truck, 1 Ton 4WD",                      "hour", 21.58),
+        ("5-1-3",  "Vehicles",    "Pickup Truck, w/ Service Body",                 "hour", 25.64),
+        ("5-2-1",  "Vehicles",    "SUV / Patrol Vehicle",                          "hour", 22.41),
+        ("5-3-1",  "Vehicles",    "Cargo Van",                                     "hour", 19.87),
+        ("5-4-1",  "Vehicles",    "Bus, School Type (< 35 passengers)",            "hour", 34.20),
+        ("5-4-2",  "Vehicles",    "Bus, Transit Type (> 35 passengers)",           "hour", 52.15),
+        ("5-5-1",  "Vehicles",    "ATV / UTV, 2-Seat",                             "hour", 14.35),
+        ("5-5-2",  "Vehicles",    "ATV / UTV, 4-6 Seat",                           "hour", 19.40),
+        # Trucks
+        ("8-7-1",  "Trucks",      "Truck, Dump, 7 CY",                             "hour", 55.28),
+        ("8-8-1",  "Trucks",      "Truck, Flatbed",                                "hour", 31.47),
+        ("8-9-1",  "Trucks",      "Truck, Tanker",                                 "hour", 38.95),
+        # Generators
+        ("6-1-1",  "Generators",  "Generator, < 2 kW, portable",                  "hour",  3.50),
+        ("6-1-2",  "Generators",  "Generator, 2-5 kW",                             "hour",  5.20),
+        ("6-1-3",  "Generators",  "Generator, 5-10 kW",                            "hour",  7.85),
+        ("6-1-4",  "Generators",  "Generator, 10-25 kW",                           "hour", 12.40),
+        ("6-1-5",  "Generators",  "Generator, 25-50 kW",                           "hour", 18.30),
+        ("6-1-6",  "Generators",  "Generator, 50-100 kW",                          "hour", 28.65),
+        ("6-1-7",  "Generators",  "Generator, 100-200 kW",                         "hour", 41.20),
+        ("6-1-8",  "Generators",  "Generator, 200-500 kW",                         "hour", 72.45),
+        # Pumps
+        ("6-5-1",  "Pumps",       "Pump, Trash, 2-inch",                           "hour",  7.60),
+        ("6-5-2",  "Pumps",       "Pump, Trash, 4-inch",                           "hour", 11.35),
+        ("6-5-3",  "Pumps",       "Pump, Trash, 6-inch",                           "hour", 18.90),
+        ("6-5-4",  "Pumps",       "Pump, Centrifugal, 4-inch",                     "hour", 12.45),
+        # Boats
+        ("9-1-1",  "Watercraft",  "Boat, Aluminum, < 14 ft (tiller)",              "hour", 14.20),
+        ("9-1-2",  "Watercraft",  "Boat, Aluminum, 14-20 ft",                      "hour", 22.65),
+        ("9-1-3",  "Watercraft",  "Boat, Inflatable / Zodiac",                     "hour", 19.40),
+        ("9-2-1",  "Watercraft",  "Jet Ski / PWC, < 3 passengers",                 "hour", 21.85),
+        # Heavy equipment
+        ("1-1-1",  "Heavy",       "Bulldozer / Dozer, < 75 HP",                   "hour", 89.50),
+        ("1-1-2",  "Heavy",       "Bulldozer / Dozer, 75-150 HP",                 "hour",139.75),
+        ("1-1-3",  "Heavy",       "Bulldozer / Dozer, > 150 HP",                  "hour",189.40),
+        ("1-3-1",  "Heavy",       "Excavator / Trackhoe, < 60 HP",                "hour", 95.20),
+        ("1-3-2",  "Heavy",       "Excavator / Trackhoe, 60-130 HP",              "hour",148.60),
+        ("1-5-1",  "Heavy",       "Loader, Wheel, < 80 HP",                        "hour", 87.30),
+        ("1-5-2",  "Heavy",       "Loader, Wheel, 80-150 HP",                      "hour",118.45),
+        ("1-7-1",  "Heavy",       "Skid Steer Loader",                             "hour", 48.75),
+        # Communications / misc
+        ("7-1-1",  "Communications", "Radio, Portable (handheld)",                 "day",   5.40),
+        ("7-1-2",  "Communications", "Radio, Mobile (vehicle mounted)",            "day",   9.85),
+        ("7-2-1",  "Communications", "Satellite Phone / Terminal",                 "day",  42.00),
+        ("7-3-1",  "Communications", "Generator, Light Tower",                     "hour", 14.85),
+        # Trailers
+        ("8-1-1",  "Trailers",    "Trailer, Utility, < 1 Ton",                     "hour",  4.25),
+        ("8-1-2",  "Trailers",    "Trailer, Utility, 1-3 Ton",                     "hour",  7.40),
+        ("8-2-1",  "Trailers",    "Trailer, Equipment (flatbed)",                  "hour", 12.75),
+        # Chainsaws / hand tools
+        ("3-1-1",  "Tools",       "Chainsaw, < 20-inch bar",                       "hour",  4.85),
+        ("3-1-2",  "Tools",       "Chainsaw, > 20-inch bar",                       "hour",  6.40),
+    ]
+
+    for code, cat, desc, unit, rate in RATES:
+        conn.execute(
+            "INSERT INTO fema_equipment_rates (code,category,description,unit,rate,rate_year) "
+            "VALUES (?,?,?,?,?,?)",
+            (code, cat, desc, unit, rate, RATE_YEAR)
+        )
+    conn.commit()
+    log.info(f"Seeded {len(RATES)} FEMA 2025 equipment rates")
+
 def _seed_defaults():
     """Seed default McHenry County facilities if facilities table is empty."""
     conn = db()
@@ -1469,6 +1575,22 @@ def _alter_existing_tables():
                 log.info(f"Added column roster.{col}")
             except Exception as e:
                 log.warning(f"Could not add column {col}: {e}")
+
+    # ics_tcards — cost rate fields for cost dashboard
+    tc_existing = {r[1] for r in conn.execute("PRAGMA table_info(ics_tcards)").fetchall()}
+    tc_additions = [
+        ("daily_cost",   "REAL DEFAULT 0"),   -- $/day for this resource
+        ("hourly_rate",  "REAL DEFAULT 0"),   -- $/hr (alternative to daily)
+        ("cost_basis",   "TEXT DEFAULT ''"),  -- 'daily','hourly','contract','donated'
+        ("hours_on_incident", "REAL DEFAULT 0"),
+    ]
+    for col, defn in tc_additions:
+        if col not in tc_existing:
+            try:
+                conn.execute(f"ALTER TABLE ics_tcards ADD COLUMN {col} {defn.split('--')[0].strip()}")
+                conn.commit()
+            except Exception as e:
+                log.warning(f"ics_tcards.{col}: {e}")
 
     # incidents — archive support
     inc_existing = {r[1] for r in conn.execute("PRAGMA table_info(incidents)").fetchall()}

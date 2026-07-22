@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cost Dashboard — FieldCommand IMS</title>
+<link rel="stylesheet" href="theme.css">
+<style>
+.big-number {
+  font-family:var(--font-hd);font-size:32px;letter-spacing:-1px;
+  line-height:1;margin-bottom:2px;
+}
+.big-lbl {
+  font-size:10px;text-transform:uppercase;letter-spacing:.1em;
+  color:var(--muted);
+}
+
+.cost-grid {
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+  gap:10px;margin-bottom:16px;
+}
+.cost-tile {
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--r-md);
+  padding:14px 16px;box-shadow:var(--shadow-sm);
+}
+
+.burn-bar-wrap {
+  background:var(--panel2);border-radius:var(--r-sm);height:8px;
+  overflow:hidden;margin:8px 0 4px;
+}
+.burn-bar { height:100%;border-radius:var(--r-sm);transition:width .5s; }
+
+.resource-row {
+  display:grid;grid-template-columns:1fr auto auto auto;
+  gap:10px;align-items:center;
+  padding:8px 12px;border-bottom:1px solid var(--line-lt);font-size:12px;
+}
+.resource-row:last-child { border-bottom:none; }
+.resource-row:hover { background:var(--panel2); }
+
+.rate-input {
+  width:90px;font-family:var(--font-mono);font-size:11px;text-align:right;
+  background:var(--input-bg);border:1px solid var(--input-border);
+  color:var(--txt);padding:3px 7px;border-radius:3px;
+}
+
+.period-row {
+  display:flex;align-items:center;gap:12px;padding:6px 10px;
+  border-bottom:1px solid var(--line-lt);font-size:12px;
+}
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <span class="page-header-badge">FINANCE</span>
+  <span class="page-header-title">Incident Cost Dashboard</span>
+  <div class="page-header-sub">Real-time cost by category · burn rate · resource costs</div>
+  <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+    <select id="incidentSel"
+      style="background:var(--input-bg);border:1px solid var(--input-border);
+             color:var(--txt);padding:5px 10px;font-size:12px;border-radius:var(--r-sm)"
+      onchange="loadDashboard()">
+      <option value="">Select incident...</option>
+    </select>
+    <button onclick="loadDashboard()" style="font-size:12px;padding:5px 10px">↺ Refresh</button>
+    <a href="fema_costs.html" style="font-size:12px;padding:5px 12px;
+       background:var(--panel);border:1px solid var(--line);border-radius:var(--r-sm);
+       color:var(--muted);text-decoration:none">✏ Edit Costs</a>
+    <a href="index.html" class="back-link">← Dashboard</a>
+  </div>
+</div>
+
+<div class="page-wrap">
+
+  <!-- No incident selected -->
+  <div id="noIncident" style="text-align:center;padding:40px;color:var(--muted)">
+    Select an incident to view cost dashboard.
+  </div>
+
+  <!-- Main dashboard -->
+  <div id="mainDash" style="display:none">
+
+    <!-- Top stat tiles -->
+    <div class="cost-grid" id="statTiles">
+      <div class="cost-tile" style="border-top:3px solid var(--eoc)">
+        <div class="big-lbl">Total Costs</div>
+        <div class="big-number" id="stat-total" style="color:var(--eoc)">$0</div>
+        <div style="font-size:10px;color:var(--dim);margin-top:4px" id="stat-entries"></div>
+      </div>
+      <div class="cost-tile" style="border-top:3px solid var(--red)">
+        <div class="big-lbl">Force Acct Labor</div>
+        <div class="big-number" id="stat-labor" style="color:var(--red)">$0</div>
+        <div style="font-size:10px;color:var(--dim);margin-top:4px" id="stat-labor-count"></div>
+      </div>
+      <div class="cost-tile" style="border-top:3px solid var(--amber)">
+        <div class="big-lbl">Force Acct Equipment</div>
+        <div class="big-number" id="stat-equip" style="color:var(--amber)">$0</div>
+        <div style="font-size:10px;color:var(--dim);margin-top:4px" id="stat-equip-count"></div>
+      </div>
+      <div class="cost-tile" style="border-top:3px solid var(--green)">
+        <div class="big-lbl">Materials / Contracts</div>
+        <div class="big-number" id="stat-mat" style="color:var(--green)">$0</div>
+        <div style="font-size:10px;color:var(--dim);margin-top:4px" id="stat-mat-count"></div>
+      </div>
+      <div class="cost-tile" style="border-top:3px solid var(--blue)">
+        <div class="big-lbl">Elapsed Time</div>
+        <div class="big-number" id="stat-elapsed" style="color:var(--blue)">—</div>
+        <div style="font-size:10px;color:var(--dim);margin-top:4px">since incident open</div>
+      </div>
+      <div class="cost-tile" style="border-top:3px solid var(--muted)">
+        <div class="big-lbl">Burn Rate</div>
+        <div class="big-number" id="stat-burn" style="color:var(--txt)">—</div>
+        <div style="font-size:10px;color:var(--dim);margin-top:4px" id="stat-burn-sub"></div>
+      </div>
+    </div>
+
+    <!-- Cost breakdown bar -->
+    <div class="section-card" style="margin-bottom:12px">
+      <h2>Cost Breakdown</h2>
+      <div id="breakdownBars"></div>
+    </div>
+
+    <!-- Two columns: resources by type + burn rate projection -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+
+      <!-- Resources on incident -->
+      <div class="section-card" style="margin:0">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+          <h2 style="margin:0">Resources on Incident</h2>
+          <a href="fema_costs.html" style="font-size:11px;color:var(--blue)">Edit rates →</a>
+        </div>
+        <div style="font-size:10px;color:var(--muted);margin-bottom:8px">
+          T-card resources. Set daily cost to include in burn rate estimate.
+        </div>
+        <div class="resource-row"
+          style="background:var(--panel2);font-weight:600;font-size:10px;
+                 text-transform:uppercase;letter-spacing:.06em;border-radius:4px 4px 0 0">
+          <div>Resource / Type</div>
+          <div style="text-align:center">Count</div>
+          <div style="text-align:center">Personnel</div>
+          <div style="text-align:right">Est Daily $</div>
+        </div>
+        <div id="resourceTypeList">
+          <div style="padding:20px;text-align:center;color:var(--muted);font-size:12px">
+            No resources on T-card board.
+          </div>
+        </div>
+        <div id="resourceTotals"
+          style="display:none;background:var(--eoc-tint);padding:8px 12px;
+                 border-radius:0 0 4px 4px;font-size:12px;font-weight:600;
+                 display:flex;justify-content:space-between">
+          <span>Totals</span>
+          <span id="totalPersonnel"></span>
+          <span id="totalResourceCost" style="color:var(--eoc)"></span>
+        </div>
+      </div>
+
+      <!-- Burn rate projection -->
+      <div class="section-card" style="margin:0">
+        <h2>Cost Projection</h2>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:12px;line-height:1.6">
+          Based on entered costs and elapsed time.
+          Projections assume current burn rate continues.
+        </div>
+        <div id="projectionList"></div>
+
+        <div style="margin-top:14px;padding-top:12px;border-top:1px solid var(--line)">
+          <div style="font-size:11px;font-weight:600;color:var(--muted);margin-bottom:8px;
+                      text-transform:uppercase;letter-spacing:.06em">Budget Tracker</div>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+            <label style="font-size:11px;color:var(--muted);white-space:nowrap">Budget Limit</label>
+            <div style="position:relative;flex:1">
+              <span style="position:absolute;left:9px;top:50%;transform:translateY(-50%);
+                           color:var(--muted);font-size:12px">$</span>
+              <input type="number" id="budgetInput" placeholder="0"
+                style="width:100%;padding:6px 9px 6px 20px;font-family:var(--font-mono);
+                       background:var(--input-bg);border:1px solid var(--input-border);
+                       color:var(--txt);font-size:12px;border-radius:var(--r-sm)"
+                oninput="updateBudgetBar()">
+            </div>
+            <button onclick="updateBudgetBar()"
+              style="font-size:11px;padding:5px 10px">Set</button>
+          </div>
+          <div id="budgetBar" style="display:none">
+            <div style="display:flex;justify-content:space-between;font-size:11px;
+                        color:var(--muted);margin-bottom:4px">
+              <span id="budgetSpentLabel">Spent</span>
+              <span id="budgetPct"></span>
+            </div>
+            <div class="burn-bar-wrap">
+              <div class="burn-bar" id="budgetBarFill"
+                style="background:var(--green)"></div>
+            </div>
+            <div style="font-size:11px;color:var(--muted);margin-top:4px"
+              id="budgetRemaining"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Per-period cost breakdown -->
+    <div class="section-card">
+      <h2>Cost by Op Period</h2>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px">
+        From FEMA force account entries tagged by period.
+      </div>
+      <div class="period-row"
+        style="background:var(--panel2);font-weight:600;font-size:10px;
+               text-transform:uppercase;letter-spacing:.06em;border-radius:4px 4px 0 0">
+        <span style="width:80px">Period</span>
+        <span>Labor</span>
+        <span>Equipment</span>
+        <span>Materials</span>
+        <span style="margin-left:auto">Total</span>
+      </div>
+      <div id="periodList">
+        <div style="padding:20px;text-align:center;color:var(--muted);font-size:12px">
+          No period data — tag FEMA cost entries with an op period.
+        </div>
+      </div>
+    </div>
+
+    <div style="font-size:10px;color:var(--dim);margin-top:8px;line-height:1.6">
+      Costs shown are from FEMA Force Account entries only. Add actual costs via
+      <a href="fema_costs.html" style="color:var(--blue)">FEMA PA Cost Documentation</a>.
+      All projections are estimates — verify with Finance Section Chief.
+    </div>
+
+  </div><!-- /mainDash -->
+
+</div>
+
+<script>
+const ICS_API = 'http://192.168.50.1:5051';
+const API     = 'http://192.168.50.1:5050';
+
+let _data     = null;
+let _budget   = 0;
+
+const fmt  = n  => '$' + (n||0).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0});
+const fmt2 = n  => '$' + (n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+const fmtH = h  => h >= 48 ? `${(h/24).toFixed(1)}d` : h >= 1 ? `${h.toFixed(1)}h` : `${Math.round(h*60)}m`;
+
+async function loadIncidents() {
+  try {
+    const r = await fetch(`${API}/api/incidents`);
+    const incs = r.ok ? await r.json() : [];
+    const sel = document.getElementById('incidentSel');
+    sel.innerHTML = '<option value="">Select incident...</option>' +
+      incs.map(i => `<option value="${i.id}">${i.name}</option>`).join('');
+    const saved = localStorage.getItem('selectedIncident');
+    if (saved) { sel.value = saved; loadDashboard(); }
+  } catch(e) {}
+}
+
+async function loadDashboard() {
+  const incId = document.getElementById('incidentSel').value;
+  if (!incId) {
+    document.getElementById('noIncident').style.display = '';
+    document.getElementById('mainDash').style.display   = 'none';
+    return;
+  }
+  localStorage.setItem('selectedIncident', incId);
+
+  try {
+    const r = await fetch(`${ICS_API}/api/ics/cost_summary?incident_id=${incId}`);
+    if (!r.ok) throw new Error('Server error');
+    _data = await r.json();
+    render(_data);
+    document.getElementById('noIncident').style.display = 'none';
+    document.getElementById('mainDash').style.display   = '';
+  } catch(e) {
+    document.getElementById('noIncident').innerHTML =
+      `<div style="color:var(--red)">Error loading cost data: ${e.message}</div>`;
+  }
+}
+
+function render(d) {
+  const t = d.totals || {};
+  const b = d.burn_rate || {};
+  const c = d.counts || {};
+  const el = h => document.getElementById(h);
+
+  // Top tiles
+  el('stat-total').textContent  = fmt(t.total);
+  el('stat-labor').textContent  = fmt(t.labor);
+  el('stat-equip').textContent  = fmt(t.equipment);
+  el('stat-mat').textContent    = fmt(t.materials);
+  el('stat-labor-count').textContent = `${c.labor_entries || 0} entries`;
+  el('stat-equip-count').textContent = `${c.equipment_entries || 0} entries`;
+  el('stat-mat-count').textContent   = `${c.material_entries || 0} entries`;
+  el('stat-entries').textContent     = `${c.tcards || 0} resources · ${c.total_personnel || 0} personnel`;
+
+  // Elapsed time
+  if (d.elapsed_hours !== null && d.elapsed_hours !== undefined) {
+    el('stat-elapsed').textContent = fmtH(d.elapsed_hours);
+  } else {
+    el('stat-elapsed').textContent = '—';
+  }
+
+  // Burn rate
+  if (b.per_hour) {
+    el('stat-burn').textContent    = fmt2(b.per_hour) + '/hr';
+    el('stat-burn-sub').textContent = `${fmt(b.per_day)}/day · ${fmt(b.per_period)}/12hr period`;
+  } else {
+    el('stat-burn').textContent    = '—';
+    el('stat-burn-sub').textContent = 'Enter costs above to calculate';
+  }
+
+  // Breakdown bars
+  const total = t.total || 1;
+  const cats = [
+    { label:'Force Account Labor',     val:t.labor,     color:'var(--red)'   },
+    { label:'Force Account Equipment', val:t.equipment, color:'var(--amber)' },
+    { label:'Materials / Contracts',   val:t.materials, color:'var(--green)' },
+  ];
+  el('breakdownBars').innerHTML = cats.map(cat => {
+    const pct = Math.round((cat.val / total) * 100) || 0;
+    return `
+      <div style="margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;font-size:11px;
+                    margin-bottom:3px">
+          <span style="color:var(--muted)">${cat.label}</span>
+          <span style="font-family:var(--font-mono)">${fmt2(cat.val)} <span
+            style="color:var(--dim)">(${pct}%)</span></span>
+        </div>
+        <div class="burn-bar-wrap">
+          <div class="burn-bar" style="width:${pct}%;background:${cat.color}"></div>
+        </div>
+      </div>`;
+  }).join('');
+
+  // Resources by type
+  const byType = d.resources_by_type || {};
+  const typeKeys = Object.keys(byType);
+  if (typeKeys.length) {
+    let totalPers = 0, totalCost = 0;
+    el('resourceTypeList').innerHTML = typeKeys.map(type => {
+      const row = byType[type];
+      totalPers += row.personnel || 0;
+      totalCost += row.daily_cost || 0;
+      return `
+        <div class="resource-row">
+          <div>
+            <div style="font-weight:600">${type}</div>
+            <div style="font-size:10px;color:var(--dim)">${row.count} resource${row.count!==1?'s':''}</div>
+          </div>
+          <div style="text-align:center;font-family:var(--font-hd)">${row.count}</div>
+          <div style="text-align:center;color:var(--muted)">${row.personnel || 0}</div>
+          <div style="text-align:right;font-family:var(--font-mono)">
+            ${row.daily_cost ? fmt(row.daily_cost) : '<span style="color:var(--dim)">—</span>'}
+          </div>
+        </div>`;
+    }).join('');
+    el('resourceTotals').style.display = 'flex';
+    el('totalPersonnel').textContent   = `${totalPers} total personnel`;
+    el('totalResourceCost').textContent = totalCost ? fmt(totalCost) + '/day' : '';
+  } else {
+    el('resourceTypeList').innerHTML =
+      '<div style="padding:20px;text-align:center;color:var(--muted);font-size:12px">No resources on T-card board.</div>';
+    el('resourceTotals').style.display = 'none';
+  }
+
+  // Projection
+  if (b.per_hour && d.elapsed_hours) {
+    const rows = [
+      { label:'Next 12hr (1 period)',  hrs:12  },
+      { label:'Next 24hr (1 day)',     hrs:24  },
+      { label:'Next 72hr (3 days)',    hrs:72  },
+      { label:'Next 7 days',           hrs:168 },
+    ];
+    el('projectionList').innerHTML = rows.map(r => `
+      <div style="display:flex;justify-content:space-between;
+                  padding:5px 0;border-bottom:1px solid var(--line-lt);font-size:12px">
+        <span style="color:var(--muted)">${r.label}</span>
+        <span style="font-family:var(--font-mono);font-weight:600">
+          ${fmt(t.total + b.per_hour * r.hrs)}
+          <span style="font-weight:400;color:var(--dim);font-size:10px">
+            (+${fmt(b.per_hour * r.hrs)})
+          </span>
+        </span>
+      </div>`).join('');
+  } else {
+    el('projectionList').innerHTML =
+      '<div style="font-size:12px;color:var(--dim)">Enter costs and incident start time for projections.</div>';
+  }
+
+  // Per-period table
+  renderPeriodTable(d);
+  updateBudgetBar();
+}
+
+async function renderPeriodTable(d) {
+  const incId = document.getElementById('incidentSel').value;
+  // Fetch all cost entries to group by period
+  try {
+    const [lr, er, mr] = await Promise.all([
+      fetch(`${ICS_API}/api/ics/fema/labor?incident_id=${incId}`).then(r=>r.json()),
+      fetch(`${ICS_API}/api/ics/fema/equipment?incident_id=${incId}`).then(r=>r.json()),
+      fetch(`${ICS_API}/api/ics/fema/materials?incident_id=${incId}`).then(r=>r.json()),
+    ]);
+
+    const periods = {};
+    const addPeriod = (p, type, amt) => {
+      const key = p || 0;
+      periods[key] = periods[key] || {labor:0,equipment:0,materials:0};
+      periods[key][type] += amt;
+    };
+
+    lr.forEach(r => {
+      const base = (r.hours_reg||0)*(r.rate_reg||0) + (r.hours_ot||0)*(r.rate_ot||0);
+      addPeriod(r.period, 'labor', base * (1+(r.fringe_pct||0)/100));
+    });
+    er.forEach(r => addPeriod(r.period, 'equipment', (r.hours_used||0)*(r.rate_hr||0)));
+    mr.forEach(r => addPeriod(r.period, 'materials', r.total_cost||0));
+
+    const pkeys = Object.keys(periods).sort((a,b) => a-b);
+    if (!pkeys.length) {
+      document.getElementById('periodList').innerHTML =
+        '<div style="padding:20px;text-align:center;color:var(--muted);font-size:12px">No period data yet.</div>';
+      return;
+    }
+
+    document.getElementById('periodList').innerHTML = pkeys.map(p => {
+      const row   = periods[p];
+      const total = row.labor + row.equipment + row.materials;
+      return `
+        <div class="period-row">
+          <span style="font-family:var(--font-hd);color:var(--eoc);width:80px">
+            ${p > 0 ? 'Period ' + p : 'Unassigned'}
+          </span>
+          <span style="font-family:var(--font-mono)">${fmt2(row.labor)}</span>
+          <span style="font-family:var(--font-mono)">${fmt2(row.equipment)}</span>
+          <span style="font-family:var(--font-mono)">${fmt2(row.materials)}</span>
+          <span style="font-family:var(--font-mono);font-weight:700;
+                       color:var(--eoc);margin-left:auto">${fmt2(total)}</span>
+        </div>`;
+    }).join('');
+  } catch(e) {}
+}
+
+function updateBudgetBar() {
+  const budget = parseFloat(document.getElementById('budgetInput').value) || 0;
+  if (!budget || !_data) {
+    document.getElementById('budgetBar').style.display = 'none';
+    return;
+  }
+  const spent  = _data?.totals?.total || 0;
+  const pct    = Math.min(100, Math.round((spent / budget) * 100));
+  const remain = budget - spent;
+  const color  = pct >= 90 ? 'var(--red)' : pct >= 70 ? 'var(--amber)' : 'var(--green)';
+
+  document.getElementById('budgetBar').style.display     = '';
+  document.getElementById('budgetBarFill').style.width   = pct + '%';
+  document.getElementById('budgetBarFill').style.background = color;
+  document.getElementById('budgetPct').textContent       = pct + '% spent';
+  document.getElementById('budgetSpentLabel').textContent = `${fmt(spent)} of ${fmt(budget)}`;
+  document.getElementById('budgetRemaining').textContent  = remain >= 0
+    ? `${fmt(remain)} remaining`
+    : `${fmt(Math.abs(remain))} over budget`;
+  document.getElementById('budgetRemaining').style.color  = remain >= 0
+    ? 'var(--green)' : 'var(--red)';
+}
+
+// Auto-refresh every 2 minutes
+setInterval(() => {
+  if (document.getElementById('incidentSel').value) loadDashboard();
+}, 120000);
+
+loadIncidents();
+</script>
+</body>
+</html>

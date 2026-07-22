@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FEMA Equipment Rates — FieldCommand IMS</title>
+<link rel="stylesheet" href="theme.css">
+<style>
+.rate-table { width:100%;border-collapse:collapse;font-size:12px; }
+.rate-table th {
+  background:var(--panel2);padding:6px 10px;text-align:left;
+  border:1px solid var(--line);font-size:10px;text-transform:uppercase;
+  letter-spacing:.06em;color:var(--muted);white-space:nowrap;
+}
+.rate-table td { padding:5px 10px;border:1px solid var(--line-lt);vertical-align:middle; }
+.rate-table tr:hover td { background:var(--panel2); }
+.cat-hdr td {
+  background:var(--eoc-tint);font-weight:700;font-size:11px;
+  color:var(--eoc);letter-spacing:.05em;padding:4px 10px;
+}
+.reminder-box {
+  background:var(--amber-bg);border:1px solid #fcd34d;border-radius:var(--r-md);
+  padding:12px 16px;margin-bottom:14px;font-size:12px;color:var(--amber);line-height:1.6;
+}
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <span class="page-header-badge">FEMA</span>
+  <span class="page-header-title">FEMA Equipment Rate Schedule</span>
+  <div class="page-header-sub">Eligible reimbursement rates for applicant-owned equipment · Labor NOT included</div>
+  <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+    <button onclick="showUpdateYearModal()"
+      style="font-size:12px;padding:5px 12px;background:var(--amber-bg);
+             border-color:#fcd34d;color:var(--amber)">
+      📅 Update Rate Year
+    </button>
+    <button onclick="showAddModal(null)"
+      style="font-size:12px;padding:5px 12px;background:var(--eoc);
+             border-color:var(--eoc);color:#fff">
+      + Add Custom Rate
+    </button>
+    <a href="fema_costs.html" class="back-link">← FEMA Costs</a>
+  </div>
+</div>
+
+<div class="page-wrap">
+
+  <!-- Reminder banner (shown when rates are old) -->
+  <div id="reminderBox" class="reminder-box" style="display:none"></div>
+
+  <!-- Rate year / source info -->
+  <div style="background:var(--panel);border:1px solid var(--line);border-radius:var(--r-md);
+              padding:10px 16px;margin-bottom:14px;display:flex;gap:16px;align-items:center;
+              flex-wrap:wrap;font-size:12px;box-shadow:var(--shadow-sm)">
+    <div>
+      <span style="color:var(--muted)">Rate Year:</span>
+      <strong id="rateYear" style="font-family:var(--font-hd);color:var(--eoc);margin-left:6px">—</strong>
+    </div>
+    <div style="color:var(--dim)">|</div>
+    <div>
+      <span style="color:var(--muted)">Source:</span>
+      <a href="https://www.fema.gov/assistance/public/tools-resources/schedule-equipment-rates"
+        target="_blank" style="color:var(--blue);margin-left:4px">
+        fema.gov Schedule of Equipment Rates ↗
+      </a>
+    </div>
+    <div style="color:var(--dim)">|</div>
+    <div style="font-size:11px;color:var(--dim)">
+      ⚠ Labor costs are tracked separately — these rates cover equipment only.
+      Use the rate in effect at the time of your disaster declaration.
+    </div>
+  </div>
+
+  <!-- Search + filter -->
+  <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+    <input type="text" id="rateSearch" placeholder="Search equipment..."
+      oninput="renderRates()"
+      style="flex:1;min-width:200px;background:var(--input-bg);border:1px solid var(--input-border);
+             color:var(--txt);padding:6px 10px;font-size:12px;border-radius:var(--r-sm)">
+    <select id="catFilter" onchange="renderRates()"
+      style="background:var(--input-bg);border:1px solid var(--input-border);
+             color:var(--txt);padding:6px 10px;font-size:12px;border-radius:var(--r-sm)">
+      <option value="">All categories</option>
+    </select>
+    <span id="rateCount" style="font-size:11px;color:var(--muted);align-self:center"></span>
+  </div>
+
+  <div style="overflow-x:auto">
+    <table class="rate-table">
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Description</th>
+          <th>Unit</th>
+          <th>Rate</th>
+          <th>Year</th>
+          <th>Notes</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="rateBody">
+        <tr><td colspan="7" style="text-align:center;color:var(--muted);padding:30px">
+          Loading rates...
+        </td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- Add/Edit Modal -->
+<div id="rateModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);
+     z-index:200;align-items:center;justify-content:center"
+     onclick="if(event.target===this)this.style.display='none'">
+<div style="background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);
+            padding:20px;width:520px;max-width:96vw">
+  <div style="font-family:var(--font-hd);font-size:12px;color:var(--eoc);
+              letter-spacing:1px;margin-bottom:12px" id="rateModalTitle">ADD CUSTOM RATE</div>
+  <input type="hidden" id="r_id">
+  <div class="grid-2" style="gap:10px;margin-bottom:10px">
+    <div class="fg"><label>Description *</label>
+      <input type="text" id="r_desc" placeholder="e.g. Generator, 10-25 kW"></div>
+    <div class="fg"><label>Category</label>
+      <input type="text" id="r_cat" placeholder="Generators, Vehicles..."></div>
+    <div class="fg"><label>FEMA Code</label>
+      <input type="text" id="r_code" placeholder="6-1-4"></div>
+    <div class="fg"><label>Unit</label>
+      <select id="r_unit"
+        style="background:var(--input-bg);border:1px solid var(--input-border);
+               color:var(--txt);padding:6px 10px;font-size:12px;border-radius:var(--r-sm)">
+        <option value="hour">hour</option>
+        <option value="day">day</option>
+        <option value="mile">mile</option>
+        <option value="each">each</option>
+      </select>
+    </div>
+    <div class="fg"><label>Rate ($/unit)</label>
+      <input type="number" id="r_rate" step="0.01" min="0" placeholder="0.00"></div>
+    <div class="fg"><label>Rate Year</label>
+      <input type="number" id="r_year" value="2025" min="2000" max="2100"></div>
+    <div class="fg" style="grid-column:1/-1"><label>Notes</label>
+      <input type="text" id="r_notes" placeholder="Optional notes"></div>
+  </div>
+  <div style="display:flex;gap:8px">
+    <button onclick="saveRate()"
+      style="flex:1;background:var(--eoc);border-color:var(--eoc);color:#fff;padding:8px;font-weight:600">
+      SAVE
+    </button>
+    <button onclick="if(confirm('Delete this rate?'))deleteRate()" id="r_del"
+      style="display:none;padding:8px 14px;background:var(--red-bg);border-color:#fca5a5;color:var(--red)">
+      Delete
+    </button>
+    <button onclick="document.getElementById('rateModal').style.display='none'"
+      style="padding:8px 14px">Cancel</button>
+  </div>
+</div>
+</div>
+
+<!-- Update Year Modal -->
+<div id="yearModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);
+     z-index:200;align-items:center;justify-content:center"
+     onclick="if(event.target===this)this.style.display='none'">
+<div style="background:var(--panel);border:1px solid #fcd34d;border-radius:var(--r-lg);
+            padding:22px;width:420px;max-width:96vw">
+  <div style="font-family:var(--font-hd);font-size:12px;color:var(--amber);
+              letter-spacing:1px;margin-bottom:12px">📅 UPDATE FEMA RATE YEAR</div>
+  <div style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:14px">
+    Use this when FEMA publishes a new Schedule of Equipment Rates.
+    This updates the rate year tag on all existing rates — it does NOT change the
+    dollar amounts. Update individual rates manually to match the new schedule.
+    <br><br>
+    Always check
+    <a href="https://www.fema.gov/assistance/public/tools-resources/schedule-equipment-rates"
+      target="_blank" style="color:var(--blue)">fema.gov ↗</a>
+    for the current schedule before an incident.
+  </div>
+  <div style="display:flex;gap:8px;align-items:center;margin-bottom:14px">
+    <label style="font-size:12px;color:var(--muted)">New Rate Year</label>
+    <input type="number" id="newYear" value="2025" min="2000" max="2100"
+      style="width:90px;font-family:var(--font-hd)">
+  </div>
+  <div style="display:flex;gap:8px">
+    <button onclick="updateRateYear()"
+      style="flex:1;background:var(--amber);border-color:var(--amber);
+             color:#fff;padding:8px;font-weight:600">
+      Update Year Tag
+    </button>
+    <button onclick="document.getElementById('yearModal').style.display='none'"
+      style="padding:8px 14px">Cancel</button>
+  </div>
+</div>
+</div>
+
+<script>
+const ICS_API = 'http://192.168.50.1:5051';
+let allRates = [];
+
+async function loadRates() {
+  try {
+    const r = await fetch(`${ICS_API}/api/ics/fema/rates`);
+    const d = await r.json();
+    allRates = d.rates || [];
+
+    // Rate year display
+    document.getElementById('rateYear').textContent = d.rate_year || '—';
+
+    // Reminder
+    if (d.reminder) {
+      document.getElementById('reminderBox').style.display = '';
+      document.getElementById('reminderBox').textContent   = '⚠ ' + d.reminder;
+    }
+
+    // Populate category filter
+    const cats = d.categories || [];
+    const sel  = document.getElementById('catFilter');
+    sel.innerHTML = '<option value="">All categories</option>' +
+      cats.map(c => `<option value="${c}">${c}</option>`).join('');
+
+    renderRates();
+  } catch(e) {
+    document.getElementById('rateBody').innerHTML =
+      `<tr><td colspan="7" style="color:var(--red);text-align:center;padding:20px">
+        Error loading rates: ${e.message}
+      </td></tr>`;
+  }
+}
+
+function renderRates() {
+  const q   = document.getElementById('rateSearch').value.toLowerCase();
+  const cat = document.getElementById('catFilter').value;
+
+  let list = allRates.filter(r => {
+    if (cat && r.category !== cat) return false;
+    if (q && !(`${r.description} ${r.code} ${r.category}`).toLowerCase().includes(q)) return false;
+    return true;
+  });
+
+  document.getElementById('rateCount').textContent =
+    `${list.length} rate${list.length!==1?'s':''}`;
+
+  if (!list.length) {
+    document.getElementById('rateBody').innerHTML =
+      '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px">No rates match.</td></tr>';
+    return;
+  }
+
+  // Group by category
+  const groups = {};
+  list.forEach(r => {
+    const c = r.category || 'Other';
+    groups[c] = groups[c] || [];
+    groups[c].push(r);
+  });
+
+  const rows = [];
+  for (const [cat, catRates] of Object.entries(groups)) {
+    rows.push(`<tr class="cat-hdr"><td colspan="7">${cat}</td></tr>`);
+    catRates.forEach(r => {
+      rows.push(`<tr>
+        <td style="font-family:var(--font-mono);font-size:10px;color:var(--dim)">${r.code||'—'}</td>
+        <td>${r.description}</td>
+        <td style="text-align:center;color:var(--muted)">${r.unit}</td>
+        <td style="text-align:right;font-family:var(--font-mono);font-weight:600;color:var(--green)">
+          $${(r.rate||0).toFixed(2)}</td>
+        <td style="text-align:center;font-size:10px;color:var(--dim)">${r.rate_year||'—'}</td>
+        <td style="font-size:10px;color:var(--dim)">${r.notes||''}</td>
+        <td>
+          <button onclick="showAddModal(${JSON.stringify(r).replace(/"/g,'&quot;')})"
+            style="font-size:10px;padding:2px 7px">✏</button>
+        </td>
+      </tr>`);
+    });
+  }
+  document.getElementById('rateBody').innerHTML = rows.join('');
+}
+
+function showAddModal(rate) {
+  const m = document.getElementById('rateModal');
+  if (rate) {
+    document.getElementById('rateModalTitle').textContent = 'EDIT RATE';
+    document.getElementById('r_id').value    = rate.id;
+    document.getElementById('r_desc').value  = rate.description || '';
+    document.getElementById('r_cat').value   = rate.category    || '';
+    document.getElementById('r_code').value  = rate.code        || '';
+    document.getElementById('r_unit').value  = rate.unit        || 'hour';
+    document.getElementById('r_rate').value  = rate.rate        || 0;
+    document.getElementById('r_year').value  = rate.rate_year   || 2025;
+    document.getElementById('r_notes').value = rate.notes       || '';
+    document.getElementById('r_del').style.display = '';
+  } else {
+    document.getElementById('rateModalTitle').textContent = 'ADD CUSTOM RATE';
+    ['r_id','r_desc','r_cat','r_code','r_notes'].forEach(id => document.getElementById(id).value='');
+    document.getElementById('r_unit').value  = 'hour';
+    document.getElementById('r_rate').value  = 0;
+    document.getElementById('r_year').value  = document.getElementById('rateYear').textContent || 2025;
+    document.getElementById('r_del').style.display = 'none';
+  }
+  m.style.display = 'flex';
+  document.getElementById('r_desc').focus();
+}
+
+async function saveRate() {
+  const desc = document.getElementById('r_desc').value.trim();
+  if (!desc) { alert('Description required'); return; }
+  const id = document.getElementById('r_id').value;
+  const payload = {
+    id:          id ? parseInt(id) : undefined,
+    description: desc,
+    category:    document.getElementById('r_cat').value.trim(),
+    code:        document.getElementById('r_code').value.trim(),
+    unit:        document.getElementById('r_unit').value,
+    rate:        parseFloat(document.getElementById('r_rate').value) || 0,
+    rate_year:   parseInt(document.getElementById('r_year').value) || 2025,
+    notes:       document.getElementById('r_notes').value.trim(),
+  };
+  await fetch(`${ICS_API}/api/ics/fema/rates`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(payload)
+  });
+  document.getElementById('rateModal').style.display = 'none';
+  await loadRates();
+}
+
+async function deleteRate() {
+  const id = document.getElementById('r_id').value;
+  if (!id) return;
+  await fetch(`${ICS_API}/api/ics/fema/rates`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({id:parseInt(id), active:0})
+  });
+  document.getElementById('rateModal').style.display = 'none';
+  await loadRates();
+}
+
+function showUpdateYearModal() {
+  document.getElementById('newYear').value =
+    parseInt(document.getElementById('rateYear').textContent) || new Date().getFullYear();
+  document.getElementById('yearModal').style.display = 'flex';
+}
+
+async function updateRateYear() {
+  const year = parseInt(document.getElementById('newYear').value);
+  if (!year || year < 2000) { alert('Enter a valid year'); return; }
+  const r = await fetch(`${ICS_API}/api/ics/fema/rates/update_year`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({year})
+  });
+  const d = await r.json();
+  if (d.ok) {
+    alert(`✓ Updated ${d.updated} rates to year ${year}`);
+    document.getElementById('yearModal').style.display = 'none';
+    await loadRates();
+  } else {
+    alert('Failed: ' + (d.error||'Unknown error'));
+  }
+}
+
+loadRates();
+</script>
+</body>
+</html>

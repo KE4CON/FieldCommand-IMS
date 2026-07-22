@@ -6331,6 +6331,922 @@ function build225FullPage(fd) {
   </body></html>`;
 }
 
+
+// ══════════════════════════════════════════════════════════════════
+// ICS-213 GENERAL MESSAGE
+// The universal ICS message form — used for any written communication
+// ══════════════════════════════════════════════════════════════════
+FORMS['213'] = {
+  title: 'ICS-213 General Message',
+  badge: 'ICS-213',
+  variants: { FEMA:'FEMA 010-0-13', USCG:'CG-5221', NWCG:'ICS-213 (NWCG)' },
+
+  render() {
+    document.getElementById('formTitle').textContent = 'ICS-213 \u2014 General Message';
+    document.getElementById('formBadge').textContent = 'ICS-213';
+    document.getElementById('formMeta').textContent =
+      `${this.variants[VARIANT]} \u00b7 ${incData.name||'No incident'}`;
+    return `
+    <div class="section-card">
+      <h2>General Message</h2>
+      <p style="font-size:11px;color:var(--muted);margin:0 0 12px">
+        The ICS-213 is the standard written message form for any ICS communication
+        that needs a paper record \u2014 resource requests, situation updates,
+        administrative messages, and inter-section communications.
+        It is NOT a radio log \u2014 use ICS-309 (net logger) for that.
+      </p>
+      <div class="grid-3">
+        ${field('msg_to','To (name / position)','text','')}
+        ${field('msg_position_to','Position','text','')}
+        ${field('msg_date_time','Date / Time','datetime-local','')}
+      </div>
+      <div class="grid-3">
+        ${field('msg_from','From (name / position)','text',
+          orgData.personal_call||'')}
+        ${field('msg_position_from','Position','text','')}
+        ${field('msg_incident','Incident Name','text',incData.name||'')}
+      </div>
+      <div class="fg" style="margin-bottom:10px">
+        <label>Subject</label>
+        <input type="text" data-key="msg_subject"
+          style="background:var(--input-bg);border:1px solid var(--line);color:var(--txt);
+                 padding:8px 10px;font-size:13px;border-radius:4px;width:100%;box-sizing:border-box">
+      </div>
+      ${field('msg_body','Message','textarea','',{rows:12})}
+    </div>
+
+    <div class="section-card">
+      <h2>Reply</h2>
+      ${field('msg_reply','Reply (if applicable)','textarea','',{rows:4})}
+      <div class="grid-2" style="margin-top:8px">
+        ${field('msg_reply_from','Reply From (name / position)','text','')}
+        ${field('msg_reply_date','Reply Date / Time','datetime-local','')}
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>Routing</h2>
+      <div class="grid-2">
+        ${field('msg_section','Originating Section','text','')}
+        ${field('msg_priority','Priority','text','Routine')}
+      </div>
+      <div class="grid-2">
+        ${field('msg_approved_by','Approved By (if required)','text','')}
+        ${field('msg_approved_position','Position','text','')}
+      </div>
+    </div>`;
+  },
+
+  buildPrint() {
+    const fd = collectFormData();
+    Object.assign(formData, fd);
+    const variant = FORMS['213'].variants[VARIANT];
+    return `
+    <div class="ics-print-header">
+      <div class="logo-cell">${logoHtml()}</div>
+      <div class="title-cell"><h1>ICS-213 GENERAL MESSAGE</h1>
+        <div class="sub">${variant} \u00b7 FieldCommand IMS</div></div>
+      <div class="meta-cell">
+        <div class="ml">Incident</div><div class="mv" style="font-size:10px">${fd.msg_incident||'\u2014'}</div>
+        <div class="ml">Date/Time</div><div class="mv">${fd.msg_date_time||'\u2014'}</div>
+        <div class="ml">Priority</div><div class="mv">${fd.msg_priority||'Routine'}</div>
+      </div>
+    </div>
+    <div class="pr">
+      <div class="pc w2">
+        <div class="pl">To</div>
+        <div class="pv" style="font-weight:bold">${fd.msg_to||''}</div>
+        <div style="font-size:10px;color:#555">${fd.msg_position_to||''}</div>
+      </div>
+      <div class="pc w2">
+        <div class="pl">From</div>
+        <div class="pv" style="font-weight:bold">${fd.msg_from||''}</div>
+        <div style="font-size:10px;color:#555">${fd.msg_position_from||''}</div>
+      </div>
+    </div>
+    <div class="pr"><div class="pc" style="flex:4">
+      <div class="pl">Subject</div>
+      <div class="pv" style="font-size:13px;font-weight:bold">${fd.msg_subject||''}</div>
+    </div></div>
+    <div class="pr"><div class="pc" style="flex:4">
+      <div class="pl">Message</div>
+      <div class="pv pw" style="min-height:120px;white-space:pre-wrap;font-size:12px;line-height:1.6">
+        ${fd.msg_body||''}
+      </div>
+    </div></div>
+    ${fd.msg_reply?`<div class="pr"><div class="pc" style="flex:4">
+      <div class="pl">Reply</div>
+      <div class="pv pw" style="min-height:60px;white-space:pre-wrap">${fd.msg_reply}</div>
+      <div style="font-size:10px;color:#555;margin-top:4px">
+        Reply from: ${fd.msg_reply_from||''} &nbsp; ${fd.msg_reply_date||''}
+      </div>
+    </div></div>`:''}
+    <div class="sig-row">
+      <div class="sig-cell"><div class="sl">Sender</div>
+        <div class="ss">${fd.msg_from||''}</div>
+        <div class="sl">Position: ${fd.msg_position_from||''}</div>
+        <div class="sl">Date/Time: ${fd.msg_date_time||''}</div>
+      </div>
+      <div class="sig-cell"><div class="sl">Sender Signature</div><div class="ss"></div></div>
+      <div class="sig-cell"><div class="sl">Approved By</div>
+        <div class="ss">${fd.msg_approved_by||''}</div>
+        <div class="sl">Position: ${fd.msg_approved_position||''}</div>
+      </div>
+      <div class="sig-cell"><div class="sl">Approval Signature</div><div class="ss"></div></div>
+    </div>
+    <div class="print-footer">
+      <span>${variant} \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
+      <span>Printed: ${new Date().toLocaleString()}</span>
+    </div>`;
+  }
+};
+
+// ══════════════════════════════════════════════════════════════════
+// ICS-234 WORK ANALYSIS MATRIX
+// Planning Section — complex multi-agency resource analysis
+// ══════════════════════════════════════════════════════════════════
+FORMS['234'] = {
+  title: 'ICS-234 Work Analysis Matrix',
+  badge: 'ICS-234',
+  variants: { FEMA:'FEMA Supplement', USCG:'USCG Supplement', NWCG:'ICS-234 (NWCG)' },
+
+  render() {
+    document.getElementById('formTitle').textContent = 'ICS-234 \u2014 Work Analysis Matrix';
+    document.getElementById('formBadge').textContent = 'ICS-234';
+    document.getElementById('formMeta').textContent =
+      `Planning Supplement \u00b7 Period ${PERIOD} \u00b7 ${incData.name||'No incident'}`;
+    return `
+    <div class="section-card">
+      <h2>Purpose</h2>
+      <div style="background:rgba(26,58,107,0.08);border:1px solid var(--eoc);border-radius:5px;
+                  padding:10px 12px;font-size:12px;color:var(--muted)">
+        The ICS-234 Work Analysis Matrix is used by the Planning Section to identify,
+        analyze, and prioritize work assignments across all divisions and groups for
+        complex multi-agency incidents. It cross-references objectives, divisions, resource
+        types, and work completion to support operational planning and the ICS-215.
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>1. Incident Information</h2>
+      <div class="grid-3">
+        ${field('incident_name','Incident Name','text',incData.name||'')}
+        ${field('operational_period_number','Op Period #','text',String(PERIOD))}
+        ${field('date_prepared','Date Prepared','date',todayDate())}
+      </div>
+      <div class="grid-2">
+        ${field('prepared_by_psc','Prepared By (Planning Section Chief)','text',
+          formData.planning_section_chief||'')}
+        ${field('approved_by_ic','Incident Commander','text',
+          formData.incident_commander||incData.incident_commander||'')}
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>2. Objectives Being Addressed</h2>
+      ${field('wam234_objectives','Incident Objectives Addressed by This Matrix','textarea',
+        'List the ICS-202 objectives this work analysis supports...',{rows:3})}
+    </div>
+
+    <div class="section-card">
+      <h2>3. Work Analysis Matrix</h2>
+      <p style="font-size:11px;color:var(--muted);margin:0 0 10px">
+        For each work assignment, record the Division/Group, the specific task,
+        estimated work quantity, resource type and count needed,
+        priority, and current completion percentage.
+      </p>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:11px">
+          <thead><tr style="background:var(--panel2)">
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:60px">Div / Group</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:160px">Work Assignment / Task</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">Work Quantity / Units</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">Resource Type Needed</th>
+            <th style="padding:6px 8px;text-align:center;border:1px solid var(--line);min-width:50px"># Units</th>
+            <th style="padding:6px 8px;text-align:center;border:1px solid var(--line);min-width:60px">Priority</th>
+            <th style="padding:6px 8px;text-align:center;border:1px solid var(--line);min-width:60px">% Complete</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">Notes</th>
+          </tr></thead>
+          <tbody id="wam234Body">
+            ${[...Array(10)].map((_,i)=>`<tr>
+              <td style="border:1px solid var(--line);padding:3px">
+                <input type="text" data-key="wam234_div_${i}"
+                  style="width:100%;font-size:11px;padding:3px 4px;font-family:var(--font-hd)">
+              </td>
+              <td style="border:1px solid var(--line);padding:3px">
+                <input type="text" data-key="wam234_task_${i}"
+                  style="width:100%;font-size:11px;padding:3px 4px">
+              </td>
+              <td style="border:1px solid var(--line);padding:3px">
+                <input type="text" data-key="wam234_qty_${i}"
+                  placeholder="e.g. 2 miles, 500 acres"
+                  style="width:100%;font-size:11px;padding:3px 4px">
+              </td>
+              <td style="border:1px solid var(--line);padding:3px">
+                <input type="text" data-key="wam234_rtype_${i}"
+                  placeholder="e.g. Type II Crew"
+                  style="width:100%;font-size:11px;padding:3px 4px">
+              </td>
+              <td style="border:1px solid var(--line);padding:3px;text-align:center">
+                <input type="number" data-key="wam234_units_${i}"
+                  style="width:50px;font-size:11px;padding:3px 4px;text-align:center">
+              </td>
+              <td style="border:1px solid var(--line);padding:3px;text-align:center">
+                <select data-key="wam234_priority_${i}"
+                  style="width:100%;font-size:11px;padding:2px 4px;background:var(--input-bg);color:var(--txt);border:none">
+                  <option></option>
+                  <option value="1 - Critical">1 \u2014 Critical</option>
+                  <option value="2 - High">2 \u2014 High</option>
+                  <option value="3 - Medium">3 \u2014 Medium</option>
+                  <option value="4 - Low">4 \u2014 Low</option>
+                </select>
+              </td>
+              <td style="border:1px solid var(--line);padding:3px;text-align:center">
+                <input type="number" data-key="wam234_pct_${i}"
+                  min="0" max="100" placeholder="0"
+                  style="width:50px;font-size:11px;padding:3px 4px;text-align:center">
+              </td>
+              <td style="border:1px solid var(--line);padding:3px">
+                <input type="text" data-key="wam234_notes_${i}"
+                  style="width:100%;font-size:11px;padding:3px 4px">
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <button onclick="add234Row()" style="margin-top:6px;font-size:11px;padding:4px 12px">+ Add Row</button>
+    </div>
+
+    <div class="section-card">
+      <h2>4. Summary</h2>
+      <div class="grid-3">
+        ${field('wam234_total_assignments','Total Work Assignments','text','')}
+        ${field('wam234_critical_count','Critical Priority Items','text','')}
+        ${field('wam234_overall_pct','Overall Estimated % Complete','text','')}
+      </div>
+      ${field('wam234_summary','Analysis Summary / Planning Notes','textarea','',{rows:4})}
+    </div>`;
+  },
+
+  buildPrint() {
+    const fd = collectFormData();
+    Object.assign(formData, fd);
+    const prioColor = p =>
+      p&&p.includes('Critical')?'#c0392b':p&&p.includes('High')?'#c07010':
+      p&&p.includes('Medium')?'#1a5276':'#888';
+    let rows = '';
+    for (let i=0; i<wam234Count; i++) {
+      if (!fd[`wam234_div_${i}`] && !fd[`wam234_task_${i}`]) continue;
+      const pct = parseInt(fd[`wam234_pct_${i}`])||0;
+      rows += `<tr>
+        <td style="padding:3px 5px;border:1px solid #ccc;font-weight:bold;font-family:monospace">${fd[`wam234_div_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`wam234_task_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`wam234_qty_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`wam234_rtype_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc;text-align:center">${fd[`wam234_units_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc;text-align:center;font-weight:bold;color:${prioColor(fd[`wam234_priority_${i}`])}">${fd[`wam234_priority_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc;text-align:center">
+          <div style="background:#e0e0e0;border-radius:3px;overflow:hidden;height:12px;width:60px;display:inline-block">
+            <div style="background:${pct>=75?'#1e8449':pct>=50?'#1a5276':'#c07010'};height:100%;width:${pct}%"></div>
+          </div>
+          <span style="font-size:9px;margin-left:3px">${pct}%</span>
+        </td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`wam234_notes_${i}`]||''}</td>
+      </tr>`;
+    }
+    return `
+    <div class="ics-print-header">
+      <div class="logo-cell">${logoHtml()}</div>
+      <div class="title-cell"><h1>ICS-234 WORK ANALYSIS MATRIX</h1>
+        <div class="sub">Planning Supplement \u00b7 FieldCommand IMS</div></div>
+      <div class="meta-cell">
+        <div class="ml">Incident</div><div class="mv" style="font-size:10px">${fd.incident_name||'\u2014'}</div>
+        <div class="ml">Op Period</div><div class="mv">${fd.operational_period_number||PERIOD}</div>
+        <div class="ml">Date</div><div class="mv">${fd.date_prepared||'\u2014'}</div>
+      </div>
+    </div>
+    <div class="pr">
+      <div class="pc w2"><div class="pl">Planning Section Chief</div><div class="pv">${fd.prepared_by_psc||''}</div></div>
+      <div class="pc w2"><div class="pl">Incident Commander</div><div class="pv">${fd.approved_by_ic||''}</div></div>
+    </div>
+    ${fd.wam234_objectives?`<div class="pr"><div class="pc" style="flex:4">
+      <div class="pl">Objectives Addressed</div><div class="pv">${fd.wam234_objectives}</div>
+    </div></div>`:''}
+    <div class="pr"><div class="pc" style="flex:4">
+      <div class="pl">3. Work Analysis Matrix</div>
+      <table style="width:100%;border-collapse:collapse;font-size:9px;margin-top:3px">
+        <thead><tr style="background:#e8eef7">
+          <th style="padding:2px 4px;border:1px solid #ccc">Div/Grp</th>
+          <th style="padding:2px 4px;border:1px solid #ccc;text-align:left">Work Assignment / Task</th>
+          <th style="padding:2px 4px;border:1px solid #ccc;text-align:left">Work Qty</th>
+          <th style="padding:2px 4px;border:1px solid #ccc;text-align:left">Resource Type</th>
+          <th style="padding:2px 4px;border:1px solid #ccc"># Units</th>
+          <th style="padding:2px 4px;border:1px solid #ccc">Priority</th>
+          <th style="padding:2px 4px;border:1px solid #ccc">% Done</th>
+          <th style="padding:2px 4px;border:1px solid #ccc;text-align:left">Notes</th>
+        </tr></thead>
+        <tbody>${rows||'<tr><td colspan="8" style="padding:6px;color:#888;text-align:center">No work assignments entered</td></tr>'}</tbody>
+      </table>
+    </div></div>
+    <div class="pr">
+      <div class="pc"><div class="pl">Total Assignments</div><div class="pv">${fd.wam234_total_assignments||''}</div></div>
+      <div class="pc"><div class="pl">Critical Priority</div><div class="pv">${fd.wam234_critical_count||''}</div></div>
+      <div class="pc w2"><div class="pl">Overall % Complete</div><div class="pv">${fd.wam234_overall_pct||''}</div></div>
+    </div>
+    ${fd.wam234_summary?`<div class="pr"><div class="pc" style="flex:4">
+      <div class="pl">Analysis Summary</div><div class="pv">${fd.wam234_summary}</div>
+    </div></div>`:''}
+    <div class="sig-row">
+      <div class="sig-cell"><div class="sl">Planning Section Chief</div>
+        <div class="ss">${fd.prepared_by_psc||''}</div></div>
+      <div class="sig-cell"><div class="sl">PSC Signature</div><div class="ss"></div></div>
+      <div class="sig-cell"><div class="sl">Incident Commander</div>
+        <div class="ss">${fd.approved_by_ic||''}</div></div>
+      <div class="sig-cell"><div class="sl">IC Signature</div><div class="ss"></div></div>
+    </div>
+    <div class="print-footer">
+      <span>Planning Supplement \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
+      <span>Printed: ${new Date().toLocaleString()}</span>
+    </div>`;
+  }
+};
+
+let wam234Count = 10;
+function add234Row() {
+  const tbody = document.getElementById('wam234Body');
+  if (!tbody) return;
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="wam234_div_${wam234Count}" style="width:100%;font-size:11px;padding:3px 4px;font-family:var(--font-hd)"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="wam234_task_${wam234Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="wam234_qty_${wam234Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="wam234_rtype_${wam234Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="number" data-key="wam234_units_${wam234Count}" style="width:50px;font-size:11px;padding:3px 4px;text-align:center"></td>
+    <td style="border:1px solid var(--line);padding:3px"><select data-key="wam234_priority_${wam234Count}" style="width:100%;font-size:11px;padding:2px 4px;background:var(--input-bg);color:var(--txt);border:none"><option></option><option value="1 - Critical">1 \u2014 Critical</option><option value="2 - High">2 \u2014 High</option><option value="3 - Medium">3 \u2014 Medium</option><option value="4 - Low">4 \u2014 Low</option></select></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="number" data-key="wam234_pct_${wam234Count}" min="0" max="100" style="width:50px;font-size:11px;padding:3px 4px;text-align:center"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="wam234_notes_${wam234Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>`;
+  tbody.appendChild(tr);
+  wam234Count++;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ICS-223 WILDLIFE PROTECTION MEASURES (NWCG Fire)
+// ══════════════════════════════════════════════════════════════════
+FORMS['223'] = {
+  title: 'ICS-223 Wildlife Protection Measures',
+  badge: 'ICS-223',
+  variants: { FEMA:'FEMA Supplement', USCG:'USCG Supplement', NWCG:'ICS-223 (NWCG Fire)' },
+
+  render() {
+    document.getElementById('formTitle').textContent = 'ICS-223 \u2014 Wildlife Protection Measures';
+    document.getElementById('formBadge').textContent = 'ICS-223';
+    document.getElementById('formMeta').textContent =
+      `NWCG Fire Supplement \u00b7 Period ${PERIOD} \u00b7 ${incData.name||'No incident'}`;
+    return `
+    <div class="section-card">
+      <h2>1. Incident Information</h2>
+      <div style="background:rgba(26,122,58,0.08);border:1px solid var(--green);border-radius:5px;
+                  padding:8px 12px;margin-bottom:12px;font-size:11px;color:var(--muted)">
+        ICS-223 is primarily used on NWCG wildland fire incidents to document measures
+        taken to protect wildlife, sensitive species, and their habitat during suppression operations.
+        Required when incident is in or adjacent to habitat of threatened or endangered species.
+      </div>
+      <div class="grid-3">
+        ${field('incident_name','Incident Name','text',incData.name||'')}
+        ${field('incident_number','Incident Number','text','')}
+        ${field('date_prepared','Date Prepared','date',todayDate())}
+      </div>
+      <div class="grid-2">
+        ${field('wl_agency_contact','Cooperating Agency Contact (USFWS / State DNR)','text','')}
+        ${field('wl_agency_phone','Agency Contact Phone','text','')}
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>2. Species of Concern</h2>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="background:var(--panel2)">
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:120px">Species (Common / Scientific)</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">Status (T/E/SC)</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:100px">Location on Incident</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:150px">Protection Measures Required</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">Responsible Party</th>
+          </tr></thead>
+          <tbody id="wl223Body">
+            ${[...Array(6)].map((_,i)=>`<tr>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="wl223_species_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px">
+                <select data-key="wl223_status_${i}" style="width:100%;font-size:11px;padding:2px 4px;background:var(--input-bg);color:var(--txt);border:none">
+                  <option></option>
+                  <option value="T">T \u2014 Threatened</option>
+                  <option value="E">E \u2014 Endangered</option>
+                  <option value="SC">SC \u2014 Species of Concern</option>
+                  <option value="S">S \u2014 Sensitive</option>
+                  <option value="Other">Other</option>
+                </select>
+              </td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="wl223_loc_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="wl223_measures_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="wl223_resp_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <button onclick="add223Row()" style="margin-top:6px;font-size:11px;padding:4px 12px">+ Add Species</button>
+    </div>
+
+    <div class="section-card">
+      <h2>3. General Wildlife Protection Restrictions</h2>
+      ${field('wl223_restrictions','General Restrictions for All Crews','textarea',
+        'e.g. No dozer work within 300ft of owl nest sites; avoid creek buffers 4/15-7/15; no night operations in spotted owl PAC areas...',{rows:4})}
+      <div class="grid-2" style="margin-top:8px">
+        ${field('wl223_buffer_zone','Buffer Zone Requirements','text',
+          'e.g. 300ft from nesting sites')}
+        ${field('wl223_time_restrictions','Time / Seasonal Restrictions','text',
+          'e.g. No work 3/1 - 7/15')}
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>4. Sensitive Areas / Habitat Map</h2>
+      ${imageField('ics223_map','Sensitive Species / Habitat Map',
+        'Map showing locations of sensitive species, nest sites, buffer zones, and exclusion areas')}
+    </div>
+
+    <div class="section-card">
+      <h2>5. Prepared By</h2>
+      <div class="grid-2">
+        ${field('prepared_by_223','Prepared By (Environmental / Resource Advisor)','text','')}
+        ${field('date_time_prepared','Date / Time','datetime-local','')}
+      </div>
+    </div>`;
+  },
+
+  buildPrint() {
+    const fd = collectFormData();
+    Object.assign(formData, fd);
+    let rows = '';
+    for (let i=0; i<wl223Count; i++) {
+      if (!fd[`wl223_species_${i}`]) continue;
+      rows += `<tr>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`wl223_species_${i}`]}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc;text-align:center;font-weight:bold">${fd[`wl223_status_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`wl223_loc_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`wl223_measures_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`wl223_resp_${i}`]||''}</td>
+      </tr>`;
+    }
+    return `
+    <div class="ics-print-header">
+      <div class="logo-cell">${logoHtml()}</div>
+      <div class="title-cell"><h1>ICS-223 WILDLIFE PROTECTION MEASURES</h1>
+        <div class="sub">NWCG Fire Supplement \u00b7 FieldCommand IMS</div></div>
+      <div class="meta-cell">
+        <div class="ml">Incident</div><div class="mv" style="font-size:10px">${fd.incident_name||'\u2014'}</div>
+        <div class="ml">Date</div><div class="mv">${fd.date_prepared||'\u2014'}</div>
+      </div>
+    </div>
+    <div class="pr">
+      <div class="pc w2"><div class="pl">Agency Contact</div><div class="pv">${fd.wl_agency_contact||''}</div></div>
+      <div class="pc w2"><div class="pl">Agency Phone</div><div class="pv">${fd.wl_agency_phone||''}</div></div>
+    </div>
+    <div class="pr"><div class="pc" style="flex:4">
+      <div class="pl">2. Species of Concern</div>
+      <table style="width:100%;border-collapse:collapse;font-size:10px;margin-top:3px">
+        <thead><tr style="background:#e8f5e9">
+          <th style="padding:3px 5px;border:1px solid #ccc;text-align:left">Species</th>
+          <th style="padding:3px 5px;border:1px solid #ccc">Status</th>
+          <th style="padding:3px 5px;border:1px solid #ccc;text-align:left">Location</th>
+          <th style="padding:3px 5px;border:1px solid #ccc;text-align:left">Protection Measures</th>
+          <th style="padding:3px 5px;border:1px solid #ccc;text-align:left">Responsible</th>
+        </tr></thead>
+        <tbody>${rows||'<tr><td colspan="5" style="padding:5px;color:#888;text-align:center">No species entered</td></tr>'}</tbody>
+      </table>
+    </div></div>
+    <div class="pr">
+      <div class="pc w2"><div class="pl">General Restrictions</div>
+        <div class="pv">${fd.wl223_restrictions||''}</div></div>
+      <div class="pc"><div class="pl">Buffer Zones</div><div class="pv">${fd.wl223_buffer_zone||''}</div></div>
+      <div class="pc"><div class="pl">Time Restrictions</div><div class="pv">${fd.wl223_time_restrictions||''}</div></div>
+    </div>
+    ${fd.ics223_map_img?`<div style="border-top:2px solid #000;padding:8px">
+      <div style="font-size:9px;text-transform:uppercase;color:#555;margin-bottom:4px">Sensitive Species / Habitat Map</div>
+      <img src="${fd.ics223_map_img}" style="max-width:100%;max-height:300px;object-fit:contain">
+    </div>`:''}
+    <div class="sig-row">
+      <div class="sig-cell"><div class="sl">Prepared By (ENV / REAC)</div>
+        <div class="ss">${fd.prepared_by_223||''}</div>
+        <div class="sl">Date/Time: ${fd.date_time_prepared||''}</div></div>
+      <div class="sig-cell"><div class="sl">Signature</div><div class="ss"></div></div>
+      <div class="sig-cell"></div><div class="sig-cell"></div>
+    </div>
+    <div class="print-footer">
+      <span>NWCG Fire Supplement \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
+      <span>Printed: ${new Date().toLocaleString()}</span>
+    </div>`;
+  }
+};
+
+let wl223Count = 6;
+function add223Row() {
+  const tbody = document.getElementById('wl223Body');
+  if (!tbody) return;
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="wl223_species_${wl223Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+    <td style="border:1px solid var(--line);padding:3px"><select data-key="wl223_status_${wl223Count}" style="width:100%;font-size:11px;padding:2px 4px;background:var(--input-bg);color:var(--txt);border:none"><option></option><option value="T">T \u2014 Threatened</option><option value="E">E \u2014 Endangered</option><option value="SC">SC \u2014 Species of Concern</option><option value="S">S \u2014 Sensitive</option><option value="Other">Other</option></select></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="wl223_loc_${wl223Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="wl223_measures_${wl223Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="wl223_resp_${wl223Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>`;
+  tbody.appendChild(tr);
+  wl223Count++;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ICS-224 CREW PERFORMANCE RATING (NWCG)
+// Post-incident — evaluated for the crew as a unit, not individually
+// ══════════════════════════════════════════════════════════════════
+FORMS['224'] = {
+  title: 'ICS-224 Crew Performance Rating',
+  badge: 'ICS-224',
+  variants: { FEMA:'FEMA Supplement', USCG:'USCG Supplement', NWCG:'ICS-224 (NWCG)' },
+
+  render() {
+    document.getElementById('formTitle').textContent = 'ICS-224 \u2014 Crew Performance Rating';
+    document.getElementById('formBadge').textContent = 'ICS-224';
+    document.getElementById('formMeta').textContent =
+      `${this.variants[VARIANT]} \u00b7 Post-Incident`;
+    return `
+    <div class="section-card">
+      <h2>1. Incident & Crew Information</h2>
+      <div class="grid-3">
+        ${field('incident_name','Incident Name','text',incData.name||'')}
+        ${field('incident_number','Incident Number','text','')}
+        ${field('incident_type','Incident Type','text',incData.type||'')}
+      </div>
+      <div class="grid-3">
+        ${field('from_date','Assignment From','date','')}
+        ${field('to_date','Assignment To','date','')}
+        ${field('incident_location','Location','text',incData.location||'')}
+      </div>
+      <div class="grid-3">
+        ${field('crew_name','Crew Name / Designator','text','')}
+        ${field('crew_type','Crew Type (Type I / II / AD)','text','')}
+        ${field('crew_num_personnel','Number of Personnel','text','')}
+      </div>
+      <div class="grid-2">
+        ${field('crew_superintendent','Crew Superintendent / Leader','text','')}
+        ${field('home_unit','Home Unit / Agency','text','')}
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>2. Evaluator Information</h2>
+      <div class="grid-3">
+        ${field('evaluator_name','Evaluator Name','text','')}
+        ${field('evaluator_position','Evaluator ICS Position','text','')}
+        ${field('evaluator_agency','Evaluator Agency','text','')}
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>3. Crew Performance Ratings</h2>
+      <div style="background:var(--bg);border:1px solid var(--line);border-radius:5px;
+                  padding:8px 12px;margin-bottom:12px;font-size:11px">
+        <strong>Rating Scale:</strong>
+        <span style="color:#1e8449;margin-left:8px"><strong>A</strong> = Outstanding</span>
+        <span style="color:#1a5276;margin-left:8px"><strong>B</strong> = Satisfactory</span>
+        <span style="color:#c07010;margin-left:8px"><strong>C</strong> = Needs Improvement</span>
+        <span style="color:#c0392b;margin-left:8px"><strong>D</strong> = Unsatisfactory</span>
+        <span style="color:var(--muted);margin-left:8px"><strong>N/O</strong> = Not Observed</span>
+      </div>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="background:var(--panel2)">
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:200px">Performance Area</th>
+            <th style="padding:6px 8px;text-align:center;border:1px solid var(--line);min-width:80px">Rating</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line)">Comments</th>
+          </tr></thead>
+          <tbody>
+            ${[
+              'Productivity / Work output relative to capability',
+              'Physical condition and endurance of crew',
+              'Quality of work performed',
+              'Adherence to safety regulations and crew cohesion',
+              'Discipline and professional conduct',
+              'Ability to follow instructions from supervisors',
+              'Crew leadership and supervision quality',
+              'Equipment and tool proficiency and maintenance',
+              'Adaptability to assignments and changing conditions',
+            ].map((area,i)=>`<tr>
+              <td style="border:1px solid var(--line);padding:5px 8px">${area}</td>
+              <td style="border:1px solid var(--line);padding:3px;text-align:center">
+                <select data-key="crew224_rating_${i}"
+                  style="font-size:13px;padding:3px 6px;background:var(--input-bg);
+                         color:var(--txt);border:1px solid var(--line);border-radius:3px">
+                  <option value=""></option>
+                  <option value="A">A \u2014 Outstanding</option>
+                  <option value="B">B \u2014 Satisfactory</option>
+                  <option value="C">C \u2014 Needs Improvement</option>
+                  <option value="D">D \u2014 Unsatisfactory</option>
+                  <option value="N/O">N/O</option>
+                </select>
+              </td>
+              <td style="border:1px solid var(--line);padding:3px">
+                <input type="text" data-key="crew224_comment_${i}"
+                  style="width:100%;font-size:11px;padding:3px 4px">
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>4. Overall Assessment</h2>
+      <div class="fg" style="margin-bottom:12px">
+        <label>Overall Crew Performance</label>
+        <div style="display:flex;gap:12px;font-size:13px;margin-top:6px;flex-wrap:wrap">
+          ${['A \u2014 Outstanding','B \u2014 Satisfactory','C \u2014 Needs Improvement','D \u2014 Unsatisfactory'].map(r=>`
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+              <input type="radio" name="crew_overall" data-key="crew_overall" value="${r}"> ${r}
+            </label>`).join('')}
+        </div>
+      </div>
+      ${field('crew224_comments','Overall Comments / Narrative','textarea','',{rows:4})}
+      <div class="fg" style="margin-top:8px">
+        <label>Recommend crew for future assignments?</label>
+        <div style="display:flex;gap:12px;font-size:13px;margin-top:4px">
+          ${['Yes','No','Yes \u2014 With Conditions'].map(r=>`
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+              <input type="radio" name="crew_recommend" data-key="crew_recommend" value="${r}"> ${r}
+            </label>`).join('')}
+        </div>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>5. Signatures</h2>
+      <div class="grid-2">
+        ${field('evaluator_sign_name','Evaluator Name (print)','text','')}
+        ${field('evaluator_sign_date','Date Signed','date',todayDate())}
+      </div>
+      <div class="grid-2">
+        ${field('superintendent_sign','Crew Superintendent (acknowledges receipt)','text','')}
+        ${field('superintendent_sign_date','Date','date','')}
+      </div>
+    </div>`;
+  },
+
+  buildPrint() {
+    const fd = collectFormData();
+    Object.assign(formData, fd);
+    const variant = FORMS['224'].variants[VARIANT];
+    const ratingColor = r =>
+      r==='A'?'#1e8449':r==='B'?'#1a5276':r==='C'?'#c07010':r==='D'?'#c0392b':'#888';
+    const areas = [
+      'Productivity / Work output','Physical condition and endurance',
+      'Quality of work performed','Safety adherence and crew cohesion',
+      'Discipline and professional conduct','Ability to follow instructions',
+      'Crew leadership and supervision','Equipment proficiency and maintenance',
+      'Adaptability to assignments',
+    ];
+    const perfRows = areas.map((area,i)=>`<tr>
+      <td style="padding:4px 6px;border:1px solid #ccc">${area}</td>
+      <td style="padding:4px 6px;border:1px solid #ccc;text-align:center;font-weight:bold;font-size:14px;
+          color:${ratingColor(fd[`crew224_rating_${i}`])}">${fd[`crew224_rating_${i}`]||''}</td>
+      <td style="padding:4px 6px;border:1px solid #ccc">${fd[`crew224_comment_${i}`]||''}</td>
+    </tr>`).join('');
+    return `
+    <div class="ics-print-header">
+      <div class="logo-cell">${logoHtml()}</div>
+      <div class="title-cell"><h1>ICS-224 CREW PERFORMANCE RATING</h1>
+        <div class="sub">${variant} \u00b7 FieldCommand IMS</div></div>
+      <div class="meta-cell">
+        <div class="ml">Incident</div><div class="mv" style="font-size:10px">${fd.incident_name||'\u2014'}</div>
+        <div class="ml">Dates</div><div class="mv" style="font-size:10px">${fd.from_date||''} \u2014 ${fd.to_date||''}</div>
+      </div>
+    </div>
+    <div class="pr">
+      <div class="pc w2"><div class="pl">Crew Name / Designator</div>
+        <div class="pv" style="font-weight:bold">${fd.crew_name||''}</div>
+        <div style="font-size:10px;color:#555">${fd.crew_type||''} \u00b7 ${fd.crew_num_personnel||''} personnel</div>
+      </div>
+      <div class="pc"><div class="pl">Superintendent</div><div class="pv">${fd.crew_superintendent||''}</div></div>
+      <div class="pc"><div class="pl">Home Unit</div><div class="pv">${fd.home_unit||''}</div></div>
+    </div>
+    <div class="pr"><div class="pc" style="flex:4">
+      <div class="pl">3. Performance Ratings &nbsp;
+        <span style="font-weight:normal;font-size:9px;color:#888">
+          A=Outstanding &nbsp; B=Satisfactory &nbsp; C=Needs Improvement &nbsp; D=Unsatisfactory &nbsp; N/O=Not Observed
+        </span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:3px">
+        <thead><tr style="background:#e8eef7">
+          <th style="padding:3px 5px;border:1px solid #ccc;text-align:left">Performance Area</th>
+          <th style="padding:3px 5px;border:1px solid #ccc;width:60px;text-align:center">Rating</th>
+          <th style="padding:3px 5px;border:1px solid #ccc;text-align:left">Comments</th>
+        </tr></thead>
+        <tbody>${perfRows}</tbody>
+      </table>
+    </div></div>
+    <div class="pr">
+      <div class="pc w2"><div class="pl">Overall Rating</div>
+        <div class="pv" style="font-weight:bold;font-size:13px">${fd.crew_overall||''}</div>
+      </div>
+      <div class="pc w2"><div class="pl">Recommended for Future Assignments</div>
+        <div class="pv" style="font-weight:bold">${fd.crew_recommend||''}</div>
+      </div>
+    </div>
+    ${fd.crew224_comments?`<div class="pr"><div class="pc" style="flex:4">
+      <div class="pl">Overall Comments</div><div class="pv">${fd.crew224_comments}</div>
+    </div></div>`:''}
+    <div class="sig-row">
+      <div class="sig-cell"><div class="sl">Evaluator (print)</div>
+        <div class="ss">${fd.evaluator_sign_name||''}</div>
+        <div class="sl">Date: ${fd.evaluator_sign_date||''}</div></div>
+      <div class="sig-cell"><div class="sl">Evaluator Signature</div><div class="ss"></div></div>
+      <div class="sig-cell"><div class="sl">Crew Superintendent (acknowledges receipt)</div>
+        <div class="ss">${fd.superintendent_sign||''}</div>
+        <div class="sl">Date: ${fd.superintendent_sign_date||''}</div></div>
+      <div class="sig-cell"><div class="sl">Superintendent Signature</div><div class="ss"></div></div>
+    </div>
+    <div class="print-footer">
+      <span>${variant} \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
+      <span>Printed: ${new Date().toLocaleString()}</span>
+    </div>`;
+  }
+};
+
+// ══════════════════════════════════════════════════════════════════
+// ICS-226 INDIVIDUAL WORK CAPACITY TEST RECORD (NWCG)
+// Documents fitness test results for wildland fire qualification
+// ══════════════════════════════════════════════════════════════════
+FORMS['226'] = {
+  title: 'ICS-226 Individual Work Capacity Test Record',
+  badge: 'ICS-226',
+  variants: { FEMA:'FEMA Supplement', USCG:'USCG Supplement', NWCG:'ICS-226 (NWCG Fire)' },
+
+  render() {
+    document.getElementById('formTitle').textContent = 'ICS-226 \u2014 Individual Work Capacity Test Record';
+    document.getElementById('formBadge').textContent = 'ICS-226';
+    document.getElementById('formMeta').textContent =
+      `NWCG Fire Qualification \u00b7 Fitness Test Record`;
+    return `
+    <div class="section-card">
+      <h2>1. Individual Information</h2>
+      <div style="background:rgba(200,118,10,0.08);border:1px solid var(--amber);border-radius:5px;
+                  padding:8px 12px;margin-bottom:12px;font-size:11px;color:var(--muted)">
+        The Work Capacity Test (WCT) measures physical fitness for wildland firefighting.
+        Three test levels: <strong>Arduous</strong> (3 miles / 45 lb pack / 45 min),
+        <strong>Moderate</strong> (2 miles / 25 lb pack / 30 min),
+        <strong>Light</strong> (1 mile / no pack / 16 min).
+      </div>
+      <div class="grid-3">
+        ${field('wct_name','Full Name','text','')}
+        ${field('wct_dob','Date of Birth','date','')}
+        ${field('wct_agency','Agency / Organization','text','')}
+      </div>
+      <div class="grid-2">
+        ${field('wct_position_applied','Position(s) Applying For','text','')}
+        ${field('wct_id','Employee / Firefighter ID','text','')}
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>2. Test Information</h2>
+      <div class="grid-3">
+        ${field('wct_date','Test Date','date',todayDate())}
+        ${field('wct_location','Test Location','text','')}
+        ${field('wct_administrator','Test Administrator','text','')}
+      </div>
+      <div class="grid-2">
+        ${field('wct_start_time','Start Time','time','')}
+        ${field('wct_finish_time','Finish Time','time','')}
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>3. Test Level & Results</h2>
+      <div class="fg" style="margin-bottom:14px">
+        <label>Test Level</label>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:8px">
+          ${[
+            {val:'Arduous',  desc:'3 miles \u00b7 45 lb pack \u00b7 45 min standard',   color:'var(--red)'},
+            {val:'Moderate', desc:'2 miles \u00b7 25 lb pack \u00b7 30 min standard',   color:'var(--amber)'},
+            {val:'Light',    desc:'1 mile \u00b7 No pack \u00b7 16 min standard',        color:'var(--green)'},
+          ].map(t=>`<label style="border:2px solid ${t.color};border-radius:6px;padding:10px;cursor:pointer;display:block">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+              <input type="radio" name="wct_level" data-key="wct_level" value="${t.val}">
+              <strong style="color:${t.color}">${t.val}</strong>
+            </div>
+            <div style="font-size:10px;color:var(--muted)">${t.desc}</div>
+          </label>`).join('')}
+        </div>
+      </div>
+      <div class="grid-3">
+        ${field('wct_elapsed_time','Elapsed Time (mm:ss)','text','')}
+        ${field('wct_pack_weight','Actual Pack Weight (lbs)','text','')}
+        ${field('wct_distance','Distance Completed (miles)','text','')}
+      </div>
+      <div class="grid-2">
+        <div class="fg">
+          <label>Test Result</label>
+          <div style="display:flex;gap:16px;font-size:14px;margin-top:6px">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;
+                          color:var(--green);font-weight:bold">
+              <input type="radio" name="wct_result" data-key="wct_result" value="PASS"> PASS
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;
+                          color:var(--red);font-weight:bold">
+              <input type="radio" name="wct_result" data-key="wct_result" value="FAIL"> FAIL
+            </label>
+          </div>
+        </div>
+        ${field('wct_next_test_date','Next Test Due (if required)','date','')}
+      </div>
+      ${field('wct_notes','Notes / Conditions / Medical Considerations','textarea','',{rows:3})}
+    </div>
+
+    <div class="section-card">
+      <h2>4. Signatures</h2>
+      <div class="grid-2">
+        ${field('wct_admin_sign','Test Administrator (print)','text','')}
+        ${field('wct_admin_date','Date','date',todayDate())}
+      </div>
+      <div class="grid-2">
+        ${field('wct_individual_sign','Individual (print — acknowledges accuracy)','text','')}
+        ${field('wct_individual_date','Date','date','')}
+      </div>
+    </div>`;
+  },
+
+  buildPrint() {
+    const fd = collectFormData();
+    Object.assign(formData, fd);
+    const variant = FORMS['226'].variants[VARIANT];
+    const pass = fd.wct_result === 'PASS';
+    return `
+    <div class="ics-print-header">
+      <div class="logo-cell">${logoHtml()}</div>
+      <div class="title-cell"><h1>ICS-226 INDIVIDUAL WORK CAPACITY TEST RECORD</h1>
+        <div class="sub">${variant} \u00b7 FieldCommand IMS</div></div>
+      <div class="meta-cell">
+        <div class="ml">Name</div><div class="mv" style="font-size:10px">${fd.wct_name||'\u2014'}</div>
+        <div class="ml">Agency</div><div class="mv" style="font-size:10px">${fd.wct_agency||'\u2014'}</div>
+        <div class="ml">Test Date</div><div class="mv">${fd.wct_date||'\u2014'}</div>
+      </div>
+    </div>
+    <div class="pr">
+      <div class="pc"><div class="pl">Date of Birth</div><div class="pv">${fd.wct_dob||''}</div></div>
+      <div class="pc"><div class="pl">Employee ID</div><div class="pv">${fd.wct_id||''}</div></div>
+      <div class="pc w2"><div class="pl">Position(s) Applied For</div><div class="pv">${fd.wct_position_applied||''}</div></div>
+    </div>
+    <div class="pr">
+      <div class="pc"><div class="pl">Test Location</div><div class="pv">${fd.wct_location||''}</div></div>
+      <div class="pc"><div class="pl">Administrator</div><div class="pv">${fd.wct_administrator||''}</div></div>
+      <div class="pc"><div class="pl">Start Time</div><div class="pv">${fd.wct_start_time||''}</div></div>
+      <div class="pc"><div class="pl">Finish Time</div><div class="pv">${fd.wct_finish_time||''}</div></div>
+    </div>
+    <div class="pr">
+      <div class="pc w2"><div class="pl">Test Level</div>
+        <div class="pv" style="font-size:16px;font-weight:bold;color:${fd.wct_level==='Arduous'?'#c0392b':fd.wct_level==='Moderate'?'#c07010':'#1e8449'}">
+          ${fd.wct_level||'\u2014'}
+        </div>
+      </div>
+      <div class="pc"><div class="pl">Pack Weight</div><div class="pv">${fd.wct_pack_weight||''} lbs</div></div>
+      <div class="pc"><div class="pl">Elapsed Time</div><div class="pv" style="font-family:monospace;font-size:14px">${fd.wct_elapsed_time||''}</div></div>
+    </div>
+    <div class="pr">
+      <div class="pc" style="flex:2">
+        <div class="pl">RESULT</div>
+        <div style="font-size:28px;font-weight:bold;color:${pass?'#1e8449':'#c0392b'};padding:8px 0">
+          ${fd.wct_result||'\u2014'}
+        </div>
+      </div>
+      <div class="pc" style="flex:2"><div class="pl">Next Test Due</div><div class="pv">${fd.wct_next_test_date||'N/A'}</div></div>
+    </div>
+    ${fd.wct_notes?`<div class="pr"><div class="pc" style="flex:4">
+      <div class="pl">Notes</div><div class="pv">${fd.wct_notes}</div>
+    </div></div>`:''}
+    <div class="sig-row">
+      <div class="sig-cell"><div class="sl">Test Administrator (print)</div>
+        <div class="ss">${fd.wct_admin_sign||''}</div>
+        <div class="sl">Date: ${fd.wct_admin_date||''}</div></div>
+      <div class="sig-cell"><div class="sl">Administrator Signature</div><div class="ss"></div></div>
+      <div class="sig-cell"><div class="sl">Individual (print)</div>
+        <div class="ss">${fd.wct_individual_sign||''}</div>
+        <div class="sl">Date: ${fd.wct_individual_date||''}</div></div>
+      <div class="sig-cell"><div class="sl">Individual Signature</div><div class="ss"></div></div>
+    </div>
+    <div class="print-footer">
+      <span>${variant} \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
+      <span>Printed: ${new Date().toLocaleString()}</span>
+    </div>`;
+  }
+};
+
 </script>
 <!-- Map Picker Modal -->
 <div class="map-picker-modal" id="mapPickerModal">

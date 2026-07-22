@@ -520,6 +520,66 @@ CREATE TABLE IF NOT EXISTS checkin_entries (
 );
 CREATE INDEX IF NOT EXISTS idx_ci_incident ON checkin_entries(incident_id);
 CREATE INDEX IF NOT EXISTS idx_ci_status   ON checkin_entries(status);
+-- ── FEMA PA Reimbursement Cost Tracking ────────────────────────────────────────
+-- Supports FEMA Public Assistance documentation: Force Account Labor,
+-- Force Account Equipment, Materials, and Project Worksheet summary.
+-- Reference: FEMA Public Assistance Program and Policy Guide (PAPPG)
+
+CREATE TABLE IF NOT EXISTS fema_labor (
+    id          TEXT PRIMARY KEY,
+    incident_id TEXT NOT NULL DEFAULT '',
+    period      INTEGER DEFAULT 0,           -- 0 = all periods / incident total
+    employee    TEXT NOT NULL DEFAULT '',
+    position    TEXT DEFAULT '',
+    dept        TEXT DEFAULT '',
+    date_worked TEXT DEFAULT '',
+    hours_reg   REAL DEFAULT 0,
+    hours_ot    REAL DEFAULT 0,
+    rate_reg    REAL DEFAULT 0,              -- $/hr regular
+    rate_ot     REAL DEFAULT 0,              -- $/hr overtime
+    fringe_pct  REAL DEFAULT 0,              -- fringe benefits %
+    notes       TEXT DEFAULT '',
+    created     TEXT NOT NULL,
+    updated     TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS fema_equipment (
+    id          TEXT PRIMARY KEY,
+    incident_id TEXT NOT NULL DEFAULT '',
+    period      INTEGER DEFAULT 0,
+    equipment   TEXT NOT NULL DEFAULT '',    -- e.g. "Pickup Truck (< 1T)"
+    equip_id    TEXT DEFAULT '',             -- agency unit ID
+    fema_code   TEXT DEFAULT '',             -- FEMA schedule code e.g. "2-7-1"
+    hours_used  REAL DEFAULT 0,
+    rate_hr     REAL DEFAULT 0,              -- FEMA eligible $/hr
+    operator    TEXT DEFAULT '',
+    date_used   TEXT DEFAULT '',
+    notes       TEXT DEFAULT '',
+    created     TEXT NOT NULL,
+    updated     TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS fema_materials (
+    id          TEXT PRIMARY KEY,
+    incident_id TEXT NOT NULL DEFAULT '',
+    description TEXT NOT NULL DEFAULT '',
+    vendor      TEXT DEFAULT '',
+    quantity    REAL DEFAULT 1,
+    unit        TEXT DEFAULT '',
+    unit_cost   REAL DEFAULT 0,
+    total_cost  REAL DEFAULT 0,
+    po_number   TEXT DEFAULT '',
+    date_purch  TEXT DEFAULT '',
+    category    TEXT DEFAULT '',             -- Supplies, Materials, Contracts
+    notes       TEXT DEFAULT '',
+    created     TEXT NOT NULL,
+    updated     TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_labor_incident   ON fema_labor(incident_id);
+CREATE INDEX IF NOT EXISTS idx_equip_incident   ON fema_equipment(incident_id);
+CREATE INDEX IF NOT EXISTS idx_mat_incident     ON fema_materials(incident_id);
+
 
 -- ── Dead Man's Switch (singleton row id=1) ────────────────────────────────────
 CREATE TABLE IF NOT EXISTS dms_state (

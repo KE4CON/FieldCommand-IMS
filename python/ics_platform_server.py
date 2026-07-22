@@ -340,6 +340,32 @@ class ICSHandler(BaseHTTPRequestHandler):
 
         # ── ICS-211 Remote Check-In ─────────────────────────────────────────
         # GET: fetch pending entries for an incident/period
+
+        # ── FEMA PA Cost Tracking API ────────────────────────────────────────
+        elif path == "/api/ics/fema/labor":
+            inc_id = qs.get("incident_id",[""])[0]
+            rows = c.execute(
+                "SELECT * FROM fema_labor WHERE incident_id=? ORDER BY date_worked,employee",
+                (inc_id,)
+            ).fetchall()
+            return self.send_json(rows_to_list(rows))
+
+        elif path == "/api/ics/fema/equipment":
+            inc_id = qs.get("incident_id",[""])[0]
+            rows = c.execute(
+                "SELECT * FROM fema_equipment WHERE incident_id=? ORDER BY date_used,equipment",
+                (inc_id,)
+            ).fetchall()
+            return self.send_json(rows_to_list(rows))
+
+        elif path == "/api/ics/fema/materials":
+            inc_id = qs.get("incident_id",[""])[0]
+            rows = c.execute(
+                "SELECT * FROM fema_materials WHERE incident_id=? ORDER BY date_purch,description",
+                (inc_id,)
+            ).fetchall()
+            return self.send_json(rows_to_list(rows))
+
         elif path == "/api/ics/checkin":
             inc_id = qs.get("incident_id",[""])[0]
             period = int(qs.get("period",["1"])[0])
@@ -524,6 +550,52 @@ class ICSHandler(BaseHTTPRequestHandler):
 
 
         # ── ICS-211 Remote Check-In POST ────────────────────────────────────
+
+        # ── FEMA PA Cost Tracking POST ───────────────────────────────────────
+        elif path == "/api/ics/fema/labor":
+            rid = body.get("id") or f"lab-{int(time.time()*1000)}"
+            c.execute("""INSERT OR REPLACE INTO fema_labor
+                (id,incident_id,period,employee,position,dept,date_worked,
+                 hours_reg,hours_ot,rate_reg,rate_ot,fringe_pct,notes,created,updated)
+                VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (rid, body.get("incident_id",""), body.get("period",0),
+                 body.get("employee",""), body.get("position",""),
+                 body.get("dept",""), body.get("date_worked",""),
+                 body.get("hours_reg",0), body.get("hours_ot",0),
+                 body.get("rate_reg",0), body.get("rate_ot",0),
+                 body.get("fringe_pct",0), body.get("notes",""), now, now))
+            c.commit()
+            return self.send_json({"ok":True,"id":rid})
+
+        elif path == "/api/ics/fema/equipment":
+            rid = body.get("id") or f"eq-{int(time.time()*1000)}"
+            c.execute("""INSERT OR REPLACE INTO fema_equipment
+                (id,incident_id,period,equipment,equip_id,fema_code,
+                 hours_used,rate_hr,operator,date_used,notes,created,updated)
+                VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (rid, body.get("incident_id",""), body.get("period",0),
+                 body.get("equipment",""), body.get("equip_id",""),
+                 body.get("fema_code",""), body.get("hours_used",0),
+                 body.get("rate_hr",0), body.get("operator",""),
+                 body.get("date_used",""), body.get("notes",""), now, now))
+            c.commit()
+            return self.send_json({"ok":True,"id":rid})
+
+        elif path == "/api/ics/fema/materials":
+            rid = body.get("id") or f"mat-{int(time.time()*1000)}"
+            total = body.get("total_cost") or (body.get("quantity",1) * body.get("unit_cost",0))
+            c.execute("""INSERT OR REPLACE INTO fema_materials
+                (id,incident_id,description,vendor,quantity,unit,
+                 unit_cost,total_cost,po_number,date_purch,category,notes,created,updated)
+                VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                (rid, body.get("incident_id",""), body.get("description",""),
+                 body.get("vendor",""), body.get("quantity",1), body.get("unit",""),
+                 body.get("unit_cost",0), total, body.get("po_number",""),
+                 body.get("date_purch",""), body.get("category","Materials"),
+                 body.get("notes",""), now, now))
+            c.commit()
+            return self.send_json({"ok":True,"id":rid})
+
         elif path == "/api/ics/checkin":
             ci_id = body.get("id") or f"ci-{int(time.time()*1000)}"
             c.execute("""INSERT OR REPLACE INTO checkin_entries
@@ -757,6 +829,15 @@ class ICSHandler(BaseHTTPRequestHandler):
         elif path.startswith("/api/ics/incidents/"):
             inc_id=path.split("/api/ics/incidents/")[1]
             c.execute("DELETE FROM incidents WHERE id=?",(inc_id,))
+        elif path.startswith("/api/ics/fema/labor/"):
+            c.execute("DELETE FROM fema_labor WHERE id=?",
+                      (path.split("/api/ics/fema/labor/")[1],))
+        elif path.startswith("/api/ics/fema/equipment/"):
+            c.execute("DELETE FROM fema_equipment WHERE id=?",
+                      (path.split("/api/ics/fema/equipment/")[1],))
+        elif path.startswith("/api/ics/fema/materials/"):
+            c.execute("DELETE FROM fema_materials WHERE id=?",
+                      (path.split("/api/ics/fema/materials/")[1],))
         else:
             return self.send_json({"error":"Not found"},404)
         c.commit(); return self.send_json({"ok":True})

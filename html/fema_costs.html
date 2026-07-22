@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FEMA PA Cost Documentation — FieldCommand IMS</title>
+<link rel="stylesheet" href="theme.css">
+<style>
+.cost-tabs { display:flex;gap:0;border-bottom:2px solid var(--line);margin-bottom:16px; }
+.cost-tab {
+  padding:8px 18px;font-family:var(--font-hd);font-size:11px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--dim);cursor:pointer;
+  border-bottom:3px solid transparent;margin-bottom:-2px;
+  transition:color .15s,border-color .15s;
+}
+.cost-tab:hover { color:var(--txt); }
+.cost-tab.active { color:var(--eoc);border-bottom-color:var(--eoc); }
+
+.cost-panel { display:none; }
+.cost-panel.active { display:block; }
+
+.cost-table {
+  width:100%;border-collapse:collapse;font-size:12px;margin-bottom:10px;
+}
+.cost-table th {
+  background:var(--panel2);padding:6px 8px;text-align:left;
+  border:1px solid var(--line);font-size:10px;text-transform:uppercase;
+  letter-spacing:.06em;color:var(--muted);white-space:nowrap;
+}
+.cost-table td {
+  padding:5px 8px;border:1px solid var(--line-lt);vertical-align:middle;
+}
+.cost-table tr:hover td { background:var(--panel2); }
+
+.total-bar {
+  background:var(--eoc-tint);border:1px solid var(--line);border-radius:var(--r-md);
+  padding:10px 16px;display:flex;gap:20px;flex-wrap:wrap;margin-bottom:14px;font-size:13px;
+}
+.total-item { display:flex;flex-direction:column;gap:2px; }
+.total-val { font-family:var(--font-hd);font-size:18px;color:var(--eoc); }
+.total-lbl { font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em; }
+
+.pw-card {
+  background:var(--panel);border:1px solid var(--line);border-radius:var(--r-md);
+  padding:16px;margin-bottom:12px;box-shadow:var(--shadow-sm);
+}
+.pw-label {
+  font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;
+  color:var(--muted);margin-bottom:4px;
+}
+.pw-value { font-size:13px;color:var(--txt); }
+
+.tag { font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600; }
+.tag-labor { background:var(--blue-bg);color:var(--blue);border:1px solid #93c5fd; }
+.tag-equip { background:var(--amber-bg);color:var(--amber);border:1px solid #fcd34d; }
+.tag-mat   { background:var(--green-bg);color:var(--green);border:1px solid #86efac; }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <span class="page-header-badge">FEMA</span>
+  <span class="page-header-title">FEMA PA Cost Documentation</span>
+  <div class="page-header-sub">Force Account Labor · Equipment · Materials · Project Worksheet</div>
+  <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+    <select id="incidentSel"
+      style="background:var(--input-bg);border:1px solid var(--input-border);
+             color:var(--txt);padding:5px 10px;font-size:12px;border-radius:var(--r-sm)"
+      onchange="loadAll()">
+      <option value="">Select incident...</option>
+    </select>
+    <button onclick="exportPW()" style="font-size:12px;padding:5px 12px">📄 Export PW</button>
+    <a href="index.html" class="back-link">← Dashboard</a>
+  </div>
+</div>
+
+<div class="page-wrap">
+
+  <!-- Totals bar -->
+  <div class="total-bar" id="totalBar">
+    <div class="total-item">
+      <div class="total-val" id="tot-labor">$0.00</div>
+      <div class="total-lbl">Force Acct Labor</div>
+    </div>
+    <div class="total-item">
+      <div class="total-val" id="tot-equip">$0.00</div>
+      <div class="total-lbl">Force Acct Equipment</div>
+    </div>
+    <div class="total-item">
+      <div class="total-val" id="tot-mat">$0.00</div>
+      <div class="total-lbl">Materials / Contracts</div>
+    </div>
+    <div class="total-item" style="border-left:2px solid var(--eoc);padding-left:20px">
+      <div class="total-val" id="tot-all" style="color:var(--green)">$0.00</div>
+      <div class="total-lbl">Total Eligible Costs</div>
+    </div>
+    <div style="font-size:10px;color:var(--dim);align-self:center;max-width:200px;line-height:1.5">
+      FEMA PA costs — review all entries with your Finance Section Chief before submission.
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="cost-tabs">
+    <div class="cost-tab active" onclick="showTab('labor')">👷 Force Account Labor</div>
+    <div class="cost-tab" onclick="showTab('equip')">🚛 Force Account Equipment</div>
+    <div class="cost-tab" onclick="showTab('mat')">📦 Materials / Contracts</div>
+    <div class="cost-tab" onclick="showTab('pw')">📋 Project Worksheet</div>
+  </div>
+
+  <!-- ── LABOR TAB ──────────────────────────────────────────────── -->
+  <div class="cost-panel active" id="panel-labor">
+    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+      <button onclick="showLaborModal(null)"
+        style="background:var(--eoc);border-color:var(--eoc);color:#fff;
+               font-size:12px;padding:5px 14px">+ Add Labor Entry</button>
+      <button onclick="importFrom214()" style="font-size:12px;padding:5px 12px">
+        ↓ Import from ICS-214
+      </button>
+      <span style="font-size:11px;color:var(--muted);align-self:center">
+        Track force account labor per FEMA PAPPG. Regular + OT separately.
+        Include fringe benefits (%).
+      </span>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="cost-table" id="laborTable">
+        <thead><tr>
+          <th>Employee</th><th>Position / Title</th><th>Dept</th>
+          <th>Date</th><th>Reg Hrs</th><th>OT Hrs</th>
+          <th>Reg Rate</th><th>OT Rate</th><th>Fringe %</th>
+          <th>Labor Cost</th><th>Total w/Fringe</th><th>Notes</th><th></th>
+        </tr></thead>
+        <tbody id="laborBody">
+          <tr><td colspan="13" style="text-align:center;color:var(--muted);padding:20px">
+            No labor entries yet.
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── EQUIPMENT TAB ──────────────────────────────────────────── -->
+  <div class="cost-panel" id="panel-equip">
+    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+      <button onclick="showEquipModal(null)"
+        style="background:var(--eoc);border-color:var(--eoc);color:#fff;
+               font-size:12px;padding:5px 14px">+ Add Equipment Entry</button>
+      <span style="font-size:11px;color:var(--muted);align-self:center">
+        Use FEMA Schedule of Equipment Rates for eligible hourly rates.
+        Include agency unit ID and FEMA schedule code.
+      </span>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="cost-table" id="equipTable">
+        <thead><tr>
+          <th>Equipment</th><th>Unit ID</th><th>FEMA Code</th>
+          <th>Date</th><th>Hours</th><th>Rate/Hr</th>
+          <th>Operator</th><th>Total</th><th>Notes</th><th></th>
+        </tr></thead>
+        <tbody id="equipBody">
+          <tr><td colspan="10" style="text-align:center;color:var(--muted);padding:20px">
+            No equipment entries yet.
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── MATERIALS TAB ─────────────────────────────────────────── -->
+  <div class="cost-panel" id="panel-mat">
+    <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+      <button onclick="showMatModal(null)"
+        style="background:var(--eoc);border-color:var(--eoc);color:#fff;
+               font-size:12px;padding:5px 14px">+ Add Material / Contract</button>
+      <span style="font-size:11px;color:var(--muted);align-self:center">
+        Include purchase orders, invoices, and receipts with each entry.
+      </span>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="cost-table" id="matTable">
+        <thead><tr>
+          <th>Description</th><th>Category</th><th>Vendor</th>
+          <th>Date</th><th>Qty</th><th>Unit</th>
+          <th>Unit Cost</th><th>Total</th><th>PO #</th><th>Notes</th><th></th>
+        </tr></thead>
+        <tbody id="matBody">
+          <tr><td colspan="11" style="text-align:center;color:var(--muted);padding:20px">
+            No material entries yet.
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── PROJECT WORKSHEET TAB ────────────────────────────────── -->
+  <div class="cost-panel" id="panel-pw">
+    <div class="section-card">
+      <h2>Project Worksheet Summary</h2>
+      <div style="font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:12px">
+        The Project Worksheet (PW) is FEMA Form FF-104-FY-21-112. This summary supports
+        PW preparation. Submit via your state/territory emergency management agency (SEMA/TEMA).
+        All costs must be documented with source records before submission.
+      </div>
+
+      <!-- Incident details from general info -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+        <div>
+          <div class="pw-label">Applicant Name</div>
+          <input type="text" id="pw_applicant" placeholder="McHenry County ARES / K9ESV"
+            style="width:100%;background:var(--input-bg);border:1px solid var(--input-border);
+                   color:var(--txt);padding:6px 10px;font-size:12px;border-radius:var(--r-sm)">
+        </div>
+        <div>
+          <div class="pw-label">Disaster / Declaration Number</div>
+          <input type="text" id="pw_disaster" placeholder="FEMA-DR-XXXX-IL"
+            style="width:100%;background:var(--input-bg);border:1px solid var(--input-border);
+                   color:var(--txt);padding:6px 10px;font-size:12px;border-radius:var(--r-sm)">
+        </div>
+        <div>
+          <div class="pw-label">Incident Name</div>
+          <input type="text" id="pw_incident"
+            style="width:100%;background:var(--input-bg);border:1px solid var(--input-border);
+                   color:var(--txt);padding:6px 10px;font-size:12px;border-radius:var(--r-sm)">
+        </div>
+        <div>
+          <div class="pw-label">Work Category</div>
+          <select id="pw_category"
+            style="width:100%;background:var(--input-bg);border:1px solid var(--input-border);
+                   color:var(--txt);padding:6px 10px;font-size:12px;border-radius:var(--r-sm)">
+            <option value="">Select...</option>
+            <option>Category A — Debris Removal</option>
+            <option>Category B — Emergency Protective Measures</option>
+            <option>Category C — Roads and Bridges</option>
+            <option>Category D — Water Control Facilities</option>
+            <option>Category E — Buildings and Equipment</option>
+            <option>Category F — Utilities</option>
+            <option>Category G — Parks, Recreational, Other</option>
+          </select>
+        </div>
+        <div style="grid-column:1/-1">
+          <div class="pw-label">Work Description / Scope</div>
+          <textarea id="pw_scope" rows="3"
+            placeholder="Describe the work performed, facilities affected, and why it was necessary..."
+            style="width:100%;background:var(--input-bg);border:1px solid var(--input-border);
+                   color:var(--txt);padding:6px 10px;font-size:12px;border-radius:var(--r-sm);
+                   resize:vertical"></textarea>
+        </div>
+        <div>
+          <div class="pw-label">Work Start Date</div>
+          <input type="date" id="pw_start"
+            style="width:100%;background:var(--input-bg);border:1px solid var(--input-border);
+                   color:var(--txt);padding:6px 10px;font-size:12px;border-radius:var(--r-sm)">
+        </div>
+        <div>
+          <div class="pw-label">Work End Date</div>
+          <input type="date" id="pw_end"
+            style="width:100%;background:var(--input-bg);border:1px solid var(--input-border);
+                   color:var(--txt);padding:6px 10px;font-size:12px;border-radius:var(--r-sm)">
+        </div>
+      </div>
+
+      <!-- Cost summary auto-calculated from entries -->
+      <div style="background:var(--panel2);border:1px solid var(--line);
+                  border-radius:var(--r-md);padding:14px;margin-bottom:14px">
+        <div style="font-family:var(--font-hd);font-size:11px;letter-spacing:1px;
+                    color:var(--eoc);margin-bottom:10px">ELIGIBLE COST SUMMARY</div>
+        <table style="width:100%;font-size:12px;border-collapse:collapse">
+          <tr>
+            <td style="padding:4px 0;color:var(--muted)">Force Account Labor</td>
+            <td style="text-align:right;font-family:var(--font-hd)" id="pw-labor">$0.00</td>
+          </tr>
+          <tr>
+            <td style="padding:4px 0;color:var(--muted)">Force Account Equipment</td>
+            <td style="text-align:right;font-family:var(--font-hd)" id="pw-equip">$0.00</td>
+          </tr>
+          <tr>
+            <td style="padding:4px 0;color:var(--muted)">Materials and Contracts</td>
+            <td style="text-align:right;font-family:var(--font-hd)" id="pw-mat">$0.00</td>
+          </tr>
+          <tr style="border-top:2px solid var(--eoc)">
+            <td style="padding:8px 0 4px;font-weight:700;color:var(--txt)">
+              Total Eligible Project Cost
+            </td>
+            <td style="text-align:right;font-family:var(--font-hd);font-size:18px;
+                       color:var(--green);padding-top:4px" id="pw-total">$0.00</td>
+          </tr>
+        </table>
+      </div>
+
+      <div style="background:var(--amber-bg);border:1px solid #fcd34d;border-radius:var(--r-sm);
+                  padding:10px 14px;font-size:11px;color:var(--amber);line-height:1.6">
+        ⚠ <strong>Important:</strong> This summary does not replace the official FEMA Project Worksheet
+        (Form FF-104-FY-21-112). All costs must be submitted through your state emergency management
+        agency with supporting documentation. Consult your Finance Section Chief before submission.
+        Costs must be directly tied to the disaster and not covered by insurance.
+      </div>
+    </div>
+  </div>
+
+</div><!-- /page-wrap -->
+
+<!-- ── Labor Modal ─────────────────────────────────────────────── -->
+<div id="laborModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);
+     z-index:200;align-items:center;justify-content:center"
+     onclick="if(event.target===this)this.style.display='none'">
+<div style="background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);
+            padding:20px;width:560px;max-width:96vw;max-height:88vh;overflow-y:auto">
+  <div style="font-family:var(--font-hd);font-size:12px;color:var(--eoc);
+              letter-spacing:1px;margin-bottom:12px" id="laborModalTitle">+ ADD LABOR ENTRY</div>
+  <input type="hidden" id="lab_id">
+  <div class="grid-2" style="gap:10px;margin-bottom:10px">
+    <div class="fg"><label>Employee Name *</label>
+      <input type="text" id="lab_employee" placeholder="Last, First"></div>
+    <div class="fg"><label>Position / Title</label>
+      <input type="text" id="lab_position" placeholder="Emergency Manager"></div>
+    <div class="fg"><label>Department</label>
+      <input type="text" id="lab_dept" placeholder="McHenry County OEM"></div>
+    <div class="fg"><label>Date Worked</label>
+      <input type="date" id="lab_date"></div>
+    <div class="fg"><label>Regular Hours</label>
+      <input type="number" id="lab_hreg" step="0.25" min="0" placeholder="8.0"></div>
+    <div class="fg"><label>Overtime Hours</label>
+      <input type="number" id="lab_hot" step="0.25" min="0" placeholder="0.0"></div>
+    <div class="fg"><label>Regular Rate ($/hr)</label>
+      <input type="number" id="lab_rreg" step="0.01" min="0" placeholder="28.50"
+        oninput="calcLaborPreview()"></div>
+    <div class="fg"><label>OT Rate ($/hr)</label>
+      <input type="number" id="lab_rot" step="0.01" min="0" placeholder="42.75"
+        oninput="calcLaborPreview()"></div>
+    <div class="fg"><label>Fringe Benefits %</label>
+      <input type="number" id="lab_fringe" step="0.1" min="0" max="100" placeholder="30.0"
+        oninput="calcLaborPreview()"></div>
+    <div class="fg" style="background:var(--eoc-tint);border-radius:var(--r-sm);padding:8px">
+      <label style="color:var(--eoc)">Preview Total</label>
+      <div style="font-family:var(--font-hd);font-size:18px;color:var(--green)" id="lab_preview">$0.00</div>
+    </div>
+    <div class="fg" style="grid-column:1/-1"><label>Notes</label>
+      <input type="text" id="lab_notes" placeholder="Relief assignment, EOC Watch, etc."></div>
+  </div>
+  <div style="display:flex;gap:8px">
+    <button onclick="saveLaborEntry()"
+      style="flex:1;background:var(--eoc);border-color:var(--eoc);color:#fff;padding:9px;font-weight:600">
+      SAVE
+    </button>
+    <button onclick="if(confirm('Delete?'))deleteLaborEntry()" id="lab_del"
+      style="display:none;padding:9px 14px;background:var(--red-bg);border-color:#fca5a5;color:var(--red)">
+      Delete
+    </button>
+    <button onclick="document.getElementById('laborModal').style.display='none'"
+      style="padding:9px 14px">Cancel</button>
+  </div>
+</div>
+</div>
+
+<!-- ── Equipment Modal ─────────────────────────────────────────── -->
+<div id="equipModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);
+     z-index:200;align-items:center;justify-content:center"
+     onclick="if(event.target===this)this.style.display='none'">
+<div style="background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);
+            padding:20px;width:520px;max-width:96vw;overflow-y:auto;max-height:88vh">
+  <div style="font-family:var(--font-hd);font-size:12px;color:var(--amber);
+              letter-spacing:1px;margin-bottom:12px">+ ADD EQUIPMENT ENTRY</div>
+  <input type="hidden" id="eq_id">
+  <div class="grid-2" style="gap:10px;margin-bottom:10px">
+    <div class="fg"><label>Equipment Type *</label>
+      <input type="text" id="eq_equip" placeholder="Pickup Truck (< 1 Ton)"></div>
+    <div class="fg"><label>Agency Unit ID</label>
+      <input type="text" id="eq_unitid" placeholder="E-412 / Unit 7"></div>
+    <div class="fg"><label>FEMA Schedule Code</label>
+      <input type="text" id="eq_code" placeholder="e.g. 2-7-1"></div>
+    <div class="fg"><label>Date Used</label>
+      <input type="date" id="eq_date"></div>
+    <div class="fg"><label>Hours Used</label>
+      <input type="number" id="eq_hours" step="0.25" min="0" placeholder="4.0"
+        oninput="calcEquipPreview()"></div>
+    <div class="fg"><label>FEMA Rate ($/hr)</label>
+      <input type="number" id="eq_rate" step="0.01" min="0" placeholder="35.00"
+        oninput="calcEquipPreview()"></div>
+    <div class="fg"><label>Operator Name</label>
+      <input type="text" id="eq_operator" placeholder="Last, First"></div>
+    <div class="fg" style="background:var(--amber-bg);border-radius:var(--r-sm);padding:8px">
+      <label style="color:var(--amber)">Preview Total</label>
+      <div style="font-family:var(--font-hd);font-size:18px;color:var(--green)" id="eq_preview">$0.00</div>
+    </div>
+    <div class="fg" style="grid-column:1/-1"><label>Notes</label>
+      <input type="text" id="eq_notes" placeholder="Mileage, fuel, purpose"></div>
+  </div>
+  <div style="display:flex;gap:8px">
+    <button onclick="saveEquipEntry()"
+      style="flex:1;background:var(--amber);border-color:var(--amber);color:#fff;padding:9px;font-weight:600">
+      SAVE
+    </button>
+    <button onclick="if(confirm('Delete?'))deleteEquipEntry()" id="eq_del"
+      style="display:none;padding:9px 14px;background:var(--red-bg);border-color:#fca5a5;color:var(--red)">
+      Delete
+    </button>
+    <button onclick="document.getElementById('equipModal').style.display='none'"
+      style="padding:9px 14px">Cancel</button>
+  </div>
+</div>
+</div>
+
+<!-- ── Materials Modal ─────────────────────────────────────────── -->
+<div id="matModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);
+     z-index:200;align-items:center;justify-content:center"
+     onclick="if(event.target===this)this.style.display='none'">
+<div style="background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);
+            padding:20px;width:520px;max-width:96vw;overflow-y:auto;max-height:88vh">
+  <div style="font-family:var(--font-hd);font-size:12px;color:var(--green);
+              letter-spacing:1px;margin-bottom:12px">+ ADD MATERIAL / CONTRACT</div>
+  <input type="hidden" id="mat_id">
+  <div class="grid-2" style="gap:10px;margin-bottom:10px">
+    <div class="fg" style="grid-column:1/-1"><label>Description *</label>
+      <input type="text" id="mat_desc" placeholder="Barricades, traffic cones, sandbags..."></div>
+    <div class="fg">
+      <label>Category</label>
+      <select id="mat_cat"
+        style="background:var(--input-bg);border:1px solid var(--input-border);
+               color:var(--txt);padding:6px 10px;font-size:12px;border-radius:var(--r-sm);width:100%">
+        <option>Materials</option>
+        <option>Supplies</option>
+        <option>Contracts</option>
+        <option>Rental</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <div class="fg"><label>Vendor / Contractor</label>
+      <input type="text" id="mat_vendor" placeholder="Vendor name"></div>
+    <div class="fg"><label>Purchase / Invoice Date</label>
+      <input type="date" id="mat_date"></div>
+    <div class="fg"><label>Quantity</label>
+      <input type="number" id="mat_qty" step="any" min="0" value="1"
+        oninput="calcMatPreview()"></div>
+    <div class="fg"><label>Unit</label>
+      <input type="text" id="mat_unit" placeholder="each, ton, yd³, hr"></div>
+    <div class="fg"><label>Unit Cost ($)</label>
+      <input type="number" id="mat_ucost" step="0.01" min="0" placeholder="0.00"
+        oninput="calcMatPreview()"></div>
+    <div class="fg" style="background:var(--green-bg);border-radius:var(--r-sm);padding:8px">
+      <label style="color:var(--green)">Total Cost</label>
+      <div style="font-family:var(--font-hd);font-size:18px;color:var(--green)" id="mat_preview">$0.00</div>
+    </div>
+    <div class="fg"><label>PO / Contract #</label>
+      <input type="text" id="mat_po" placeholder="PO-2026-001"></div>
+    <div class="fg"><label>Notes</label>
+      <input type="text" id="mat_notes" placeholder="Receipt #, justification"></div>
+  </div>
+  <div style="display:flex;gap:8px">
+    <button onclick="saveMatEntry()"
+      style="flex:1;background:var(--green);border-color:var(--green);color:#fff;padding:9px;font-weight:600">
+      SAVE
+    </button>
+    <button onclick="if(confirm('Delete?'))deleteMatEntry()" id="mat_del"
+      style="display:none;padding:9px 14px;background:var(--red-bg);border-color:#fca5a5;color:var(--red)">
+      Delete
+    </button>
+    <button onclick="document.getElementById('matModal').style.display='none'"
+      style="padding:9px 14px">Cancel</button>
+  </div>
+</div>
+</div>
+
+<script>
+const ICS_API = 'http://192.168.50.1:5051';
+const API     = 'http://192.168.50.1:5050';
+
+let laborData = [], equipData = [], matData = [];
+let INC_ID = localStorage.getItem('selectedIncident') || '';
+
+// ── Tab switching ──────────────────────────────────────────────────
+function showTab(id) {
+  document.querySelectorAll('.cost-tab').forEach((t,i) =>
+    t.classList.toggle('active', ['labor','equip','mat','pw'][i] === id));
+  document.querySelectorAll('.cost-panel').forEach(p =>
+    p.classList.toggle('active', p.id === 'panel-'+id));
+}
+
+// ── Currency formatting ────────────────────────────────────────────
+const fmt = n => '$' + (n||0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+
+// ── Cost calculations ──────────────────────────────────────────────
+function laborCost(r) {
+  const base = (r.hours_reg||0)*(r.rate_reg||0) + (r.hours_ot||0)*(r.rate_ot||0);
+  return base * (1 + (r.fringe_pct||0)/100);
+}
+function equipCost(r) { return (r.hours_used||0) * (r.rate_hr||0); }
+function matCost(r)   { return r.total_cost || ((r.quantity||1)*(r.unit_cost||0)); }
+
+function updateTotals() {
+  const tl = laborData.reduce((s,r) => s + laborCost(r), 0);
+  const te = equipData.reduce((s,r) => s + equipCost(r), 0);
+  const tm = matData.reduce((s,r) => s + matCost(r), 0);
+  const ta = tl + te + tm;
+  document.getElementById('tot-labor').textContent = fmt(tl);
+  document.getElementById('tot-equip').textContent = fmt(te);
+  document.getElementById('tot-mat').textContent   = fmt(tm);
+  document.getElementById('tot-all').textContent   = fmt(ta);
+  document.getElementById('pw-labor').textContent  = fmt(tl);
+  document.getElementById('pw-equip').textContent  = fmt(te);
+  document.getElementById('pw-mat').textContent    = fmt(tm);
+  document.getElementById('pw-total').textContent  = fmt(ta);
+}
+
+// ── Load all data ──────────────────────────────────────────────────
+async function loadAll() {
+  INC_ID = document.getElementById('incidentSel').value;
+  if (INC_ID) localStorage.setItem('selectedIncident', INC_ID);
+  if (!INC_ID) return;
+  try {
+    const [lr, er, mr] = await Promise.all([
+      fetch(`${ICS_API}/api/ics/fema/labor?incident_id=${INC_ID}`).then(r=>r.json()),
+      fetch(`${ICS_API}/api/ics/fema/equipment?incident_id=${INC_ID}`).then(r=>r.json()),
+      fetch(`${ICS_API}/api/ics/fema/materials?incident_id=${INC_ID}`).then(r=>r.json()),
+    ]);
+    laborData = lr; equipData = er; matData = mr;
+  } catch(e) { laborData=[]; equipData=[]; matData=[]; }
+  renderLabor(); renderEquip(); renderMat(); updateTotals();
+  // Auto-fill PW incident name
+  const sel = document.getElementById('incidentSel');
+  const name = sel.selectedOptions[0]?.text?.split(' (')[0] || '';
+  document.getElementById('pw_incident').value = name;
+}
+
+async function loadIncidents() {
+  try {
+    const r = await fetch(`${API}/api/incidents`);
+    const incs = r.ok ? await r.json() : [];
+    const sel = document.getElementById('incidentSel');
+    sel.innerHTML = '<option value="">Select incident...</option>' +
+      incs.map(i => `<option value="${i.id}">${i.name}</option>`).join('');
+    if (INC_ID) { sel.value = INC_ID; loadAll(); }
+  } catch(e) {}
+}
+
+// ── Render tables ──────────────────────────────────────────────────
+function renderLabor() {
+  const tb = document.getElementById('laborBody');
+  if (!laborData.length) {
+    tb.innerHTML = '<tr><td colspan="13" style="text-align:center;color:var(--muted);padding:20px">No labor entries.</td></tr>';
+    return;
+  }
+  tb.innerHTML = laborData.map(r => {
+    const cost = laborCost(r);
+    return `<tr>
+      <td>${r.employee}</td>
+      <td style="color:var(--muted)">${r.position||'—'}</td>
+      <td style="color:var(--muted)">${r.dept||'—'}</td>
+      <td style="font-family:var(--font-mono);font-size:11px">${r.date_worked||'—'}</td>
+      <td style="text-align:right">${r.hours_reg||0}</td>
+      <td style="text-align:right">${r.hours_ot||0}</td>
+      <td style="text-align:right;font-family:var(--font-mono)">${fmt(r.rate_reg)}</td>
+      <td style="text-align:right;font-family:var(--font-mono)">${fmt(r.rate_ot)}</td>
+      <td style="text-align:right">${r.fringe_pct||0}%</td>
+      <td style="text-align:right;font-family:var(--font-mono)">${fmt((r.hours_reg||0)*(r.rate_reg||0)+(r.hours_ot||0)*(r.rate_ot||0))}</td>
+      <td style="text-align:right;font-family:var(--font-mono);font-weight:700;color:var(--green)">${fmt(cost)}</td>
+      <td style="color:var(--dim);font-size:10px">${r.notes||''}</td>
+      <td><button onclick="showLaborModal('${r.id}')" style="font-size:10px;padding:2px 7px">✏</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderEquip() {
+  const tb = document.getElementById('equipBody');
+  if (!equipData.length) {
+    tb.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:20px">No equipment entries.</td></tr>';
+    return;
+  }
+  tb.innerHTML = equipData.map(r => `<tr>
+    <td>${r.equipment}</td>
+    <td style="font-family:var(--font-mono);font-size:11px">${r.equip_id||'—'}</td>
+    <td style="font-family:var(--font-mono);font-size:11px">${r.fema_code||'—'}</td>
+    <td style="font-family:var(--font-mono);font-size:11px">${r.date_used||'—'}</td>
+    <td style="text-align:right">${r.hours_used||0}</td>
+    <td style="text-align:right;font-family:var(--font-mono)">${fmt(r.rate_hr)}/hr</td>
+    <td>${r.operator||'—'}</td>
+    <td style="text-align:right;font-family:var(--font-mono);font-weight:700;color:var(--green)">${fmt(equipCost(r))}</td>
+    <td style="color:var(--dim);font-size:10px">${r.notes||''}</td>
+    <td><button onclick="showEquipModal('${r.id}')" style="font-size:10px;padding:2px 7px">✏</button></td>
+  </tr>`).join('');
+}
+
+function renderMat() {
+  const tb = document.getElementById('matBody');
+  if (!matData.length) {
+    tb.innerHTML = '<tr><td colspan="11" style="text-align:center;color:var(--muted);padding:20px">No material entries.</td></tr>';
+    return;
+  }
+  const catTag = { Materials:'tag-mat', Supplies:'tag-mat', Contracts:'tag-equip', Rental:'tag-labor' };
+  tb.innerHTML = matData.map(r => `<tr>
+    <td>${r.description}</td>
+    <td><span class="tag ${catTag[r.category]||'tag-mat'}">${r.category||'Materials'}</span></td>
+    <td>${r.vendor||'—'}</td>
+    <td style="font-family:var(--font-mono);font-size:11px">${r.date_purch||'—'}</td>
+    <td style="text-align:right">${r.quantity||1}</td>
+    <td>${r.unit||'—'}</td>
+    <td style="text-align:right;font-family:var(--font-mono)">${fmt(r.unit_cost)}</td>
+    <td style="text-align:right;font-family:var(--font-mono);font-weight:700;color:var(--green)">${fmt(matCost(r))}</td>
+    <td style="font-family:var(--font-mono);font-size:10px">${r.po_number||'—'}</td>
+    <td style="color:var(--dim);font-size:10px">${r.notes||''}</td>
+    <td><button onclick="showMatModal('${r.id}')" style="font-size:10px;padding:2px 7px">✏</button></td>
+  </tr>`).join('');
+}
+
+// ── Live preview calculations ──────────────────────────────────────
+function calcLaborPreview() {
+  const hreg = parseFloat(document.getElementById('lab_hreg').value)||0;
+  const hot  = parseFloat(document.getElementById('lab_hot').value)||0;
+  const rreg = parseFloat(document.getElementById('lab_rreg').value)||0;
+  const rot  = parseFloat(document.getElementById('lab_rot').value)||0;
+  const frng = parseFloat(document.getElementById('lab_fringe').value)||0;
+  const base = hreg*rreg + hot*rot;
+  document.getElementById('lab_preview').textContent = fmt(base*(1+frng/100));
+}
+function calcEquipPreview() {
+  const h = parseFloat(document.getElementById('eq_hours').value)||0;
+  const r = parseFloat(document.getElementById('eq_rate').value)||0;
+  document.getElementById('eq_preview').textContent = fmt(h*r);
+}
+function calcMatPreview() {
+  const q = parseFloat(document.getElementById('mat_qty').value)||1;
+  const u = parseFloat(document.getElementById('mat_ucost').value)||0;
+  document.getElementById('mat_preview').textContent = fmt(q*u);
+}
+
+// ── Labor modal ────────────────────────────────────────────────────
+function showLaborModal(id) {
+  const modal = document.getElementById('laborModal');
+  if (id) {
+    const r = laborData.find(x => x.id === id);
+    if (!r) return;
+    document.getElementById('lab_id').value       = r.id;
+    document.getElementById('lab_employee').value = r.employee;
+    document.getElementById('lab_position').value = r.position||'';
+    document.getElementById('lab_dept').value     = r.dept||'';
+    document.getElementById('lab_date').value     = r.date_worked||'';
+    document.getElementById('lab_hreg').value     = r.hours_reg||0;
+    document.getElementById('lab_hot').value      = r.hours_ot||0;
+    document.getElementById('lab_rreg').value     = r.rate_reg||0;
+    document.getElementById('lab_rot').value      = r.rate_ot||0;
+    document.getElementById('lab_fringe').value   = r.fringe_pct||0;
+    document.getElementById('lab_notes').value    = r.notes||'';
+    document.getElementById('lab_del').style.display = '';
+    calcLaborPreview();
+  } else {
+    ['lab_id','lab_employee','lab_position','lab_dept','lab_date',
+     'lab_notes'].forEach(id => document.getElementById(id).value='');
+    ['lab_hreg','lab_hot','lab_rreg','lab_rot'].forEach(id =>
+      document.getElementById(id).value=0);
+    document.getElementById('lab_fringe').value = 30;
+    document.getElementById('lab_del').style.display='none';
+    document.getElementById('lab_preview').textContent='$0.00';
+  }
+  modal.style.display='flex';
+  document.getElementById('lab_employee').focus();
+}
+
+async function saveLaborEntry() {
+  const name = document.getElementById('lab_employee').value.trim();
+  if (!name) { alert('Employee name required'); return; }
+  const payload = {
+    id: document.getElementById('lab_id').value || undefined,
+    incident_id: INC_ID, employee: name,
+    position:    document.getElementById('lab_position').value,
+    dept:        document.getElementById('lab_dept').value,
+    date_worked: document.getElementById('lab_date').value,
+    hours_reg:   parseFloat(document.getElementById('lab_hreg').value)||0,
+    hours_ot:    parseFloat(document.getElementById('lab_hot').value)||0,
+    rate_reg:    parseFloat(document.getElementById('lab_rreg').value)||0,
+    rate_ot:     parseFloat(document.getElementById('lab_rot').value)||0,
+    fringe_pct:  parseFloat(document.getElementById('lab_fringe').value)||0,
+    notes:       document.getElementById('lab_notes').value,
+  };
+  await fetch(`${ICS_API}/api/ics/fema/labor`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(payload)
+  });
+  document.getElementById('laborModal').style.display='none';
+  await loadAll();
+}
+
+async function deleteLaborEntry() {
+  const id = document.getElementById('lab_id').value;
+  if (!id) return;
+  await fetch(`${ICS_API}/api/ics/fema/labor/${id}`, { method:'DELETE' });
+  document.getElementById('laborModal').style.display='none';
+  await loadAll();
+}
+
+// ── Equipment modal ────────────────────────────────────────────────
+function showEquipModal(id) {
+  const modal = document.getElementById('equipModal');
+  if (id) {
+    const r = equipData.find(x => x.id === id);
+    if (!r) return;
+    document.getElementById('eq_id').value       = r.id;
+    document.getElementById('eq_equip').value    = r.equipment;
+    document.getElementById('eq_unitid').value   = r.equip_id||'';
+    document.getElementById('eq_code').value     = r.fema_code||'';
+    document.getElementById('eq_date').value     = r.date_used||'';
+    document.getElementById('eq_hours').value    = r.hours_used||0;
+    document.getElementById('eq_rate').value     = r.rate_hr||0;
+    document.getElementById('eq_operator').value = r.operator||'';
+    document.getElementById('eq_notes').value    = r.notes||'';
+    document.getElementById('eq_del').style.display='';
+    calcEquipPreview();
+  } else {
+    ['eq_id','eq_equip','eq_unitid','eq_code','eq_date','eq_operator','eq_notes']
+      .forEach(id => document.getElementById(id).value='');
+    ['eq_hours','eq_rate'].forEach(id => document.getElementById(id).value=0);
+    document.getElementById('eq_del').style.display='none';
+    document.getElementById('eq_preview').textContent='$0.00';
+  }
+  modal.style.display='flex';
+  document.getElementById('eq_equip').focus();
+}
+
+async function saveEquipEntry() {
+  const eq = document.getElementById('eq_equip').value.trim();
+  if (!eq) { alert('Equipment type required'); return; }
+  const payload = {
+    id: document.getElementById('eq_id').value || undefined,
+    incident_id: INC_ID, equipment: eq,
+    equip_id:   document.getElementById('eq_unitid').value,
+    fema_code:  document.getElementById('eq_code').value,
+    date_used:  document.getElementById('eq_date').value,
+    hours_used: parseFloat(document.getElementById('eq_hours').value)||0,
+    rate_hr:    parseFloat(document.getElementById('eq_rate').value)||0,
+    operator:   document.getElementById('eq_operator').value,
+    notes:      document.getElementById('eq_notes').value,
+  };
+  await fetch(`${ICS_API}/api/ics/fema/equipment`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(payload)
+  });
+  document.getElementById('equipModal').style.display='none';
+  await loadAll();
+}
+
+async function deleteEquipEntry() {
+  const id = document.getElementById('eq_id').value;
+  if (!id) return;
+  await fetch(`${ICS_API}/api/ics/fema/equipment/${id}`, { method:'DELETE' });
+  document.getElementById('equipModal').style.display='none';
+  await loadAll();
+}
+
+// ── Materials modal ────────────────────────────────────────────────
+function showMatModal(id) {
+  const modal = document.getElementById('matModal');
+  if (id) {
+    const r = matData.find(x => x.id === id);
+    if (!r) return;
+    document.getElementById('mat_id').value    = r.id;
+    document.getElementById('mat_desc').value  = r.description;
+    document.getElementById('mat_cat').value   = r.category||'Materials';
+    document.getElementById('mat_vendor').value= r.vendor||'';
+    document.getElementById('mat_date').value  = r.date_purch||'';
+    document.getElementById('mat_qty').value   = r.quantity||1;
+    document.getElementById('mat_unit').value  = r.unit||'';
+    document.getElementById('mat_ucost').value = r.unit_cost||0;
+    document.getElementById('mat_po').value    = r.po_number||'';
+    document.getElementById('mat_notes').value = r.notes||'';
+    document.getElementById('mat_del').style.display='';
+    calcMatPreview();
+  } else {
+    ['mat_id','mat_desc','mat_vendor','mat_date','mat_unit','mat_po','mat_notes']
+      .forEach(id => document.getElementById(id).value='');
+    document.getElementById('mat_qty').value=1;
+    document.getElementById('mat_ucost').value=0;
+    document.getElementById('mat_cat').value='Materials';
+    document.getElementById('mat_del').style.display='none';
+    document.getElementById('mat_preview').textContent='$0.00';
+  }
+  modal.style.display='flex';
+  document.getElementById('mat_desc').focus();
+}
+
+async function saveMatEntry() {
+  const desc = document.getElementById('mat_desc').value.trim();
+  if (!desc) { alert('Description required'); return; }
+  const qty   = parseFloat(document.getElementById('mat_qty').value)||1;
+  const ucost = parseFloat(document.getElementById('mat_ucost').value)||0;
+  const payload = {
+    id: document.getElementById('mat_id').value || undefined,
+    incident_id: INC_ID, description: desc,
+    category:   document.getElementById('mat_cat').value,
+    vendor:     document.getElementById('mat_vendor').value,
+    date_purch: document.getElementById('mat_date').value,
+    quantity: qty, unit: document.getElementById('mat_unit').value,
+    unit_cost: ucost, total_cost: qty*ucost,
+    po_number:  document.getElementById('mat_po').value,
+    notes:      document.getElementById('mat_notes').value,
+  };
+  await fetch(`${ICS_API}/api/ics/fema/materials`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(payload)
+  });
+  document.getElementById('matModal').style.display='none';
+  await loadAll();
+}
+
+async function deleteMatEntry() {
+  const id = document.getElementById('mat_id').value;
+  if (!id) return;
+  await fetch(`${ICS_API}/api/ics/fema/materials/${id}`, { method:'DELETE' });
+  document.getElementById('matModal').style.display='none';
+  await loadAll();
+}
+
+// ── Import labor from ICS-214 ──────────────────────────────────────
+async function importFrom214() {
+  if (!INC_ID) { alert('Select an incident first'); return; }
+  try {
+    const r = await fetch(`${ICS_API}/api/ics/forms/ics214?incident_id=${INC_ID}`);
+    if (!r.ok) return;
+    const forms = await r.json();
+    let imported = 0;
+    for (const form of forms) {
+      let d = {};
+      try { d = JSON.parse(form.data||'{}'); } catch(e) { continue; }
+      if (!d.unit_leader) continue;
+      const payload = {
+        incident_id: INC_ID,
+        employee:    d.unit_leader,
+        position:    d.unit_name || '',
+        notes:       `From ICS-214, Op Period ${d.operational_period_number||form.period}`,
+        hours_reg:   8,  // placeholder — operator fills in actual hours
+        rate_reg:    0,
+      };
+      await fetch(`${ICS_API}/api/ics/fema/labor`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      });
+      imported++;
+    }
+    alert(`Imported ${imported} unit leader(s) from ICS-214. Fill in hours and rates for each.`);
+    await loadAll();
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+// ── Project Worksheet text export ─────────────────────────────────
+function exportPW() {
+  const tl = laborData.reduce((s,r)=>s+laborCost(r),0);
+  const te = equipData.reduce((s,r)=>s+equipCost(r),0);
+  const tm = matData.reduce((s,r)=>s+matCost(r),0);
+  const ta = tl+te+tm;
+
+  const lines = [
+    'FEMA PUBLIC ASSISTANCE — PROJECT WORKSHEET SUMMARY',
+    '=' .repeat(56),
+    `Applicant:    ${document.getElementById('pw_applicant').value || '[Enter applicant name]'}`,
+    `Disaster #:   ${document.getElementById('pw_disaster').value || '[Enter DR number]'}`,
+    `Incident:     ${document.getElementById('pw_incident').value || '[Enter incident name]'}`,
+    `Category:     ${document.getElementById('pw_category').value || '[Select category]'}`,
+    `Work Period:  ${document.getElementById('pw_start').value || '—'} to ${document.getElementById('pw_end').value || '—'}`,
+    '',
+    'SCOPE OF WORK:',
+    document.getElementById('pw_scope').value || '[Enter scope of work]',
+    '',
+    'COST SUMMARY:',
+    '-'.repeat(40),
+    `Force Account Labor:        ${fmt(tl)}`,
+    `Force Account Equipment:    ${fmt(te)}`,
+    `Materials and Contracts:    ${fmt(tm)}`,
+    '-'.repeat(40),
+    `TOTAL ELIGIBLE COSTS:       ${fmt(ta)}`,
+    '',
+    'FORCE ACCOUNT LABOR DETAIL:',
+    ['Employee','Position','Date','Reg Hrs','OT Hrs','Reg Rate','OT Rate','Fringe%','Total'].join('\t'),
+    ...laborData.map(r =>
+      [r.employee,r.position||'',r.date_worked||'',r.hours_reg||0,r.hours_ot||0,
+       fmt(r.rate_reg),fmt(r.rate_ot),(r.fringe_pct||0)+'%',fmt(laborCost(r))].join('\t')
+    ),
+    '',
+    'FORCE ACCOUNT EQUIPMENT DETAIL:',
+    ['Equipment','Unit ID','FEMA Code','Date','Hours','Rate/Hr','Total'].join('\t'),
+    ...equipData.map(r =>
+      [r.equipment,r.equip_id||'',r.fema_code||'',r.date_used||'',
+       r.hours_used||0,fmt(r.rate_hr),fmt(equipCost(r))].join('\t')
+    ),
+    '',
+    'MATERIALS / CONTRACTS DETAIL:',
+    ['Description','Category','Vendor','Date','Qty','Unit','Unit Cost','Total','PO#'].join('\t'),
+    ...matData.map(r =>
+      [r.description,r.category||'',r.vendor||'',r.date_purch||'',
+       r.quantity||1,r.unit||'',fmt(r.unit_cost),fmt(matCost(r)),r.po_number||''].join('\t')
+    ),
+    '',
+    `Generated: ${new Date().toLocaleString()} — FieldCommand IMS`,
+    'Submit to your State/Territorial Emergency Management Agency (SEMA/TEMA) with supporting documentation.',
+  ];
+
+  const blob = new Blob([lines.join('\n')], {type:'text/plain'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `FEMA-PW-${INC_ID||'incident'}-${new Date().toISOString().slice(0,10)}.txt`;
+  a.click();
+}
+
+loadIncidents();
+</script>
+</body>
+</html>

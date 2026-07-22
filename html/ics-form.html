@@ -5324,6 +5324,1013 @@ function add233Row() {
   at233Count++;
 }
 
+
+// ══════════════════════════════════════════════════════════════════
+// ICS-218 SUPPORT VEHICLE / EQUIPMENT INVENTORY
+// ══════════════════════════════════════════════════════════════════
+FORMS['218'] = {
+  title: 'ICS-218 Support Vehicle / Equipment Inventory',
+  badge: 'ICS-218',
+  variants: { FEMA:'FEMA 010-0-18', USCG:'CG-5227', NWCG:'ICS-218 (NWCG)' },
+
+  render() {
+    document.getElementById('formTitle').textContent = 'ICS-218 \u2014 Support Vehicle / Equipment Inventory';
+    document.getElementById('formBadge').textContent = 'ICS-218';
+    document.getElementById('formMeta').textContent =
+      `${this.variants[VARIANT]} \u00b7 Period ${PERIOD} \u00b7 ${incData.name||'No incident'}`;
+    return `
+    <div class="section-card">
+      <h2>1. Incident Information</h2>
+      <div class="grid-3">
+        ${field('incident_name','Incident Name','text',incData.name||'')}
+        ${field('operational_period_number','Op Period #','text',String(PERIOD))}
+        ${field('date_prepared','Date Prepared','date',todayDate())}
+      </div>
+      <div class="grid-2">
+        ${field('prepared_by_gsul','Prepared By (Ground Support Unit Leader)','text',
+          formData.ground_support_unit_ldr||'')}
+        ${field('inventory_location','Inventory Location / Staging Area','text','')}
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>2. Vehicle / Equipment Inventory</h2>
+      <p style="font-size:11px;color:var(--muted);margin:0 0 10px">
+        All support vehicles and equipment assigned to the incident.
+        Maintained by the Ground Support Unit Leader (GSUL).
+      </p>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="background:var(--panel2)">
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:50px">Item #</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">Category</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:120px">Description / Make / Model</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">ID / License / Serial</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">Agency / Owner</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:70px">Operator</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">Assignment / Location</th>
+            <th style="padding:6px 8px;text-align:center;border:1px solid var(--line);min-width:60px">Status</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">Fuel Type / Notes</th>
+          </tr></thead>
+          <tbody id="inv218Body">
+            ${[...Array(12)].map((_,i)=>`<tr>
+              <td style="border:1px solid var(--line);padding:3px;text-align:center;
+                  color:var(--dim);font-size:11px">${i+1}</td>
+              <td style="border:1px solid var(--line);padding:3px">
+                <select data-key="inv218_cat_${i}" style="width:100%;font-size:11px;padding:2px 4px;background:var(--input-bg);color:var(--txt);border:none">
+                  <option></option>
+                  <option>Passenger Vehicle</option>
+                  <option>Pickup Truck</option>
+                  <option>Bus / Van</option>
+                  <option>Heavy Truck</option>
+                  <option>Water Tender</option>
+                  <option>Fuel Tender</option>
+                  <option>Generator</option>
+                  <option>Trailer</option>
+                  <option>ATV / UTV</option>
+                  <option>Boat</option>
+                  <option>Communications Unit</option>
+                  <option>Other Equipment</option>
+                </select>
+              </td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="inv218_desc_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="inv218_id_${i}" style="width:100%;font-size:11px;padding:3px 4px;font-family:var(--font-hd)"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="inv218_agency_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="inv218_operator_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="inv218_assign_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px;text-align:center">
+                <select data-key="inv218_status_${i}" style="width:100%;font-size:11px;padding:2px 4px;background:var(--input-bg);color:var(--txt);border:none">
+                  <option>Available</option><option>In Use</option>
+                  <option>Out of Service</option><option>Returned</option>
+                </select>
+              </td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="inv218_notes_${i}" placeholder="Gas/Diesel/Propane" style="width:100%;font-size:11px;padding:3px 4px"></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <button onclick="add218Row()" style="margin-top:6px;font-size:11px;padding:4px 12px">+ Add Item</button>
+    </div>
+
+    <div class="section-card">
+      <h2>3. Summary Counts</h2>
+      <div class="grid-4">
+        ${field('inv218_total','Total Items on Inventory','text','')}
+        ${field('inv218_in_use','Currently In Use','text','')}
+        ${field('inv218_available','Available','text','')}
+        ${field('inv218_oos','Out of Service','text','')}
+      </div>
+    </div>`;
+  },
+
+  buildPrint() {
+    const fd = collectFormData();
+    Object.assign(formData, fd);
+    const variant = FORMS['218'].variants[VARIANT];
+    const statusColor = s => s==='In Use'?'#1a5276':s==='Out of Service'?'#c0392b':s==='Returned'?'#888':'#1e8449';
+    let rows = '';
+    for (let i=0; i<inv218Count; i++) {
+      if (!fd[`inv218_desc_${i}`] && !fd[`inv218_id_${i}`]) continue;
+      rows += `<tr>
+        <td style="padding:3px 5px;border:1px solid #ccc;text-align:center">${i+1}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`inv218_cat_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`inv218_desc_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc;font-family:monospace">${fd[`inv218_id_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`inv218_agency_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`inv218_operator_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`inv218_assign_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc;text-align:center;font-weight:bold;color:${statusColor(fd[`inv218_status_${i}`])}">${fd[`inv218_status_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`inv218_notes_${i}`]||''}</td>
+      </tr>`;
+    }
+    return `
+    <div class="ics-print-header">
+      <div class="logo-cell">${logoHtml()}</div>
+      <div class="title-cell"><h1>ICS-218 SUPPORT VEHICLE / EQUIPMENT INVENTORY</h1>
+        <div class="sub">${variant} \u00b7 FieldCommand IMS</div></div>
+      <div class="meta-cell">
+        <div class="ml">Incident Name</div><div class="mv" style="font-size:10px">${fd.incident_name||'\u2014'}</div>
+        <div class="ml">Op Period</div><div class="mv">${fd.operational_period_number||PERIOD}</div>
+        <div class="ml">Location</div><div class="mv" style="font-size:10px">${fd.inventory_location||'\u2014'}</div>
+      </div>
+    </div>
+    <div class="pr">
+      <div class="pc w2"><div class="pl">Ground Support Unit Leader</div><div class="pv">${fd.prepared_by_gsul||''}</div></div>
+      <div class="pc"><div class="pl">Total Items</div><div class="pv">${fd.inv218_total||''}</div></div>
+      <div class="pc"><div class="pl">In Use / Available / OOS</div>
+        <div class="pv">${fd.inv218_in_use||''} / ${fd.inv218_available||''} / ${fd.inv218_oos||''}</div>
+      </div>
+    </div>
+    <div class="pr"><div class="pc" style="flex:4">
+      <div class="pl">2. Vehicle / Equipment Inventory</div>
+      <table style="width:100%;border-collapse:collapse;font-size:8px;margin-top:3px">
+        <thead><tr style="background:#e8eef7">
+          <th style="padding:2px 4px;border:1px solid #ccc">#</th>
+          <th style="padding:2px 4px;border:1px solid #ccc;text-align:left">Category</th>
+          <th style="padding:2px 4px;border:1px solid #ccc;text-align:left">Description</th>
+          <th style="padding:2px 4px;border:1px solid #ccc">ID / License</th>
+          <th style="padding:2px 4px;border:1px solid #ccc;text-align:left">Agency</th>
+          <th style="padding:2px 4px;border:1px solid #ccc;text-align:left">Operator</th>
+          <th style="padding:2px 4px;border:1px solid #ccc;text-align:left">Assignment</th>
+          <th style="padding:2px 4px;border:1px solid #ccc">Status</th>
+          <th style="padding:2px 4px;border:1px solid #ccc;text-align:left">Notes</th>
+        </tr></thead>
+        <tbody>${rows||'<tr><td colspan="9" style="padding:5px;color:#888;text-align:center">No items entered</td></tr>'}</tbody>
+      </table>
+    </div></div>
+    <div class="sig-row">
+      <div class="sig-cell"><div class="sl">Ground Support Unit Leader</div>
+        <div class="ss">${fd.prepared_by_gsul||''}</div></div>
+      <div class="sig-cell"><div class="sl">Signature</div><div class="ss"></div></div>
+      <div class="sig-cell"></div><div class="sig-cell"></div>
+    </div>
+    <div class="print-footer">
+      <span>${variant} \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
+      <span>Printed: ${new Date().toLocaleString()}</span>
+    </div>`;
+  }
+};
+
+let inv218Count = 12;
+function add218Row() {
+  const tbody = document.getElementById('inv218Body');
+  if (!tbody) return;
+  const num = inv218Count + 1;
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td style="border:1px solid var(--line);padding:3px;text-align:center;color:var(--dim);font-size:11px">${num}</td>
+    <td style="border:1px solid var(--line);padding:3px"><select data-key="inv218_cat_${inv218Count}" style="width:100%;font-size:11px;padding:2px 4px;background:var(--input-bg);color:var(--txt);border:none"><option></option><option>Passenger Vehicle</option><option>Pickup Truck</option><option>Bus / Van</option><option>Heavy Truck</option><option>Water Tender</option><option>Generator</option><option>Trailer</option><option>ATV / UTV</option><option>Boat</option><option>Communications Unit</option><option>Other Equipment</option></select></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="inv218_desc_${inv218Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="inv218_id_${inv218Count}" style="width:100%;font-size:11px;padding:3px 4px;font-family:var(--font-hd)"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="inv218_agency_${inv218Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="inv218_operator_${inv218Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="inv218_assign_${inv218Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+    <td style="border:1px solid var(--line);padding:3px"><select data-key="inv218_status_${inv218Count}" style="width:100%;font-size:11px;padding:2px 4px;background:var(--input-bg);color:var(--txt);border:none"><option>Available</option><option>In Use</option><option>Out of Service</option><option>Returned</option></select></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="inv218_notes_${inv218Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>`;
+  tbody.appendChild(tr);
+  inv218Count++;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ICS-216 RADIO REQUIREMENTS WORKSHEET (NWCG)
+// Precedes ICS-205 — used when planning complex multi-agency comms
+// ══════════════════════════════════════════════════════════════════
+FORMS['216'] = {
+  title: 'ICS-216 Radio Requirements Worksheet',
+  badge: 'ICS-216',
+  variants: { FEMA:'FEMA Supplement', USCG:'USCG Supplement', NWCG:'ICS-216 (NWCG)' },
+
+  render() {
+    document.getElementById('formTitle').textContent = 'ICS-216 \u2014 Radio Requirements Worksheet';
+    document.getElementById('formBadge').textContent = 'ICS-216';
+    document.getElementById('formMeta').textContent =
+      `Radio Planning Worksheet \u00b7 Period ${PERIOD} \u00b7 ${incData.name||'No incident'}`;
+    return `
+    <div class="section-card">
+      <h2>1. Incident Information</h2>
+      <p style="font-size:11px;color:var(--amber);background:rgba(200,118,10,0.08);
+                border:1px solid rgba(200,118,10,0.3);border-radius:5px;padding:8px 10px;margin:0 0 12px">
+        The ICS-216 is a <strong>planning worksheet</strong> completed by the Communications Unit Leader
+        before building the ICS-205 Radio Plan. It identifies all radio needs by
+        Division/Group/function and helps assign frequencies to avoid conflicts.
+        This form is not normally distributed \u2014 it feeds into the ICS-205.
+      </p>
+      <div class="grid-3">
+        ${field('incident_name','Incident Name','text',incData.name||'')}
+        ${field('operational_period_number','Planning for Op Period #','text',String(PERIOD))}
+        ${field('date_prepared','Date Prepared','date',todayDate())}
+      </div>
+      <div class="grid-2">
+        ${field('coml_name','Communications Unit Leader (COML)','text',
+          formData.comms_unit_ldr||'')}
+        ${field('total_radios_available','Total Radios Available','text','')}
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>2. Radio Requirements by Function</h2>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="background:var(--panel2)">
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:100px">Function / Division</th>
+            <th style="padding:6px 8px;text-align:center;border:1px solid var(--line);min-width:60px">Portables Needed</th>
+            <th style="padding:6px 8px;text-align:center;border:1px solid var(--line);min-width:60px">Mobiles Needed</th>
+            <th style="padding:6px 8px;text-align:center;border:1px solid var(--line);min-width:60px">Base Stations</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">Frequency / Net Assigned</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:60px">Repeater Needed?</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">Notes / Special Requirements</th>
+          </tr></thead>
+          <tbody id="req216Body">
+            ${['Command Net','Operations — Div A','Operations — Div B','Operations — Div C',
+               'Air-to-Ground','Logistics','Medical','Public Information','Finance/Admin','Other'].map((fn,i)=>`
+            <tr>
+              <td style="border:1px solid var(--line);padding:3px">
+                <input type="text" data-key="req216_fn_${i}" value="${fn}"
+                  style="width:100%;font-size:11px;padding:3px 4px;font-weight:bold">
+              </td>
+              <td style="border:1px solid var(--line);padding:3px;text-align:center">
+                <input type="number" data-key="req216_port_${i}"
+                  style="width:50px;font-size:11px;padding:3px 4px;text-align:center">
+              </td>
+              <td style="border:1px solid var(--line);padding:3px;text-align:center">
+                <input type="number" data-key="req216_mob_${i}"
+                  style="width:50px;font-size:11px;padding:3px 4px;text-align:center">
+              </td>
+              <td style="border:1px solid var(--line);padding:3px;text-align:center">
+                <input type="number" data-key="req216_base_${i}"
+                  style="width:50px;font-size:11px;padding:3px 4px;text-align:center">
+              </td>
+              <td style="border:1px solid var(--line);padding:3px">
+                <input type="text" data-key="req216_freq_${i}"
+                  style="width:100%;font-size:11px;padding:3px 4px;font-family:var(--font-hd)">
+              </td>
+              <td style="border:1px solid var(--line);padding:3px;text-align:center">
+                <select data-key="req216_rep_${i}" style="width:100%;font-size:11px;padding:2px 4px;background:var(--input-bg);color:var(--txt);border:none">
+                  <option value="No">No</option><option value="Yes">Yes</option><option value="Maybe">Maybe</option>
+                </select>
+              </td>
+              <td style="border:1px solid var(--line);padding:3px">
+                <input type="text" data-key="req216_notes_${i}"
+                  style="width:100%;font-size:11px;padding:3px 4px">
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>3. Radio Inventory Available</h2>
+      <div class="grid-4">
+        ${field('inv_portables','Portable Radios Available','text','')}
+        ${field('inv_mobiles','Mobile Radios Available','text','')}
+        ${field('inv_base','Base Stations Available','text','')}
+        ${field('inv_repeaters','Repeaters Available','text','')}
+      </div>
+      ${field('req216_notes','Shortfalls / Additional Requirements / Notes','textarea','',{rows:3})}
+    </div>
+
+    <div class="section-card">
+      <h2>4. Prepared By</h2>
+      <div class="grid-2">
+        ${field('prepared_by_coml','Prepared By (COML)','text',formData.comms_unit_ldr||'')}
+        ${field('date_time_prepared','Date / Time','datetime-local','')}
+      </div>
+    </div>`;
+  },
+
+  buildPrint() {
+    const fd = collectFormData();
+    Object.assign(formData, fd);
+    const functions = ['Command Net','Operations \u2014 Div A','Operations \u2014 Div B',
+                       'Operations \u2014 Div C','Air-to-Ground','Logistics','Medical',
+                       'Public Information','Finance/Admin','Other'];
+    const rows = functions.map((_,i) => `<tr>
+      <td style="padding:3px 5px;border:1px solid #ccc;font-weight:bold">${fd[`req216_fn_${i}`]||''}</td>
+      <td style="padding:3px 5px;border:1px solid #ccc;text-align:center">${fd[`req216_port_${i}`]||''}</td>
+      <td style="padding:3px 5px;border:1px solid #ccc;text-align:center">${fd[`req216_mob_${i}`]||''}</td>
+      <td style="padding:3px 5px;border:1px solid #ccc;text-align:center">${fd[`req216_base_${i}`]||''}</td>
+      <td style="padding:3px 5px;border:1px solid #ccc;font-family:monospace">${fd[`req216_freq_${i}`]||''}</td>
+      <td style="padding:3px 5px;border:1px solid #ccc;text-align:center">${fd[`req216_rep_${i}`]||''}</td>
+      <td style="padding:3px 5px;border:1px solid #ccc">${fd[`req216_notes_${i}`]||''}</td>
+    </tr>`).join('');
+    return `
+    <div class="ics-print-header">
+      <div class="logo-cell">${logoHtml()}</div>
+      <div class="title-cell"><h1>ICS-216 RADIO REQUIREMENTS WORKSHEET</h1>
+        <div class="sub">Radio Planning Worksheet \u00b7 FieldCommand IMS</div></div>
+      <div class="meta-cell">
+        <div class="ml">Incident Name</div><div class="mv" style="font-size:10px">${fd.incident_name||'\u2014'}</div>
+        <div class="ml">Op Period</div><div class="mv">${fd.operational_period_number||PERIOD}</div>
+        <div class="ml">COML</div><div class="mv" style="font-size:10px">${fd.coml_name||'\u2014'}</div>
+      </div>
+    </div>
+    <div class="pr"><div class="pc" style="flex:4">
+      <div class="pl">2. Radio Requirements by Function</div>
+      <table style="width:100%;border-collapse:collapse;font-size:9px;margin-top:3px">
+        <thead><tr style="background:#e8eef7">
+          <th style="padding:3px 4px;border:1px solid #ccc;text-align:left">Function / Division</th>
+          <th style="padding:3px 4px;border:1px solid #ccc">Portables</th>
+          <th style="padding:3px 4px;border:1px solid #ccc">Mobiles</th>
+          <th style="padding:3px 4px;border:1px solid #ccc">Base</th>
+          <th style="padding:3px 4px;border:1px solid #ccc;text-align:left">Freq / Net</th>
+          <th style="padding:3px 4px;border:1px solid #ccc">Repeater?</th>
+          <th style="padding:3px 4px;border:1px solid #ccc;text-align:left">Notes</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div></div>
+    <div class="pr">
+      <div class="pc"><div class="pl">Portables Available</div><div class="pv">${fd.inv_portables||''}</div></div>
+      <div class="pc"><div class="pl">Mobiles Available</div><div class="pv">${fd.inv_mobiles||''}</div></div>
+      <div class="pc"><div class="pl">Base Stations</div><div class="pv">${fd.inv_base||''}</div></div>
+      <div class="pc"><div class="pl">Repeaters</div><div class="pv">${fd.inv_repeaters||''}</div></div>
+    </div>
+    ${fd.req216_notes?`<div class="pr"><div class="pc" style="flex:4"><div class="pl">Shortfalls / Notes</div>
+      <div class="pv">${fd.req216_notes}</div></div></div>`:''}
+    <div class="sig-row">
+      <div class="sig-cell"><div class="sl">Prepared By (COML)</div>
+        <div class="ss">${fd.prepared_by_coml||''}</div>
+        <div class="sl">Date/Time: ${fd.date_time_prepared||''}</div></div>
+      <div class="sig-cell"><div class="sl">Signature</div><div class="ss"></div></div>
+      <div class="sig-cell"></div><div class="sig-cell"></div>
+    </div>
+    <div class="print-footer">
+      <span>Radio Planning Worksheet \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
+      <span>Printed: ${new Date().toLocaleString()}</span>
+    </div>`;
+  }
+};
+
+// ══════════════════════════════════════════════════════════════════
+// ICS-217A COMMUNICATION RESOURCES AVAILABLE WORKSHEET
+// ══════════════════════════════════════════════════════════════════
+FORMS['217A'] = {
+  title: 'ICS-217A Communication Resources Available Worksheet',
+  badge: 'ICS-217A',
+  variants: { FEMA:'FEMA Supplement', USCG:'USCG Supplement', NWCG:'ICS-217A (NWCG)' },
+
+  render() {
+    document.getElementById('formTitle').textContent = 'ICS-217A \u2014 Communication Resources Available';
+    document.getElementById('formBadge').textContent = 'ICS-217A';
+    document.getElementById('formMeta').textContent =
+      `Comms Planning Worksheet \u00b7 ${incData.name||'No incident'}`;
+    return `
+    <div class="section-card">
+      <h2>1. Purpose & Instructions</h2>
+      <div style="background:rgba(26,58,107,0.1);border:1px solid var(--eoc);border-radius:5px;
+                  padding:10px 12px;font-size:12px;color:var(--muted);margin-bottom:12px">
+        The ICS-217A documents all available communications resources (frequencies, channels,
+        repeaters, equipment) that can be drawn upon when building the ICS-205 Radio Plan.
+        Completed by the COML before or during the Tactics Meeting.
+        Lists what is <em>available</em> \u2014 the ICS-216 then identifies what is <em>needed</em> \u2014
+        and the ICS-205 documents what is <em>assigned</em>.
+      </div>
+      <div class="grid-3">
+        ${field('incident_name','Incident Name','text',incData.name||'')}
+        ${field('date_prepared','Date Prepared','date',todayDate())}
+        ${field('prepared_by_coml','Prepared By (COML)','text',formData.comms_unit_ldr||'')}
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>2. Available Frequencies / Channels</h2>
+      <p style="font-size:11px;color:var(--muted);margin:0 0 10px">
+        List all frequencies and channels confirmed available for this incident.
+        Check your agency license, frequency coordination, and any mutual aid agreements.
+      </p>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="background:var(--panel2)">
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:90px">Frequency (MHz)</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">Channel Name</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:60px">Mode</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:60px">PL / NAC</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:60px">Coverage Area</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">Restrictions / License</th>
+            <th style="padding:6px 8px;text-align:center;border:1px solid var(--line);min-width:50px">Repeater?</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:60px">Assigned To</th>
+          </tr></thead>
+          <tbody id="cr217aBody">
+            ${[...Array(12)].map((_,i)=>`<tr>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="cr217a_freq_${i}" style="width:100%;font-size:11px;padding:3px 4px;font-family:var(--font-hd)"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="cr217a_name_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px">
+                <select data-key="cr217a_mode_${i}" style="width:100%;font-size:11px;padding:2px 4px;background:var(--input-bg);color:var(--txt);border:none">
+                  <option>FM</option><option>NFM</option><option>P25</option><option>DMR</option>
+                  <option>D-STAR</option><option>C4FM</option><option>SSB</option><option>AM</option>
+                </select>
+              </td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="cr217a_pl_${i}" style="width:100%;font-size:11px;padding:3px 4px;font-family:var(--font-hd)"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="cr217a_cov_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="cr217a_restrict_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px;text-align:center">
+                <input type="checkbox" data-key="cr217a_rep_${i}">
+              </td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="cr217a_assign_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <button onclick="load217AFromRepeaters()" style="margin-top:8px;font-size:11px;padding:4px 14px;background:var(--eoc);border-color:var(--eoc);color:#fff">
+        📡 Load from Repeater Database
+      </button>
+    </div>
+
+    <div class="section-card">
+      <h2>3. Equipment Available</h2>
+      <div class="grid-4">
+        ${field('equip_portables','Portable Radios','text','')}
+        ${field('equip_mobiles','Mobile Radios','text','')}
+        ${field('equip_base_stations','Base Stations','text','')}
+        ${field('equip_repeaters','Repeaters','text','')}
+      </div>
+      <div class="grid-4">
+        ${field('equip_satellite','Satellite Phones','text','')}
+        ${field('equip_cell','Cell Phones / LTE','text','')}
+        ${field('equip_laptop','Laptops / Tablets w/ Winlink','text','')}
+        ${field('equip_other','Other Comms Equipment','text','')}
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>4. Notes / Limitations</h2>
+      ${field('cr217a_notes','Notes / Dead Zones / Limitations / Mutual Aid Frequencies','textarea','',{rows:4})}
+    </div>`;
+  },
+
+  buildPrint() {
+    const fd = collectFormData();
+    Object.assign(formData, fd);
+    let rows = '';
+    for (let i=0; i<cr217aCount; i++) {
+      if (!fd[`cr217a_freq_${i}`]) continue;
+      rows += `<tr>
+        <td style="padding:3px 4px;border:1px solid #ccc;font-family:monospace">${fd[`cr217a_freq_${i}`]||''}</td>
+        <td style="padding:3px 4px;border:1px solid #ccc">${fd[`cr217a_name_${i}`]||''}</td>
+        <td style="padding:3px 4px;border:1px solid #ccc">${fd[`cr217a_mode_${i}`]||''}</td>
+        <td style="padding:3px 4px;border:1px solid #ccc;font-family:monospace">${fd[`cr217a_pl_${i}`]||''}</td>
+        <td style="padding:3px 4px;border:1px solid #ccc">${fd[`cr217a_cov_${i}`]||''}</td>
+        <td style="padding:3px 4px;border:1px solid #ccc">${fd[`cr217a_restrict_${i}`]||''}</td>
+        <td style="padding:3px 4px;border:1px solid #ccc;text-align:center">${fd[`cr217a_rep_${i}`]?'\u2713':''}</td>
+        <td style="padding:3px 4px;border:1px solid #ccc">${fd[`cr217a_assign_${i}`]||''}</td>
+      </tr>`;
+    }
+    return `
+    <div class="ics-print-header">
+      <div class="logo-cell">${logoHtml()}</div>
+      <div class="title-cell"><h1>ICS-217A COMMUNICATION RESOURCES AVAILABLE</h1>
+        <div class="sub">Comms Planning Worksheet \u00b7 FieldCommand IMS</div></div>
+      <div class="meta-cell">
+        <div class="ml">Incident</div><div class="mv" style="font-size:10px">${fd.incident_name||'\u2014'}</div>
+        <div class="ml">Date</div><div class="mv">${fd.date_prepared||'\u2014'}</div>
+        <div class="ml">COML</div><div class="mv" style="font-size:10px">${fd.prepared_by_coml||'\u2014'}</div>
+      </div>
+    </div>
+    <div class="pr"><div class="pc" style="flex:4">
+      <div class="pl">Available Frequencies / Channels</div>
+      <table style="width:100%;border-collapse:collapse;font-size:9px;margin-top:3px">
+        <thead><tr style="background:#e8eef7">
+          <th style="padding:2px 4px;border:1px solid #ccc">Frequency</th>
+          <th style="padding:2px 4px;border:1px solid #ccc;text-align:left">Name</th>
+          <th style="padding:2px 4px;border:1px solid #ccc">Mode</th>
+          <th style="padding:2px 4px;border:1px solid #ccc">PL/NAC</th>
+          <th style="padding:2px 4px;border:1px solid #ccc;text-align:left">Coverage</th>
+          <th style="padding:2px 4px;border:1px solid #ccc;text-align:left">Restrictions</th>
+          <th style="padding:2px 4px;border:1px solid #ccc">Rep</th>
+          <th style="padding:2px 4px;border:1px solid #ccc;text-align:left">Assigned To</th>
+        </tr></thead>
+        <tbody>${rows||'<tr><td colspan="8" style="padding:5px;color:#888;text-align:center">No frequencies entered</td></tr>'}</tbody>
+      </table>
+    </div></div>
+    <div class="pr">
+      <div class="pc"><div class="pl">Portables</div><div class="pv">${fd.equip_portables||''}</div></div>
+      <div class="pc"><div class="pl">Mobiles</div><div class="pv">${fd.equip_mobiles||''}</div></div>
+      <div class="pc"><div class="pl">Base Stations</div><div class="pv">${fd.equip_base_stations||''}</div></div>
+      <div class="pc"><div class="pl">Repeaters</div><div class="pv">${fd.equip_repeaters||''}</div></div>
+    </div>
+    ${fd.cr217a_notes?`<div class="pr"><div class="pc" style="flex:4"><div class="pl">Notes / Limitations</div>
+      <div class="pv">${fd.cr217a_notes}</div></div></div>`:''}
+    <div class="print-footer">
+      <span>Comms Planning Worksheet \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
+      <span>Printed: ${new Date().toLocaleString()}</span>
+    </div>`;
+  }
+};
+
+let cr217aCount = 12;
+
+async function load217AFromRepeaters() {
+  try {
+    const r = await fetch(`${MAIN_API}/api/repeaters`);
+    const reps = await r.json();
+    let idx = 0;
+    reps.forEach(rep => {
+      if (idx >= cr217aCount) return;
+      const set = (key,val) => { const el=document.querySelector(`[data-key="${key}"]`); if(el) el.value=val; };
+      set(`cr217a_freq_${idx}`, rep.output_freq||'');
+      set(`cr217a_name_${idx}`, `${rep.callsign||''} ${rep.city?'('+rep.city+')':''}`);
+      set(`cr217a_mode_${idx}`, rep.mode||'FM');
+      set(`cr217a_pl_${idx}`, rep.tone||'');
+      set(`cr217a_cov_${idx}`, rep.county||rep.city||'');
+      set(`cr217a_restrict_${idx}`, rep.use_type||'Open');
+      idx++;
+    });
+  } catch(e) { alert('Could not load repeaters: '+e); }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ICS-225 INCIDENT PERSONNEL PERFORMANCE RATING
+// Post-incident — Finance/Admin Section
+// ══════════════════════════════════════════════════════════════════
+FORMS['225'] = {
+  title: 'ICS-225 Incident Personnel Performance Rating',
+  badge: 'ICS-225',
+  variants: { FEMA:'FEMA 010-0-25', USCG:'CG-5234', NWCG:'ICS-225 (NWCG)' },
+
+  render() {
+    document.getElementById('formTitle').textContent = 'ICS-225 \u2014 Personnel Performance Rating';
+    document.getElementById('formBadge').textContent = 'ICS-225';
+    document.getElementById('formMeta').textContent =
+      `${this.variants[VARIANT]} \u00b7 Post-Incident \u00b7 ${incData.name||'No incident'}`;
+    return `
+    <div style="background:rgba(192,32,32,0.08);border:1px solid var(--red);border-radius:6px;
+                padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;
+                justify-content:space-between;flex-wrap:wrap;gap:8px">
+      <div>
+        <span style="font-family:var(--font-hd);font-size:12px;color:var(--red);letter-spacing:1px">
+          \u{1F512} CONFIDENTIAL \u2014 PERSONNEL PERFORMANCE DOCUMENT
+        </span>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px">
+          The evaluated person receives a copy to take with them for their position task book records.
+          Supervisor retains the original.
+        </div>
+      </div>
+      <button onclick="print225Standalone()"
+        style="background:var(--red);border-color:var(--red);color:#fff;
+               font-weight:bold;font-size:12px;padding:8px 18px;white-space:nowrap">
+        \ud83d\udda8 Print / Take With You
+      </button>
+    </div>
+
+    <div class="section-card">
+      <h2>1. Incident & Assignment Information</h2>
+      <div class="grid-3">
+        ${field('incident_name','Incident Name','text',incData.name||'')}
+        ${field('incident_number','Incident Number','text','')}
+        ${field('incident_type','Incident Type','text',incData.type||'')}
+      </div>
+      <div class="grid-3">
+        ${field('incident_location','Location','text',incData.location||'')}
+        ${field('from_date','Assignment From Date','date','')}
+        ${field('to_date','Assignment To Date','date','')}
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>2. Person Being Evaluated</h2>
+      <div class="grid-3">
+        ${field('ratee_name','Full Name','text','')}
+        ${field('ratee_agency','Home Agency / Organization','text','')}
+        ${field('ratee_phone','Contact Phone / Email','text','')}
+      </div>
+      <div class="grid-3">
+        ${field('ratee_position','ICS Position Evaluated','text','')}
+        ${field('ratee_taskbook','Position Task Book # / Course Code','text','')}
+        ${field('ratee_currency_period','Currency Period (if applicable)','text',
+          'e.g. 5 years from date of qualification')}
+      </div>
+      <div class="grid-2">
+        ${field('ratee_trainee','Training Assignment (Trainee)?','text','Yes \u2014 seeking qualification')}
+        ${field('ratee_supervisor','Immediate Supervisor / Evaluator on this Incident','text','')}
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>3. Evaluator Information</h2>
+      <div class="grid-3">
+        ${field('evaluator_name','Evaluator Full Name','text','')}
+        ${field('evaluator_position','Evaluator ICS Position / Qualification','text','')}
+        ${field('evaluator_agency','Evaluator Home Agency','text','')}
+      </div>
+      <div class="grid-2">
+        ${field('evaluator_qualified','Evaluator is qualified in this position?','text','Yes / No')}
+        ${field('evaluator_contact','Evaluator Contact (phone / email)','text','')}
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>4. Performance Evaluation</h2>
+      <div style="background:var(--bg);border:1px solid var(--line);border-radius:6px;
+                  padding:10px 12px;margin-bottom:12px;font-size:11px">
+        <strong>Rating Scale:</strong>
+        <span style="color:#1e8449;margin-left:10px"><strong>4</strong> = Exceeds Standards</span>
+        <span style="color:#1a5276;margin-left:10px"><strong>3</strong> = Meets Standards (Fully Successful)</span>
+        <span style="color:#c07010;margin-left:10px"><strong>2</strong> = Needs Improvement</span>
+        <span style="color:#c0392b;margin-left:10px"><strong>1</strong> = Unacceptable</span>
+        <span style="color:var(--muted);margin-left:10px"><strong>N/O</strong> = Not Observed</span>
+      </div>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="background:var(--panel2)">
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:220px">Competency / Behavior</th>
+            <th style="padding:6px 8px;text-align:center;border:1px solid var(--line);min-width:80px">Rating</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line)">Evaluator Comments / Examples</th>
+          </tr></thead>
+          <tbody>
+            ${[
+              'Performs assigned tasks safely and effectively',
+              'Demonstrates knowledge of ICS / NIMS structure and processes',
+              'Manages assigned resources and maintains accountability',
+              'Communicates clearly and professionally (verbal and written)',
+              'Works effectively with team members and other agencies',
+              'Performs effectively under pressure and in dynamic situations',
+              'Exercises sound judgment and decision-making',
+              'Provides leadership and supervision of assigned personnel',
+              'Adapts to changing incident priorities and conditions',
+              'Adheres to all safety policies, PPE requirements, and procedures',
+            ].map((comp,i)=>`<tr>
+              <td style="border:1px solid var(--line);padding:6px 8px;line-height:1.4">${comp}</td>
+              <td style="border:1px solid var(--line);padding:4px;text-align:center">
+                <select data-key="perf225_rating_${i}"
+                  style="font-size:13px;padding:4px 6px;background:var(--input-bg);
+                         color:var(--txt);border:1px solid var(--line);border-radius:3px;width:100%">
+                  <option value=""></option>
+                  <option value="4">4 \u2014 Exceeds</option>
+                  <option value="3">3 \u2014 Meets</option>
+                  <option value="2">2 \u2014 Needs Improvement</option>
+                  <option value="1">1 \u2014 Unacceptable</option>
+                  <option value="N/O">N/O</option>
+                </select>
+              </td>
+              <td style="border:1px solid var(--line);padding:4px">
+                <input type="text" data-key="perf225_comment_${i}"
+                  placeholder="Specific examples, observations..."
+                  style="width:100%;font-size:11px;padding:4px 5px">
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>5. Overall Assessment</h2>
+      <div class="fg" style="margin-bottom:12px">
+        <label>Overall Performance Rating</label>
+        <div style="display:flex;gap:12px;font-size:13px;margin-top:6px;flex-wrap:wrap">
+          ${[
+            {val:'Outstanding',     color:'#1e8449'},
+            {val:'Excellent',       color:'#1a5276'},
+            {val:'Fully Successful',color:'#555'},
+            {val:'Marginal',        color:'#c07010'},
+            {val:'Unacceptable',    color:'#c0392b'},
+          ].map(r=>`<label style="display:flex;align-items:center;gap:6px;cursor:pointer;
+                              border:1px solid ${r.color};border-radius:4px;padding:5px 10px;
+                              color:${r.color}">
+              <input type="radio" name="overall_rating" data-key="overall_rating" value="${r.val}">
+              ${r.val}
+            </label>`).join('')}
+        </div>
+      </div>
+      ${field('overall_comments','Overall Comments / Narrative Evaluation','textarea',
+        'Describe the individual\'s performance, notable strengths, and areas for improvement...',
+        {rows:5})}
+      <div class="grid-2" style="margin-top:10px">
+        <div class="fg">
+          <label>Recommended for this position in future incidents?</label>
+          <div style="display:flex;gap:10px;margin-top:6px;font-size:13px;flex-wrap:wrap">
+            ${['Yes','No','Yes \u2014 With Conditions'].map(r=>
+              `<label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+                <input type="radio" name="recommend" data-key="recommend" value="${r}"> ${r}
+              </label>`).join('')}
+          </div>
+        </div>
+        ${field('recommend_conditions','Conditions / Notes (if applicable)','text','')}
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>6. Task Book Completion (if applicable)</h2>
+      <div class="grid-2">
+        ${field('taskbook_tasks_completed','Tasks / Competencies Completed This Incident','text',
+          'e.g. Tasks 1, 3, 5, 7 of 12')}
+        ${field('taskbook_tasks_remaining','Tasks Remaining for Full Qualification','text','')}
+      </div>
+      ${field('taskbook_notes','Task Book Notes / Recommended Next Steps','textarea',
+        'What should this person focus on for their next assignment to complete qualification?',
+        {rows:3})}
+    </div>
+
+    <div class="section-card" style="border-color:var(--red)">
+      <h2>7. Signatures</h2>
+      <p style="font-size:11px;color:var(--muted);margin:0 0 12px">
+        <strong>Evaluator signs first.</strong> Ratee signature acknowledges receipt only \u2014
+        it does not indicate agreement. The ratee may attach a written response.
+        <strong>The ratee keeps a copy. The evaluator / agency retains the original.</strong>
+      </p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+        <div style="border:1px solid var(--line);border-radius:6px;padding:12px">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:8px">
+            Evaluator
+          </div>
+          ${field('evaluator_sign_name','Name (print)','text','')}
+          <div style="border-bottom:1px solid var(--line);margin-top:20px;margin-bottom:4px;
+                      min-height:30px"></div>
+          <div style="font-size:10px;color:var(--muted)">Signature &nbsp;&nbsp;&nbsp;
+            Date: <input type="text" data-key="evaluator_sign_date"
+              style="border:none;border-bottom:1px solid var(--line);background:transparent;
+                     color:var(--txt);font-size:10px;width:80px">
+          </div>
+        </div>
+        <div style="border:1px solid var(--line);border-radius:6px;padding:12px">
+          <div style="font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:8px">
+            Ratee (Acknowledges Receipt)
+          </div>
+          ${field('ratee_sign_name','Name (print)','text','')}
+          <div style="border-bottom:1px solid var(--line);margin-top:20px;margin-bottom:4px;
+                      min-height:30px"></div>
+          <div style="font-size:10px;color:var(--muted)">Signature &nbsp;&nbsp;&nbsp;
+            Date: <input type="text" data-key="ratee_sign_date"
+              style="border:none;border-bottom:1px solid var(--line);background:transparent;
+                     color:var(--txt);font-size:10px;width:80px">
+          </div>
+        </div>
+      </div>
+      ${field('ratee_response','Ratee Response / Rebuttal (optional \u2014 attach additional pages if needed)',
+        'textarea','',{rows:3})}
+    </div>`;
+  },
+
+  buildPrint() {
+    return build225PrintDoc(collectFormData());
+  }
+};
+
+// Standalone print function — opens a proper print window
+function print225Standalone() {
+  const fd = collectFormData();
+  Object.assign(formData, fd);
+  const printWin = window.open('', '_blank', 'width=850,height=1100');
+  printWin.document.write(build225FullPage(fd));
+  printWin.document.close();
+}
+
+// Shared data builder for both print paths
+function build225PrintDoc(fd) {
+  Object.assign(formData, fd);
+  const variant = FORMS['225'].variants[VARIANT];
+  const ratingColor = r =>
+    r==='4'?'#1e8449':r==='3'?'#1a5276':r==='2'?'#c07010':r==='1'?'#c0392b':'#888';
+  const competencies = [
+    'Performs assigned tasks safely and effectively',
+    'Demonstrates knowledge of ICS / NIMS structure and processes',
+    'Manages assigned resources and maintains accountability',
+    'Communicates clearly and professionally (verbal and written)',
+    'Works effectively with team members and other agencies',
+    'Performs effectively under pressure and in dynamic situations',
+    'Exercises sound judgment and decision-making',
+    'Provides leadership and supervision of assigned personnel',
+    'Adapts to changing incident priorities and conditions',
+    'Adheres to all safety policies, PPE requirements, and procedures',
+  ];
+  const perfRows = competencies.map((comp,i)=>`<tr>
+    <td style="padding:5px 7px;border:1px solid #ccc;line-height:1.4">${comp}</td>
+    <td style="padding:5px 7px;border:1px solid #ccc;text-align:center;font-weight:bold;font-size:13px;
+        color:${ratingColor(fd[`perf225_rating_${i}`])}">${fd[`perf225_rating_${i}`]||''}</td>
+    <td style="padding:5px 7px;border:1px solid #ccc">${fd[`perf225_comment_${i}`]||''}</td>
+  </tr>`).join('');
+  const overallColor = r =>
+    r==='Outstanding'?'#1e8449':r==='Excellent'?'#1a5276':
+    r==='Marginal'?'#c07010':r==='Unacceptable'?'#c0392b':'#333';
+  return `<!-- ICS-225 print body -->
+  <div style="font-family:Arial,sans-serif;font-size:11px;color:#111;padding:0">
+    <!-- Header -->
+    <div style="background:#001428;color:#fff;padding:12px 16px;display:flex;
+                align-items:center;justify-content:space-between;margin-bottom:0">
+      <div>
+        <div style="font-size:16px;font-weight:bold;letter-spacing:2px">ICS-225</div>
+        <div style="font-size:11px;opacity:0.7">${variant}</div>
+      </div>
+      <div style="text-align:center">
+        <div style="font-size:14px;font-weight:bold;letter-spacing:1px">
+          INCIDENT PERSONNEL PERFORMANCE RATING
+        </div>
+        <div style="font-size:10px;opacity:0.6">FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON</div>
+      </div>
+      <div style="text-align:right;background:#8b0000;padding:6px 12px;border-radius:4px">
+        <div style="font-size:12px;font-weight:bold">CONFIDENTIAL</div>
+        <div style="font-size:9px;opacity:0.8">Personnel Document</div>
+      </div>
+    </div>
+
+    <!-- Incident block -->
+    <table style="width:100%;border-collapse:collapse;border:1px solid #999;font-size:11px">
+      <tr style="background:#e8eef7">
+        <td style="padding:5px 8px;border:1px solid #999;font-weight:bold;width:25%">Incident Name</td>
+        <td style="padding:5px 8px;border:1px solid #999;width:25%">${fd.incident_name||''}</td>
+        <td style="padding:5px 8px;border:1px solid #999;font-weight:bold;width:15%">Inc. Number</td>
+        <td style="padding:5px 8px;border:1px solid #999;width:15%">${fd.incident_number||''}</td>
+        <td style="padding:5px 8px;border:1px solid #999;font-weight:bold;width:10%">From</td>
+        <td style="padding:5px 8px;border:1px solid #999">${fd.from_date||''}</td>
+      </tr>
+      <tr>
+        <td style="padding:5px 8px;border:1px solid #999;font-weight:bold">Location</td>
+        <td style="padding:5px 8px;border:1px solid #999">${fd.incident_location||''}</td>
+        <td style="padding:5px 8px;border:1px solid #999;font-weight:bold">Type</td>
+        <td style="padding:5px 8px;border:1px solid #999">${fd.incident_type||''}</td>
+        <td style="padding:5px 8px;border:1px solid #999;font-weight:bold">To</td>
+        <td style="padding:5px 8px;border:1px solid #999">${fd.to_date||''}</td>
+      </tr>
+    </table>
+
+    <!-- Person evaluated / evaluator split -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;border:1px solid #999;border-top:none">
+      <div style="padding:8px;border-right:1px solid #999">
+        <div style="font-weight:bold;font-size:10px;text-transform:uppercase;color:#555;margin-bottom:4px">
+          Person Being Evaluated
+        </div>
+        <div style="font-size:14px;font-weight:bold;margin-bottom:2px">${fd.ratee_name||'&nbsp;'}</div>
+        <div>${fd.ratee_position||''} &nbsp;\u00b7&nbsp; ${fd.ratee_agency||''}</div>
+        ${fd.ratee_phone?`<div style="color:#555;font-size:10px">${fd.ratee_phone}</div>`:''}
+        <div style="margin-top:6px;font-size:10px">
+          <span style="font-weight:bold">Task Book #:</span> ${fd.ratee_taskbook||'&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'}
+          &nbsp;&nbsp;
+          <span style="font-weight:bold">Trainee:</span> ${fd.ratee_trainee||'Yes'}
+        </div>
+        ${fd.ratee_currency_period?`<div style="font-size:10px;color:#555">Currency: ${fd.ratee_currency_period}</div>`:''}
+      </div>
+      <div style="padding:8px">
+        <div style="font-weight:bold;font-size:10px;text-transform:uppercase;color:#555;margin-bottom:4px">
+          Evaluator
+        </div>
+        <div style="font-size:13px;font-weight:bold;margin-bottom:2px">${fd.evaluator_name||'&nbsp;'}</div>
+        <div>${fd.evaluator_position||''} &nbsp;\u00b7&nbsp; ${fd.evaluator_agency||''}</div>
+        ${fd.evaluator_contact?`<div style="color:#555;font-size:10px">${fd.evaluator_contact}</div>`:''}
+        <div style="font-size:10px;margin-top:6px">
+          <span style="font-weight:bold">Qualified in this position:</span> ${fd.evaluator_qualified||'Yes'}
+        </div>
+      </div>
+    </div>
+
+    <!-- Performance table -->
+    <div style="border:1px solid #999;border-top:none;padding:8px">
+      <div style="font-weight:bold;font-size:10px;text-transform:uppercase;color:#555;margin-bottom:4px">
+        Performance Evaluation &nbsp;
+        <span style="font-weight:normal;color:#888">
+          4=Exceeds &nbsp; 3=Meets Standards &nbsp; 2=Needs Improvement &nbsp; 1=Unacceptable &nbsp; N/O=Not Observed
+        </span>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-size:11px">
+        <thead><tr style="background:#e8eef7">
+          <th style="padding:4px 6px;border:1px solid #ccc;text-align:left">Competency / Behavior</th>
+          <th style="padding:4px 6px;border:1px solid #ccc;width:60px;text-align:center">Rating</th>
+          <th style="padding:4px 6px;border:1px solid #ccc;text-align:left">Evaluator Comments / Examples</th>
+        </tr></thead>
+        <tbody>${perfRows}</tbody>
+      </table>
+    </div>
+
+    <!-- Overall assessment -->
+    <div style="border:1px solid #999;border-top:none;padding:8px">
+      <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:8px">
+        <div style="font-weight:bold;font-size:10px;text-transform:uppercase;color:#555">
+          Overall Performance Rating:
+        </div>
+        ${['Outstanding','Excellent','Fully Successful','Marginal','Unacceptable'].map(r=>`
+          <span style="border:2px solid ${r===fd.overall_rating?overallColor(r):'#ccc'};
+                       border-radius:4px;padding:3px 10px;font-size:12px;font-weight:bold;
+                       color:${r===fd.overall_rating?overallColor(r):'#999'};
+                       background:${r===fd.overall_rating?'rgba(0,0,0,0.04)':'transparent'}">
+            ${r===fd.overall_rating?'\u2611':'\u2610'} ${r}
+          </span>`).join('')}
+      </div>
+      ${fd.overall_comments?`<div style="background:#f9f9f9;border:1px solid #e0e0e0;border-radius:4px;
+                                         padding:8px;font-size:11px;margin-bottom:8px">
+        <strong>Comments:</strong> ${fd.overall_comments}
+      </div>`:`<div style="min-height:50px;border:1px solid #e0e0e0;border-radius:4px;
+                           padding:8px;margin-bottom:8px;background:#f9f9f9;color:#999;font-size:11px">
+        Evaluator comments...
+      </div>`}
+      <div style="display:flex;align-items:center;gap:16px">
+        <div style="font-weight:bold;font-size:10px;text-transform:uppercase;color:#555">
+          Recommended for this position in future:
+        </div>
+        ${['Yes','No','Yes \u2014 With Conditions'].map(r=>`
+          <span style="font-size:11px">
+            ${r===fd.recommend?'\u2611':'\u2610'} ${r}
+          </span>`).join('')}
+        ${fd.recommend_conditions?`<span style="font-size:10px;color:#555">(${fd.recommend_conditions})</span>`:''}
+      </div>
+    </div>
+
+    <!-- Task book section -->
+    ${(fd.taskbook_tasks_completed||fd.taskbook_tasks_remaining||fd.taskbook_notes)?`
+    <div style="border:1px solid #999;border-top:none;padding:8px;background:#fffdf0">
+      <div style="font-weight:bold;font-size:10px;text-transform:uppercase;color:#c07010;margin-bottom:6px">
+        Position Task Book Progress
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px">
+        <div><span style="font-weight:bold">Completed this incident:</span> ${fd.taskbook_tasks_completed||'\u2014'}</div>
+        <div><span style="font-weight:bold">Remaining:</span> ${fd.taskbook_tasks_remaining||'\u2014'}</div>
+      </div>
+      ${fd.taskbook_notes?`<div style="font-size:10px;color:#555"><strong>Notes:</strong> ${fd.taskbook_notes}</div>`:''}
+    </div>`:''}
+
+    <!-- Signature blocks -->
+    <div style="border:1px solid #999;border-top:none;padding:10px">
+      <div style="font-weight:bold;font-size:10px;text-transform:uppercase;color:#555;margin-bottom:8px">
+        Signatures &mdash; Evaluator signs first. Ratee signature acknowledges receipt only, not agreement.
+        <strong>The ratee takes a copy.</strong>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        <div>
+          <div style="font-size:10px;font-weight:bold;text-transform:uppercase;margin-bottom:4px">Evaluator</div>
+          <div style="margin-bottom:2px">Name (print): <strong>${fd.evaluator_sign_name||fd.evaluator_name||'_______________________________'}</strong></div>
+          <div style="border-bottom:1px solid #333;height:30px;margin:8px 0"></div>
+          <div style="font-size:10px;color:#555">Signature &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            Date: ${fd.evaluator_sign_date||'_______________'}</div>
+        </div>
+        <div>
+          <div style="font-size:10px;font-weight:bold;text-transform:uppercase;margin-bottom:4px">
+            Ratee (Acknowledges Receipt)
+          </div>
+          <div style="margin-bottom:2px">Name (print): <strong>${fd.ratee_sign_name||fd.ratee_name||'_______________________________'}</strong></div>
+          <div style="border-bottom:1px solid #333;height:30px;margin:8px 0"></div>
+          <div style="font-size:10px;color:#555">Signature &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            Date: ${fd.ratee_sign_date||'_______________'}</div>
+        </div>
+      </div>
+      ${fd.ratee_response?`
+      <div style="margin-top:10px;border-top:1px solid #ccc;padding-top:8px">
+        <div style="font-size:10px;font-weight:bold;margin-bottom:4px">Ratee Response / Rebuttal:</div>
+        <div style="font-size:11px">${fd.ratee_response}</div>
+      </div>`:''}
+    </div>
+
+    <!-- Footer -->
+    <div style="border:1px solid #999;border-top:none;padding:6px 10px;background:#f5f5f5;
+                display:flex;justify-content:space-between;font-size:9px;color:#888">
+      <span>${variant} \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0 \u00b7 CONFIDENTIAL</span>
+      <span>Printed: ${new Date().toLocaleString()}</span>
+    </div>
+  </div>`;
+}
+
+// Full standalone print page
+function build225FullPage(fd) {
+  return `<!DOCTYPE html><html><head>
+    <title>ICS-225 \u2014 ${fd.ratee_name||'Personnel Performance Rating'}</title>
+    <style>
+      @page { margin: 0.6in; size: letter; }
+      body { font-family: Arial, Helvetica, sans-serif; font-size: 11px;
+             color: #111; margin: 0; background: #fff; }
+      @media print {
+        body { margin: 0; }
+        .no-print { display: none !important; }
+      }
+      .print-btn {
+        position: fixed; top: 12px; right: 12px; z-index: 999;
+        background: #8b0000; color: #fff; border: none; padding: 10px 20px;
+        font-size: 13px; font-weight: bold; border-radius: 4px; cursor: pointer;
+      }
+    </style>
+  </head><body>
+  <button class="no-print" onclick="window.print()" style="position:fixed;top:12px;right:12px;
+    z-index:999;background:#8b0000;color:#fff;border:none;padding:10px 20px;
+    font-size:13px;font-weight:bold;border-radius:4px;cursor:pointer">
+    \ud83d\udda8 Print / Save PDF
+  </button>
+  <div style="padding:0">
+    ${build225PrintDoc(fd)}
+  </div>
+  <script>
+    // Auto-open print dialog
+    setTimeout(() => window.print(), 500);
+  <\/script>
+  </body></html>`;
+}
+
 </script>
 <!-- Map Picker Modal -->
 <div class="map-picker-modal" id="mapPickerModal">

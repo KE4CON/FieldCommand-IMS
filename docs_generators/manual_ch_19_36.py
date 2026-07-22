@@ -17,7 +17,7 @@ def ch19():
         ['Comms Plan (ICS-205)',
          'Build the radio communications plan. Each row is a channel: function, channel name, '
          'frequency, CTCSS tone, mode, remarks. Click <b>Add Comms Row</b> to add a channel. '
-         'Pre-fill with your agency's radio channels.'],
+         'Pre-fill with your agency\'s radio channels.'],
         ['Supply',
          'Log supply requests: item, category, quantity needed, quantity on hand, priority. '
          'A progress bar shows the fill rate. Use <b>Add Supply</b>.'],

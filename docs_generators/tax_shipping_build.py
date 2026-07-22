@@ -52,14 +52,14 @@ class TCanvas(pdfcanvas.Canvas):
             self.setFillColor(GOLD)
             self.setFont('Helvetica', 8)
             self.drawString(M, PAGE_H-0.44*inch,
-                f'Delivery to Woodstock IL 60098  ·  Sales tax 8.25%  ·  Estimated {TODAY}  ·  Developed by KE4CON for MCESV / MCEMA')
+                f'Delivery to Woodstock IL 60098  ·  Sales tax 8.25%  ·  Estimated {TODAY}  ·  Developed by KE4CON for your organization')
             self.setFillColor(white)
             self.setFont('Helvetica-Bold', 9)
             self.drawRightString(PAGE_W-M, PAGE_H-0.30*inch, f'Page {n} of {total}')
             self.setFillColor(HexColor('#c0d4f0'))
             self.setFont('Helvetica', 7)
             self.drawCentredString(PAGE_W/2, 0.17*inch,
-                'Tax rate verified: IL 6.25% + McHenry County 0.75% + Woodstock City 1.00% + RTA 0.25% = 8.25%  ·  '
+                'Tax rate verified: IL 6.25% + your county 0.75% + Woodstock City 1.00% + RTA 0.25% = 8.25%  ·  '
                 'Shipping: UPS/USPS ground estimates; many major vendors ship free  ·  Harbor Freight cases available for in-store pickup (free)')
             super().showPage()
         super().save()
@@ -91,13 +91,13 @@ SECTIONS = [
     ('CAT6 patch cables (×10)', 30.00, 1, 'amazon.com', 0.00),
   ]),
   ('WAN — CELLULAR (INSTYCONNECT)', [
-    ('InstyConnect Drum system', 375.00, 1, 'instyconnect.com (order builder)', 20.00),
-    ('InstyConnect Switchblade', 425.00, 1, 'instyconnect.com (order builder)', 0.00),
+    ('the cellular antenna Drum system', 375.00, 1, 'instyconnect.com (order builder)', 20.00),
+    ('the cellular antenna Switchblade', 425.00, 1, 'instyconnect.com (order builder)', 0.00),
     ('Spare outdoor PoE cable', 20.00, 1, 'amazon.com', 0.00),
   ]),
   ('WAN — SATELLITE (STARLINK)', [
-    ('Starlink Standard Gen 3 kit', 349.00, 1, 'starlink.com / Home Depot (free delivery)', 0.00),
-    ('Starlink Ethernet adapter', 25.00, 1, 'starlink.com', 0.00),
+    ('the satellite dish Standard Gen 3 kit', 349.00, 1, 'starlink.com / Home Depot (free delivery)', 0.00),
+    ('the satellite dish Ethernet adapter', 25.00, 1, 'starlink.com', 0.00),
     ('USB 3.0 GbE adapter', 18.00, 1, 'amazon.com', 0.00),
   ]),
   ('OPERATOR WORKSTATIONS', [
@@ -147,9 +147,9 @@ story = []
 story.append(Spacer(1, 2))
 story.append(P(
     f'<b>Tax rate:</b> 8.25% for Woodstock IL 60098 — verified at TaxHero.net and Avalara (IL state 6.25% + '
-    f'McHenry County 0.75% + Woodstock city 1.00% + RTA 0.25%), effective January 1, 2026.  '
+    f'your county 0.75% + Woodstock city 1.00% + RTA 0.25%), effective January 1, 2026.  '
     f'<b>Shipping:</b> UPS/USPS Ground estimates to 60098; most major vendors (Amazon, DX Engineering, GigaParts, '
-    f'Best Buy, Starlink) ship free. HRO charges ~$30 per order. Harbor Freight cases can be picked up '
+    f'Best Buy, the satellite dish) ship free. HRO charges ~$30 per order. Harbor Freight cases can be picked up '
     f'in-store (Crystal Lake IL store) for $0 shipping. Digirig on summer break until July 31 — orders ship automatically.',
     S('intro', fontSize=8.5, leading=12, spaceAfter=5)))
 
@@ -234,7 +234,7 @@ story.append(P(
     f'(2) Shipping estimates based on UPS/USPS Ground from each vendor\'s distribution point to 60098; actual rates '
     f'calculated at checkout.  '
     f'(3) Harbor Freight Crystal Lake store (approx. 10 mi from Woodstock) allows free in-store pickup — saving ~$72 on cases.  '
-    f'(4) DX Engineering, GigaParts, Amazon, Best Buy, Starlink ship free — no minimum for most items.  '
+    f'(4) DX Engineering, GigaParts, Amazon, Best Buy, the satellite dish ship free — no minimum for most items.  '
     f'(5) Digirig summer break through July 31, 2026 — auto-ships.  '
     f'(6) DR-9400-BTWF budgeted at $2,250 — standard model $2,099; premium for BT/WiFi bundle estimated; confirm at dxengineering.com.  '
     f'(7) Chameleon USA250 25%-off sale through ~July 14, 2026 could reduce MPAS 2.0 to ~$495, saving ~$137 + tax.',

@@ -17,7 +17,7 @@ def ch19():
         ['Comms Plan (ICS-205)',
          'Build the radio communications plan. Each row is a channel: function, channel name, '
          'frequency, CTCSS tone, mode, remarks. Click <b>Add Comms Row</b> to add a channel. '
-         'Pre-filled with McHenry County Starcom channels.'],
+         'Pre-fill with your agency's radio channels.'],
         ['Supply',
          'Log supply requests: item, category, quantity needed, quantity on hand, priority. '
          'A progress bar shows the fill rate. Use <b>Add Supply</b>.'],
@@ -268,9 +268,9 @@ def ch27():
     s.append(SP(6))
     s.append(P('Default Facilities', H2))
     s.append(P(
-        'On first startup, FieldCommand seeds four McHenry County facilities: '
-        'the McHenry County EOC (Woodstock), Centegra Hospital Woodstock, '
-        'the McHenry County Fairgrounds staging area, and Centegra Hospital McHenry. '
+        'On first startup, FieldCommand seeds four your county facilities: '
+        'the your county EOC (Woodstock), Centegra Hospital Woodstock, '
+        'the your county Fairgrounds staging area, and Centegra Hospital your area. '
         'Edit these with your actual operational details.'))
     s.append(SP(6))
     s.append(P('Managing Facilities', H2))
@@ -290,7 +290,7 @@ def ch28():
     s.append(P(
         'Convert between decimal latitude/longitude and Maidenhead grid squares in '
         'both directions, and calculate distance and bearing between two grid squares. '
-        'Supports 4-character (EN52) and 6-character (EN52ab) precision.'))
+        'Supports 4-character (e.g. EN52) and 6-character (e.g. EN52ab) precision.'))
     s.append(SP(6))
     s.append(P('Using the Calculator', H2))
     s += steps([
@@ -302,7 +302,7 @@ def ch28():
     s.append(SP(4))
     s.append(P(
         'The map on the page highlights the grid square on a North America outline '
-        'for quick visual reference. McHenry County, IL is in grid square <b>EN52</b>.'))
+        'for quick visual reference. For example, northern Illinois is in grid square <b>EN52</b>.'))
     s.append(PB())
     return s
 
@@ -516,7 +516,7 @@ def ch33():
     s += steps([
         'Run <font face="Courier" size="9">sudo bash /opt/fieldcommand/scripts/download_tiles.sh</font> for the interactive menu (106 presets: all Illinois counties, WI/IN/IA border counties, all 50 states).',
         'Search presets: <font face="Courier" size="9">download_tiles.sh --search "mchenry"</font>',
-        'Download a preset: <font face="Courier" size="9">download_tiles.sh --area "McHenry County IL" --zoom 8-16</font>',
+        'Download a preset: <font face="Courier" size="9">download_tiles.sh --area "your county IL" --zoom 8-16</font>',
         'Tiles are stored in /opt/fieldcommand/data/tiles/ and served by the tile server on port 8083.',
     ])
     s.append(SP(8))
@@ -571,7 +571,7 @@ def ch34():
     s.append(tbl(['DEVICE', 'ROLE', 'CONNECTION'], [
         ['ASUS RT-BE58 Go  (primary)',
          'Wi-Fi 7 AP  ·  DHCP server  ·  WAN gateway  ·  AiMesh controller',
-         'WAN: InstyConnect cellular  ·  USB WAN: Starlink failover  ·  LAN: UniFi switch'],
+         'WAN: the cellular modem  ·  USB WAN: the satellite dish failover  ·  LAN: UniFi switch'],
         ['ASUS RT-BE58 Go  (mesh node 1)',
          'EMCOMM-NET extension — same SSID, seamless roaming',
          'Wired backhaul via UniFi Switch Port 11'],
@@ -596,22 +596,22 @@ def ch34():
         'extends EMCOMM-NET to field positions without additional cabling.'))
     s.append(SP(6))
 
-    s.append(P('33.2  WAN Connectivity — InstyConnect Primary + Starlink Failover', H2))
+    s.append(P('33.2  WAN Connectivity — the cellular antenna unit Primary + the satellite dish Failover', H2))
     s.append(P(
         'The ASUS router manages two WAN sources with automatic failover. '
-        'InstyConnect cellular (T-Mobile and Verizon dual-carrier) is always the primary. '
-        'Starlink satellite is secondary — the ASUS switches to it automatically '
+        'the cellular modem (your cellular carrier and your cellular carrier dual-carrier) is always the primary. '
+        'satellite internet is secondary — the ASUS switches to it automatically '
         'within 30 to 60 seconds when cellular drops, and switches back when cellular recovers. '
         'No operator action is required for the failover in either direction.'))
     s.append(SP(4))
     s.append(tbl(['PRI', 'WAN SOURCE', 'CONNECTION', 'ACTIVATES'], [
         ['1',
-         'InstyConnect  (T-Mobile + Verizon)',
+         'the cellular antenna unit  (your cellular carrier + your cellular carrier)',
          'PoE Ethernet from Drum or Switchblade to ASUS WAN port',
          'Always — default for all activations'],
         ['2',
-         'Starlink satellite',
-         'Starlink Ethernet adapter + USB-Ethernet to ASUS USB WAN',
+         'satellite internet',
+         'the satellite dish Ethernet adapter + USB-Ethernet to ASUS USB WAN',
          'Auto when cellular drops'],
         ['3',
          'EOC site Ethernet',
@@ -624,9 +624,9 @@ def ch34():
     ], [0.4*inch, 1.6*inch, 2.0*inch, CW-4.0*inch]))
     s.append(SP(6))
 
-    s.append(P('33.3  InstyConnect Antennas', H2))
+    s.append(P('33.3  the cellular antenna unit Antennas', H2))
     s.append(P(
-        'FieldCommand carries two InstyConnect antennas to handle different deployment sites. '
+        'FieldCommand carries two the cellular antenna unit antennas to handle different deployment sites. '
         'Both connect via a single outdoor-rated PoE Ethernet cable to the ASUS WAN port. '
         'The modem is integrated into the outdoor antenna enclosure — '
         'no separate modem box is needed. Power travels up the same cable that carries data.'))
@@ -638,12 +638,12 @@ def ch34():
         ['Switchblade  (directional)',
          'When Drum signal is poor. Folds flat for transport. '
          'Swap the PoE cable from Drum to Switchblade on the same ASUS WAN port.',
-         'Aim toward nearest tower using InstyConnect app. '
+         'Aim toward nearest tower using the cellular antenna unit app. '
          'Rotate slowly — stop at peak signal.'],
     ], [1.3*inch, 2.4*inch, CW-3.7*inch]))
     s.append(SP(4))
     s.append(note(
-        'InstyConnect data plan management: '
+        'the cellular antenna unit data plan management: '
         'Keep the plan in Standby mode ($5/month) between activations. '
         'Standby maintains the SIM and multi-network capability so you can activate '
         'at full speed the moment an emergency is declared. '
@@ -657,9 +657,9 @@ def ch34():
         'The WAN Status Dashboard at http://192.168.50.1/wan-status.html gives '
         'operators a live view of all WAN sources from any browser on EMCOMM-NET. '
         'The active WAN source is shown in a large color-coded panel: '
-        'green for InstyConnect cellular, blue for Starlink satellite, red for offline. '
-        'InstyConnect signal strength, carrier, and technology are displayed. '
-        'Starlink latency, throughput, and obstruction percentage appear when the dish is active. '
+        'green for the cellular modem, blue for satellite internet, red for offline. '
+        'the cellular antenna unit signal strength, carrier, and technology are displayed. '
+        'the satellite dish latency, throughput, and obstruction percentage appear when the dish is active. '
         'A connectivity test panel verifies reachability to NWS weather alerts, '
         'APRS-IS, Cloudflare DNS, and the AMPRNet gateway every 60 seconds. '
         'A WAN event log records every failover and failback with UTC timestamps.'))
@@ -682,7 +682,7 @@ def ch34():
          'Graywolf and YAAC connect to APRS-IS servers on 44.x.x.x — '
          'keeping APRS traffic within the amateur radio network.'],
         ['Inter-node FieldCommand',
-         'If a second MCESV FieldCommand system with its own 44Net gateway is deployed, '
+         'If a second your organization FieldCommand system with its own 44Net gateway is deployed, '
          'the two systems can share data over AMPRNet without commercial internet routing.'],
         ['Direct station connectivity',
          'Any amateur station worldwide with a 44.x.x.x address is directly reachable '
@@ -737,8 +737,8 @@ def ch34():
         ['Windows Laptop  (recommended)',           '192.168.50.3',   'DHCP reservation in router'],
         ['Color MFP Printer  (recommended)',        '192.168.50.10',  'DHCP reservation in router'],
         ['Pi 500 Workstations  (×4)',              '192.168.50.20–23', 'DHCP reservations in router'],
-        ['InstyConnect modem',                     '10.1.1.1',       'http://10.1.1.1  (via InstyConnect Wi-Fi)'],
-        ['Starlink dish admin',                    '192.168.100.1',  'http://192.168.100.1  (via Starlink network)'],
+        ['the cellular antenna unit modem',                     '10.1.1.1',       'http://10.1.1.1  (via the cellular antenna unit Wi-Fi)'],
+        ['the satellite dish dish admin',                    '192.168.100.1',  'http://192.168.100.1  (via the satellite dish network)'],
         ['Field devices  (DHCP)',                  '192.168.50.100–200', 'Assigned automatically by ASUS router'],
         ['CUPS print server',                      '192.168.50.1',   'http://192.168.50.1:631'],
         ['Kiwix offline library',                  '192.168.50.1',   'http://192.168.50.1:8081'],
@@ -961,7 +961,7 @@ def ch_appendix():
 
     s.append(P('A4  Winlink — Email Over Radio', H2))
     s.append(P(
-        'MCESV/MCEMA uses <b>Winlink Express</b> as the primary Winlink client on the '
+        'Most deployments use <b>Winlink Express</b> as the primary Winlink client on the '
         'Windows laptop with the IC-7300 + VARA HF. '
         'The Pi also runs <b>Pat</b> as a backup browser-based Winlink client on port 8090. '
         'Never run both clients with an active session on the same radio simultaneously.'))

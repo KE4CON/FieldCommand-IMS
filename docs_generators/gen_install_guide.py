@@ -29,9 +29,8 @@ RED    = HexColor('#b82020')
 PURPLE = HexColor('#5b2d8c')
 MUTED  = HexColor('#4a6080')
 
-ORG    = ('McHenry County Emergency Services Volunteers and '
-          'McHenry County Emergency Management Agency')
-SHORT  = 'MCESV/MCEMA  ·  K9ESV'
+ORG    = 'FieldCommand IMS'
+SHORT  = 'FieldCommand IMS v1.0'
 TODAY  = datetime.date.today().strftime('%B %d, %Y')
 PAGE_W, PAGE_H = letter
 M  = 0.65*inch
@@ -82,11 +81,11 @@ class NC(canvas.Canvas):
         self.setFillColor(GOLD)
         self.setFont('Helvetica-Bold', 10)
         self.drawCentredString(PAGE_W/2, PAGE_H - 0.70*inch,
-            'K9ESV  ·  McHenry County Emergency Services Volunteers')
+            'FieldCommand Incident Management System')
         self.setFillColor(HexColor('#c0d4f0'))
         self.setFont('Helvetica', 9)
         self.drawCentredString(PAGE_W/2, PAGE_H - 0.88*inch,
-            'and McHenry County Emergency Management Agency')
+            'Open-Source · Offline-First · Field-Deployable')
 
         # ── FIELDCOMMAND main title ──────────────────────────────────────────────
         self.setFillColor(white)
@@ -119,7 +118,7 @@ class NC(canvas.Canvas):
         self.setFillColor(HexColor('#6070a0'))
         self.setFont('Helvetica', 9)
         self.drawCentredString(PAGE_W/2, PAGE_H*0.25,
-            f'RACES  ·  ARES  ·  Starcom  ·  K9ESV  ·  {TODAY}')
+            f'ICS/NIMS All-Hazards  ·  Amateur Radio EMCOMM  ·  {TODAY}')
 
         # ── Bottom footer ──────────────────────────────────────────────────────
         self.setFillColor(EOC)
@@ -368,7 +367,7 @@ story.append(SP(6))
 story.append(P(
     'FieldCommand is a complete off-grid emergency communications server built on two Raspberry Pi 5 units '
     '— one running all 32 EmComm tools, one dedicated to the AMPRNet / 44Net gateway. '
-    'InstyConnect cellular (T-Mobile + Verizon) is the primary WAN source with Starlink satellite '
+    'A cellular modem is the primary WAN source with a satellite dish '
     'as automatic failover, both managed by the ASUS RT-BE58 Go Wi-Fi 7 router. '
     'Two additional ASUS RT-BE58 Go routers extend EMCOMM-NET as AiMesh nodes for large venues. '
     'Any phone, tablet, or laptop connects to EMCOMM-NET and reaches all tools at '
@@ -393,7 +392,7 @@ story.append(tbl(['COMPONENT', 'DESCRIPTION', 'COMPONENT', 'DESCRIPTION'], [
      'HF Propagation', 'Solar indices, band conditions, A/K-index'],
     ['APRS Tactical Map', 'Graywolf + YAAC merged, offline tiles, overlays',
      'Repeater Database', 'RepeaterBook CSV, filter by band, mode, ARES affiliation'],
-    ['Member Roster', 'MCESV/MCEMA directory with certs, equipment, activations',
+    ['Member Roster', 'your organization directory with certs, equipment, activations',
      'Reference Library', 'Upload and serve field reference docs across EMCOMM-NET'],
     ['NTS Radiogram', 'ARRL-formatted radiogram generator with traffic log',
      'Kiwix Library', 'WikiMed, Wikipedia, iFixit — offline at port 8081'],
@@ -448,7 +447,7 @@ story.append(tbl(['DEVICE', 'ROLE', 'NOTES'], [
      '16-port gigabit managed switch  /  8x PoE + 8x non-PoE  /  2x 1G SFP uplink',
      'Replaces the 5-port Flex 2.5G.  Port layout: 1=ASUS router uplink, '
      '2=FieldCommand Pi, 3=44Net Gateway Pi, 4=Windows laptop, '
-     '5=color MFP printer, 6-9=Pi 500 workstations, 10=Starlink (optional), 11-16=spare.  '
+     '5=color MFP printer, 6-9=Pi 500 workstations, 10=Satellite dish (optional), 11-16=spare.  '
      '~$200.  PoE powers future UniFi APs without a separate injector.'],
 ], [1.6*inch, 1.6*inch, CW-3.2*inch]))
 story.append(SP(8))
@@ -561,42 +560,41 @@ bom_rows = [
     ['Wire winders', '4× heavy-duty wire winders sized for 75-100 ft each  —  tangle-free storage and rapid deployment/recovery of antenna wire in the field', 'chameleonantenna.com · DX Engineering  (~$60)'],
     ['USB-A to USB-B cable (IC-7300 to laptop)', 'USB-A to USB-B, shielded, 6 ft', 'Amazon · Monoprice'],
     ['Windows laptop (Winlink Express + JS8Call)', 'Any Windows 10/11 laptop with USB-A port and Wi-Fi', 'Best Buy · Amazon'],
-    cat_row('WAN Connectivity — InstyConnect Cellular  (Primary WAN)'),
-    ['InstyConnect Drum antenna  (primary)',
-     'InstyConnect Drum  —  omnidirectional 5G/LTE antenna  —  PoE powered  —  '
+    cat_row('WAN Connectivity — Cellular Modem  (Primary WAN)'),
+    ['the cellular antenna unit Drum antenna  (primary)',
+     'the cellular antenna unit Drum  —  omnidirectional 5G/LTE antenna  —  PoE powered  —  '
      'mounts on any standard 1.5" to 2" pole  —  includes PoE injector and 25 ft PoE Ethernet cable  —  '
-     'connects directly to ASUS RT-BE58 Go WAN port  —  T-Mobile and Verizon multi-network capable',
+     'connects directly to ASUS RT-BE58 Go WAN port  —  multi-carrier capable',
      'instyconnect.com  (~$350-400)'],
-    ['InstyConnect Switchblade antenna  (directional backup)',
-     'InstyConnect Switchblade  —  compact folding 4x directional LDAP antenna  —  '
-     'PoE powered  —  deploys and folds flat for transport  —  '
+    ['Directional cellular antenna  (backup)',
+     'Compact folding directional LTE/5G antenna — PoE powered — deploys and folds flat for transport  —  '
      'use when Drum signal is insufficient at the deployment site  —  '
      'same PoE cable connection as Drum — swap in minutes',
      'instyconnect.com  (~$400-450)'],
-    ['InstyConnect PoE Ethernet cable  (spare)',
+    ['the cellular antenna unit PoE Ethernet cable  (spare)',
      '25 ft outdoor-rated PoE Ethernet cable  —  connects outdoor antenna unit to ASUS WAN port  —  '
      'one included with each antenna  —  carry one spare',
      'instyconnect.com  or  Amazon  (~$20)'],
-    ['InstyConnect data plan  —  Multi-Network Unlimited',
-     'InstyConnect Multi-Network Unlimited plan  —  T-Mobile + Verizon dual-carrier  —  '
+    ['the cellular antenna unit data plan  —  Multi-Network Unlimited',
+     'the cellular antenna unit Multi-Network Unlimited plan  —  dual-carrier  —  '
      'automatic carrier failover  —  1.2 TB fair use per carrier (2.4 TB total)  —  '
      'can be paused after first month for $5/month standby  —  '
      'activate only during emergency activations  —  no long-term contract required',
      'instyconnect.com  (~$79-99/month active  /  $5/month standby)'],
-    cat_row('WAN Connectivity — Starlink Satellite  (Secondary WAN / Automatic Failover)'),
-    ['Starlink satellite dish and router kit',
-     'Starlink Standard or Flat High Performance dish  —  includes dish, router, cables, and mount  —  '
-     'connects to ASUS RT-BE58 Go via Starlink Ethernet adapter  —  automatic failover when cellular WAN drops  —  '
-     'note: Starlink uses CGNAT  —  inbound connections from internet not possible',
+    cat_row('WAN Connectivity — Satellite Dish  (Secondary WAN / Automatic Failover)'),
+    ['satellite internet dish and router kit',
+     'satellite dish Standard or Flat High Performance dish  —  includes dish, router, cables, and mount  —  '
+     'connects to ASUS RT-BE58 Go via satellite Ethernet adapter  —  automatic failover when cellular WAN drops  —  '
+     'note: satellite dish uses CGNAT  —  inbound connections from internet not possible',
      'starlink.com  (~$350-600 hardware  +  $120/month service)'],
-    ['Starlink Ethernet adapter',
-     'Official Starlink Ethernet adapter  —  converts Starlink dish output to standard RJ45  —  '
-     'required to connect Starlink to ASUS router without using Starlink router  —  '
+    ['Satellite dish Ethernet adapter',
+     'Official satellite Ethernet adapter  —  converts satellite dish dish output to standard RJ45  —  '
+     'required to connect satellite dish to ASUS router without using satellite dish router  —  '
      'plug Ethernet output into USB-to-Ethernet adapter for ASUS USB WAN port',
-     'starlink.com  (~$25)'],
-    ['USB-to-Ethernet adapter  (Starlink to ASUS USB WAN)',
+     'Available from satellite provider (~$20–30)'],
+    ['USB-to-Ethernet adapter  (satellite dish to ASUS USB WAN)',
      'USB-A to Gigabit Ethernet adapter  —  plugs into ASUS RT-BE58 Go USB port  —  '
-     'connects Starlink Ethernet adapter to ASUS USB WAN for secondary WAN failover  —  '
+     'connects satellite Ethernet adapter to ASUS USB WAN for secondary WAN failover  —  '
      'ASIX AX88179 chipset recommended for best ASUS router compatibility',
      'Amazon  (~$15-20)'],
     cat_row('Accessories — Backup & Connectivity'),
@@ -755,7 +753,7 @@ story.append(tbl(['IMAGER OPTION', 'VALUE  /  REASON'], [
     ['Password',          'Choose a strong password and record it  —  required for SSH and CUPS admin'],
     ['Enable SSH',        'Yes  —  required for remote access from your laptop during setup'],
     ['Wi-Fi',             'Set your home or lab Wi-Fi during initial OS setup.  EMCOMM-NET comes later.'],
-    ['Locale / Timezone', 'US/Central for McHenry County operations'],
+    ['Locale / Timezone', 'US/Central for local operations'],
 ], [1.8*inch, CW-1.8*inch]))
 story.append(SP(8))
 
@@ -937,19 +935,19 @@ story.append(P(
     'The UniFi Switch Lite 16 PoE is the central wiring hub for the entire EMCOMM-NET deployment. '
     'Connect everything to the switch, and the switch connects up to the ASUS router. '
     'Use short CAT 6 patch cables (1 ft to 3 ft) to keep the rack or case tidy. '
-    'The InstyConnect Drum antenna connects directly to the ASUS WAN port via its PoE Ethernet cable '
+    'The the cellular antenna unit Drum antenna connects directly to the ASUS WAN port via its PoE Ethernet cable '
     '— this is completely separate from the switch and does not use a switch port.'))
 story.append(SP(4))
 story.append(tbl(['CONNECTION', 'DEVICE', 'IP / NOTES'], [
     ['ASUS WAN port  (PoE Ethernet)',
-     'InstyConnect Drum  (primary cellular WAN)',
-     'Primary internet — cellular via T-Mobile / Verizon.  '
+     'the cellular antenna unit Drum  (primary cellular WAN)',
+     'Primary internet — cellular via your cellular carrier.  '
      'PoE cable from outdoor antenna unit to ASUS WAN port directly.  '
-     'InstyConnect serves DHCP on its own subnet — ASUS bridges to EMCOMM-NET.'],
+     'the cellular antenna unit serves DHCP on its own subnet — ASUS bridges to EMCOMM-NET.'],
     ['ASUS USB WAN port  (USB-to-Ethernet)',
-     'Starlink  (secondary WAN — automatic failover)',
+     'satellite dish  (secondary WAN — automatic failover)',
      'Secondary internet — satellite.  '
-     'Starlink Ethernet adapter → USB-to-Ethernet adapter → ASUS USB port.  '
+     'satellite Ethernet adapter → USB-to-Ethernet adapter → ASUS USB port.  '
      'ASUS switches automatically when cellular WAN drops.'],
     ['Switch Port 1  (uplink)',
      'ASUS RT-BE58 Go  —  LAN 2.5G port',
@@ -965,7 +963,7 @@ story.append(tbl(['CONNECTION', 'DEVICE', 'IP / NOTES'], [
     ['Ports 6 – 9',
      'Pi 500 Operator Workstations  (up to 4)', '192.168.50.20 – 192.168.50.23  (static DHCP reservations)'],
     ['Port 10',
-     'Starlink Router  (if deployed)', 'Optional second WAN path  —  connect Starlink Ethernet output to switch, use as WAN source on ASUS router.'],
+     'satellite dish Router  (if deployed)', 'Optional second WAN path  —  connect satellite dish Ethernet output to switch, use as WAN source on ASUS router.'],
     ['Port 11',
      'ASUS RT-BE58 Go  —  Mesh Node 1',
      'Wired backhaul to first mesh node.  Node extends EMCOMM-NET to secondary coverage zone.'],
@@ -993,9 +991,9 @@ story.append(tbl(['DEVICE', 'POWER SOURCE'], [
      'Official 27W USB-C PD supply connected to Pironman MAX 5 power inlet'],
 ], [2.2*inch, CW-2.2*inch]))
 story.append(SP(6))
-story.append(H2('1.2  InstyConnect — Physical Setup and Antenna Mounting'))
+story.append(H2('1.2  the cellular antenna unit — Physical Setup and Antenna Mounting'))
 story.append(P(
-    'The InstyConnect system consists of an outdoor antenna/modem unit connected by a single PoE '
+    'The the cellular antenna unit system consists of an outdoor antenna/modem unit connected by a single PoE '
     'Ethernet cable to the ASUS router WAN port. '
     'The modem is built into the antenna enclosure — no separate modem box to install. '
     'A single cable carries both power to the outdoor unit and data back to the router.'))
@@ -1011,9 +1009,9 @@ story.append(steps([
     'Maximum cable length is typically 100 meters (328 ft) for PoE over CAT 6.',
     '<b>Connect the PoE cable</b> to the <b>ASUS RT-BE58 Go WAN port</b>. '
     'Do not connect to the switch — this goes directly to the router WAN port.',
-    '<b>Power on the InstyConnect system.</b> '
+    '<b>Power on the the cellular antenna unit system.</b> '
     'The Drum status LED will indicate cellular connection status. '
-    'Open http://my.insty or http://10.1.1.1 on any device temporarily connected to the InstyConnect '
+    'Open http://my.insty or http://10.1.1.1 on any device temporarily connected to the the cellular antenna unit '
     'Wi-Fi to verify the modem has cellular signal.',
     '<b>Verify the ASUS WAN port shows "Connected"</b> in the ASUS router admin at '
     'http://192.168.50.254 → WAN → Internet Status.',
@@ -1028,27 +1026,27 @@ story.append(P(
 story.append(SP(4))
 story.append(steps([
     '<b>Unfold the Switchblade</b> and mount it on the same mast or a portable tripod.',
-    '<b>Open the InstyConnect signal app</b> on a phone connected to the InstyConnect Wi-Fi. '
+    '<b>Open the the cellular antenna unit signal app</b> on a phone connected to the the cellular antenna unit Wi-Fi. '
     'Slowly rotate the Switchblade while watching signal strength in the app. '
     'Stop at the direction giving the highest signal — typically facing the nearest '
-    'T-Mobile or Verizon tower.',
+    'the nearest cellular tower.',
     '<b>Unplug the Drum PoE cable</b> from the ASUS WAN port.',
     '<b>Connect the Switchblade PoE cable</b> to the same ASUS WAN port.',
     '<b>Verify connection</b> in the ASUS router admin — WAN should show "Connected" '
-    'with the InstyConnect cellular IP.',
+    'with the the cellular modem IP.',
 ]))
 story.append(SP(6))
 
-story.append(H3('InstyConnect Data Plan — Activation and Standby'))
+story.append(H3('the cellular antenna unit Data Plan — Activation and Standby'))
 story.append(tbl(['STATE', 'COST', 'WHEN TO USE', 'HOW TO CHANGE'], [
     ['Active  —  Multi-Network Unlimited',
      '~$79-99/month',
      'During activations, exercises, and training events',
-     'Log in to InstyConnect portal — activate plan'],
+     'Log in to the cellular antenna unit portal — activate plan'],
     ['Standby mode',
      '$5/month',
      'Between activations — holds your plan and SIM active without full monthly charge',
-     'Log in to InstyConnect portal — pause plan (available after first month)'],
+     'Log in to the cellular antenna unit portal — pause plan (available after first month)'],
     ['Cancelled',
      '$0',
      'Extended periods of non-use  (re-activation required)',
@@ -1056,7 +1054,7 @@ story.append(tbl(['STATE', 'COST', 'WHEN TO USE', 'HOW TO CHANGE'], [
 ], [1.4*inch, 0.8*inch, 1.8*inch, CW-4.0*inch]))
 story.append(SP(4))
 story.append(NoteBox(
-    'For MCESV/MCEMA operations, the recommended approach is to keep the plan in '
+    'For your organization operations, the recommended approach is to keep the plan in '
     'Standby mode ($5/month) between activations. '
     'This maintains the SIM, the phone number, and the multi-network capability '
     'so you can activate at full speed the moment an emergency is declared. '
@@ -1078,30 +1076,30 @@ story.append(steps([
 story.append(SP(6))
 story.append(P(
     'The ASUS RT-BE58 Go supports dual WAN with automatic failover. '
-    'InstyConnect cellular is the primary WAN source. '
-    'Starlink is the secondary — the ASUS switches automatically if cellular drops. '
+    'the cellular modem is the primary WAN source. '
+    'satellite dish is the secondary — the ASUS switches automatically if cellular drops. '
     'When both are unavailable, FieldCommand continues operating on all local features '
     'without interruption — net logging, ICS platform, APRS, and all tools remain fully functional.'))
 story.append(SP(6))
 story.append(tbl(['PRIORITY', 'WAN SOURCE', 'ASUS CONNECTION', 'SETUP', 'ACTIVATES'], [
-    ['1  — Primary', 'InstyConnect Drum  (omnidirectional cellular)',
+    ['1  — Primary', 'the cellular antenna unit Drum  (omnidirectional cellular)',
      'WAN Ethernet port  (PoE from modem)',
-     'PoE Ethernet cable from InstyConnect outdoor unit to ASUS WAN port.  '
-     'Set WAN → Automatic IP (DHCP).  InstyConnect modem serves DHCP.',
+     'PoE Ethernet cable from the cellular antenna unit outdoor unit to ASUS WAN port.  '
+     'Set WAN → Automatic IP (DHCP).  the cellular antenna unit modem serves DHCP.',
      'Always — deployed at every activation'],
-    ['1b — Swap', 'InstyConnect Switchblade  (directional cellular)',
+    ['1b — Swap', 'the cellular antenna unit Switchblade  (directional cellular)',
      'Same WAN Ethernet port  (replaces Drum cable)',
      'Unplug Drum PoE cable.  Plug Switchblade PoE cable into same ASUS WAN port.  '
-     'Aim Switchblade toward nearest tower using InstyConnect signal app.',
+     'Aim Switchblade toward nearest tower using the cellular antenna unit signal app.',
      'Manual — when Drum signal is poor at the deployment site'],
-    ['2  — Secondary', 'Starlink satellite',
+    ['2  — Secondary', 'satellite internet',
      'ASUS USB WAN port  (via Ethernet adapter)',
-     'Starlink Ethernet adapter → USB-to-Ethernet adapter → ASUS USB WAN port.  '
+     'satellite Ethernet adapter → USB-to-Ethernet adapter → ASUS USB WAN port.  '
      'Set ASUS WAN failover: primary = WAN port, secondary = USB port.  '
      'Automatic failover when cellular WAN drops.',
-     'Automatic — when InstyConnect WAN is down or degraded'],
+     'Automatic — when the cellular antenna unit WAN is down or degraded'],
     ['3  — Site network', 'EOC site Ethernet',
-     'WAN Ethernet port  (replaces InstyConnect)',
+     'WAN Ethernet port  (replaces the cellular antenna unit)',
      'Plug site Ethernet directly into ASUS WAN port.  '
      'Set WAN → Automatic IP (DHCP).  Use when site has reliable wired internet.',
      'Manual — when site LAN is available at an EOC or shelter'],
@@ -1117,9 +1115,9 @@ story.append(tbl(['PRIORITY', 'WAN SOURCE', 'ASUS CONNECTION', 'SETUP', 'ACTIVAT
      'Manual — hospital, shelter, or venue with existing guest Wi-Fi'],
 ], [0.7*inch, 1.4*inch, 1.1*inch, 2.0*inch, CW-5.2*inch]))
 story.append(SP(8))
-story.append(H2('1.3  Configure Dual WAN Failover  (InstyConnect Primary  +  Starlink Secondary)'))
+story.append(H2('1.3  Configure Dual WAN Failover  (the cellular antenna unit Primary  +  satellite dish Secondary)'))
 story.append(P(
-    'With InstyConnect connected to the WAN port and Starlink connected via USB, '
+    'With the cellular antenna unit connected to the WAN port and satellite dish connected via USB, '
     'configure the ASUS router to switch automatically between them. '
     'This takes about 3 minutes and requires no changes to FieldCommand software.'))
 story.append(SP(6))
@@ -1127,27 +1125,27 @@ story.append(steps([
     'Open the ASUS router admin: <b>http://192.168.50.254</b>',
     'Go to <b>WAN → Dual WAN</b>.',
     'Set <b>Enable Dual WAN</b> to ON.',
-    'Set <b>Primary WAN</b> to <b>WAN</b> (the physical WAN port — InstyConnect).',
-    'Set <b>Secondary WAN</b> to <b>USB</b> (the USB port — Starlink via adapter).',
+    'Set <b>Primary WAN</b> to <b>WAN</b> (the physical WAN port — the cellular antenna unit).',
+    'Set <b>Secondary WAN</b> to <b>USB</b> (the USB port — satellite dish via adapter).',
     'Set <b>Dual WAN mode</b> to <b>Failover mode</b>.',
     'Under <b>Heartbeat server</b>, set the primary check target to <b>1.1.1.1</b> (Cloudflare) '
     'and secondary to <b>8.8.8.8</b> (Google). These are the IPs the router pings to confirm WAN is up.',
     'Set <b>Failback to primary WAN when primary WAN is recovered</b> to ON. '
-    'This switches back to InstyConnect automatically when cellular returns.',
+    'This switches back to the cellular antenna unit automatically when cellular returns.',
     'Click <b>Apply</b>.',
-    'Test failover: unplug the InstyConnect PoE cable from the WAN port. '
-    'Within 30-60 seconds, the ASUS should switch to Starlink USB. '
+    'Test failover: unplug the the cellular antenna unit PoE cable from the WAN port. '
+    'Within 30-60 seconds, the ASUS should switch to satellite dish USB. '
     'Check WAN status in the router admin — it should show USB WAN active. '
-    'Reconnect InstyConnect — the router should failback to WAN port within 60 seconds.',
+    'Reconnect the cellular antenna unit — the router should failback to WAN port within 60 seconds.',
 ]))
 story.append(SP(4))
 story.append(tbl(['WAN STATE', 'WHAT EMCOMM-NET DEVICES SEE', 'FIELDCOMMAND IMPACT'], [
-    ['InstyConnect  UP  (primary)',
-     'Full internet — cellular 5G/LTE via T-Mobile or Verizon',
+    ['the cellular antenna unit  UP  (primary)',
+     'Full internet — cellular 5G/LTE via your cellular carrier',
      'NWS weather alerts live, APRS-IS active, FCC DB refresh available, Pat Winlink via internet'],
-    ['InstyConnect  DOWN  →  Starlink  UP  (failover)',
+    ['the cellular antenna unit  DOWN  →  satellite dish  UP  (failover)',
      'Full internet via satellite  —  slightly higher latency (~20-40ms typical)',
-     'All internet features remain active.  CGNAT on Starlink means no inbound connections possible.'],
+     'All internet features remain active.  CGNAT on satellite dish means no inbound connections possible.'],
     ['Both WAN sources  DOWN',
      'No internet  —  EMCOMM-NET still fully operational',
      'All local FieldCommand features work normally.  NWS alerts, APRS-IS, FCC refresh paused until WAN returns.'],
@@ -1157,7 +1155,7 @@ story.append(SP(8))
 story.append(H2('1.4  AiMesh Mesh Node Setup — Extending EMCOMM-NET Coverage'))
 story.append(P(
     'The standard FieldCommand deployment includes three ASUS RT-BE58 Go routers: '
-    'one primary (connected to InstyConnect WAN and the UniFi switch) '
+    'one primary (connected to the cellular antenna unit WAN and the UniFi switch) '
     'and two mesh nodes that extend EMCOMM-NET to additional rooms, floors, or outdoor areas. '
     'All three use the same hardware, the same SSID, and the same password. '
     'Devices roam between them automatically.'))
@@ -1291,7 +1289,7 @@ story.append(SP(4))
 story.append(tbl(['PROMPT', 'DEFAULT', 'DESCRIPTION'], [
     ['Station callsign', 'W8ABC', 'Your amateur callsign. Patched into all HTML pages.'],
     ['Station latitude', '42.3153', 'Decimal degrees. Used for APRS station marker, NWS alerts, propagation, distance calc.'],
-    ['Station longitude', '-88.4473', 'Decimal degrees (negative = West). Default: Woodstock IL (McHenry County seat).'],
+    ['Station longitude', '-88.4473', 'Decimal degrees (negative = West). Default: Woodstock IL (your area).'],
     ['Wi-Fi AP SSID', 'EMCOMM-NET', 'The Wi-Fi network name that field devices connect to.'],
     ['Wi-Fi AP password', 'fieldcommand2026', 'WPA2 password for EMCOMM-NET. Change this for operational security.'],
     ['Server IP address', '192.168.50.1', 'The Pi\'s static IP on EMCOMM-NET. Devices browse to http://192.168.50.1/'],
@@ -1825,7 +1823,7 @@ story.append(tbl(['', 'Option A — Client Printer', 'Option B — USB via Pi / 
     ['Best for', 'Single operator or tablet with own printer', 'Any USB printer, shared to all devices', 'Wi-Fi/Ethernet printer already on site'],
 ], [1.6*inch, 1.4*inch, 1.7*inch, CW-4.7*inch]))
 story.append(SP(4))
-story.append(NoteBox('For most K9ESV field activations, Option B (USB printer via CUPS) is recommended. '
+story.append(NoteBox('For most your callsign field activations, Option B (USB printer via CUPS) is recommended. '
                      'A Brother HL-L2350DW or HP LaserJet plugged into the Pi USB hub covers all ICS forms, '
                      'net logs, and cheat sheets needed for a typical activation.', 'tip'))
 story.append(PB())
@@ -1845,7 +1843,7 @@ story.append(SP(4))
 story.append(P(
     'Pat serves as the backup Winlink path when the Windows laptop is unavailable, '
     'or for VHF Packet operations when a TNC is connected directly to the Pi. '
-    'MCESV/MCEMA primary Winlink operations use Winlink Express on the Windows laptop '
+    'your organization primary Winlink operations use Winlink Express on the Windows laptop '
     '(Step 10). Pat is the fallback.'))
 story.append(SP(6))
 story.append(CodeBlock([
@@ -1858,7 +1856,7 @@ story.append(CodeBlock([
     '# Add your Winlink password:',
     'sudo nano /opt/fieldcommand/.config/pat/config.json',
     '# Verify / update these fields:',
-    '#   "mycall": "K9ESV"                 ← set by installer',
+    '#   "mycall": "your callsign"                 ← set by installer',
     '#   "secure_login_password": "xxxxx"   ← add your Winlink password',
     '#   "http_addr": "0.0.0.0:8090"       ← must be 0.0.0.0 for EMCOMM-NET access',
 ]))
@@ -1887,7 +1885,7 @@ story.append(SP(6))
 story.append(H2('9.2  Install Winlink Express + VARA HF'))
 story.append(steps([
     'Download Winlink Express from: <b>winlink.org/client-software</b>. Run installer, accept defaults.',
-    'On first launch: enter your callsign, Winlink password, and grid square EN52 (McHenry County, IL).',
+    'On first launch: enter your callsign, Winlink password, and grid square <your grid> (your county).',
     'Settings → Radio Setup: Radio=IC-7300, Control Port=(check Device Manager), Baud Rate=115200, PTT via CAT=checked.',
     'Settings → Sound Card: Input=USB Audio CODEC (IC-7300), Output=USB Audio CODEC (IC-7300).',
     'Download and install VARA HF from: winlink.org → VARA → VARA HF Modem. Set same audio devices in VARA HF Settings.',
@@ -1897,7 +1895,7 @@ story.append(SP(6))
 story.append(H2('9.3  Install JS8Call'))
 story.append(steps([
     'Download JS8Call from: <b>js8call.com</b> → Windows installer. Run installer, accept defaults.',
-    'Launch JS8Call. Open File → Settings (F2). General tab: My Call=K9ESV, My Grid=EN52.',
+    'Launch JS8Call. Open File → Settings (F2). General tab: My Call=<your callsign>, My Grid=<your grid square>.',
     'Audio tab: Input=USB Audio CODEC (IC-7300), Output=USB Audio CODEC (IC-7300).',
     'Radio tab: Rig=IC-7300, PTT Method=CAT, Serial Port=(same COM port as Winlink), Baud Rate=115200.',
     'Reporting tab (CRITICAL): TCP Server Hostname=<b>0.0.0.0</b> (MUST change from 127.0.0.1). Enable TCP Server API=checked. TCP Server Port=<b>2442</b>. Accept TCP Requests=checked.',
@@ -2046,7 +2044,7 @@ story.append(CodeBlock([
     '# Useful TNC verification commands:',
     'ver              # shows firmware version and TNC model',
     'status           # shows current operating status',
-    'mycall K9ESV     # sets your callsign in the TNC (replace K9ESV with yours)',
+    'mycall YOURCALL  # replace YOURCALL with your FCC callsign',
     '',
     '# If the TNC does not respond:',
     '#   1. Confirm the correct COM port in Device Manager',
@@ -2119,19 +2117,19 @@ story.append(SP(8))
 
 story.append(H2('Part A  —  Get Your AMPRNet Allocation  (Do This First — Allow 2-4 Weeks)'))
 story.append(P(
-    'Before configuring any software, you need an AMPRNet IP address block assigned to K9ESV. '
+    'Before configuring any software, you need an AMPRNet IP address block assigned to your callsign. '
     'This is a one-time registration process managed by the AMPRNet administrators at ampr.org. '
     'The block you receive will be something like 44.x.x.x/29 (6 usable addresses) '
     'or 44.x.x.x/28 (14 usable addresses) depending on what is available in your region.'))
 story.append(SP(6))
 story.append(steps([
     '<b>Create an account at portal.ampr.org</b> — go to https://portal.ampr.org and click Register. '
-    'You must use your callsign K9ESV as your username. '
+    'You must use your callsign your callsign as your username. '
     'Verify your license via the FCC ULS lookup that the portal performs automatically.',
     '<b>Request a subnet allocation</b> — after logging in, click Subnets → Request Subnet. '
     'Select your region (Illinois — typically 44.24.x.x or 44.172.x.x range). '
     'Request a /29 block for a small deployment or a /28 if you anticipate growth. '
-    'In the justification field, explain the MCESV/MCEMA EMCOMM-NET deployment and intended use.',
+    'In the justification field, explain the your organization EMCOMM-NET deployment and intended use.',
     '<b>Coordinate with your regional AMPRNet administrator</b> — Illinois AMPRNet administration '
     'is coordinated through ARRL. You may be contacted by the regional admin for verification. '
     'Response times vary from days to several weeks. Be patient.',
@@ -2145,7 +2143,7 @@ story.append(steps([
 story.append(SP(4))
 story.append(NoteBox(
     'ARRL membership is not required for an AMPRNet allocation, but a valid FCC amateur '
-    'radio license (any class) is required. The K9ESV club callsign is valid for this purpose. '
+    'radio license (any class) is required. The your club or personal callsign is valid for this purpose. '
     'The allocation is tied to the callsign and is permanent as long as the license remains active.',
     'note'))
 story.append(SP(8))
@@ -2377,7 +2375,7 @@ story.append(H2('Part C  —  What You Can Do on AMPRNet'))
 story.append(P(
     'Once the gateway is operational and the route is advertised to EMCOMM-NET, '
     'every device on EMCOMM-NET has full access to the AMPRNet. '
-    'Here are the most useful applications for MCESV/MCEMA operations:'))
+    'Here are the most useful applications for your organization operations:'))
 story.append(SP(6))
 story.append(tbl(['APPLICATION', 'HOW IT USES 44NET', 'ACCESS FROM EMCOMM-NET'], [
     ['Winlink via AMPRNet',
@@ -2391,7 +2389,7 @@ story.append(tbl(['APPLICATION', 'HOW IT USES 44NET', 'ACCESS FROM EMCOMM-NET'],
      'keeping APRS traffic within the amateur radio network.',
      'Configure APRS-IS server address in Graywolf or YAAC settings'],
     ['Inter-node FieldCommand',
-     'If another MCESV station runs a second FieldCommand system with its own 44Net gateway, '
+     'If another your organization station runs a second FieldCommand system with its own 44Net gateway, '
      'the two systems can share net data and resource boards over AMPRNet '
      'without routing traffic through the commercial internet.',
      'Future capability — requires second FieldCommand deployment'],
@@ -2487,9 +2485,9 @@ story.append(SP(6))
 story.append(H2('Full Network Topology'))
 story.append(P(
     'The EMCOMM-NET deployment uses the ASUS RT-BE58 Go as the Wi-Fi access point and DHCP server. '
-    'The InstyConnect Drum provides primary cellular WAN (T-Mobile / Verizon) via a PoE Ethernet '
+    'The the cellular antenna unit Drum provides primary cellular WAN (your cellular carrier) via a PoE Ethernet '
     'cable directly to the ASUS WAN port. '
-    'Starlink provides automatic secondary WAN failover via the ASUS USB WAN port. '
+    'satellite dish provides automatic secondary WAN failover via the ASUS USB WAN port. '
     'The UniFi Switch Lite 16 PoE distributes wired connections to both Pi servers, '
     'all operator workstations, the network printer, and additional field devices. '
     'The 44Net Gateway Pi routes the 44.0.0.0/8 AMPRNet address block for all EMCOMM-NET devices '
@@ -2498,7 +2496,7 @@ story.append(SP(6))
 story.append(tbl(['DEVICE', 'IP ADDRESS', 'ROLE', 'CONNECTION'], [
     ['ASUS RT-BE58 Go', '192.168.50.254  (LAN gateway)',
      'Wi-Fi 7 AP + DHCP server + WAN gateway',
-     'WAN: site Ethernet, Starlink, or USB tether (optional).  EMCOMM-NET SSID on 2.4 GHz and 5 GHz.'],
+     'WAN: site Ethernet, satellite dish, or USB tether (optional).  EMCOMM-NET SSID on 2.4 GHz and 5 GHz.'],
     ['UniFi Switch Lite 16 PoE', 'N/A  (Layer 2 switch)',
      'Wired distribution hub  —  16 ports',
      'Port 1 uplink to ASUS router.  Ports 2-16 to all wired devices.'],
@@ -2640,9 +2638,9 @@ story.append(tbl(['ITEM', 'VALUE'], [
     ['Wi-Fi network (SSID)',   'EMCOMM-NET'],
     ['WAN status dashboard',   'http://192.168.50.1/wan-status.html'],
     ['FieldCommand Pi static IP','192.168.50.1'],
-    ['InstyConnect modem admin','http://10.1.1.1  or  http://my.insty  (connect to InstyConnect Wi-Fi first)'],
-    ['InstyConnect data plan', 'instyconnect.com  —  Multi-Network Unlimited  —  pause in portal between activations'],
-    ['Starlink admin',         'http://192.168.10.1  (Starlink app or browser)'],
+    ['the cellular antenna unit modem admin','http://10.1.1.1  or  http://my.insty  (connect to the cellular antenna unit Wi-Fi first)'],
+    ['the cellular antenna unit data plan', 'instyconnect.com  —  Multi-Network Unlimited  —  pause in portal between activations'],
+    ['satellite dish admin',         'http://192.168.10.1  (satellite dish app or browser)'],
     ['44Net Gateway Pi IP',    '192.168.50.2'],
     ['44Net gateway status',   'http://192.168.50.2:9000'],
     ['AMPRNet tunnel check',   'ping 44.0.0.1  (from any EMCOMM-NET device)'],
@@ -2652,9 +2650,9 @@ story.append(tbl(['ITEM', 'VALUE'], [
     ['Kiwix offline library',  'http://192.168.50.1:8081'],
     ['Health monitor (raw)',   'http://192.168.50.1:5051/health'],
     ['JS8Call TCP API (laptop)','http://[laptop-ip]:2442'],
-    ['Callsign K9ESV', 'McHenry County Emergency Services Volunteers and EMA'],
-    ['McHenry County grid', 'EN52'],
-    ['Default coordinates', '42.3153 N  /  88.4473 W  (Woodstock, IL)'],
+    ['Your callsign', 'your organization'],
+    ['your county grid', '<your grid>'],
+    ['Default coordinates', 'your deployment coordinates (decimal degrees)'],
     ['Install log', '/var/log/fieldcommand-install.log'],
     ['Application data', '/opt/fieldcommand/data/'],
     ['HTML pages', '/opt/fieldcommand/html/'],
@@ -2668,7 +2666,7 @@ doc = SimpleDocTemplate(
     leftMargin=M, rightMargin=M,
     topMargin=0.55*inch, bottomMargin=0.42*inch,
     title='FieldCommand IMS v1.0 — Installation Guide',
-    author='McHenry County Emergency Services Volunteers and McHenry County Emergency Management Agency')
+    author='your organization')
 doc.build(story, canvasmaker=NC)
 
 # Append Pi 500 addendum

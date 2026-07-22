@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 FieldCommand IMS v1.0 — Beta Test Checklist Generator
-K9ESV · MCESV/MCEMA
+your callsign · your organization
 Output: /mnt/user-data/outputs/ESV_Beta_Test_Checklist.pdf
 """
 import datetime, io
@@ -25,9 +25,9 @@ GREEN  = HexColor('#1a7a3a')
 AMBER  = HexColor('#c8760a')
 RED    = HexColor('#b82020')
 
-ORG   = ('McHenry County Emergency Services Volunteers and '
-         'McHenry County Emergency Management Agency')
-SHORT = 'MCESV/MCEMA  ·  K9ESV'
+ORG   = ('FieldCommand IMS and '
+         'your emergency management agency')
+SHORT = 'FieldCommand IMS v1.0'
 TODAY = datetime.date.today().strftime('%B %d, %Y')
 PAGE_W, PAGE_H = letter
 M  = 0.65 * inch
@@ -84,11 +84,11 @@ class NC(canvas.Canvas):
         self.setFillColor(HexColor('#f0c040'))
         self.setFont('Helvetica-Bold', 10)
         self.drawCentredString(PAGE_W/2, PAGE_H - 0.70*inch,
-            'K9ESV  ·  McHenry County Emergency Services Volunteers')
+            'your callsign  ·  FieldCommand IMS')
         self.setFillColor(HexColor('#c0d4f0'))
         self.setFont('Helvetica', 9)
         self.drawCentredString(PAGE_W/2, PAGE_H - 0.88*inch,
-            'and McHenry County Emergency Management Agency')
+            'and your emergency management agency')
         self.setFillColor(HexColor('#ffffff'))
         self.setFont('Helvetica-Bold', 58)
         self.drawCentredString(PAGE_W/2, PAGE_H*0.60, 'FIELDCOMMAND')
@@ -108,14 +108,14 @@ class NC(canvas.Canvas):
         self.setFillColor(HexColor('#8090c0'))
         self.setFont('Helvetica', 9.5)
         self.drawCentredString(PAGE_W/2, PAGE_H*0.30,
-            'RACES  ·  ARES  ·  Starcom  ·  K9ESV  ·  MCESV / MCEMA')
+            'RACES  ·  ARES  ·  Starcom  ·  FieldCommand IMS v1.0')
         self.setFillColor(HexColor('#6070a0'))
         self.setFont('Helvetica', 9)
         self.drawCentredString(PAGE_W/2, PAGE_H*0.25, TODAY)
         self.setFillColor(HexColor('#1a3a6b'))
         self.setFont('Helvetica', 7)
         self.drawCentredString(PAGE_W/2, 0.05*inch,
-            f'FieldCommand IMS v1.0  ·  MCESV/MCEMA  ·  {TODAY}')
+            f'FieldCommand IMS v1.0  ·  your organization  ·  {TODAY}')
 
 
 # ── Style helpers ─────────────────────────────────────────────────────────────
@@ -291,26 +291,26 @@ story.append(KeepTogether([subsection('1.1b  AiMesh Coverage Extension  (standar
     ('Pi remains at 192.168.50.1 throughout — not affected by which node is connected', ''),
 ])])); story.append(SP(6))
 
-story.append(KeepTogether([subsection('1.1c  WAN Connectivity  (InstyConnect + Starlink failover)'), SP(2), rows_table([
-    ('InstyConnect Drum powered on and connected to ASUS WAN port via PoE cable',
+story.append(KeepTogether([subsection('1.1c  WAN Connectivity  (the cellular antenna + the satellite dish failover)'), SP(2), rows_table([
+    ('the cellular antenna Drum powered on and connected to ASUS WAN port via PoE cable',
      'Drum LED green or white = carrier connected'),
-    ('ASUS WAN port shows Connected status with InstyConnect IP address',
+    ('ASUS WAN port shows Connected status with the cellular antenna IP address',
      'Router admin → WAN → Internet Status = Connected'),
-    ('WAN Status dashboard shows active source as InstyConnect Cellular',
+    ('WAN Status dashboard shows active source as the cellular antenna Cellular',
      'wan-status.html — WAN card must be green'),
-    ('Carrier shown on WAN status page  (T-Mobile or Verizon)',
+    ('Carrier shown on WAN status page  (your cellular carrier or your cellular carrier)',
      'Confirms multi-network plan is active'),
     ('NWS weather alerts loading on dashboard  (requires WAN)',
      'Alerts populate — confirms internet is active'),
-    ('Starlink dish powered on and connected to ASUS USB WAN port via adapter',
+    ('the satellite dish dish powered on and connected to ASUS USB WAN port via adapter',
      'Dish LED — allow 3 min to acquire satellite'),
     ('ASUS Dual WAN configured: Primary = WAN port, Secondary = USB, Mode = Failover',
      'Router admin → WAN → Dual WAN = ON'),
-    ('Failover test: unplug InstyConnect PoE cable — ASUS switches to Starlink within 60 seconds',
-     'Dashboard WAN card turns blue = Starlink active'),
-    ('Failback test: reconnect InstyConnect PoE cable — ASUS switches back to cellular within 60 seconds',
+    ('Failover test: unplug the cellular antenna PoE cable — ASUS switches to the satellite dish within 60 seconds',
+     'Dashboard WAN card turns blue = the satellite dish active'),
+    ('Failback test: reconnect the cellular antenna PoE cable — ASUS switches back to cellular within 60 seconds',
      'WAN card returns to green = cellular restored'),
-    ('Reconnect InstyConnect PoE cable after failover test', 'Restore normal WAN config'),
+    ('Reconnect the cellular antenna PoE cable after failover test', 'Restore normal WAN config'),
 ])])); story.append(SP(6))
 
 story.append(KeepTogether([subsection('1.1d  AMPRNet / 44Net Gateway'), SP(2), rows_table([
@@ -430,7 +430,7 @@ story.append(KeepTogether([subsection('3.2  Resource Board (http://192.168.50.1/
 ])])); story.append(SP(6))
 
 story.append(KeepTogether([subsection('3.3  Facilities (http://192.168.50.1/facilities.html)'), SP(2), rows_table([
-    ('Seeded facilities load (McHenry County EOC, etc.)', ''),
+    ('Seeded facilities load (your county EOC, etc.)', ''),
     ('Add a new facility (name, type, address, lat/lon)', ''),
     ('Edit a facility', ''),
     ('Delete a facility', ''),
@@ -493,7 +493,7 @@ story.append(KeepTogether([subsection('5.2  Command Section (ics/command.html)')
     ('Safety message field accepts input', ''),
     ('Situation report fields save correctly', ''),
     ('Save persists data for the active incident', ''),
-    ('MCESV/MCEMA-specific objectives appear in the last group', ''),
+    ('your organization-specific objectives appear in the last group', ''),
 ])])); story.append(SP(6))
 
 story.append(KeepTogether([subsection('5.3  Operations Section (ics/operations.html)'), SP(2), rows_table([
@@ -513,7 +513,7 @@ story.append(KeepTogether([subsection('5.4  Planning Section (ics/planning.html)
 ])])); story.append(SP(6))
 
 story.append(KeepTogether([subsection('5.5  Logistics Section (ics/logistics.html)'), SP(2), rows_table([
-    ('ICS-205 comms plan pre-filled with McHenry County channels', ''),
+    ('ICS-205 comms plan pre-filled with your county channels', ''),
     ('Supply tracking entries can be added and deleted', ''),
     ('Meal log entries can be added', ''),
     ('Check-in list (ICS-211) accepts entries', ''),
@@ -721,7 +721,7 @@ story.append(KeepTogether([section('12 · System Services',
 story.append(KeepTogether([subsection('12.1  Service Status'), SP(2), rows_table([
     ('fcc-lookup.service — main API running on port 5050', ''),
     ('health-monitor.service — health API running on port 5051', ''),
-    ('wan-monitor.service — WAN status monitor polling InstyConnect and Starlink', ''),
+    ('wan-monitor.service — WAN status monitor polling the cellular antenna and the satellite dish', ''),
     ('amprgate-poll.service — polls gateway Pi every 30s for 44Net status', ''),
     ('ics-platform.service — ICS API running on port 5055', ''),
     ('fieldcommand-refs.service — reference library API running on port 5056', ''),
@@ -826,7 +826,7 @@ doc = SimpleDocTemplate(
     leftMargin=M, rightMargin=M,
     topMargin=0.55*inch, bottomMargin=0.42*inch,
     title='FieldCommand IMS v1.0 — Beta Test Checklist',
-    author='McHenry County Emergency Services Volunteers and McHenry County Emergency Management Agency')
+    author='FieldCommand IMS')
 doc.build(story, canvasmaker=NC)
 
 # Append Pi 500 addendum

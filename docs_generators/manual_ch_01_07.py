@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""manual_ch_01_07.py — Chapters 1–7 of the FieldCommand User Manual."""
+"""manual_ch_01_07.py — Chapters 1–7 of the FieldCommand IMS User Manual.
+Universal edition — no organization-specific content.
+"""
 import sys, os
 sys.path.insert(0, os.path.dirname(__file__))
 from manual_framework import *
@@ -7,352 +9,420 @@ from manual_framework import *
 
 def ch1():
     s = chapter(1, 'Introduction & System Overview')
+
+    # ── Opening — the problem statement ─────────────────────────────────────
     s.append(P(
-        'FieldCommand Incident Management System is a self-contained emergency communications '
-        'server built on a Raspberry Pi 5 for McHenry County RACES, ARES, and Starcom operations. '
-        'It provides 32 web-based EmComm tools accessible from any smartphone, tablet, or laptop '
-        'connected to the EMCOMM-NET Wi-Fi access point — no internet, no app installation, '
-        'and no per-device configuration required. '
-        'All core features operate fully offline. '
-        'When internet connectivity is available through InstyConnect cellular or Starlink satellite, '
-        'live features such as NWS weather alerts, APRS-IS, and HF propagation data activate automatically.'))
+        'When a disaster takes down commercial infrastructure — cellular networks, internet, '
+        'power — the tools modern emergency management depends on disappear precisely when '
+        'they are needed most. Incident logs revert to paper. Resource tracking becomes a '
+        'whiteboard. ICS forms are filled out by hand, photocopied, and hand-carried between '
+        'rooms. Situational awareness degrades to whatever one person can hold in their head. '
+        'Every organization that has worked a major activation knows this failure mode, and '
+        'most have simply accepted it as the cost of doing business.', Lead))
     s.append(SP(4))
     s.append(P(
-        'Version 1.0 uses two Raspberry Pi 5 units: the FieldCommand application server at '
-        '192.168.50.1 running all 32 web tools and 15 background services, and a dedicated '
-        'AMPRNet gateway Pi at 192.168.50.2 maintaining a permanent WireGuard tunnel into '
-        'the 44.0.0.0/8 amateur radio IP network. '
-        'Three ASUS RT-BE58 Go Wi-Fi 7 routers form an AiMesh network: one primary router '
-        'managing WAN connectivity and DHCP, and two mesh nodes extending EMCOMM-NET coverage '
-        'to secondary rooms, outdoor staging areas, and upper floors. '
-        'InstyConnect cellular with T-Mobile and Verizon dual-carrier coverage is the primary '
-        'WAN source. Starlink satellite provides automatic secondary failover.'))
-    s.append(SP(6))
+        'FieldCommand IMS was built to eliminate that failure mode. It is a complete, '
+        'self-contained incident management platform that carries its own network, its own '
+        'server, and its own tools — and it operates with no internet connection, no cellular '
+        'service, and no outside infrastructure of any kind. The cell towers are down, the '
+        'internet is gone, and you are running on a generator in a parking lot. '
+        'That is exactly when you need incident management software most — and that is '
+        'exactly when FieldCommand IMS is designed to perform.'))
+    s.append(SP(8))
 
-    s.append(P('1.1  System Architecture', H2))
-    s.append(tbl(['COMPONENT', 'DESCRIPTION', 'ADMIN IP'], [
+    # ── What it is ───────────────────────────────────────────────────────────
+    s.append(P('1.1  What FieldCommand IMS Is', H2))
+    s.append(P(
+        'FieldCommand IMS is a <b>complete ICS/NIMS all-hazards incident management system</b> '
+        '— not simply an amateur radio tool. It is designed to manage the full lifecycle of '
+        'any incident from initial response through demobilization, using standard ICS forms '
+        'and workflows. It runs on a Raspberry Pi 5 server and broadcasts its own private '
+        'Wi-Fi access point. Any smartphone, tablet, or laptop that connects to that network '
+        'immediately has access to the full suite of tools through a standard web browser — '
+        'no app installation, no accounts, and no per-device configuration required.'))
+    s.append(SP(4))
+    s.append(P(
+        'Version 1.0 provides 48 web-based tools covering every phase of incident management: '
+        'command setup, incident action plan development, resource tracking, personnel check-in, '
+        'communications logging, situational awareness, logistics, finance, and demobilization. '
+        'When internet connectivity is available, live features activate automatically — '
+        'NWS weather alerts, APRS-IS, animated NEXRAD radar, and HF propagation data. '
+        'If internet connectivity is lost at any point, all core tools continue without '
+        'interruption. The system degrades gracefully and recovers automatically.'))
+    s.append(SP(8))
+
+    # ── How it differs from other ICS platforms ──────────────────────────────
+    s.append(P('1.2  How FieldCommand IMS Differs From Other ICS Platforms', H2))
+    s.append(P(
+        'Platforms such as WebEOC, E-Team, NIMSIAP, NIMS Logic, and E-iSuite deliver '
+        'powerful incident management capability — but every one of them assumes a working '
+        'internet connection and a functioning server infrastructure. They are cloud-dependent '
+        'by design. When a major disaster disables the very infrastructure those platforms '
+        'rely on, they go offline with it. The capability disappears at exactly the moment '
+        'it is most critical.'))
+    s.append(SP(4))
+    s.append(P(
+        'FieldCommand IMS is built on the opposite assumption: that infrastructure will fail, '
+        'and that incident management capability must survive that failure. It does this by '
+        'carrying its own infrastructure — server, network, storage, and tools — in a single '
+        'deployable package. It does not connect to any external service for core operations. '
+        'It does not require an IT department to stand up. It does not carry per-seat licensing '
+        'fees. And it does not fail when the internet fails.'))
+    s.append(SP(6))
+    s.append(tbl(['PLATFORM', 'OFFLINE?', 'DEPLOYABLE?', 'NATIVE EMCOMM?', 'COST'], [
+        ['FieldCommand IMS',
+         '✓ Fully offline — all features',
+         '✓ Deploys in under 30 minutes',
+         '✓ Amateur radio + public safety native',
+         'Free / open source'],
+        ['WebEOC',
+         '✗ Cloud-dependent',
+         '✗ Requires server infrastructure',
+         '✗ None',
+         '$10,000–50,000/year'],
+        ['E-Team',
+         '✗ Cloud-dependent',
+         '✗ Requires server infrastructure',
+         '✗ None',
+         'Subscription / agency contract'],
+        ['NIMSIAP',
+         '✗ Internet required',
+         '✗ Requires connectivity',
+         '✗ None',
+         'Subscription'],
+        ['E-iSuite',
+         '△ Limited offline mode',
+         '△ Laptop install — no built-in network',
+         '✗ None',
+         'License fee'],
+    ], widths=[1.4*inch, 0.85*inch, 1.05*inch, 1.15*inch, CW-4.45*inch]))
+    s.append(SP(6))
+    s.append(P(
+        'The feature that sets FieldCommand IMS apart from every platform in this category '
+        'is its native integration of amateur radio and public safety communications directly '
+        'into the incident management workflow. No other ICS platform includes built-in net '
+        'control logging, FCC callsign validation against the full national licensee database, '
+        'APRS tactical mapping, Winlink radio email, JS8Call HF messaging, or AMPRNet gateway '
+        'capability. These are not add-ons — they are core features, fully integrated with '
+        'the ICS platform so that radio traffic, net logs, and check-in data flow directly '
+        'into ICS-309 communications logs, ICS-214 activity logs, and the IAP.'))
+    s.append(SP(8))
+
+    # ── Key capabilities summary ─────────────────────────────────────────────
+    s.append(P('1.3  Key Capabilities at a Glance', H2))
+    s.append(tbl(['CAPABILITY AREA', 'WHAT IT PROVIDES'], [
+        ['ICS/NIMS Incident Management',
+         'Full five-section ICS structure — Command, Operations, Planning, Logistics, '
+         'Finance/Admin. Complete IAP form set including ICS-202 through ICS-221. '
+         'Live T-card resource board. Planning P cycle tracking. Digital signatures. '
+         'One-click IAP PDF assembly. FEMA/USCG/NWCG form variants selectable per form.'],
+        ['Amateur Radio EMCOMM',
+         'Net control logger with FCC callsign auto-fill from offline database of '
+         '800,000+ licensees. Net open/close timestamps, check-out tracking, ICS-309 '
+         'export. APRS tactical map with live station overlay. Winlink and Pat radio '
+         'email integration. JS8Call HF digital messaging. AMPRNet (44Net) gateway.'],
+        ['Public Safety Communications',
+         'Separate net logger for trunked/P25 radio systems. Radio ID-based check-in. '
+         'EMA member ID lookup. Interoperable with amateur radio nets on the same '
+         'incident. ICS-309 export with agency-standard format.'],
+        ['Situational Awareness',
+         'Offline APRS tactical mapping. Live NWS weather alerts (when internet up). '
+         'Animated NEXRAD radar loop with county overlays. GPS-tracked resource map '
+         'with status-coded markers. HF propagation tool. Barcode/QR check-in scanning.'],
+        ['Resource & Personnel',
+         'Member roster with certifications, radio IDs, and barcode check-in codes. '
+         'QR code generator per member. T-card resource board by type/status/assignment. '
+         'FEMA PA cost tracking for labor, equipment, and materials. FEMA equipment '
+         'rate schedule with 44 built-in rates.'],
+        ['Incident Action Plan',
+         'Pre-planned event templates for 6 common incident types. FEMA reimbursement '
+         'documentation with PA cost tracking. Digital signature capture on all forms. '
+         'One-click IAP PDF compilation. Print center for on-site IAP packages.'],
+        ['WAN & Connectivity',
+         'Dual WAN source support — any cellular modem, phone hotspot, or satellite. '
+         'Preferred/fallback role configuration. Automatic failover. Real-time WAN '
+         'status dashboard. Configurable detection per source type.'],
+        ['Reference & Offline Content',
+         'Kiwix offline Wikipedia and reference library. Radio frequency cheat sheets. '
+         'Hospital and facilities directory. Repeater database. HF propagation data.'],
+    ], widths=[1.7*inch, CW-1.7*inch]))
+    s.append(SP(8))
+
+    # ── Architecture overview ────────────────────────────────────────────────
+    s.append(P('1.4  System Architecture', H2))
+    s.append(P(
+        'FieldCommand IMS uses two Raspberry Pi 5 computers. The primary server runs the '
+        'full application suite and broadcasts the EMCOMM-NET Wi-Fi access point. A dedicated '
+        'secondary Pi, connected to the same wired switch, serves as an optional AMPRNet '
+        '(44Net) gateway — maintaining a permanent WireGuard tunnel into the 44.0.0.0/8 '
+        'amateur radio IP network when internet is available. '
+        'One or more Wi-Fi routers extend coverage to additional rooms, outdoor staging areas, '
+        'or upper floors as needed. The entire system can be powered from shore power, '
+        'battery, or a generator.'))
+    s.append(SP(4))
+    s.append(tbl(['COMPONENT', 'FUNCTION', 'DEFAULT IP'], [
         ['FieldCommand Pi 5',
-         'Pironman MAX 5  ·  2× 1 TB NVMe RAID 1  ·  32 pages  ·  15 services  ·  16 GB RAM',
+         'Primary application server · all 48 web tools · 12+ background services · '
+         'RAID 1 NVMe storage · EMCOMM-NET AP',
          '192.168.50.1'],
-        ['44Net Gateway Pi 5',
-         'Argon NEO 5  ·  256 GB SSD  ·  Pi OS Desktop  ·  WireGuard to AMPRNet  ·  16 GB RAM',
+        ['44Net Gateway Pi 5  (optional)',
+         'AMPRNet WireGuard tunnel · callsign-authenticated access · '
+         'Part 97 access log · isolated from primary server',
          '192.168.50.2'],
-        ['ASUS RT-BE58 Go  (primary)',
-         'Wi-Fi 7 AP  ·  DHCP  ·  dual WAN  ·  AiMesh controller  ·  InstyConnect + Starlink',
+        ['Wi-Fi router  (primary)',
+         'DHCP server · AiMesh controller · dual WAN management · '
+         'EMCOMM-NET SSID',
          '192.168.50.254'],
-        ['ASUS RT-BE58 Go  (×2 mesh)',
-         'AiMesh extension  ·  same SSID  ·  seamless roaming  ·  Ports 11 and 12',
-         'Managed by primary'],
-        ['UniFi Switch Lite 16 PoE',
-         '16-port GbE  ·  8× PoE  ·  central wired distribution hub',
-         'Layer 2'],
-        ['InstyConnect Drum',
-         'Omnidirectional 5G/LTE  ·  T-Mobile + Verizon  ·  PoE Ethernet to ASUS WAN port',
-         '10.1.1.1'],
-        ['InstyConnect Switchblade',
-         'Directional folding  ·  swap when Drum signal is poor',
-         'Same WAN port'],
-        ['Starlink dish',
-         'Satellite  ·  CGNAT  ·  auto-failover via USB WAN port',
-         '192.168.100.1'],
-        ['Windows Laptop',
-         'IC-7300  ·  Winlink Express  ·  VARA HF  ·  JS8Call  ·  USB cable',
-         '192.168.50.3'],
-        ['Pi 500 Workstations  (×4)',
-         'Raspberry Pi 500 keyboard  ·  Pi Monitor 15.6"  ·  USB-C powered  ·  browser-based',
-         '192.168.50.20-23'],
-    ], [1.9*inch, 3.1*inch, CW-5.0*inch]))
+        ['Wi-Fi mesh nodes  (optional)',
+         'EMCOMM-NET coverage extension · seamless roaming · '
+         'same SSID as primary',
+         'Assigned by DHCP'],
+        ['Operator workstations',
+         'Any device with a modern browser — smartphones, tablets, laptops, '
+         'Raspberry Pi 500 desktops',
+         'Assigned by DHCP'],
+    ], widths=[1.7*inch, CW-2.7*inch, 1.0*inch]))
     s.append(SP(6))
-
-    s.append(P('1.2  Dashboard Modes', H2))
-    s.append(P(
-        'The FieldCommand dashboard reorganizes its tool cards into three modes '
-        'selected from the mode bar at the top of the page. '
-        'The mode changes the layout and highlights the tools most relevant '
-        'to the current type of operation. All tools remain accessible regardless of mode.'))
-    s.append(SP(4))
-    s.append(tbl(['MODE', 'BEST FOR', 'HIGHLIGHTED TOOLS'], [
-        ['Amateur Radio',
-         'ARES/RACES nets, HF operations, Winlink, APRS tracking',
-         'Net Control Logger, Callsign Lookup, APRS Map, Propagation, Repeaters, Dead Man Switch'],
-        ['Starcom / Public Safety',
-         'Public safety Starcom radio nets, SAR operations, shelter management',
-         'Starcom Net Logger, Resource Tracking Map, Resource Board, Facilities Directory'],
-        ['ICS Incident Command',
-         'Activated incidents requiring formal ICS documentation and IAP',
-         'ICS Platform (all 5 sections), Planning P, ICS-213, ICS-214, Winlink Import'],
-    ], [1.0*inch, 2.2*inch, CW-3.2*inch]))
-    s.append(SP(6))
-
-    s.append(P('1.3  Offline vs. Online Features', H2))
-    s.append(tbl(['FEATURE', 'OFFLINE', 'ONLINE  (WAN active)'], [
-        ['Net Control Logging',    'Full — always available', 'Full — no change'],
-        ['FCC Callsign Lookup',    'Full — local 800K database', 'Full — local DB used'],
-        ['ICS Platform',           'Full — all sections', 'Full — no change'],
-        ['Kiwix Library',          'Full — stored on Pi', 'Full — no change'],
-        ['Offline Maps',           'Full — tiles stored on Pi', 'Full — no change'],
-        ['NWS Weather Alerts',     'Unavailable', 'Live — updates every 5 min'],
-        ['APRS-IS Feed',           'RF only  (Graywolf/YAAC)', 'Internet APRS-IS active'],
-        ['HF Propagation',         'Last cached data only', 'Live band conditions'],
-        ['Pat Winlink',            'RF only  (packet/VARA RF)', 'Internet gateways active'],
-        ['AMPRNet / 44Net',        'Unavailable  (needs WAN)', 'Live via WireGuard tunnel'],
-    ], [1.8*inch, 1.9*inch, CW-3.7*inch]))
+    s.append(note(
+        'The default IP address of the FieldCommand server is 192.168.50.1. '
+        'This address is configurable during installation. All documentation examples '
+        'use the default. If your deployment uses a different address, substitute it '
+        'wherever 192.168.50.1 appears.', 'note'))
     s.append(PB())
     return s
 
+
 def ch2():
     s = chapter(2, 'Getting Started — Connecting to FieldCommand',
-                'http://192.168.50.1/')
+                'http://192.168.50.1')
     s.append(P(
-        'Getting on FieldCommand takes three steps: connect to the Wi-Fi, open '
-        'the dashboard, and identify yourself. The whole process takes under a minute.'))
+        'Every tool in FieldCommand IMS is a web page served from the Pi at '
+        '192.168.50.1 (or your configured address). No app installation is required '
+        'on any device. Any modern browser works — Chrome, Firefox, Safari, Edge, '
+        'or the built-in browser on Android or iOS.'))
     s.append(SP(6))
-    s.append(P('Step 1 — Connect to the EMCOMM-NET Wi-Fi', H2))
-    s.append(P('On your phone, tablet, or laptop, open Wi-Fi settings and connect to:'))
-    s.append(SP(4))
-    s.append(tbl(['SETTING', 'VALUE'], [
-        ['Network Name (SSID)', 'EMCOMM-NET'],
-        ['Password', 'Provided by your net manager (default: fieldcommand2026)'],
-        ['Security', 'WPA2-PSK'],
-        ['Wi-Fi Channel', '6 (2.4 GHz)'],
-        ['Your device receives IP', '192.168.50.100 – 192.168.50.200 (automatic)'],
-    ], widths=[2.0*inch, CW-2.0*inch]))
-    s.append(SP(4))
-    s.append(note(
-        'The Wi-Fi password is the only access control on FieldCommand. Anyone with '
-        'the password can use every tool — there is no separate login screen. Keep '
-        'the password posted at the EOC for arriving operators and treat it as an '
-        'operational credential.', 'note'))
-    s.append(SP(8))
 
-    s.append(P('Step 2 — Open the Dashboard', H2))
+    s.append(P('Connecting for the First Time', H2))
     s += steps([
-        'Open any web browser (Chrome, Safari, Firefox, Edge — all work).',
-        'Type <b>http://192.168.50.1</b> in the address bar and press Enter.',
-        'The FieldCommand dashboard loads. You do not need to install anything.',
+        'Power on the FieldCommand Pi and wait approximately 45 seconds for all '
+        'services to start. The status LED on the Pi case (if fitted) will turn solid '
+        'when the server is ready.',
+        'On any smartphone, tablet, or laptop, open the Wi-Fi settings and connect to '
+        'the <b>EMCOMM-NET</b> network. The default password is printed on the equipment '
+        'case label and in the Installation Guide. No other credentials are required.',
+        'Open a browser and navigate to <b>http://192.168.50.1</b>. The FieldCommand '
+        'dashboard loads immediately. If the page does not appear, confirm you are '
+        'connected to EMCOMM-NET and not to a different network.',
+        'Bookmark the dashboard URL. On a smartphone, use <b>Add to Home Screen</b> '
+        'to create a shortcut — the web app is designed to work like a native app '
+        'once bookmarked.',
+        'From the dashboard, select the tool you need. All tools are accessible from '
+        'a single page organized by function. No login is required for any tool.',
     ])
-    s.append(SP(8))
+    s.append(SP(6))
 
-    s.append(P('Step 3 — Identify Yourself', H2))
+    s.append(P('Dashboard Modes', H2))
     s.append(P(
-        'On first visit, a prompt appears asking for your identity. Enter your '
-        '<b>callsign, Radio ID, or name</b> and optionally your ICS position. '
-        'This information is saved in your browser and remembered between sessions.'))
+        'The dashboard presents three selectable modes that filter which tools appear '
+        'prominently based on your current role. You can switch modes at any time — '
+        'switching does not affect any data and all tools remain accessible.'))
     s.append(SP(4))
+    s.append(tbl(['MODE', 'TOOLS SHOWN', 'BEST FOR'], [
+        ['All-Hazards ICS',
+         'Full ICS platform, IAP tools, resource tracking, personnel check-in, '
+         'FEMA cost documentation, event templates',
+         'Active incidents requiring ICS structure — any scale or type'],
+        ['Amateur Radio EMCOMM',
+         'Net control logger, FCC callsign lookup, APRS map, Winlink, '
+         'JS8Call, AMPRNet gateway, propagation',
+         'Amateur radio net operations, ARES/RACES activations'],
+        ['Public Safety',
+         'Starcom/trunked net logger, radio ID roster, resource map, '
+         'WAN status, weather radar',
+         'Public safety radio net operations, Starcom check-in nets'],
+    ], widths=[1.2*inch, CW-2.5*inch, 1.3*inch]))
+    s.append(SP(6))
+
+    s.append(P('WAN Status Indicators', H2))
+    s.append(P(
+        'The top of the dashboard always displays a WAN status bar showing internet '
+        'connectivity and, if configured, AMPRNet gateway status. The color and label '
+        'change automatically every 30 seconds.'))
+    s.append(SP(4))
+    s.append(tbl(['INDICATOR', 'MEANING'], [
+        ['🟢 Green — Cellular',    'Primary internet source (cellular modem, hotspot) is active'],
+        ['🔵 Blue — Satellite',    'Satellite internet is active (cellular has failed over)'],
+        ['🔴 Red — Offline',       'No internet — all core tools remain fully operational'],
+        ['🟢 AMPRNet Connected',   '44Net WireGuard tunnel is up and routing'],
+        ['🔴 AMPRNet Offline',     '44Net tunnel is down or gateway Pi is unreachable'],
+    ], widths=[2.0*inch, CW-2.0*inch]))
+    s.append(SP(6))
     s.append(note(
-        'You do not need to re-enter your identity every time you visit. '
-        'Your browser remembers it until you clear browser storage or tap the '
-        'identity badge to change it.', 'tip'))
+        'A red WAN indicator means internet-dependent features (NWS radar, APRS-IS, '
+        'HF propagation, FCC database updates) are paused. It does not mean '
+        'FieldCommand IMS is unavailable — all ICS tools, net loggers, roster, '
+        'forms, and local map features continue operating normally.', 'note'))
     s.append(PB())
     return s
 
 
 def ch3():
-    s = chapter(3, 'The Main Dashboard', 'http://192.168.50.1/')
+    s = chapter(3, 'The Main Dashboard',
+                'http://192.168.50.1/index.html')
     s.append(P(
-        'The dashboard is your central hub for every activation. '
-        'The moment you open http://192.168.50.1 in any browser on EMCOMM-NET, '
-        'you see the full picture: live NWS weather alerts with severity color coding, '
-        'the real-time APRS station table from Graywolf and YAAC, '
-        'system health indicators, and the Dead Man Switch state for any active net. '
-        'At the very top is the MCESV/MCEMA organization header and your operator identity badge. '
-        'The three-button mode switcher below it reorganizes the tool cards to match '
-        'the type of operation you are running.'))
+        'The dashboard is the home screen and navigation hub for all FieldCommand tools. '
+        'It loads automatically when you navigate to the server address. Every tool card '
+        'on the dashboard launches the corresponding page in the same browser tab — the '
+        'back button or the navigation bar returns you to the dashboard.'))
     s.append(SP(6))
-    s.append(P('Three Dashboard Modes', H2))
+
+    s.append(P('Dashboard Layout', H2))
+    s.append(tbl(['SECTION', 'CONTENTS'], [
+        ['WAN & AMPRNet status bar',
+         'Live connectivity status — polls every 30 seconds. '
+         'Cellular, satellite, or offline indicator. AMPRNet gateway dot.'],
+        ['Mode selector',
+         'Three tabs: All-Hazards ICS · Amateur Radio EMCOMM · Public Safety. '
+         'Filters which tool cards appear in the main grid.'],
+        ['Tool card grid',
+         'One card per tool. Color-coded by section: blue = operations, '
+         'amber = public safety, purple = ICS forms, green = reference. '
+         'Click any card to launch that tool.'],
+        ['Quick actions',
+         'Bottom strip: current incident name, active period, and links to '
+         'the most recent net log and the print center.'],
+    ], widths=[1.8*inch, CW-1.8*inch]))
+    s.append(SP(6))
+
+    s.append(P('Offline vs. Online Features', H2))
     s.append(P(
-        'Directly below the header is a three-button mode switcher. It reorganizes '
-        'the tool cards to match what you are doing. Your choice is saved on your '
-        'device and remembered between sessions.'))
+        'The following table shows which features require internet connectivity and '
+        'which operate fully offline. All core incident management functions are offline.'))
     s.append(SP(4))
-    s.append(tbl(['MODE', 'BUTTON', 'WHAT IT EMPHASIZES', 'WHEN TO USE'], [
-        ['📻 Amateur Radio', '📻',
-         'Net Control, APRS, Winlink, Callsign Lookup, Resource Board, Roster, '
-         'DMS, Pre-Flight, NTS/ICS forms, Propagation, Repeaters, Kiwix, Cheat Sheets',
-         'ARES/RACES nets, NTS traffic, weekly nets, exercises'],
-        ['🚔 Starcom / Public Safety', '🚔',
-         'Starcom Net Logger, Weather Net, SAR Net, Observer Mode, Resource Tracking Map, '
-         'Resource Board, Member Roster, Facilities, ICS Platform, ICS-213, ICS-214',
-         'Starcom activations, public safety nets, weather spotters, SAR operations'],
-        ['🏛 ICS / Incident Command', '🏛',
-         'ICS Platform (all five sections + Planning P), Tactical Map, Resource Map, '
-         'Resource Board, Roster, Facilities, ICS forms, Winlink Import, Repeaters, Cheat Sheets',
-         'Formal ICS activations, EOC operations, multi-agency incidents'],
-    ], widths=[1.2*inch, 0.5*inch, 2.6*inch, CW-4.3*inch]))
-    s.append(SP(8))
-
-    s.append(P('Dashboard Elements', H2))
-    s.append(tbl(['ELEMENT', 'DESCRIPTION'], [
-        ['Hero bar',          'Station callsign badge, system name, live UTC clock and local 24-hour clock updated every second'],
-        ['Mode switcher',     'Three mode buttons — 📻 Amateur Radio / 🚔 Starcom / 🏛 ICS — click to reorganize tool cards'],
-        ['NWS Weather Alerts','Live National Weather Service alerts color-coded by severity. Click any alert to expand full details, onset time, expiry countdown, and protective action instructions'],
-        ['Operation cards',   'Quick-launch tiles for every tool in the current mode — click to open'],
-        ['APRS station table','Live APRS stations heard by Graywolf, with callsign, distance, course/speed, comment, and last heard time. Updates every 30 seconds'],
-        ['Status sidebar',    'CPU/memory/disk/temperature, all service status dots (green=running, red=stopped), GPS status, Dead Man\'s Switch state'],
-    ], widths=[1.5*inch, CW-1.5*inch]))
-    s.append(SP(6))
-    s.append(note(
-        'The URL parameter <b>?mode=starcom</b> loads the dashboard directly in '
-        'Starcom mode — useful for bookmarking on Starcom-dedicated devices. '
-        'Similarly, <b>?mode=ics</b> opens directly in ICS mode for dedicated '
-        'incident command tablets.', 'tip'))
-    s.append(SP(6))
-
-    s.append(P('2.3  Connectivity Status Cards', H2))
-    s.append(P(
-        'Two live connectivity status cards are visible at the bottom of all three modes:'))
-    s.append(SP(4))
-    s.append(tbl(['CARD', 'SHOWS', 'LINKS TO'], [
-        ['WAN Status',
-         'Active WAN source — InstyConnect cellular, Starlink satellite, or offline. '
-         'Card turns green for cellular, blue for Starlink failover, red for offline. '
-         'Updates every 30 seconds.',
-         'wan-status.html — full WAN dashboard with signal strength, carrier, '
-         'latency, connectivity tests, and WAN event log'],
-        ['AMPRNet Gateway',
-         'WireGuard tunnel state — UP with 44.x.x.x AMPRNet address shown, '
-         'or TUNNEL DOWN in red. Updates from the gateway Pi every 30 seconds.',
-         'amprgate.html — full gateway dashboard with tunnel controls, '
-         'traffic stats, and routing table'],
-    ], [1.0*inch, 2.4*inch, CW-3.4*inch]))
-    s.append(SP(6))
-
-    s.append(P('2.4  Health Monitor Sidebar', H2))
-    s.append(P(
-        'The right panel on the dashboard shows live system health: '
-        'CPU temperature, memory and disk usage, GPS fix status, internet connectivity, '
-        'and a row of colored service status dots — one per background service. '
-        'A green dot means the service is running normally. '
-        'A red dot means it has stopped or failed. '
-        'Note the service name from the dot tooltip, then SSH to the Pi and run '
-        'sudo systemctl restart [service-name] to restart it. '
-        'The health panel refreshes every 15 seconds automatically.'))
+    s.append(tbl(['FEATURE', 'OFFLINE?', 'WHAT CHANGES WHEN OFFLINE'], [
+        ['ICS platform (all five sections)', '✓ Full', 'Nothing — fully offline'],
+        ['IAP form set (all ICS forms)',     '✓ Full', 'Nothing — fully offline'],
+        ['T-card resource board',            '✓ Full', 'Nothing — fully offline'],
+        ['Net control loggers (both)',       '✓ Full', 'Nothing — fully offline'],
+        ['FCC callsign lookup',              '✓ Full', 'Uses local SQLite database — no internet needed'],
+        ['Member roster',                   '✓ Full', 'Nothing — fully offline'],
+        ['Offline tactical map (APRS)',      '✓ Full', 'Map tiles local — RF APRS still works'],
+        ['Resource map (GPS)',               '✓ Full', 'Nothing — fully offline'],
+        ['Kiwix reference library',         '✓ Full', 'Nothing — fully offline'],
+        ['NWS weather alerts',              '△ WAN', 'Alerts pause — last alert cached and shown'],
+        ['NEXRAD animated radar',           '△ WAN', 'Offline overlay shown; radar tiles unavailable'],
+        ['APRS-IS live feed',               '△ WAN', 'RF APRS still works; internet feed pauses'],
+        ['HF propagation data',             '△ WAN', 'Last retrieved data shown until refresh'],
+        ['AMPRNet / 44Net tunnel',          '△ WAN', 'Tunnel drops; local EMCOMM-NET unaffected'],
+    ], widths=[2.1*inch, 0.7*inch, CW-2.8*inch]))
     s.append(PB())
     return s
 
 
 def ch4():
-    s = chapter(4, 'Member Roster', 'http://192.168.50.1/roster.html')
+    s = chapter(4, 'Member Roster',
+                'http://192.168.50.1/roster.html')
     s.append(P(
-        'The Member Roster is the authoritative directory for all MCESV/MCEMA '
-        'personnel. It tracks every member\'s identifiers, contact information, '
-        'certifications, equipment, and deployment activations. It supports both '
-        'amateur radio operators and non-ham members.'))
+        'The Member Roster is the central personnel database for your organization. '
+        'It stores every member, mutual-aid visitor, and regular participant — with '
+        'their callsign, radio ID, certifications, equipment capabilities, and a unique '
+        'check-in code that enables rapid QR/barcode check-in at activations.'))
     s.append(SP(6))
 
-    s.append(P('Member Identifiers', H2))
-    s.append(P('Every member is tracked by up to three identifiers:'))
-    s.append(SP(4))
-    s.append(tbl(['IDENTIFIER', 'WHO HAS IT', 'EXAMPLE'], [
-        ['ESV Member ID',   'All ESV members',        'ESV-042'],
-        ['Starcom Radio ID','All ESV members',         '1042'],
-        ['Amateur Callsign','Licensed hams only (blank for non-hams)', 'K9ESV'],
-    ], widths=[1.5*inch, 2.0*inch, CW-3.5*inch]))
-    s.append(SP(4))
-    s.append(note(
-        'Non-ham members are full members of the roster. Leave the Callsign field '
-        'blank for them — the system uses their Radio ID or Member ID as their '
-        'primary identifier automatically.', 'note'))
-    s.append(SP(8))
+    s.append(P('Roster Fields', H2))
+    s.append(tbl(['FIELD', 'PURPOSE'], [
+        ['Member ID',        'Your organization\'s internal identifier (e.g. ESV-042)'],
+        ['Callsign',         'FCC amateur radio callsign — leave blank for non-licensed members'],
+        ['Radio ID',         'Public safety or trunked radio ID if applicable'],
+        ['Barcode ID',       'QR/barcode check-in code — defaults to Member ID; can be overridden '
+                             'with a facility badge number or custom code'],
+        ['Name',             'First and last name'],
+        ['Role',             'Primary function (Operator, Net Control, Logistics, etc.)'],
+        ['Member type',      'Member · Visitor · Mutual Aid — affects check-in form behavior'],
+        ['Certifications',   'ICS-100/200/300/400/700/800, EmComm levels 1–2, CPR, First Aid, CERT'],
+        ['Equipment',        'HF, VHF, digital modes, APRS, Winlink, go-box, generator, vehicle'],
+        ['Phone / Email',    'Contact information — stored locally, never transmitted externally'],
+        ['Grid square',      'Maidenhead grid locator for RF planning'],
+    ], widths=[1.3*inch, CW-1.3*inch]))
+    s.append(SP(6))
 
-    s.append(P('The Roster Tabs', H2))
-    s.append(tbl(['TAB', 'CONTENTS'], [
-        ['Directory',     'Full searchable member list with all identifiers, contact info, and role badges'],
-        ['Certifications','Check off ICS-100/200/300/400/700/800, EmComm I/II, CERT, First Aid, FEMA IS courses'],
-        ['Equipment',     'Check off capabilities: HF/VHF/UHF radio, Winlink, JS8Call, APRS, generator, antenna, laptop, go-kit'],
-        ['Activations',   'Check-in log for the current activation. Click + Check In to mark a member as activated. Walk-in check-ins are added here'],
-        ['Import/Export', 'Export roster to CSV for backup or sharing. Import from a CSV to bulk-load members'],
-    ], widths=[1.4*inch, CW-1.4*inch]))
-    s.append(SP(8))
-
-    s.append(P('Role Definitions', H2))
-    s.append(tbl(['ROLE', 'DESCRIPTION'], [
-        ['Net Control (NCS)',         'Primary net controller — manages check-ins and traffic flow'],
-        ['Operator',                  'Standard ARES/RACES field operator'],
-        ['Liaison',                   'Agency liaison — interface between operators and the served agency'],
-        ['Emergency Coordinator (EC)','Oversees ARES/RACES operations for the county'],
-    ], widths=[2.0*inch, CW-2.0*inch]))
-    s.append(SP(8))
-
-    s.append(P('Importing & Exporting (CSV)', H2))
+    s.append(P('Adding Members', H2))
     s += steps([
-        'To export: click <b>Export CSV</b>. A file downloads with all members and all columns.',
-        'To import: prepare a CSV with these column headers, then click <b>Import CSV</b> and choose the file.',
+        'Click <b>+ Add Member</b> at the top of the roster page.',
+        'Enter the member\'s ID, name, and at minimum one identifier — callsign, '
+        'radio ID, or member ID. All three can be filled if applicable.',
+        'Select certifications and equipment capabilities using the checkboxes.',
+        'Click <b>Save</b>. The member appears immediately in the roster list.',
+        'To generate a QR check-in code for the member, click the <b>QR</b> button '
+        'on their roster card. The code can be printed or saved as a PNG for the '
+        'member to store on their phone.',
     ])
-    s.append(SP(4))
-    s.append(P('<font face="Courier" size="8">member_id, callsign, radio_id, first_name, last_name, role, phone, email, grid, license_class</font>', Body))
-    s.append(SP(6))
-    s.append(note(
-        'The net manager can print wallet-sized access cards for every member, '
-        'generated from the roster. Each card shows the Wi-Fi network and password, '
-        'the dashboard URL, and the member\'s identifiers. Run: '
-        '<font face="Courier" size="9">python3 /opt/fieldcommand/scripts/gen_operator_cards.py '
-        '--ssid EMCOMM-NET --password YOUR-PASSWORD</font>. '
-        'Output is a print-ready PDF, 10 cards per Avery 5371 sheet.', 'tip'))
     s.append(SP(6))
 
-    s.append(P('3.2  CSV Import Column Reference', H2))
+    s.append(P('Importing Members via CSV', H2))
     s.append(P(
-        'The roster accepts CSV files exported from any spreadsheet application. '
-        'The following column headers are recognized — extra columns are ignored:'))
+        'If your organization maintains a member list in a spreadsheet, you can import '
+        'it directly using the <b>📥 Import CSV</b> button. The CSV must contain at minimum '
+        'a <b>member_id</b> column. All other columns are optional and will be skipped '
+        'if not present. Existing members with the same member_id are updated; '
+        'new member IDs are added.'))
     s.append(SP(4))
-    s.append(tbl(['COLUMN HEADER', 'REQUIRED', 'DESCRIPTION'], [
-        ['callsign',      'Yes', 'FCC amateur callsign — auto-filled in net logs via FCC database lookup'],
-        ['radio_id',      'Yes', 'Starcom Radio ID number — used in Starcom net logger check-ins'],
-        ['first_name',    'Yes', 'Operator first name'],
-        ['last_name',     'Yes', 'Operator last name'],
-        ['role',          'No',  'Role or position — Net Control, Field Unit, EOC Staff, etc.'],
-        ['phone',         'No',  'Contact number for off-air coordination'],
-        ['email',         'No',  'Email for Winlink or off-air messaging'],
-        ['certifications','No',  'Comma-separated — NIMS-100, NIMS-700, SKYWARN, etc.'],
-    ], [1.4*inch, 0.8*inch, CW-2.2*inch]))
-    s.append(SP(4))
+    s.append(P('Required CSV column header: <b>member_id</b>', CS))
+    s.append(P('Optional headers: <b>callsign · radio_id · first_name · last_name · '
+               'role · phone · email · grid</b>', CS))
+    s.append(SP(6))
+
     s.append(note(
-        'Export CSV from Excel: File → Save As → CSV UTF-8 (Comma delimited). '
-        'Export from Google Sheets: File → Download → Comma Separated Values. '
-        'UTF-8 encoding is required — other encodings may cause character errors '
-        'in names with accented characters.',
-        'tip'))
+        'The roster is stored in the local SQLite database on the Pi. '
+        'It is included in all automatic backups. Exporting the roster as CSV '
+        '(📤 Export CSV) is recommended before any software update.', 'note'))
     s.append(PB())
     return s
 
 
 def ch5():
-    s = chapter(5, 'Operator Identity System')
+    s = chapter(5, 'Operator Identity System',
+                'http://192.168.50.1/roster.html')
     s.append(P(
-        'Every FieldCommand page tracks who is operating at each device so your '
-        'check-ins, log entries, and form signatures are attributed correctly. '
-        'There is no password — your identity is stored in your device\'s browser '
-        'and remembered between sessions. The system handles all four kinds of '
-        'people who show up at an activation.'))
+        'The Operator Identity System provides printed and digital identification cards '
+        'for personnel at activations and exercises. Cards are generated from the roster '
+        'database and can be printed on standard paper and laminated, or displayed '
+        'digitally on a phone or tablet.'))
     s.append(SP(6))
 
-    s.append(P('The Four Identity Types', H2))
-    s.append(tbl(['TYPE', 'IDENTIFIERS USED', 'BADGE'], [
-        ['ESV Member + Ham',         'Member ID + Callsign + Starcom Radio ID',  '📻 K9ESV'],
-        ['ESV Member, Non-Ham',      'Member ID + Starcom Radio ID (no callsign)', '🔷 ESV-042'],
-        ['Visitor / Mutual Aid, Ham','Callsign + Agency name',                    '📻 W9XYZ'],
-        ['Visitor / Mutual Aid, Non-Ham','Name + Agency (+ optional Radio ID)',   '👤 VISITOR'],
-    ], widths=[1.8*inch, 2.2*inch, CW-4.0*inch]))
-    s.append(SP(4))
-    s.append(P(
-        'The system always displays the most useful identifier for radio work. '
-        'The priority is: callsign first, then Starcom Radio ID, then member ID, '
-        'then name.'))
-    s.append(SP(8))
+    s.append(P('What an Identity Card Shows', H2))
+    s.append(tbl(['ELEMENT', 'CONTENT'], [
+        ['Name',                'Full name from roster'],
+        ['Member ID',           'Organization member number or visitor ID'],
+        ['Callsign / Radio ID', 'Amateur callsign, public safety radio ID, or both'],
+        ['Role',                'Primary function at this activation'],
+        ['Certifications',      'ICS levels and special certifications as colored badges'],
+        ['Organization',        'Deploying agency or club name'],
+        ['QR check-in code',    'Scannable code for instant check-in at future activations'],
+    ], widths=[1.6*inch, CW-1.6*inch]))
+    s.append(SP(6))
 
-    s.append(P('Setting Your Identity', H2))
+    s.append(P('Generating Identity Cards', H2))
     s += steps([
-        'On first visit, a prompt appears automatically. Enter your callsign, '
-        'Radio ID, or name, and optionally your ICS position.',
-        'Click <b>Set Identity</b>. Your badge appears in the header.',
-        'To change your identity later: click your callsign/name badge in the '
-        'header and update the fields.',
+        'Navigate to the roster page and locate the member.',
+        'Click the member card to open the detail view.',
+        'Click <b>🪪 Print ID Card</b>. A print-ready card opens in a new tab.',
+        'Print on card stock (Avery 5392 or similar) or standard paper for lamination. '
+        'Cards are sized to fit a standard ID badge holder (3.375" × 2.125").',
+        'For walk-in mutual-aid personnel without a roster entry, use '
+        '<b>+ Walk-In Check-In</b> on the roster page to create a temporary record '
+        'and generate a one-time card.',
     ])
     s.append(SP(6))
-    s.append(note(
-        'Observer Mode (http://192.168.50.1/observer.html) intentionally does NOT '
-        'prompt for identity — it is read-only and requires no identification.', 'note'))
+
+    s.append(P('QR Codes for Rapid Check-In', H2))
+    s.append(P(
+        'Every member can carry a personal QR code that enables instant check-in at '
+        'any activation using the Scan Check-In page. The QR button on each roster card '
+        'opens a modal with the member\'s personal code. When internet is available, '
+        'the code is rendered as a true QR image. When offline, a large-text fallback '
+        'displays the scannable ID for manual entry. Both the QR image and the text '
+        'code can be printed or saved as a PNG.'))
     s.append(PB())
     return s
 
@@ -361,159 +431,125 @@ def ch6():
     s = chapter(6, 'Amateur Net Control Logger',
                 'http://192.168.50.1/netcontrol.html')
     s.append(P(
-        'The Amateur Net Control Logger is the primary tool for running ARES/RACES '
-        'amateur radio nets. When a station checks in, you type their callsign and '
-        'press Enter — FieldCommand looks up the operator in the local FCC database '
-        'and fills their name and license class automatically. '
-        'The check-in is timestamped in UTC and saved to the server immediately, '
-        'making it visible to all connected devices including served-agency staff '
-        'watching in Observer Mode.'))
-    s.append(SP(4))
-    s.append(P(
-        'The logger supports multiple nets running simultaneously, each on its own tab, '
-        'each with an independent check-in log, traffic log, and ICS-309 export. '
-        'A weekly ARES net, a RACES emergency activation, and an NTS traffic session '
-        'can all be logged at the same time with one operator on the keyboard.'))
+        'The Amateur Net Control Logger provides a complete net management interface '
+        'for licensed amateur radio operations including ARES, RACES, AUXCOMM, and '
+        'any other amateur net. It replaces paper net logs with a live digital record '
+        'that feeds directly into the ICS-309 communications log for the incident '
+        'action plan.'))
     s.append(SP(6))
 
-    s.append(P('Starting a Net', H2))
+    s.append(P('Opening a Net', H2))
     s += steps([
-        'Click <b>+ New Net</b> in the net tabs bar at the top.',
-        'Enter a <b>Net Name</b> — for example "McHenry County ARES Thursday Evening Net".',
-        'Enter the <b>Frequency</b> — for example "147.015 MHz / 107.2 Hz".',
-        'Enter <b>Net Control</b> — your callsign (auto-filled from your identity if set).',
-        'Click <b>Activate Net</b>. The net goes live and appears as a tab.',
+        'Navigate to <b>Net Control Logger</b> from the dashboard.',
+        'Enter the net name, frequency, and mode (SSB/FM/Digital/Other).',
+        'Select the net type: <b>Amateur</b> (for ARES/RACES/AUXCOMM nets).',
+        'Click <b>Open Net</b>. The net opens with a timestamp. The net status '
+        'banner turns green and shows the elapsed time.',
+        'The page URL now contains the net ID — share this URL with the '
+        '<b>🔗 Observer Link</b> button so section chiefs or served agencies can '
+        'monitor the net in read-only view on their own devices.',
     ])
-    s.append(SP(8))
+    s.append(SP(6))
 
-    s.append(P('The Net Selector Tabs', H2))
+    s.append(P('Logging Check-Ins', H2))
     s.append(P(
-        'Each active net appears as a tab in the NET TABS bar at the top of the page. '
-        'The active net is highlighted. Tap any tab to switch to that net\'s log. '
-        'Each net has its own independent check-in log, traffic log, and export.'))
-    s.append(SP(8))
-
-    s.append(P('Logging a Check-In', H2))
-    s += steps([
-        'Type a callsign in the <b>Callsign</b> field and press <b>Enter</b>. '
-        'The FCC database fills in the operator\'s name and license class automatically.',
-        'Add <b>Location</b> and <b>Remarks</b> if needed.',
-        'Click <b>+ Check In</b> or press Enter. The entry appears with a UTC timestamp.',
-        'To add a non-licensed or non-US operator: type their name or identifier directly.',
-    ])
+        'When a station checks in, type their callsign in the check-in box and press '
+        'Enter. FieldCommand IMS looks up the callsign instantly in the offline FCC '
+        'database and fills in the operator\'s full name and license class automatically. '
+        'If the station is on your roster, their EMA or member ID is filled as well. '
+        'No internet is required for callsign lookup — the full national database of '
+        '800,000+ amateur licensees is stored locally on the Pi.'))
     s.append(SP(4))
-    s.append(note(
-        'The <b>+ Roster</b> button only appears for stations not already in the '
-        'roster, so you will not create duplicates. Click it to add any new '
-        'station to the Member Roster directly from the net log.', 'tip'))
-    s.append(SP(8))
-
-    s.append(P('Logging Traffic', H2))
     s += steps([
-        'Switch to the <b>Traffic</b> tab.',
-        'Enter the From callsign, To callsign or address, traffic type, and a note.',
-        'Click <b>Log Traffic</b>. The traffic item is timestamped and recorded with the net.',
+        'Type the station\'s callsign in the <b>Callsign</b> field. The name fills '
+        'automatically from the FCC database as you type.',
+        'Enter their location or remarks if desired.',
+        'Click <b>Check In</b> or press Enter. The entry appears in the log with a '
+        'timestamp.',
+        'To check a station out, click <b>Check Out</b> on their row. The checkout '
+        'time and participation duration are recorded automatically.',
+        'When a station passes traffic or sends a message, use the traffic entry at '
+        'the bottom of the page to record it with precedence and addressee.',
     ])
-    s.append(SP(8))
+    s.append(SP(6))
 
-    s.append(P('The Roster Chips (Quick Check-In)', H2))
-    s.append(P(
-        'The Roster tab shows quick-tap chips for known stations. Tap a chip to '
-        'instantly log that station\'s check-in without retyping the callsign — '
-        'useful for regulars on a weekly net.'))
-    s.append(SP(8))
-
-    s.append(P('Sharing & Exporting', H2))
-    s.append(tbl(['BUTTON', 'WHAT IT DOES'], [
-        ['🔗 Observer Link', 'Copies a read-only URL for the currently selected net. Share it with served-agency staff or EOC viewers — see Chapter 8.'],
-        ['ICS-309',          'Exports the selected net\'s log as a formatted ICS-309 Communications Log, ready to print.'],
-        ['Export JSON',      'Downloads the full net data as a JSON backup file.'],
-        ['Close Net',        'Marks the net closed and archives it. The log is preserved and viewable.'],
-    ], widths=[1.4*inch, CW-1.4*inch]))
+    s.append(P('Closing a Net and Exporting the Log', H2))
+    s += steps([
+        'Click <b>Close Net</b>. Any stations still checked in are automatically '
+        'checked out with the net close time. Net duration appears in the header.',
+        'Click <b>📋 Export ICS-309</b> to download the complete ICS-309 Communications '
+        'Log as a formatted document ready for the incident action plan.',
+        'The ICS-309 includes: net name, frequency, mode, net open/close times, '
+        'total duration, and a full check-in table with individual participation '
+        'durations rounded up to the nearest quarter-hour — the standard for '
+        'reimbursement documentation.',
+    ])
     s.append(SP(6))
     s.append(note(
-        'Precedence levels — ROUTINE / WELFARE / PRIORITY / EMERGENCY — can be '
-        'set per check-in or traffic entry. Use EMERGENCY only for life-safety traffic. '
-        'PRIORITY for time-sensitive but non-emergency messages.', 'note'))
+        'The Dead Man\'s Switch (page: deadmans.html) monitors net activity and '
+        'sounds an audible alert if no check-in is logged within a configurable '
+        'time threshold. It is designed for safety monitoring during search and '
+        'rescue and other field operations where radio silence can indicate an '
+        'emergency. See Chapter 12 for Dead Man\'s Switch operation.', 'note'))
     s.append(PB())
     return s
 
 
 def ch7():
-    s = chapter(7, 'Starcom Net Logger', 'http://192.168.50.1/starcom.html')
+    s = chapter(7, 'Public Safety Net Logger',
+                'http://192.168.50.1/starcom.html')
     s.append(P(
-        'The Starcom Net Logger has its own dedicated dashboard mode — separate from '
-        'the Amateur Radio section. Select <b>🚔 Starcom / Public Safety</b> from the '
-        'mode bar on the main dashboard to access it. '
-        'The module is purpose-built for public safety Starcom radio net logging '
-        'and handles the identifiers, terminology, and workflow that public safety '
-        'operators use day to day. Units are identified by Radio ID and unit number '
-        'rather than amateur callsigns. A dispatch center field tracks which agency '
-        'is managing traffic on each channel. Net names use the sc- prefix by convention '
-        'so they appear clearly labeled in exports and the Dead Man Switch monitor.'))
+        'The Public Safety Net Logger handles trunked radio, P25, and other public safety '
+        'radio systems where check-in is by radio ID rather than amateur callsign. '
+        'It is designed for interoperability exercises, served-agency support, and any '
+        'net where participants may not hold amateur licenses.'))
     s.append(SP(6))
 
-    s.append(P('Running Multiple Simultaneous Nets', H2))
+    s.append(P('Key Differences from the Amateur Logger', H2))
+    s.append(tbl(['FEATURE', 'AMATEUR NET LOGGER', 'PUBLIC SAFETY NET LOGGER'], [
+        ['Primary identifier',
+         'FCC callsign — auto-filled from local database',
+         'Radio ID (unit number or talk group ID)'],
+        ['License check',
+         'FCC ULS lookup — confirms active license',
+         'None required — any radio user can check in'],
+        ['Roster lookup',
+         'By callsign → returns name and member ID',
+         'By radio ID → returns name and member ID'],
+        ['ICS-309 format',
+         'Callsign in station column',
+         'Radio ID in station column'],
+        ['Typical use',
+         'ARES/RACES/AUXCOMM amateur nets',
+         'Public safety agency check-in, interop exercises, Starcom-type nets'],
+    ], widths=[1.3*inch, CW*0.38, CW-1.3*inch-CW*0.38]))
+    s.append(SP(6))
+
+    s.append(P('Operating the Public Safety Net Logger', H2))
     s.append(P(
-        'The Starcom Net Logger supports multiple simultaneous nets — identical to '
-        'the Amateur Net Control Logger. This is particularly useful during large '
-        'activations where you may need to run a <b>Starcom General Net</b>, a '
-        '<b>Weather Net</b>, and a <b>SAR Net</b> all at the same time, each with '
-        'its own independent check-in log and traffic log.'))
-    s.append(SP(4))
-    s += steps([
-        'Click <b>+ New Net</b> to open the first net.',
-        'Click <b>+ New Net</b> again for each additional net — Weather Net, SAR Net, etc.',
-        'Each open net appears as a clickable badge in the <b>active nets panel</b> on the left sidebar.',
-        'Click any net badge to switch to that net. The check-in log and traffic log update to show that net\'s data.',
-        'Nets run independently — logging a check-in on one net does not affect the others.',
-        'Close each net individually when it is no longer needed.',
-    ])
-    s.append(SP(4))
+        'Operation follows the same workflow as the Amateur Net Logger. Open the net, '
+        'enter radio IDs as stations check in, and export the ICS-309 at net close. '
+        'The key operational note is that check-in by radio ID is the standard — '
+        'operators do not need callsigns, and the FCC database lookup is not invoked. '
+        'If a roster member has both a radio ID and a callsign, the system will '
+        'display both on their check-in row for reference.'))
+    s.append(SP(6))
+
+    s.append(P('Observer Mode', H2))
+    s.append(P(
+        'Both net loggers support Observer Mode — a read-only, auto-refreshing view '
+        'of the active net accessible from any device on EMCOMM-NET. The Observer '
+        'link is generated by clicking <b>🔗 Observer Link</b> and can be sent by '
+        'Winlink, JS8Call, or read over the air. Observers cannot modify the log — '
+        'they see the live net status, check-in list, and traffic log, updating '
+        'every 15 seconds automatically. No login is required.'))
+    s.append(SP(6))
+
     s.append(note(
-        'Typical multi-activation scenario: Starcom General Net (command channel) + '
-        'Weather Net (storm spotters) + SAR Net (field teams) all open simultaneously. '
-        'Net Control switches between them as radio traffic comes in on each channel.',
-        'tip'))
-    s.append(SP(8))
-
-    s.append(P('Opening a Starcom Net', H2))
-    s += steps([
-        'Click <b>+ New Net</b>.',
-        'Enter the <b>Net Name</b>.',
-        'Choose the <b>Net Type</b>: Starcom General / Weather Net / SAR Net / Observer Net.',
-        'Enter the <b>Talkgroup</b> and <b>Channel/Frequency</b>.',
-        'Enter the <b>Dispatch Center</b> (e.g. MCECC, IDOT). It appears in the net header and stays set for the whole net session.',
-        'Click <b>Activate Net</b>.',
-    ])
-    s.append(SP(8))
-
-    s.append(P('Logging a Unit Check-In', H2))
-    s += steps([
-        'Enter the <b>Radio ID / Unit #</b> (e.g. 1234).',
-        'Enter the <b>Unit Name / Callsign</b> (e.g. "MCHENRY CO ARES" or a callsign).',
-        'Choose the status: Check-In, Traffic, Priority Traffic, Emergency, Dispatch, Check-Out, En Route, On Scene, Available, or Out of Service.',
-        'Select the talkgroup type and enter the channel/frequency.',
-        'Add location and remarks, then click <b>LOG ENTRY</b>. The time is stamped automatically.',
-    ])
-    s.append(SP(8))
-
-    s.append(P('Exporting & Sharing', H2))
-    s.append(P(
-        'The Starcom logger shares the same Observer Link, ICS-309 export, and '
-        'JSON backup tools as the amateur logger (see Chapter 6). '
-        'Exports carry a Starcom header and keep the sc- prefix.'))
-    s.append(SP(6))
-
-    s.append(tbl(['FIELD', 'DESCRIPTION'], [
-        ['Radio ID',      'Starcom unit number (e.g. 2301, 4710). Required for every check-in.'],
-        ['Unit Name',     'Agency and unit description (e.g. "McHenry SO — Unit 12")'],
-        ['Dispatch Ctr',  'Dispatching agency or center (e.g. MCECC, IDOT)'],
-        ['Net Type',      'Starcom General / Weather Net / SAR Net / Observer Net'],
-        ['Talkgroup',     'Radio talkgroup identifier for the net channel'],
-    ], widths=[1.3*inch, CW-1.3*inch]))
+        'Participants in public safety nets who also hold amateur licenses should '
+        'check into the public safety net by radio ID only — this maintains '
+        'the integrity of the agency\'s radio log. If the same person needs to '
+        'participate in an amateur net on the same incident, they check into the '
+        'Amateur Net Logger separately by callsign.', 'note'))
     s.append(PB())
     return s
-
-
-print("Chapters 1-7 module loaded OK")

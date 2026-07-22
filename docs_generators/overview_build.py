@@ -31,8 +31,8 @@ RED    = HexColor('#b82020')
 MUTED  = HexColor('#4a6080')
 
 TODAY  = datetime.date.today().strftime('%B %Y')
-ORG    = 'McHenry County Emergency Services Volunteers and Emergency Management Agency'
-SHORT  = 'MCESV / MCEMA  ·  K9ESV  ·  RACES / ARES / Starcom'
+ORG    = 'FieldCommand IMS and Emergency Management Agency'
+SHORT  = 'FieldCommand IMS v1.0  ·  RACES / ARES / Starcom'
 PAGE_W, PAGE_H = letter
 M  = 0.42 * inch
 CW = PAGE_W - 2 * M
@@ -169,7 +169,7 @@ story = []
 story.append(SP(2))
 story.append(P(
     '<b>FieldCommand</b> is a self-contained emergency communications server '
-    'built on a Raspberry Pi 5 for McHenry County RACES, ARES, and Starcom operations. '
+    'built on a Raspberry Pi 5 for your county RACES, ARES, and Starcom operations. '
     'Any smartphone, tablet, or laptop connects to the <b>EMCOMM-NET</b> Wi-Fi access point '
     'and reaches the full dashboard at <b>http://192.168.50.1</b> — '
     'no internet, no app installation, no per-device configuration required. '
@@ -276,9 +276,9 @@ story.append(section_hdr('📡', 'Connectivity — Dual WAN with Automatic Failo
                          AMBER, HexColor('#fef3d8')))
 story.append(SP(1))
 wan_tbl = Table([[
-    P('InstyConnect Cellular  (Primary WAN)',
+    P('the cellular antenna Cellular  (Primary WAN)',
       S('wh', fontName='Helvetica-Bold', fontSize=8, textColor=EOC, leading=10)),
-    P('Starlink Satellite  (Automatic Failover)',
+    P('the satellite dish Satellite  (Automatic Failover)',
       S('wh', fontName='Helvetica-Bold', fontSize=8, textColor=EOC, leading=10)),
     P('AMPRNet / 44Net  (Amateur Radio IP)',
       S('wh', fontName='Helvetica-Bold', fontSize=8, textColor=EOC, leading=10)),
@@ -294,8 +294,8 @@ wan_tbl.setStyle(TableStyle([
 story.append(wan_tbl)
 
 wan_desc = Table([[
-    P('InstyConnect Drum omnidirectional antenna + Switchblade directional backup. '
-      'T-Mobile + Verizon dual-carrier. Pauses at $5/month between activations.',
+    P('the cellular antenna Drum omnidirectional antenna + Switchblade directional backup. '
+      'dual-carrier cellular dual-carrier. Pauses at $5/month between activations.',
       S('wd', fontSize=7, leading=9.5)),
     P('Automatic failover when cellular drops. '
       'ASUS RT-BE58 Go manages failover with no operator action required. '
@@ -336,10 +336,10 @@ hw_data = [
      'ASUS RT-BE58 Go  Wi-Fi 7  ·  UniFi Lite 16 PoE  (16-port GbE)',
      'EMCOMM-NET  ·  DHCP  ·  dual WAN failover  ·  wired hub'],
     ['Primary WAN  (Cellular)',
-     'InstyConnect Drum (omni)  +  Switchblade (directional)  ·  5G/LTE',
-     'T-Mobile + Verizon  ·  pause at $5/month  ·  swap in 5 min'],
+     'the cellular antenna Drum (omni)  +  Switchblade (directional)  ·  5G/LTE',
+     'dual-carrier cellular  ·  pause at $5/month  ·  swap in 5 min'],
     ['Secondary WAN  (Satellite)',
-     'Starlink dish  +  Ethernet adapter  →  ASUS USB WAN',
+     'the satellite dish dish  +  Ethernet adapter  →  ASUS USB WAN',
      'Auto-failover when cellular drops  ·  all features stay active'],
     ['Radio  +  Workstations',
      'IC-7300  ·  Winlink  ·  VARA HF  ·  JS8Call  ·  Pi 500 ×4  ·  Monitor ×4',
@@ -383,7 +383,7 @@ ref_items = [
     ('📻', 'Cheat Sheets',      'Phonetics, Q-codes, CTCSS, band plan'),
     ('🔍', 'Callsign Lookup',   '800K licensees — instant offline'),
     ('✅', 'Pre-Flight Check',  'GO / CAUTION / NO-GO readiness'),
-    ('📡', 'WAN Dashboard',     'InstyConnect, Starlink, 44Net live'),
+    ('📡', 'WAN Dashboard',     'the cellular antenna, the satellite dish, 44Net live'),
     ('🗺', 'Offline Maps',      'USGS topo — APRS and SAR maps'),
     ('💻', 'Health Monitor',    'CPU, disk, GPS, internet, services'),
     ('🖥', 'Access Cards',      'Avery 5371 printable wallet cards'),
@@ -560,7 +560,7 @@ doc = SimpleDocTemplate(
     leftMargin=M, rightMargin=M,
     topMargin=0.54*inch, bottomMargin=0.36*inch,
     title='FieldCommand IMS v1.0 — System Overview',
-    author='McHenry County Emergency Services Volunteers and McHenry County Emergency Management Agency')
+    author='FieldCommand IMS')
 doc.build(story, canvasmaker=NC)
 
 from pypdf import PdfReader

@@ -141,7 +141,7 @@ doc = SimpleDocTemplate(
     leftMargin=M, rightMargin=M,
     topMargin=0.60*inch, bottomMargin=0.48*inch,
     title='FieldCommand IMS v1.0 — Complete User Manual',
-    author='McHenry County Emergency Services Volunteers and McHenry County Emergency Management Agency')
+    author='FieldCommand IMS and Open-Source · Offline-First · Field-Deployable')
 doc.build(story, canvasmaker=ManualCanvas)
 
 # Append Pi 500 addendum

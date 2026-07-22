@@ -54,7 +54,7 @@ class BomCanvas(pdfcanvas.Canvas):
             self.setFillColor(GOLD)
             self.setFont('Helvetica', 8)
             self.drawString(M, PAGE_H-0.44*inch,
-                'Verified pricing — June 2026  ·  Developed by KE4CON for MCESV / MCEMA')
+                'Verified pricing — June 2026  ·  Developed by KE4CON for your organization')
             self.setFillColor(white)
             self.setFont('Helvetica-Bold', 9)
             self.drawRightString(PAGE_W-M, PAGE_H-0.32*inch, 'v1.0')
@@ -134,11 +134,11 @@ sections = [
         ('CAT6 cables', 'Assorted lengths', 10, '$3', '$30'),
     ], '$586'),
     ('WAN — Cellular + Satellite', [
-        ('InstyConnect Drum', 'Omnidirectional 5G/LTE antenna+modem — T-Mobile + Verizon — primary WAN', 1, '$375', '$375'),
-        ('InstyConnect Switchblade', 'Directional folding antenna — backup for weak-signal sites', 1, '$425', '$425'),
+        ('the cellular antenna Drum', 'Omnidirectional 5G/LTE antenna+modem — dual-carrier cellular — primary WAN', 1, '$375', '$375'),
+        ('the cellular antenna Switchblade', 'Directional folding antenna — backup for weak-signal sites', 1, '$425', '$425'),
         ('Spare PoE cable', 'Outdoor-rated shielded CAT6', 1, '$20', '$20'),
-        ('Starlink kit', 'Standard dish — automatic failover WAN (price DROP from $499; regional promos lower)', 1, '$349', '$349'),
-        ('Starlink Ethernet adapter', 'Official adapter', 1, '$25', '$25'),
+        ('the satellite dish kit', 'Standard dish — automatic failover WAN (price DROP from $499; regional promos lower)', 1, '$349', '$349'),
+        ('the satellite dish Ethernet adapter', 'Official adapter', 1, '$25', '$25'),
         ('USB-to-Ethernet adapter', 'GbE USB 3.0 — ASUS USB WAN port', 1, '$18', '$18'),
     ], '$1,212'),
     ('Operator Workstations', [
@@ -217,8 +217,8 @@ t.setStyle(TableStyle([
 story.append(t)
 story.append(SP(6))
 story.append(P(
-    '<b>Recurring costs:</b>  InstyConnect data plan — $5/month standby, $79-99/month during '
-    'activations only  ·  Starlink service — ~$120/month or Roam plan (pausable)  ·  No '
+    '<b>Recurring costs:</b>  the cellular antenna data plan — $5/month standby, $79-99/month during '
+    'activations only  ·  the satellite dish service — ~$120/month or Roam plan (pausable)  ·  No '
     'software licenses, subscriptions, or per-seat fees.',
     S('rec', fontSize=8.5, leading=12, textColor=DGRAY)))
 story.append(P(

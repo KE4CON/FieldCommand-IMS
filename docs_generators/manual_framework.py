@@ -32,9 +32,8 @@ PAGE_W, PAGE_H = letter
 M  = 0.75 * inch
 CW = PAGE_W - 2 * M
 TODAY = datetime.date.today().strftime('%B %d, %Y')
-ORG   = ('McHenry County Emergency Services Volunteers and '
-         'McHenry County Emergency Management Agency')
-SHORT = 'MCESV/MCEMA  ·  K9ESV'
+ORG   = 'FieldCommand IMS'
+SHORT = 'FieldCommand IMS'
 
 # ── Style shortcuts ───────────────────────────────────────────────────────────
 def _s(name, **kw):
@@ -53,6 +52,10 @@ H3     = _s('H3',  fontName='Helvetica-Bold', fontSize=10, textColor=EOC,
 Bullet = _s('Bullet', leftIndent=16, firstLineIndent=-10, leading=13, spaceAfter=3)
 Code   = _s('Code', fontName='Courier', fontSize=8, leading=11,
             backColor=LGRAY, leftIndent=12, rightIndent=12)
+Lead   = _s('Lead', fontSize=11, leading=16, alignment=TA_JUSTIFY,
+            spaceBefore=2, spaceAfter=10)
+CS     = _s('CS',   fontName='Courier', fontSize=9, leading=13,
+            textColor=EOC, leftIndent=12)
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 def P(text, style=None):
@@ -203,11 +206,11 @@ class ManualCanvas(canvas.Canvas):
         self.setFillColor(GOLD)
         self.setFont('Helvetica-Bold', 10)
         self.drawCentredString(PAGE_W/2, PAGE_H - 0.70*inch,
-            'K9ESV  ·  McHenry County Emergency Services Volunteers')
+            'FieldCommand Incident Management System')
         self.setFillColor(HexColor('#c0d4f0'))
         self.setFont('Helvetica', 9)
         self.drawCentredString(PAGE_W/2, PAGE_H - 0.88*inch,
-            'and McHenry County Emergency Management Agency')
+            'Open-Source  ·  Offline-First  ·  Field-Deployable')
         # FIELDCOMMAND title
         self.setFillColor(white)
         self.setFont('Helvetica-Bold', 58)
@@ -233,7 +236,7 @@ class ManualCanvas(canvas.Canvas):
         self.setFillColor(HexColor('#8090c0'))
         self.setFont('Helvetica', 9.5)
         self.drawCentredString(PAGE_W/2, PAGE_H*0.30,
-            'RACES  ·  ARES  ·  Starcom  ·  K9ESV  ·  MCESV / MCEMA')
+            'ICS/NIMS All-Hazards  ·  Amateur Radio EMCOMM  ·  Public Safety')
         # Date
         self.setFillColor(HexColor('#6070a0'))
         self.setFont('Helvetica', 9)
@@ -242,7 +245,7 @@ class ManualCanvas(canvas.Canvas):
         self.setFillColor(EOC)
         self.setFont('Helvetica', 7)
         self.drawCentredString(PAGE_W/2, 0.05*inch,
-            f'FieldCommand IMS v1.0  ·  For Authorized Operator Use  ·  MCESV/MCEMA')
+            f'FieldCommand IMS v1.0  ·  Open-Source  ·  Developed by James Rospopo KE4CON')
 
     def _draw_chrome(self):
         n = self._pageNumber
@@ -264,7 +267,7 @@ class ManualCanvas(canvas.Canvas):
             self.setFillColor(white)
             self.setFont('Helvetica-Bold', 8)
             self.drawString(M+1.0*inch, PAGE_H-0.20*inch,
-                            'Incident Management System v1.0 — Complete User Manual · K9ESV')
+                            'Incident Management System v1.0 — Complete User Manual')
             self.setFont('Helvetica', 7)
             self.drawString(M+1.0*inch, PAGE_H-0.32*inch,
                             f'For Authorized Operator Use — {SHORT}')

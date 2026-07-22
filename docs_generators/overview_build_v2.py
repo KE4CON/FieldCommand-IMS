@@ -44,7 +44,7 @@ class NC(canvas.Canvas):
         self.setFillColor(white); self.setFont('Helvetica-Bold',10.5)
         self.drawString(M+1.15*inch,PAGE_H-0.21*inch,'Incident Management System v1.0')
         self.setFont('Helvetica',7.5)
-        self.drawString(M+1.15*inch,PAGE_H-0.36*inch,'McHenry County Emergency Services Volunteers · K9ESV · RACES/ARES/Starcom')
+        self.drawString(M+1.15*inch,PAGE_H-0.36*inch,'FieldCommand IMS · your callsign · RACES/ARES/Starcom')
         self.setFillColor(EOC); self.rect(0,0,PAGE_W,0.26*inch,fill=1,stroke=0)
         self.setFillColor(GOLD); self.rect(0,0.26*inch,PAGE_W,0.013*inch,fill=1,stroke=0)
         self.setFillColor(white); self.setFont('Helvetica',6.5)
@@ -122,7 +122,7 @@ acc.setStyle(TableStyle([('BACKGROUND',(0,0),(-1,-1),LGRAY),('BACKGROUND',(0,0),
 story.append(acc)
 
 out='/mnt/user-data/outputs/IncidentManagement_Overview.pdf'
-doc=SimpleDocTemplate(out,pagesize=letter,leftMargin=M,rightMargin=M,topMargin=0.62*inch,bottomMargin=0.37*inch,title='Incident Management System v1.0 — Overview',author='McHenry County Emergency Services Volunteers')
+doc=SimpleDocTemplate(out,pagesize=letter,leftMargin=M,rightMargin=M,topMargin=0.62*inch,bottomMargin=0.37*inch,title='Incident Management System v1.0 — Overview',author='FieldCommand IMS')
 doc.build(story,canvasmaker=NC)
 from pypdf import PdfReader
 r=PdfReader(out); print(f'BUILT: {out}  Pages: {len(r.pages)}')

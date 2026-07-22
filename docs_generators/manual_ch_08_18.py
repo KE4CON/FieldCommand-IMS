@@ -50,7 +50,7 @@ def ch9():
     s.append(SP(6))
     s.append(P('Quick Callsign Lookup', H2))
     s += steps([
-        'Type a callsign (e.g. K9ESV) in the search box at the top of the page.',
+        'Type a callsign (e.g. your callsign) in the search box at the top of the page.',
         'Press <b>Enter</b> or click <b>🔍 Look Up</b>.',
         'The result shows: full name, license class, expiration date, mailing address, grid square, and FRN.',
         'Click <b>+ Add to Roster</b> to add the licensee directly to the Member Roster.',
@@ -89,7 +89,7 @@ def ch10():
         'The default map layer is USGS Imagery+Topo Hybrid — public-domain satellite '
         'imagery with roads, contours, and place names overlaid. Additional tile sets '
         '(OpenStreetMap, Esri World Imagery) are available in the layer selector. '
-        'McHenry County map tiles are included with the FieldCommand installation. '
+        'your county map tiles are included with the FieldCommand installation. '
         'Additional county and state tile sets are downloaded using the '
         'download_tiles.sh script.'))
     s.append(SP(6))
@@ -159,7 +159,7 @@ def ch10():
     ], [1.4*inch, 2.4*inch, CW-3.8*inch]))
     s.append(SP(4))
     s.append(note(
-        'Offline map tiles for McHenry County and surrounding counties are '
+        'Offline map tiles for your county and surrounding counties are '
         'pre-loaded during installation. '
         'To download tiles for additional counties or states, run: '
         'sudo bash /opt/fieldcommand/scripts/download_tiles.sh --region [region-name]. '
@@ -471,7 +471,7 @@ def ch16():
         'Communications, Resource Management, Incident Command, Search & Rescue, '
         'Shelter & Mass Care, Weather & Natural Disaster, HazMat, Mass Casualty, '
         'Public Information, Finance & Administration, Demobilization, and '
-        'MCESV/MCEMA Specific.', 'note'))
+        'Agency-Specific.', 'note'))
     s.append(SP(8))
     s.append(P('Situation Report Fields', H2))
     s.append(tbl(['FIELD', 'WHAT TO ENTER'], [

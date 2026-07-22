@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-gen_user_guide.py — McHenry County RACES/ARES/Starcom FieldCommand User Guide
+gen_user_guide.py — your county RACES/ARES/Starcom FieldCommand User Guide
 A section-per-tool reference guide covering all 35 tool pages.
-Output: /mnt/user-data/outputs/McHenry_County_RACES_ARES_Starcom_FieldCommand_User_Guide.pdf
+Output: /mnt/user-data/outputs/your area_County_RACES_ARES_Starcom_FieldCommand_User_Guide.pdf
 """
 import datetime, io, os
 from reportlab.lib.pagesizes import letter
@@ -28,9 +28,9 @@ RED    = HexColor('#b82020')
 PURPLE = HexColor('#5b2d8c')
 MUTED  = HexColor('#4a6080')
 
-ORG    = ('McHenry County Emergency Services Volunteers and '
-          'McHenry County Emergency Management Agency')
-SHORT  = 'MCESV/MCEMA  ·  K9ESV  ·  RACES/ARES/Starcom'
+ORG    = ('FieldCommand IMS and '
+          'your emergency management agency')
+SHORT  = 'FieldCommand IMS v1.0  ·  RACES/ARES/Starcom'
 TODAY  = datetime.date.today().strftime('%B %d, %Y')
 PAGE_W, PAGE_H = letter
 M  = 0.65*inch
@@ -60,7 +60,7 @@ class NC(canvas.Canvas):
                 self.setFillColor(white)
                 self.setFont('Helvetica-Bold', 8)
                 self.drawString(M, PAGE_H-0.22*inch,
-                    'McHenry County RACES/ARES/Starcom')
+                    'your county RACES/ARES/Starcom')
                 self.setFont('Helvetica', 7.5)
                 self.drawRightString(PAGE_W-M, PAGE_H-0.22*inch,
                     'FieldCommand EmComm Field Server v1.0 — User Guide')
@@ -90,11 +90,11 @@ class NC(canvas.Canvas):
         self.setFillColor(HexColor('#f0c040'))
         self.setFont('Helvetica-Bold', 10)
         self.drawCentredString(PAGE_W/2, PAGE_H - 0.70*inch,
-            'K9ESV  ·  McHenry County Emergency Services Volunteers')
+            'your callsign  ·  FieldCommand IMS')
         self.setFillColor(HexColor('#c0d4f0'))
         self.setFont('Helvetica', 9)
         self.drawCentredString(PAGE_W/2, PAGE_H - 0.88*inch,
-            'and McHenry County Emergency Management Agency')
+            'and your emergency management agency')
         self.setFillColor(HexColor('#ffffff'))
         self.setFont('Helvetica-Bold', 58)
         self.drawCentredString(PAGE_W/2, PAGE_H*0.60, 'FIELDCOMMAND')
@@ -110,18 +110,18 @@ class NC(canvas.Canvas):
         self.drawCentredString(PAGE_W/2, PAGE_H*0.448, 'USER GUIDE')
         self.setFillColor(HexColor('#c0d4f0'))
         self.setFont('Helvetica', 10)
-        self.drawCentredString(PAGE_W/2, PAGE_H*0.395, 'McHenry County RACES, ARES & Starcom')
+        self.drawCentredString(PAGE_W/2, PAGE_H*0.395, 'your county RACES, ARES & Starcom')
         self.setFillColor(HexColor('#8090c0'))
         self.setFont('Helvetica', 9.5)
         self.drawCentredString(PAGE_W/2, PAGE_H*0.30,
-            'RACES  ·  ARES  ·  Starcom  ·  K9ESV  ·  MCESV / MCEMA')
+            'RACES  ·  ARES  ·  Starcom  ·  FieldCommand IMS v1.0')
         self.setFillColor(HexColor('#6070a0'))
         self.setFont('Helvetica', 9)
         self.drawCentredString(PAGE_W/2, PAGE_H*0.25, TODAY)
         self.setFillColor(HexColor('#1a3a6b'))
         self.setFont('Helvetica', 7)
         self.drawCentredString(PAGE_W/2, 0.05*inch,
-            f'FieldCommand IMS v1.0  ·  MCESV/MCEMA  ·  {TODAY}')
+            f'FieldCommand IMS v1.0  ·  your organization  ·  {TODAY}')
 
 
 # ── Style helpers ─────────────────────────────────────────────────────────────
@@ -213,7 +213,7 @@ story = []
 # ── COVER ─────────────────────────────────────────────────────────────────────
 story.append(SP(40))
 cov = Table([[Table([[
-    P('McHenry County', S('c1', fontName='Helvetica-Bold', fontSize=18,
+    P('your county', S('c1', fontName='Helvetica-Bold', fontSize=18,
                            textColor=GOLD, alignment=TA_CENTER, leading=22)),
     P('RACES / ARES / Starcom', S('c2', fontName='Helvetica', fontSize=12,
                                    textColor=HexColor('#c0d4f0'), alignment=TA_CENTER, leading=16)),
@@ -232,7 +232,7 @@ cov = Table([[Table([[
     P('http://192.168.50.1  ·  EMCOMM-NET', S('c6', fontName='Courier', fontSize=10,
                                                 textColor=HexColor('#8090b0'), alignment=TA_CENTER, leading=13)),
     SP(16),
-    P(f'MCESV/MCEMA  ·  K9ESV  ·  {TODAY}',
+    P(f'FieldCommand IMS v1.0  ·  {TODAY}',
       S('c7', fontName='Helvetica', fontSize=8.5,
         textColor=HexColor('#6070a0'), alignment=TA_CENTER, leading=12)),
 ]], colWidths=[CW])]], colWidths=[CW])
@@ -274,7 +274,7 @@ TOC_ENTRIES = [
     (32,'Winlink Form Import','/winlink-import.html'), (33,'JS8Call','/'),
     (34,'ICS Planning P','/ics/planningp.html'), (35,'Operator Access Cards','/printcenter.html'),
     (36,'Network — EMCOMM-NET & AiMesh','/'),
-    (36.1,'WAN Connectivity — InstyConnect & Starlink','/wan-status.html'),
+    (36.1,'WAN Connectivity — the cellular antenna & the satellite dish','/wan-status.html'),
     (36.2,'AMPRNet / 44Net Gateway','http://192.168.50.2:9000'),
     (37,'Printer Setup',':631'),
 ]
@@ -308,8 +308,8 @@ story.append(P(
     'Three ASUS RT-BE58 Go Wi-Fi 7 routers form the EMCOMM-NET access point: '
     'one primary router managing WAN connectivity and DHCP, and two AiMesh nodes extending '
     'coverage to secondary rooms and outdoor areas. '
-    'InstyConnect cellular (T-Mobile and Verizon) is the primary internet source. '
-    'Starlink satellite provides automatic failover when cellular drops. '
+    'the cellular modem (your cellular carriers) is the primary internet source. '
+    'satellite internet provides automatic failover when cellular drops. '
     'Any smartphone, tablet, or laptop on EMCOMM-NET reaches the full dashboard at '
     'http://192.168.50.1 in under a minute — no app, no login, no internet required.'))
 story.append(SP(6))
@@ -350,7 +350,7 @@ story.append(SP(4))
 story.append(tbl([['CARD','COLOR','SHOWS','LINKS TO'],
     ['WAN Status',
      'Green = cellular  Blue = satellite  Red = offline',
-     'Active WAN source (InstyConnect or Starlink), carrier, and signal. Updates every 30 seconds.',
+     'Active WAN source (the cellular antenna or the satellite dish), carrier, and signal. Updates every 30 seconds.',
      '/wan-status.html — full WAN dashboard with signal strength, latency, connectivity tests, and event log'],
     ['AMPRNet Gateway',
      'Green = tunnel UP  Red = tunnel DOWN',
@@ -372,7 +372,7 @@ story.append(SP(6))
 story.append(H2('Starting a Net'))
 for i, step in enumerate([
     'Click <b>[+ New Net]</b>',
-    'Enter Net Name → e.g. "McHenry County ARES Thursday Evening Net"',
+    'Enter Net Name → e.g. "your county ARES Thursday Evening Net"',
     'Enter Frequency → e.g. "147.015 MHz / 107.2 Hz"',
     'Enter Net Control → your callsign',
     'Click <b>[Activate Net]</b> → The net is now live',
@@ -397,7 +397,7 @@ story.append(P('Purpose-built for public safety Starcom radio net logging. Ident
 story.append(SP(6))
 story.append(tbl([['FEATURE','AMATEUR NET CONTROL','STARCOM LOGGER'],
     ['Unit identification','FCC Callsign (e.g. W9XYZ)','Radio ID / Unit number (e.g. 1234)'],
-    ['Net name prefix','Free form','sc- prefix (e.g. sc-McHenry-TAC1)'],
+    ['Net name prefix','Free form','sc- prefix (e.g. sc-your area-TAC1)'],
     ['ID lookup','FCC database auto-fill','Unit name / callsign manual entry'],
     ['Dispatch field','Not applicable','Dispatch center name field included'],
     ['Export format','ICS-309','ICS-309 (Starcom header)'],
@@ -420,7 +420,7 @@ story.append(PB())
 
 # Section 6 — Member Roster
 story += [SB(6,'Member Roster','http://192.168.50.1/roster.html'), SP(8)]
-story.append(P('The authoritative directory for McHenry County RACES/ARES/Starcom personnel. '
+story.append(P('The authoritative directory for your county RACES/ARES/Starcom personnel. '
                'Tracks certifications, equipment capabilities, contact information, and deployment activations.'))
 story.append(SP(6))
 story.append(tbl([['TAB','CONTENTS'],
@@ -550,7 +550,7 @@ for num, title, url, content in [
         ('Documentation', 'Running log of all documents produced during the incident.'),
     ]),
     (17, 'ICS Logistics', 'http://192.168.50.1/ics/logistics.html', [
-        ('Comms Plan (ICS-205)', 'Build the radio communications plan. Each row is a channel: function, name, frequency, CTCSS tone, mode, remarks. Pre-filled with McHenry County channels.'),
+        ('Comms Plan (ICS-205)', 'Build the radio communications plan. Each row is a channel: function, name, frequency, CTCSS tone, mode, remarks. Pre-filled with your county channels.'),
         ('Supply Tracking', 'Log supply requests with item, category, quantity needed, quantity on hand, and priority.'),
         ('Food / Medical (ICS-206)', 'Meal service log and medical unit leader, ambulance service, nearest hospital info.'),
         ('Check-In (ICS-211)', 'Personnel check-in list with name, ICS position, agency, and arrival time.'),
@@ -639,7 +639,7 @@ story.append(P('Maintain a directory of EOC locations, hospitals, shelters, stag
                'Each entry stores address, coordinates, radio frequencies, CTCSS tone, contact person, '
                'on-site callsign, generator status, ADA access, capacity, and operational notes.'))
 story.append(SP(4))
-story.append(TipBox('Four default facilities are pre-loaded for McHenry County. Edit these with your actual '
+story.append(TipBox('Four default facilities are pre-loaded for your county. Edit these with your actual '
                     'EOC, shelter, and staging area information. Click any card to expand full detail.'))
 story.append(PB())
 
@@ -647,7 +647,7 @@ story.append(PB())
 story += [SB(25,'Grid Square Calculator','http://192.168.50.1/grid.html'), SP(8)]
 story.append(P('Convert between decimal latitude/longitude and Maidenhead grid squares in both directions. '
                'Supports 4-character (EN52) and 6-character (EN52ab) precision. Also calculates distance '
-               'and bearing between any two grid squares. McHenry County, IL is in grid square <b>EN52</b>.'))
+               'and bearing between any two grid squares. your county, IL is in grid square <b>EN52</b>.'))
 story.append(PB())
 
 # Section 26 — Cheat Sheets
@@ -815,28 +815,28 @@ story.append(tbl([['ROUTER','PORT','PLACEMENT'],
     ['Mesh Node 2','Port 12','Third zone — outdoor staging, parking, or far wing.'],
     ], [1.5*inch, 0.7*inch, CW-2.2*inch]))
 story.append(SP(6))
-story.append(H2('WAN Connectivity — InstyConnect Primary + Starlink Failover'))
+story.append(H2('WAN Connectivity — the cellular antenna Primary + the satellite dish Failover'))
 story.append(P(
-    'InstyConnect cellular (T-Mobile and Verizon dual-carrier) is the primary internet source '
+    'the cellular modem (your cellular carriers dual-carrier) is the primary internet source '
     'connected to the ASUS WAN port via a single PoE Ethernet cable from the outdoor antenna. '
-    'Starlink satellite is the automatic secondary — the ASUS switches to it within 30-60 seconds '
+    'satellite internet is the automatic secondary — the ASUS switches to it within 30-60 seconds '
     'if cellular drops, and switches back when it recovers. No operator action is required.'))
 story.append(SP(4))
 story.append(tbl([['ANTENNA','WHEN TO USE'],
-    ['InstyConnect Drum','Default — every activation. Mounts on any mast or tripod. No aiming needed.'],
-    ['InstyConnect Switchblade','When Drum signal is poor. Swap PoE cable to same ASUS WAN port. Aim toward tower.'],
-    ['Starlink dish','Active automatically when cellular drops. Requires clear sky view. No inbound connections.'],
+    ['the cellular antenna Drum','Default — every activation. Mounts on any mast or tripod. No aiming needed.'],
+    ['the cellular antenna Switchblade','When Drum signal is poor. Swap PoE cable to same ASUS WAN port. Aim toward tower.'],
+    ['the satellite dish dish','Active automatically when cellular drops. Requires clear sky view. No inbound connections.'],
     ], [2.2*inch, CW-2.2*inch]))
 story.append(SP(4))
 story.append(tbl([['WAN STATE','DASHBOARD SHOWS','FEATURES AVAILABLE'],
-    ['InstyConnect UP','WAN card green — cellular + carrier','All features: NWS, APRS-IS, FCC refresh, Pat Winlink via internet'],
-    ['Starlink UP  (failover)','WAN card blue — Starlink failover','All features except inbound connections. ~20-40ms higher latency.'],
+    ['the cellular antenna UP','WAN card green — cellular + carrier','All features: NWS, APRS-IS, FCC refresh, Pat Winlink via internet'],
+    ['the satellite dish UP  (failover)','WAN card blue — the satellite dish failover','All features except inbound connections. ~20-40ms higher latency.'],
     ['Both DOWN  (offline)','WAN card red — Offline mode','All 32 local tools work normally. NWS, APRS-IS, FCC refresh paused.'],
     ], [1.4*inch, 1.5*inch, CW-2.9*inch]))
 story.append(SP(4))
 story.append(TipBox(
     'View full WAN details at http://192.168.50.1/wan-status.html — shows active source, '
-    'carrier, signal strength, Starlink latency, connectivity test results, and a WAN event log '
+    'carrier, signal strength, the satellite dish latency, connectivity test results, and a WAN event log '
     'recording every failover and failback with UTC timestamps.'))
 story.append(SP(6))
 story.append(H2('AMPRNet / 44Net Gateway'))
@@ -880,13 +880,13 @@ story.append(TipBox('Recommended field printers: Brother HL-L2350DW (laser, exce
                     'Canon PIXMA TR150 or HP OfficeJet 200 (battery-powered portable options).'))
 
 # ── Build ─────────────────────────────────────────────────────────────────────
-out = '/mnt/user-data/outputs/McHenry_County_RACES_ARES_Starcom_FieldCommand_User_Guide.pdf'
+out = '/mnt/user-data/outputs/your area_County_RACES_ARES_Starcom_FieldCommand_User_Guide.pdf'
 doc = SimpleDocTemplate(
     out, pagesize=letter,
     leftMargin=M, rightMargin=M,
     topMargin=0.55*inch, bottomMargin=0.42*inch,
-    title='McHenry County RACES/ARES/Starcom FieldCommand User Guide',
-    author='McHenry County Emergency Services Volunteers and McHenry County Emergency Management Agency')
+    title='your county RACES/ARES/Starcom FieldCommand User Guide',
+    author='FieldCommand IMS')
 doc.build(story, canvasmaker=NC)
 
 # Append Pi 500 addendum

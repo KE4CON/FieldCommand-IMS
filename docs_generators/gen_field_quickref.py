@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 FieldCommand Field Quick-Reference — PDF Generator
-K9ESV · MCESV/MCEMA
+FieldCommand IMS
 8-page lean field guide. Print double-sided and hand out at check-in.
 Output: /mnt/user-data/outputs/FieldCommand_Field_Quick_Reference.pdf
 """
@@ -33,7 +33,7 @@ PURPLE = HexColor('#5b2d8c')
 RED_BG = HexColor('#fde8e8')
 RED    = HexColor('#b82020')
 
-ORG   = 'Developed by James Rospopo KE4CON for McHenry County ESV / MCESV / K9ESV'
+ORG   = 'FieldCommand IMS — FieldCommand Incident Management System'
 PROD  = 'FieldCommand IMS v1.0 — Field Quick-Reference'
 TODAY = datetime.date.today().strftime('%B %Y')
 PAGE_W, PAGE_H = letter
@@ -76,11 +76,11 @@ class NC(canvas.Canvas):
         self.setFillColor(HexColor('#f0c040'))
         self.setFont('Helvetica-Bold', 10)
         self.drawCentredString(PAGE_W/2, PAGE_H - 0.70*inch,
-            'K9ESV  ·  McHenry County Emergency Services Volunteers')
+            'your callsign  ·  your county Emergency Services Volunteers')
         self.setFillColor(HexColor('#c0d4f0'))
         self.setFont('Helvetica', 9)
         self.drawCentredString(PAGE_W/2, PAGE_H - 0.88*inch,
-            'and McHenry County Emergency Management Agency')
+            'and your county Emergency Management Agency')
         self.setFillColor(HexColor('#ffffff'))
         self.setFont('Helvetica-Bold', 58)
         self.drawCentredString(PAGE_W/2, PAGE_H*0.60, 'FIELDCOMMAND')
@@ -100,14 +100,14 @@ class NC(canvas.Canvas):
         self.setFillColor(HexColor('#8090c0'))
         self.setFont('Helvetica', 9.5)
         self.drawCentredString(PAGE_W/2, PAGE_H*0.30,
-            'RACES  ·  ARES  ·  Starcom  ·  K9ESV  ·  MCESV / MCEMA')
+            'RACES  ·  ARES  ·  ICS/NIMS  ·  Amateur Radio EMCOMM  ·  Public Safety')
         self.setFillColor(HexColor('#6070a0'))
         self.setFont('Helvetica', 9)
         self.drawCentredString(PAGE_W/2, PAGE_H*0.25, TODAY)
         self.setFillColor(HexColor('#1a3a6b'))
         self.setFont('Helvetica', 7)
         self.drawCentredString(PAGE_W/2, 0.05*inch,
-            f'FieldCommand IMS v1.0  ·  MCESV/MCEMA  ·  {TODAY}')
+            f'FieldCommand IMS v1.0  ·  Open-Source Field-Deployable ICS Platform  ·  {TODAY}')
 
 
     def _chrome(self, total):
@@ -253,7 +253,7 @@ story = []
 # ── COVER ─────────────────────────────────────────────────────────────────────
 story.append(SP(50))
 cover = Table([[Table([[
-    P('MCESV / MCEMA  ·  K9ESV',
+    P('FieldCommand Incident Management System',
       S('co', fontName='Helvetica', fontSize=10, textColor=GOLD,
         alignment=TA_CENTER, leading=13)),
     SP(6),
@@ -391,7 +391,7 @@ story.append(ref_tbl(
     ['FIELD', 'DESCRIPTION'],
     [
         ['Radio ID',      'Starcom unit number (e.g. 2301, 4710). Required for every check-in.'],
-        ['Unit Name',     'Agency and unit description (e.g. "McHenry SO — Unit 12")'],
+        ['Unit Name',     'Agency and unit description (e.g. "your area SO — Unit 12")'],
         ['Dispatch Ctr',  'Dispatching agency or center (e.g. MCECC, IDOT)'],
         ['Weather / SAR', 'Use the quick-launch cards on the Starcom dashboard to pre-set net type'],
         ['Multiple nets', 'Typical activation: Starcom General + Weather Net + SAR Net all open simultaneously'],
@@ -481,7 +481,7 @@ story.append(ref_tbl(
          'IAP form tracker, resource status table, incident documentation log, operational period notes. '
          'Forms: ICS-209.'],
         ['🟢 Logistics',
-         'Communications plan (ICS-205) with pre-filled McHenry County channels, supply tracking, '
+         'Communications plan (ICS-205) with pre-filled your county channels, supply tracking, '
          'meal log, personnel check-in list. Forms: ICS-205, ICS-206, ICS-211.'],
         ['💜 Finance/Admin',
          'Expenditure log, personnel time tracking, procurement orders. Export to CSV for agency reporting.'],
@@ -491,7 +491,7 @@ story.append(SP(6))
 story.append(tip(
     'The 100-item objectives dropdown in Command section is organized into 13 groups. '
     'Select an objective → it pre-fills the text box → edit if needed → click + Add. '
-    'MCESV/MCEMA-specific objectives are in the last group.',
+    'Your agency-specific objectives are in the last group.',
     AMBER, AMBER_BG))
 story.append(PB())
 
@@ -570,7 +570,7 @@ story.append(ref_tbl(
         ['Health Monitor', ':5051/health',
          'Live CPU/memory/disk/temp, all service status dots, GPS fix quality, internet status.'],
         ['WAN Status', '/wan-status.html',
-         'Active WAN source (InstyConnect cellular or Starlink satellite), signal strength, '
+         'Active WAN source (cellular modem or satellite internet), signal strength, '
          'carrier, latency, connectivity tests, and WAN event log.'],
         ['AMPRNet Gateway', '192.168.50.2:9000',
          'WireGuard tunnel state, AMPRNet 44.x.x.x address, traffic stats. '
@@ -615,15 +615,15 @@ story.append(ref_tbl(
     [
         ['FieldCommand dashboard', 'http://192.168.50.1', 'Main entry point — all 32 tools'],
         ['WAN Status dashboard', '/wan-status.html',
-         'InstyConnect + Starlink + WAN event log'],
+         'cellular antenna + satellite dish + WAN event log'],
         ['AMPRNet gateway status', 'http://192.168.50.2:9000',
          'Requires FCC callsign login'],
         ['ASUS router admin  (primary)', 'http://192.168.50.254',
          'Wi-Fi settings, dual WAN failover, AiMesh'],
-        ['InstyConnect modem admin', 'http://10.1.1.1  or  http://my.insty',
-         'Connect to InstyConnect Wi-Fi first'],
-        ['Starlink dish admin', 'http://192.168.100.1',
-         'Or use Starlink app on phone'],
+        ['cellular antenna modem admin', 'http://10.1.1.1  or  http://my.insty',
+         'Connect to cellular antenna Wi-Fi first'],
+        ['satellite dish dish admin', 'http://192.168.100.1',
+         'Or use satellite dish app on phone'],
         ['CUPS print server', 'http://192.168.50.1:631',
          'Printer management and shared queue'],
         ['Pat Winlink', 'http://192.168.50.1:8090',
@@ -639,18 +639,18 @@ story.append(ref_tbl(
 story.append(SP(6))
 
 story.append(section_hdr('📡', 'WAN Connectivity Quick Reference',
-                         'InstyConnect Primary  ·  Starlink Automatic Failover', AMBER, AMBER_BG))
+                         'cellular antenna Primary  ·  satellite dish Automatic Failover', AMBER, AMBER_BG))
 story.append(SP(6))
 story.append(ref_tbl(
     ['WAN SOURCE', 'HOW CONNECTED', 'WHEN ACTIVE'],
     [
-        ['InstyConnect Drum',
+        ['cellular antenna Drum',
          'PoE cable from outdoor antenna to ASUS WAN port',
          'Default — primary WAN at all activations  ·  10.1.1.1'],
-        ['InstyConnect Switchblade',
+        ['cellular antenna Switchblade',
          'Same PoE cable to same ASUS WAN port  (swap Drum)',
          'When Drum signal is poor — aim toward tower  ·  10.1.1.1'],
-        ['Starlink satellite',
+        ['satellite internet',
          'Ethernet adapter + USB adapter → ASUS USB WAN',
          'Auto when cellular drops — switches in 60s  ·  192.168.100.1'],
         ['Site Ethernet',
@@ -711,10 +711,10 @@ story.append(ref_tbl(
          'A background service has stopped',
          'SSH to Pi: sudo systemctl restart <service-name>  (e.g. fcc-lookup, ics-platform)'],
         ['WAN shows offline',
-         'InstyConnect disconnected or plan inactive',
+         'cellular antenna disconnected or plan inactive',
          'Check Drum LED. Try Switchblade. Check plan at instyconnect.com. '
-         'If Starlink is connected, failover should be automatic.'],
-        ['Starlink failover not working',
+         'If satellite dish is connected, failover should be automatic.'],
+        ['satellite dish failover not working',
          'USB adapter not seated or ASUS Dual WAN not enabled',
          'Check ASUS admin → WAN → Dual WAN → must be ON with USB as secondary.'],
         ['AMPRNet login fails',
@@ -737,8 +737,8 @@ story.append(HR(EOC_LT, 0.8))
 story.append(SP(8))
 
 bm = Table([[
-    P('K9ESV  ·  McHenry County Emergency Services Volunteers\n'
-      'and McHenry County Emergency Management Agency',
+    P('your callsign  ·  your county Emergency Services Volunteers\n'
+      'and your county Emergency Management Agency',
       S('bm', fontName='Helvetica-Bold', fontSize=9, textColor=EOC, leading=13)),
     P('RACES · ARES · Starcom\nhttp://192.168.50.1',
       S('bm', fontName='Helvetica-Bold', fontSize=9, textColor=EOC,
@@ -762,7 +762,7 @@ doc = SimpleDocTemplate(
     leftMargin=M, rightMargin=M,
     topMargin=0.58*inch, bottomMargin=0.40*inch,
     title='FieldCommand IMS v1.0 — Field Quick-Reference',
-    author='McHenry County Emergency Services Volunteers and McHenry County Emergency Management Agency')
+    author='your county Emergency Services Volunteers and your county Emergency Management Agency')
 doc.build(story, canvasmaker=NC)
 
 from pypdf import PdfReader, PdfWriter

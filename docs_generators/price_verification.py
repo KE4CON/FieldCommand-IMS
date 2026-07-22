@@ -56,7 +56,7 @@ class VCanvas(pdfcanvas.Canvas):
             self.setFillColor(GOLD)
             self.setFont('Helvetica', 8)
             self.drawString(M, PAGE_H-0.44*inch,
-                f'Every item researched {TODAY}  ·  For ARDC grant proposal budget justification  ·  Developed by KE4CON for MCESV / MCEMA')
+                f'Every item researched {TODAY}  ·  For ARDC grant proposal budget justification  ·  Developed by KE4CON for your organization')
             self.setFillColor(white)
             self.setFont('Helvetica-Bold', 9)
             self.drawRightString(PAGE_W-M, PAGE_H-0.30*inch, f'Page {n} of {total}')
@@ -143,12 +143,12 @@ ROWS = [
    'Commodity bundle 1–6 ft lengths.'),
 
   ('CAT','WAN — CELLULAR (INSTYCONNECT)'),
-  ('InstyConnect Drum system',
+  ('the cellular antenna Drum system',
    '$375.00', 'O',
    'instyconnect.com/order',
    'Owner documented purchase price',
    'Complete 5G X62 POE + Drum antenna system. Drum antenna released early 2026 per rvmobileinternet.com review. Builds via order wizard at instyconnect.com/order — pricing varies by configuration. Verify before purchase.'),
-  ('InstyConnect Switchblade',
+  ('the cellular antenna Switchblade',
    '$425.00', 'O',
    'instyconnect.com (owner purchase)',
    'Owner documented purchase price',
@@ -160,16 +160,16 @@ ROWS = [
    'Weatherproof outdoor-rated shielded CAT6.'),
 
   ('CAT','WAN — SATELLITE (STARLINK)'),
-  ('Starlink Standard Gen 3 kit',
+  ('the satellite dish Standard Gen 3 kit',
    '$349.00', 'V',
    'homedepot.com (SKU 329052560) · starlink.com',
    '$349.00 — Home Depot product page verified; starlink.com confirms hardware cost',
    'PRICE DROP from $499. Includes dish, Wi-Fi 6 router, cable, kickstand. Rental option: $10/mo for Residential plan customers. Regional promo pricing as low as $89 in some zones — check starlink.com for your address.'),
-  ('Starlink Ethernet adapter',
+  ('the satellite dish Ethernet adapter',
    '$25.00', 'V',
    'starlink.com (accessories store)',
    '$25.00 — confirmed at starlink.com',
-   'Required to bypass Starlink router and connect dish to ASUS RT-BE58 Go.'),
+   'Required to bypass the satellite dish router and connect dish to ASUS RT-BE58 Go.'),
   ('USB 3.0 Gigabit Ethernet adapter',
    '$18.00', 'E',
    'amazon.com',
@@ -382,8 +382,8 @@ tot = [
     ('FieldCommand Server (Pi 5 16GB, Pironman MAX, 2× 1TB NVMe RAID, PSU, SD)', '$784'),
     ('44Net Gateway (Pi 5 16GB, Argon NEO 5, 256GB SATA SSD, PSU)', '$399'),
     ('Networking (3× ASUS RT-BE58 Go @ $119, UniFi Lite 16 PoE @ $199, cables)', '$586'),
-    ('Cellular WAN (InstyConnect Drum @ $375, Switchblade @ $425, cable @ $20)', '$820'),
-    ('Satellite WAN (Starlink Standard kit @ $349, adapters)', '$392'),
+    ('Cellular WAN (the cellular antenna Drum @ $375, Switchblade @ $425, cable @ $20)', '$820'),
+    ('Satellite WAN (the satellite dish Standard kit @ $349, adapters)', '$392'),
     ('Operator Workstations (4× Pi 500+ Desktop Kit @ $430, 4× Pi Monitor @ $100)', '$2,120'),
     ('HF Station (IC-7300MK2 @ $1,500, 2× Astron RS-35M-AP @ $344 ea, LDG IT-100 @ $180, cable, laptop @ $1,000)', '$3,378'),
     ('PACTOR HF Modem (SCS PXdragon DR-9400 @ $2,099 + IC-7300MK2 cables @ $60)', '$2,159'),
@@ -416,11 +416,11 @@ story.append(Spacer(1, 6))
 story.append(P(
     '<b>Key changes from prior estimates:</b>  '
     '(1) Pi 500+ replaces Pi 500 — $430/kit vs $130/unit; workstations up $1,120 total.  '
-    '(2) Starlink kit price DROPPED from $499 to $349.  '
+    '(2) the satellite dish kit price DROPPED from $499 to $349.  '
     '(3) Pi 500+ includes 256 GB NVMe SSD and mechanical keyboard; Desktop Kit includes PSU and HDMI — no separate purchases needed.  '
     '(4) Chameleon USA250 25%-off sale runs through ~July 14, 2026 — MPAS 2.0 could be ~$495 if purchased now.  '
     '(5) Icom runs periodic instant coupons — check hamradio.com/special_offers before purchasing MK2.  '
-    '<b>Recurring costs:</b> InstyConnect $5/mo standby / $79–99/mo active  ·  Starlink ~$120/mo (or Roam plan, pausable).',
+    '<b>Recurring costs:</b> the cellular antenna $5/mo standby / $79–99/mo active  ·  the satellite dish ~$120/mo (or Roam plan, pausable).',
     S('gn', fontSize=8, leading=11, textColor=DGRAY, spaceBefore=2)))
 
 doc = SimpleDocTemplate('/mnt/user-data/outputs/FieldCommand_Price_Verification.pdf',

@@ -31,6 +31,39 @@ def log_activity(incident_id, section, action, detail):
     get_conn().commit()
 
 
+def _rr_text(elem, tag):
+    """Extract text from first matching XML child element."""
+    import xml.etree.ElementTree as ET
+    found = elem.find(".//" + tag)
+    return (found.text or "").strip() if found is not None else ""
+
+def _rr_mode(rr_mode_str):
+    """Map RadioReference mode string to our standard."""
+    m = (rr_mode_str or "").upper()
+    if "P25" in m or "APCO" in m: return "P25"
+    if "DMR"  in m:               return "DMR"
+    if "NXDN" in m:               return "NXDN"
+    if "DSTAR" in m or "D-STAR" in m: return "D-STAR"
+    if "NFM"  in m:               return "NFM"
+    if "FM"   in m:               return "FM"
+    if "AM"   in m:               return "AM"
+    return "FM"  # safe default
+
+def _rr_tag_to_function(tag):
+    """Map RadioReference tag to our function categories."""
+    if not tag: return "Tactical"
+    t = tag.lower()
+    if "fire"    in t: return "Tactical"
+    if "ems"     in t or "medical" in t: return "Medical"
+    if "law"     in t or "police"  in t or "sheriff" in t: return "Command"
+    if "interop" in t: return "Interop"
+    if "command" in t: return "Command"
+    if "dispatch" in t: return "Command"
+    if "data"    in t: return "Data"
+    if "air"     in t: return "Air"
+    return "Tactical"
+
+
 class ICSHandler(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args): pass
 
@@ -270,6 +303,124 @@ class ICSHandler(BaseHTTPRequestHandler):
                 c.execute(f"INSERT INTO channel_library ({cols}) VALUES ({phs})", vals)
             c.commit()
             return self.send_json({"status":"ok","id":ch_id})
+
+
+        # ── RadioReference SOAP Proxy ───────────────────────────────────────
+        # Proxies requests to the RadioReference SOAP API on behalf of the
+        # client — avoids CORS issues and keeps credentials server-side per session.
+        # User supplies their own RR username/password (premium subscription required).
+        # We never store credentials — they are passed per-request only.
+        elif path == "/api/ics/rr_search":
+            import urllib.request
+            rr_username = body.get("username","")
+            rr_password = body.get("password","")
+            rr_appkey   = body.get("appkey","")
+            search_type = body.get("type","county")   # county | zip | agency
+            search_val  = body.get("value","")        # countyId, ZIP, agencyId
+            tag_filter  = body.get("tag","")          # optional tag (Fire, EMS, Law, etc.)
+
+            if not all([rr_username, rr_password, search_val]):
+                return self.send_json({"error":"username, password, and value are required"},400)
+
+            # Build SOAP envelope based on search type
+            if search_type == "zip":
+                method   = "getZipCodeInfo"
+                body_xml = f"<cid>{search_val}</cid>"
+            elif search_type == "county_freqs" and tag_filter:
+                method   = "getCountyFreqsByTag"
+                body_xml = f"<cid>{search_val}</cid><tagId>{tag_filter}</tagId>"
+            elif search_type == "county_freqs":
+                method   = "getCountyInfo"
+                body_xml = f"<cid>{search_val}</cid>"
+            elif search_type == "agency":
+                method   = "getAgencyInfo"
+                body_xml = f"<aid>{search_val}</aid>"
+            else:
+                return self.send_json({"error":f"unknown search type: {search_type}"},400)
+
+            soap_env = f"""<?xml version="1.0" encoding="UTF-8"?>
+<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"
+  xmlns:ns1="http://api.radioreference.com/soap2">
+  <SOAP-ENV:Body>
+    <ns1:{method}>
+      <authInfo>
+        <appKey>{rr_appkey or "FieldCommandIMS"}</appKey>
+        <username>{rr_username}</username>
+        <password>{rr_password}</password>
+        <version>latest</version>
+        <style>rpc</style>
+      </authInfo>
+      {body_xml}
+    </ns1:{method}>
+  </SOAP-ENV:Body>
+</SOAP-ENV:Envelope>"""
+
+            try:
+                req = urllib.request.Request(
+                    "https://api.radioreference.com/soap2/",
+                    data=soap_env.encode("utf-8"),
+                    headers={
+                        "Content-Type": "text/xml; charset=utf-8",
+                        "SOAPAction": f"http://api.radioreference.com/soap2/#{method}",
+                    },
+                    method="POST"
+                )
+                with urllib.request.urlopen(req, timeout=15) as resp:
+                    xml_resp = resp.read().decode("utf-8")
+
+                # Parse the SOAP XML response into something useful
+                import xml.etree.ElementTree as ET
+                root = ET.fromstring(xml_resp)
+                ns   = {"s": "http://schemas.xmlsoap.org/soap/envelope/"}
+
+                # Check for SOAP fault
+                fault = root.find(".//faultstring")
+                if fault is not None:
+                    return self.send_json({"error": fault.text or "SOAP fault"}, 400)
+
+                # Extract frequencies from getCountyInfo / getCountyFreqsByTag
+                channels = []
+                # Conventional frequencies
+                for freq in root.iter("freqs"):
+                    output   = _rr_text(freq, "output")
+                    input_f  = _rr_text(freq, "input")
+                    pl_tone  = _rr_text(freq, "pl")
+                    desc     = _rr_text(freq, "descr")
+                    alpha    = _rr_text(freq, "alpha")
+                    mode     = _rr_text(freq, "mode") or "FM"
+                    tag_name = _rr_text(freq, "tag")
+                    if output:
+                        channels.append({
+                            "name":      desc or alpha or output,
+                            "alpha_tag": alpha or "",
+                            "rx_freq":   output,
+                            "tx_freq":   input_f or output,
+                            "pl_tone":   pl_tone or "",
+                            "mode":      _rr_mode(mode),
+                            "function":  _rr_tag_to_function(tag_name),
+                            "notes":     tag_name or "",
+                            "source":    "RadioReference",
+                        })
+
+                # For zip lookup — return county/state info
+                if search_type == "zip":
+                    result = {
+                        "county_id": _rr_text(root, "cid"),
+                        "state_id":  _rr_text(root, "stid"),
+                        "city":      _rr_text(root, "ctName"),
+                        "lat":       _rr_text(root, "lat"),
+                        "lon":       _rr_text(root, "lon"),
+                    }
+                    return self.send_json(result)
+
+                return self.send_json({
+                    "channels": channels,
+                    "count":    len(channels),
+                    "source":   "RadioReference SOAP API",
+                })
+
+            except Exception as e:
+                return self.send_json({"error": str(e)}, 503)
 
         elif path == "/api/ics/general_info":
             inc_id = body.get("incident_id","")

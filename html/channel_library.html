@@ -82,6 +82,144 @@
   tactical frequencies here. These appear in the ICS-205 Channel Library picker on every form.
   Universal channels (National Simplex, APRS, NIFOG, Mutual Aid) are always available
   automatically — only add your agency-specific channels here.
+  <a href="#rr-import" onclick="toggleRR()" style="color:var(--amber);margin-left:10px">
+    📡 Import from RadioReference →
+  </a>
+</div>
+
+<!-- RadioReference Import Panel -->
+<div id="rrPanel" style="display:none;background:rgba(200,118,10,0.06);
+     border-bottom:2px solid rgba(200,118,10,0.3);padding:16px 20px">
+  <div style="display:flex;align-items:flex-start;gap:20px;flex-wrap:wrap">
+    <div style="flex:1;min-width:280px">
+      <div style="font-family:var(--font-hd);font-size:12px;color:var(--amber);
+                  letter-spacing:1px;margin-bottom:10px">
+        📡 RADIOREFERENCE IMPORT
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:12px;line-height:1.6">
+        Requires a <a href="https://www.radioreference.com/apps/subscription/"
+          target="_blank" style="color:var(--amber)">RadioReference Premium subscription</a>.
+        Enter your own credentials — they are used only for this request and never stored.
+        Search by ZIP code to find your county, then import channels by category.
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+        <div>
+          <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:3px">
+            RR Username *
+          </label>
+          <input type="text" id="rr_user" placeholder="RadioReference username"
+            style="width:100%;box-sizing:border-box;background:var(--input-bg);
+                   border:1px solid var(--line);color:var(--txt);
+                   padding:6px 9px;font-size:12px;border-radius:4px">
+        </div>
+        <div>
+          <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:3px">
+            RR Password *
+          </label>
+          <input type="password" id="rr_pass" placeholder="RadioReference password"
+            style="width:100%;box-sizing:border-box;background:var(--input-bg);
+                   border:1px solid var(--line);color:var(--txt);
+                   padding:6px 9px;font-size:12px;border-radius:4px">
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+        <div>
+          <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:3px">
+            ZIP Code
+          </label>
+          <input type="text" id="rr_zip" placeholder="e.g. 60098" maxlength="5"
+            style="width:100%;box-sizing:border-box;background:var(--input-bg);
+                   border:1px solid var(--line);color:var(--txt);
+                   padding:6px 9px;font-size:12px;border-radius:4px;
+                   font-family:var(--font-hd)">
+        </div>
+        <div>
+          <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:3px">
+            County ID <span style="font-style:italic">(from ZIP lookup)</span>
+          </label>
+          <input type="text" id="rr_county" placeholder="auto-filled"
+            style="width:100%;box-sizing:border-box;background:var(--input-bg);
+                   border:1px solid var(--line);color:var(--txt);
+                   padding:6px 9px;font-size:12px;border-radius:4px;
+                   font-family:var(--font-hd)">
+        </div>
+        <div>
+          <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:3px">
+            Filter by Tag
+          </label>
+          <select id="rr_tag"
+            style="width:100%;background:var(--input-bg);border:1px solid var(--line);
+                   color:var(--txt);padding:6px 9px;font-size:12px;border-radius:4px">
+            <option value="">All frequencies</option>
+            <option value="2">Fire Dispatch</option>
+            <option value="3">Fire-Tac</option>
+            <option value="4">EMS Dispatch</option>
+            <option value="5">EMS-Tac</option>
+            <option value="6">Law Dispatch</option>
+            <option value="7">Law-Tac</option>
+            <option value="8">Interop</option>
+            <option value="12">Emergency Ops</option>
+            <option value="17">Amateur</option>
+          </select>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button onclick="rrZipLookup()"
+          style="font-size:12px;padding:7px 14px;
+                 background:rgba(200,118,10,0.15);border-color:rgba(200,118,10,0.4);
+                 color:var(--amber)">
+          🔍 Lookup ZIP
+        </button>
+        <button onclick="rrFetchChannels()"
+          style="font-size:12px;padding:7px 14px;
+                 background:var(--amber);border-color:var(--amber);color:#001428;
+                 font-weight:bold">
+          📥 Fetch Channels
+        </button>
+        <button onclick="toggleRR()"
+          style="font-size:12px;padding:7px 12px">
+          Cancel
+        </button>
+      </div>
+      <div id="rrStatus" style="margin-top:8px;font-size:11px;color:var(--muted)"></div>
+    </div>
+
+    <!-- Results panel -->
+    <div id="rrResults" style="flex:2;min-width:300px;display:none">
+      <div style="font-family:var(--font-hd);font-size:11px;color:var(--muted);
+                  letter-spacing:1px;margin-bottom:8px">
+        RESULTS — <span id="rrResultCount">0</span> channels found
+        <button onclick="rrImportAll()"
+          style="margin-left:10px;font-size:10px;padding:3px 10px;
+                 background:var(--green);border-color:var(--green);color:#fff">
+          Import All
+        </button>
+        <button onclick="rrImportSelected()"
+          style="margin-left:4px;font-size:10px;padding:3px 10px">
+          Import Selected
+        </button>
+      </div>
+      <div style="max-height:240px;overflow-y:auto;border:1px solid var(--line);
+                  border-radius:5px;background:var(--bg)">
+        <table style="width:100%;border-collapse:collapse;font-size:11px" id="rrResultTable">
+          <thead style="position:sticky;top:0;background:var(--panel2)">
+            <tr>
+              <th style="padding:5px 8px;width:30px">
+                <input type="checkbox" id="rrSelectAll"
+                  onchange="document.querySelectorAll('.rr-sel').forEach(c=>c.checked=this.checked)">
+              </th>
+              <th style="padding:5px 8px;text-align:left">Name</th>
+              <th style="padding:5px 8px;text-align:left">Frequency</th>
+              <th style="padding:5px 8px;text-align:left">PL</th>
+              <th style="padding:5px 8px;text-align:left">Mode</th>
+              <th style="padding:5px 8px;text-align:left">Function</th>
+            </tr>
+          </thead>
+          <tbody id="rrResultBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Filter bar -->
@@ -442,6 +580,119 @@ async function handleCSVImport(input) {
 }
 
 loadChannels();
+
+
+// ── RadioReference Import ─────────────────────────────────────────
+let _rrChannels = [];
+
+function toggleRR() {
+  const panel = document.getElementById('rrPanel');
+  panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+}
+
+function rrStatus(msg, color='var(--muted)') {
+  const el = document.getElementById('rrStatus');
+  if (el) { el.textContent = msg; el.style.color = color; }
+}
+
+async function rrZipLookup() {
+  const zip  = document.getElementById('rr_zip').value.trim();
+  const user = document.getElementById('rr_user').value.trim();
+  const pass = document.getElementById('rr_pass').value.trim();
+  if (!zip || !user || !pass) {
+    rrStatus('Enter ZIP code, username, and password first', 'var(--red)'); return;
+  }
+  rrStatus('Looking up ZIP code...', 'var(--amber)');
+  try {
+    const r = await fetch(`${API}/api/ics/rr_search`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ username:user, password:pass, type:'zip', value:zip })
+    });
+    const d = await r.json();
+    if (d.error) { rrStatus('Error: ' + d.error, 'var(--red)'); return; }
+    document.getElementById('rr_county').value = d.county_id || '';
+    rrStatus(`✓ ${d.city||'Unknown'} — County ID: ${d.county_id||'?'}`, 'var(--green)');
+  } catch(e) { rrStatus('Request failed: ' + e.message, 'var(--red)'); }
+}
+
+async function rrFetchChannels() {
+  const user   = document.getElementById('rr_user').value.trim();
+  const pass   = document.getElementById('rr_pass').value.trim();
+  const county = document.getElementById('rr_county').value.trim();
+  const tag    = document.getElementById('rr_tag').value;
+  if (!user || !pass) { rrStatus('Enter credentials', 'var(--red)'); return; }
+  if (!county)        { rrStatus('Enter County ID or use ZIP lookup', 'var(--red)'); return; }
+  rrStatus('Fetching from RadioReference...', 'var(--amber)');
+  try {
+    const r = await fetch(`${API}/api/ics/rr_search`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ username:user, password:pass,
+        type:'county_freqs', value:county, tag })
+    });
+    const d = await r.json();
+    if (d.error) { rrStatus('RR error: ' + d.error, 'var(--red)'); return; }
+    _rrChannels = d.channels || [];
+    rrStatus(`✓ Fetched ${_rrChannels.length} channels`, 'var(--green)');
+    renderRRResults();
+  } catch(e) { rrStatus('Failed: ' + e.message, 'var(--red)'); }
+}
+
+function renderRRResults() {
+  const tbody = document.getElementById('rrResultBody');
+  if (!tbody) return;
+  document.getElementById('rrResultCount').textContent = _rrChannels.length;
+  document.getElementById('rrResults').style.display = _rrChannels.length ? '' : 'none';
+  tbody.innerHTML = _rrChannels.map((ch, i) => `
+    <tr>
+      <td style="padding:4px 8px;text-align:center">
+        <input type="checkbox" class="rr-sel" data-idx="${i}" checked>
+      </td>
+      <td style="padding:4px 8px">${ch.name}</td>
+      <td style="padding:4px 8px;font-family:monospace;color:var(--green)">${ch.rx_freq}</td>
+      <td style="padding:4px 8px;font-size:10px;color:var(--muted)">${ch.pl_tone||'—'}</td>
+      <td style="padding:4px 8px;font-size:10px;color:var(--muted)">${ch.mode||'FM'}</td>
+      <td style="padding:4px 8px">
+        <span class="fn-badge ${fnClass(ch.function)}">${ch.function||''}</span>
+      </td>
+    </tr>`).join('');
+}
+
+async function rrImportAll() { await rrImportChannels(_rrChannels); }
+
+async function rrImportSelected() {
+  const selected = [...document.querySelectorAll('.rr-sel:checked')]
+    .map(cb => _rrChannels[parseInt(cb.dataset.idx)]).filter(Boolean);
+  if (!selected.length) { alert('No channels selected'); return; }
+  await rrImportChannels(selected);
+}
+
+async function rrImportChannels(channels) {
+  rrStatus(`Importing ${channels.length} channels...`, 'var(--amber)');
+  let count = 0;
+  for (const ch of channels) {
+    try {
+      await fetch(`${API}/api/ics/channel_library`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          id:        'rr-' + Date.now() + '-' + Math.random().toString(36).slice(2,7),
+          name:      ch.name,
+          alpha_tag: ch.alpha_tag || '',
+          rx_freq:   ch.rx_freq,
+          tx_freq:   ch.tx_freq || ch.rx_freq,
+          pl_tone:   ch.pl_tone || '',
+          mode:      ch.mode || 'FM',
+          function:  ch.function || 'Tactical',
+          division:  '',
+          notes:     'RadioReference import' + (ch.notes ? ' — ' + ch.notes : ''),
+          custom:    1, active: 1,
+        })
+      });
+      count++;
+    } catch(e) {}
+  }
+  rrStatus(`✓ Imported ${count} channels`, 'var(--green)');
+  await loadChannels();
+}
 </script>
 </body>
 </html>

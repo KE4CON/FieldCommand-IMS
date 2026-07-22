@@ -2069,6 +2069,524 @@ function importSelectedRepeaters(repeaters) {
   }
 }
 
+
+// ══════════════════════════════════════════════════════════════════
+// ICS-205A COMMUNICATIONS LIST
+// ══════════════════════════════════════════════════════════════════
+FORMS['205A'] = {
+  title: 'ICS-205A Communications List',
+  badge: 'ICS-205A',
+  variants: { FEMA:'FEMA 010-0-5A', USCG:'CG-5214A', NWCG:'ICS-205A (NWCG)' },
+
+  render() {
+    document.getElementById('formTitle').textContent = 'ICS-205A \u2014 Communications List';
+    document.getElementById('formBadge').textContent = 'ICS-205A';
+    document.getElementById('formMeta').textContent =
+      `${this.variants[VARIANT]} \u00b7 Period ${PERIOD} \u00b7 ${incData.name||'No incident'}`;
+    return `
+    <div class="section-card">
+      <h2>1. Incident Information</h2>
+      <div class="grid-3">
+        ${field('incident_name','Incident Name','text',incData.name||'')}
+        ${field('operational_period_number','Op Period #','text',String(PERIOD))}
+        ${field('date_prepared','Date Prepared','date',todayDate())}
+      </div>
+      <div class="grid-2">
+        ${field('operational_period_from','Op Period From','datetime-local','')}
+        ${field('operational_period_to','Op Period To','datetime-local','')}
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>2. Personnel Communications List</h2>
+      <p style="font-size:11px;color:var(--muted);margin:0 0 10px">
+        List all incident personnel with their assigned radio channel, cell number, and pager/satellite contact.
+        This supplements ICS-205 with individual contact information.
+      </p>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="background:var(--panel2)">
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:120px">Name</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:140px">ICS Position / Title</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">Home Agency</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:70px">Radio Ch/Zone</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:100px">Cell / Phone</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:100px">Pager / Satellite</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:120px">Email / Winlink</th>
+          </tr></thead>
+          <tbody id="cl205aBody">
+            ${[...Array(12)].map((_,i)=>FORMS['205A']._row(i)).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <button onclick="add205ARow()" style="font-size:11px;padding:4px 12px">+ Add Person</button>
+        <button onclick="importFrom203()" style="font-size:11px;padding:4px 12px;background:var(--eoc);border-color:var(--eoc);color:#fff">
+          📋 Import from ICS-203 Assignments
+        </button>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>3. Prepared By</h2>
+      <div class="grid-2">
+        ${field('prepared_by_coml','Prepared By (COML)','text',
+          orgData.personal_call?`${orgData.personal_call} \u2014 Communications Unit Leader`:'')}
+        ${field('date_time_prepared','Date / Time','datetime-local','')}
+      </div>
+    </div>`;
+  },
+
+  _row(i, data={}) {
+    return `<tr id="cl205arow_${i}">
+      <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="cl205a_name_${i}" value="${data.name||''}" placeholder="Name" style="width:100%;font-size:11px;padding:3px 4px"></td>
+      <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="cl205a_pos_${i}" value="${data.pos||''}" placeholder="ICS Position" style="width:100%;font-size:11px;padding:3px 4px"></td>
+      <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="cl205a_agency_${i}" value="${data.agency||''}" placeholder="Agency" style="width:100%;font-size:11px;padding:3px 4px"></td>
+      <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="cl205a_radio_${i}" value="${data.radio||''}" placeholder="Ch 1-1" style="width:100%;font-size:11px;padding:3px 4px;font-family:var(--font-hd)"></td>
+      <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="cl205a_cell_${i}" value="${data.cell||''}" placeholder="(555) 000-0000" style="width:100%;font-size:11px;padding:3px 4px"></td>
+      <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="cl205a_pager_${i}" value="${data.pager||''}" placeholder="Satellite / Pager" style="width:100%;font-size:11px;padding:3px 4px"></td>
+      <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="cl205a_email_${i}" value="${data.email||''}" placeholder="email or callsign@winlink.org" style="width:100%;font-size:11px;padding:3px 4px"></td>
+    </tr>`;
+  },
+
+  buildPrint() {
+    const fd = collectFormData();
+    Object.assign(formData, fd);
+    const variant = FORMS['205A'].variants[VARIANT];
+    let rows = '';
+    for (let i=0; i<cl205aCount; i++) {
+      if (!fd[`cl205a_name_${i}`] && !fd[`cl205a_pos_${i}`]) continue;
+      rows += `<tr>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`cl205a_name_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`cl205a_pos_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`cl205a_agency_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc;font-family:monospace">${fd[`cl205a_radio_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`cl205a_cell_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`cl205a_pager_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`cl205a_email_${i}`]||''}</td>
+      </tr>`;
+    }
+    return `
+    <div class="ics-print-header">
+      <div class="logo-cell">${logoHtml()}</div>
+      <div class="title-cell"><h1>ICS-205A COMMUNICATIONS LIST</h1>
+        <div class="sub">${variant} \u00b7 FieldCommand IMS</div></div>
+      <div class="meta-cell">
+        <div class="ml">Incident Name</div><div class="mv" style="font-size:10px">${fd.incident_name||'\u2014'}</div>
+        <div class="ml">Op Period</div><div class="mv">${fd.operational_period_number||PERIOD}</div>
+        <div class="ml">Date</div><div class="mv">${fd.date_prepared||'\u2014'}</div>
+      </div>
+    </div>
+    <div class="pr">
+      <div class="pc w2"><div class="pl">Op Period From</div><div class="pv">${fd.operational_period_from||''}</div></div>
+      <div class="pc w2"><div class="pl">Op Period To</div><div class="pv">${fd.operational_period_to||''}</div></div>
+    </div>
+    <div class="pr"><div class="pc" style="flex:4">
+      <div class="pl">2. Personnel Communications List</div>
+      <table style="width:100%;border-collapse:collapse;font-size:9px;margin-top:4px">
+        <thead><tr style="background:#e8eef7">
+          <th style="padding:3px 4px;border:1px solid #ccc;text-align:left">Name</th>
+          <th style="padding:3px 4px;border:1px solid #ccc;text-align:left">ICS Position</th>
+          <th style="padding:3px 4px;border:1px solid #ccc">Agency</th>
+          <th style="padding:3px 4px;border:1px solid #ccc">Radio Ch</th>
+          <th style="padding:3px 4px;border:1px solid #ccc;text-align:left">Cell</th>
+          <th style="padding:3px 4px;border:1px solid #ccc;text-align:left">Pager/Sat</th>
+          <th style="padding:3px 4px;border:1px solid #ccc;text-align:left">Email/Winlink</th>
+        </tr></thead>
+        <tbody>${rows||'<tr><td colspan="7" style="padding:6px;color:#888;text-align:center">No entries</td></tr>'}</tbody>
+      </table>
+    </div></div>
+    <div class="sig-row">
+      <div class="sig-cell"><div class="sl">Prepared By (COML)</div>
+        <div class="ss">${fd.prepared_by_coml||''}</div>
+        <div class="sl">Date/Time: ${fd.date_time_prepared||''}</div></div>
+      <div class="sig-cell"><div class="sl">Signature</div><div class="ss"></div></div>
+      <div class="sig-cell"></div><div class="sig-cell"></div>
+    </div>
+    <div class="print-footer">
+      <span>${variant} \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
+      <span>Printed: ${new Date().toLocaleString()}</span>
+    </div>`;
+  }
+};
+
+let cl205aCount = 12;
+
+function add205ARow() {
+  const tbody = document.getElementById('cl205aBody');
+  if (!tbody) return;
+  const tmp = document.createElement('tbody');
+  tmp.innerHTML = FORMS['205A']._row(cl205aCount++);
+  tbody.appendChild(tmp.firstChild);
+}
+
+async function importFrom203() {
+  // Pull assignment data and populate 205A
+  if (!INC_ID) { alert('Open this form from an incident to import assignments.'); return; }
+  try {
+    const r = await fetch(`${ICS_API}/api/ics/assignments?incident_id=${INC_ID}`);
+    const data = await r.json();
+    const all = [...(data.assignments||[]), ...(data.roster_roles||[])];
+    let idx = 0;
+    all.forEach(a => {
+      if (idx >= cl205aCount) add205ARow();
+      const set = (key,val) => { const el=document.querySelector(`[data-key="${key}"]`); if(el) el.value=val; };
+      const name = a.name || a.callsign || '';
+      const pos  = a.ics_position || a.role || '';
+      if (!name && !pos) return;
+      set(`cl205a_name_${idx}`, name);
+      set(`cl205a_pos_${idx}`, pos);
+      set(`cl205a_email_${idx}`, a.callsign ? `${a.callsign}@winlink.org` : '');
+      idx++;
+    });
+    const statusDiv = document.querySelector('.section-card h2 + p');
+    if (statusDiv) statusDiv.style.color = 'var(--green)';
+  } catch(e) { alert('Import failed: ' + e); }
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ICS-206 MEDICAL PLAN
+// ══════════════════════════════════════════════════════════════════
+FORMS['206'] = {
+  title: 'ICS-206 Medical Plan',
+  badge: 'ICS-206',
+  variants: { FEMA:'FEMA 010-0-6', USCG:'CG-5215', NWCG:'ICS-206 (NWCG)' },
+
+  render() {
+    document.getElementById('formTitle').textContent = 'ICS-206 \u2014 Medical Plan';
+    document.getElementById('formBadge').textContent = 'ICS-206';
+    document.getElementById('formMeta').textContent =
+      `${this.variants[VARIANT]} \u00b7 Period ${PERIOD} \u00b7 ${incData.name||'No incident'}`;
+
+    const uscgNote = VARIANT==='USCG'
+      ?`<div style="background:rgba(26,58,107,0.15);border:1px solid var(--eoc);border-radius:5px;padding:7px 12px;margin-bottom:10px;font-size:11px;color:var(--blue)">
+        USCG variant: includes medevac helicopter fields and Coast Guard sector contact information.</div>`:'';
+
+    return `${uscgNote}
+    <div class="section-card">
+      <h2>1. Incident Information</h2>
+      <div class="grid-3">
+        ${field('incident_name','Incident Name','text',incData.name||'')}
+        ${field('operational_period_number','Op Period #','text',String(PERIOD))}
+        ${field('date_prepared','Date Prepared','date',todayDate())}
+      </div>
+      <div class="grid-2">
+        ${field('operational_period_from','Op Period From','datetime-local','')}
+        ${field('operational_period_to','Op Period To','datetime-local','')}
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>2. Medical Aid Stations</h2>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="background:var(--panel2)">
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:130px">Medical Aid Station</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:130px">Location</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:120px">Paramedic / EMT On Site?</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:100px">Contact / Radio</th>
+          </tr></thead>
+          <tbody>
+            ${[...Array(4)].map((_,i)=>`<tr>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="med_station_${i}" placeholder="Station name" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="med_location_${i}" placeholder="Location" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px">
+                <select data-key="med_paramedic_${i}" style="width:100%;font-size:11px;padding:3px 4px;background:var(--input-bg);color:var(--txt);border:none">
+                  <option>Yes — Paramedic</option><option>Yes — EMT</option>
+                  <option>First Aid Only</option><option>No</option>
+                </select>
+              </td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="med_contact_${i}" placeholder="Radio ch / phone" style="width:100%;font-size:11px;padding:3px 4px"></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>3. Transportation</h2>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="background:var(--panel2)">
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">Ambulance Service</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">Location</th>
+            <th style="padding:6px 8px;text-align:center;border:1px solid var(--line);min-width:50px">Level</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:100px">Contact / Radio</th>
+            <th style="padding:6px 8px;text-align:center;border:1px solid var(--line);min-width:50px">ALS?</th>
+          </tr></thead>
+          <tbody>
+            ${[...Array(4)].map((_,i)=>`<tr>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="amb_service_${i}" placeholder="Agency" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="amb_location_${i}" placeholder="Location" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px;text-align:center">
+                <select data-key="amb_level_${i}" style="width:100%;font-size:11px;padding:3px 4px;background:var(--input-bg);color:var(--txt);border:none">
+                  <option>ALS</option><option>BLS</option><option>Air</option>
+                </select>
+              </td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="amb_contact_${i}" placeholder="Phone / Radio" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px;text-align:center">
+                <input type="checkbox" data-key="amb_als_${i}">
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>4. Hospitals</h2>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="background:var(--panel2)">
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:130px">Hospital Name</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">Address</th>
+            <th style="padding:6px 8px;text-align:center;border:1px solid var(--line);min-width:50px">Travel Time</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:90px">Phone</th>
+            <th style="padding:6px 8px;text-align:center;border:1px solid var(--line);min-width:50px">Trauma?</th>
+            <th style="padding:6px 8px;text-align:center;border:1px solid var(--line);min-width:50px">Burn?</th>
+            <th style="padding:6px 8px;text-align:center;border:1px solid var(--line);min-width:50px">Helipad?</th>
+          </tr></thead>
+          <tbody>
+            ${[...Array(4)].map((_,i)=>`<tr>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="hosp_name_${i}" placeholder="Hospital" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="hosp_addr_${i}" placeholder="Address" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px;text-align:center"><input type="text" data-key="hosp_time_${i}" placeholder="15 min" style="width:60px;font-size:11px;padding:3px 4px;text-align:center"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="hosp_phone_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px;text-align:center"><input type="checkbox" data-key="hosp_trauma_${i}"></td>
+              <td style="border:1px solid var(--line);padding:3px;text-align:center"><input type="checkbox" data-key="hosp_burn_${i}"></td>
+              <td style="border:1px solid var(--line);padding:3px;text-align:center"><input type="checkbox" data-key="hosp_helo_${i}"></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap">
+        <button onclick="showHospitalPicker()" style="font-size:12px;padding:5px 14px;background:var(--red);border-color:var(--red);color:#fff">
+          🏥 Load from Hospital Database
+        </button>
+        <a href="hospitals.html" target="_blank" style="font-size:11px;color:var(--blue)">
+          Manage Hospital Database →
+        </a>
+      </div>
+    </div>
+
+    ${VARIANT==='USCG'?`
+    <div class="section-card">
+      <h2>5. Medevac / Rescue Helicopters (USCG)</h2>
+      <div class="grid-2">
+        ${field('medevac_helo_1','Helicopter 1 / Call Sign','text','')}
+        ${field('medevac_helo_1_contact','Contact Frequency','text','')}
+      </div>
+      <div class="grid-2">
+        ${field('medevac_helo_2','Helicopter 2 / Call Sign','text','')}
+        ${field('medevac_helo_2_contact','Contact Frequency','text','')}
+      </div>
+    </div>`:''}
+
+    <div class="section-card">
+      <h2>${VARIANT==='USCG'?'6':'5'}. Medical Unit Leader & Special Notes</h2>
+      <div class="grid-2">
+        ${field('medical_unit_ldr','Medical Unit Leader (MEDL)','text',
+          formData.medical_unit_ldr||'')}
+        ${field('medl_contact','MEDL Contact / Radio','text','')}
+      </div>
+      ${field('medical_notes','Special Medical Notes / Procedures','textarea',
+        'Evacuation routes, special medical considerations, allergies on file, pre-existing conditions...',{rows:4})}
+    </div>
+
+    <div class="section-card">
+      <h2>${VARIANT==='USCG'?'7':'6'}. Prepared By</h2>
+      <div class="grid-2">
+        ${field('prepared_by_medl','Prepared By (Medical Unit Leader)','text',
+          formData.medical_unit_ldr||orgData.personal_call||'')}
+        ${field('date_time_prepared','Date / Time','datetime-local','')}
+      </div>
+      <div class="grid-2">
+        ${field('approved_by_lsc','Approved By (Logistics Section Chief)','text',
+          formData.logistics_section_chief||incData.logistics_section_chief||'')}
+        ${field('date_time_approved','Date / Time Approved','datetime-local','')}
+      </div>
+    </div>`;
+  },
+
+  buildPrint() {
+    const fd = collectFormData();
+    Object.assign(formData, fd);
+    const variant = FORMS['206'].variants[VARIANT];
+
+    const stations = [0,1,2,3].map(i => fd[`med_station_${i}`]
+      ?`<tr><td style="padding:3px 5px;border:1px solid #ccc">${fd[`med_station_${i}`]}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`med_location_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`med_paramedic_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`med_contact_${i}`]||''}</td></tr>`:''
+    ).join('');
+
+    const hospitals = [0,1,2,3].map(i => fd[`hosp_name_${i}`]
+      ?`<tr><td style="padding:3px 5px;border:1px solid #ccc">${fd[`hosp_name_${i}`]}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`hosp_addr_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc;text-align:center">${fd[`hosp_time_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`hosp_phone_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc;text-align:center">${fd[`hosp_trauma_${i}`]?'\u2713':''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc;text-align:center">${fd[`hosp_burn_${i}`]?'\u2713':''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc;text-align:center">${fd[`hosp_helo_${i}`]?'\u2713':''}</td></tr>`:''
+    ).join('');
+
+    return `
+    <div class="ics-print-header">
+      <div class="logo-cell">${logoHtml()}</div>
+      <div class="title-cell"><h1>ICS-206 MEDICAL PLAN</h1>
+        <div class="sub">${variant} \u00b7 FieldCommand IMS</div></div>
+      <div class="meta-cell">
+        <div class="ml">Incident Name</div><div class="mv" style="font-size:10px">${fd.incident_name||'\u2014'}</div>
+        <div class="ml">Op Period</div><div class="mv">${fd.operational_period_number||PERIOD}</div>
+        <div class="ml">Date</div><div class="mv">${fd.date_prepared||'\u2014'}</div>
+      </div>
+    </div>
+    <div class="pr">
+      <div class="pc w2"><div class="pl">Medical Unit Leader</div><div class="pv">${fd.medical_unit_ldr||''}</div></div>
+      <div class="pc w2"><div class="pl">MEDL Contact / Radio</div><div class="pv">${fd.medl_contact||''}</div></div>
+    </div>
+    <div class="pr"><div class="pc" style="flex:4">
+      <div class="pl">2. Medical Aid Stations</div>
+      <table style="width:100%;border-collapse:collapse;font-size:10px;margin-top:3px">
+        <thead><tr style="background:#e8eef7">
+          <th style="padding:3px 5px;border:1px solid #ccc;text-align:left">Station</th>
+          <th style="padding:3px 5px;border:1px solid #ccc;text-align:left">Location</th>
+          <th style="padding:3px 5px;border:1px solid #ccc">Paramedic/EMT</th>
+          <th style="padding:3px 5px;border:1px solid #ccc;text-align:left">Contact</th>
+        </tr></thead>
+        <tbody>${stations||'<tr><td colspan="4" style="padding:5px;color:#888">None entered</td></tr>'}</tbody>
+      </table>
+    </div></div>
+    <div class="pr"><div class="pc" style="flex:4">
+      <div class="pl">4. Hospitals</div>
+      <table style="width:100%;border-collapse:collapse;font-size:10px;margin-top:3px">
+        <thead><tr style="background:#e8eef7">
+          <th style="padding:3px 4px;border:1px solid #ccc;text-align:left">Hospital</th>
+          <th style="padding:3px 4px;border:1px solid #ccc;text-align:left">Address</th>
+          <th style="padding:3px 4px;border:1px solid #ccc">Travel</th>
+          <th style="padding:3px 4px;border:1px solid #ccc;text-align:left">Phone</th>
+          <th style="padding:3px 4px;border:1px solid #ccc">Trauma</th>
+          <th style="padding:3px 4px;border:1px solid #ccc">Burn</th>
+          <th style="padding:3px 4px;border:1px solid #ccc">Heli</th>
+        </tr></thead>
+        <tbody>${hospitals||'<tr><td colspan="7" style="padding:5px;color:#888">None entered</td></tr>'}</tbody>
+      </table>
+    </div></div>
+    <div class="pr">
+      <div class="pc" style="flex:4">
+        <div class="pl">${VARIANT==='USCG'?'6':'5'}. Special Medical Notes</div>
+        <div class="pv" style="min-height:40px">${fd.medical_notes||''}</div>
+      </div>
+    </div>
+    <div class="sig-row">
+      <div class="sig-cell"><div class="sl">Prepared By (MEDL)</div>
+        <div class="ss">${fd.prepared_by_medl||''}</div>
+        <div class="sl">Date/Time: ${fd.date_time_prepared||''}</div></div>
+      <div class="sig-cell"><div class="sl">Signature</div><div class="ss"></div></div>
+      <div class="sig-cell"><div class="sl">Approved By (LSC)</div>
+        <div class="ss">${fd.approved_by_lsc||''}</div></div>
+      <div class="sig-cell"><div class="sl">LSC Signature</div><div class="ss"></div></div>
+    </div>
+    <div class="print-footer">
+      <span>${variant} \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
+      <span>Printed: ${new Date().toLocaleString()}</span>
+    </div>`;
+  }
+};
+
+// Hospital database picker for ICS-206
+async function showHospitalPicker() {
+  try {
+    const r = await fetch(`${MAIN_API}/api/hospitals`);
+    const hospitals = await r.json();
+    if (!hospitals.length) {
+      alert('No hospitals in database.\nOpen the Hospital Database page to add hospitals for your deployment area.');
+      return;
+    }
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:300;display:flex;align-items:center;justify-content:center';
+    const rowsHtml = hospitals.map((h,i) => {
+      const caps = [h.burn_center?'Burn':'',h.helipad?'Heli':'',h.icu?'ICU':''].filter(Boolean).join(' ');
+      return `<tr style="border-bottom:1px solid var(--line)">
+        <td style="padding:5px 8px"><input type="checkbox" id="hpchk_${i}" ${i<4?'checked':''}></td>
+        <td style="padding:5px 8px"><strong>${h.name}</strong></td>
+        <td style="padding:5px 8px">${h.city||''}, ${h.state||''}</td>
+        <td style="padding:5px 8px">${h.county||''}</td>
+        <td style="padding:5px 8px">${h.phone||''}</td>
+        <td style="padding:5px 8px;text-align:center">${h.travel_time_min?h.travel_time_min+' min':'—'}</td>
+        <td style="padding:5px 8px;text-align:center">${h.trauma_level||'—'}</td>
+        <td style="padding:5px 8px;font-size:10px">${caps}</td>
+      </tr>`;
+    }).join('');
+    overlay.innerHTML = `
+      <div style="background:var(--panel);border:1px solid var(--red);border-radius:10px;
+                  padding:20px;width:720px;max-width:96vw;max-height:80vh;display:flex;flex-direction:column">
+        <div style="font-family:var(--font-hd);font-size:14px;color:var(--amber);margin-bottom:8px;letter-spacing:1px">
+          🏥 SELECT HOSPITALS FOR ICS-206 MEDICAL PLAN
+        </div>
+        <p style="font-size:11px;color:var(--muted);margin:0 0 10px">
+          First 4 pre-selected. Check any hospitals to include.
+          <a href="hospitals.html" target="_blank" style="color:var(--blue);margin-left:8px">Add hospitals →</a>
+        </p>
+        <div style="overflow-y:auto;flex:1;border:1px solid var(--line);border-radius:6px">
+          <table style="width:100%;border-collapse:collapse;font-size:12px">
+            <thead style="position:sticky;top:0;background:var(--panel2)">
+              <tr>
+                <th style="padding:5px 8px">✓</th>
+                <th style="padding:5px 8px;text-align:left">Hospital Name</th>
+                <th style="padding:5px 8px">City, State</th>
+                <th style="padding:5px 8px">County</th>
+                <th style="padding:5px 8px;text-align:left">Phone</th>
+                <th style="padding:5px 8px">Travel</th>
+                <th style="padding:5px 8px">Trauma</th>
+                <th style="padding:5px 8px">Caps</th>
+              </tr>
+            </thead>
+            <tbody>${rowsHtml}</tbody>
+          </table>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button id="hospImportBtn"
+            style="background:var(--red);border-color:var(--red);color:#fff;font-weight:bold;padding:7px 20px">
+            Import Selected into ICS-206
+          </button>
+          <button id="hospCancelBtn" style="background:var(--panel2)">Cancel</button>
+          <span style="font-size:11px;color:var(--muted);margin-left:auto">
+            ${hospitals.length} hospital${hospitals.length!==1?'s':''} in database
+          </span>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    document.getElementById('hospCancelBtn').onclick = () => overlay.remove();
+    document.getElementById('hospImportBtn').onclick = () => {
+      let imported = 0;
+      hospitals.forEach((h, i) => {
+        const chk = document.getElementById('hpchk_'+i);
+        if (!chk?.checked) return;
+        const set = (key,val) => {
+          const el = document.querySelector('[data-key="'+key+'"]');
+          if (el) el.value = val;
+        };
+        const setC = (key,val) => {
+          const el = document.querySelector('[data-key="'+key+'"]');
+          if (el) el.checked = !!val;
+        };
+        set('hosp_name_'+imported, h.name||'');
+        set('hosp_addr_'+imported, [h.address,h.city,h.state].filter(Boolean).join(', '));
+        set('hosp_time_'+imported, h.travel_time_min?h.travel_time_min+' min':'');
+        set('hosp_phone_'+imported, h.phone||'');
+        setC('hosp_trauma_'+imported, h.trauma_level);
+        setC('hosp_burn_'+imported, h.burn_center);
+        setC('hosp_helo_'+imported, h.helipad);
+        imported++;
+      });
+      overlay.remove();
+    };
+  } catch(e) {
+    alert('Could not load hospital database: ' + e);
+  }
+}
+
 </script>
 <!-- Map Picker Modal -->
 <div class="map-picker-modal" id="mapPickerModal">

@@ -316,6 +316,17 @@ class Handler(BaseHTTPRequestHandler):
             row = c.execute("SELECT * FROM resmap_state WHERE id=1").fetchone()
             return self.send_json({"markers":jload(row["markers"],[]) if row else []})
 
+        elif path == "/api/hospitals":
+            county = qs.get("county",[None])[0]
+            state  = qs.get("state",[None])[0]
+            srch   = qs.get("q",[""])[0].lower()
+            sql    = "SELECT * FROM hospitals WHERE active=1"; params=[]
+            if county: sql+=" AND UPPER(county) LIKE ?"; params.append(f"%{county.upper()}%")
+            if state:  sql+=" AND UPPER(state)=?"; params.append(state.upper())
+            rows = rows_to_list(c.execute(sql+" ORDER BY state,county,name",params).fetchall())
+            if srch: rows=[r for r in rows if srch in json.dumps(r).lower()]
+            return self.send_json(rows)
+
         elif path == "/api/repeaters":
             band  = qs.get("band",[None])[0]
             state = qs.get("state",[None])[0]
@@ -397,6 +408,29 @@ class Handler(BaseHTTPRequestHandler):
         body   = self.read_body()
         c      = get_conn()
         now    = utcnow()
+
+        if path == "/api/hospitals":
+            hid = body.get("id")
+            fields = ['name','address','city','state','county','phone','phone2','fax',
+                      'lat','lon','trauma_level','burn_center','helipad','icu',
+                      'peds_trauma','stroke_center','cardiac_center','travel_time_min',
+                      'notes','active']
+            if hid:
+                # Update existing
+                sets = [f"{f}=?" for f in fields if f in body]
+                vals = [body[f] for f in fields if f in body] + [hid]
+                if sets:
+                    c.execute(f"UPDATE hospitals SET {','.join(sets)} WHERE id=?", vals)
+                    c.commit()
+                return self.send_json({"ok":True,"id":hid})
+            else:
+                # Insert new
+                cols = [f for f in fields if f in body]
+                vals = [body[f] for f in cols]
+                c.execute(f"INSERT INTO hospitals ({','.join(cols)}) VALUES ({','.join(['?']*len(cols))})", vals)
+                c.commit()
+                new_id = c.execute("SELECT last_insert_rowid()").fetchone()[0]
+                return self.send_json({"ok":True,"id":new_id})
 
         if path == "/api/config":
             fields = ['callsign','personal_call','org_name','org_short',
@@ -628,7 +662,12 @@ class Handler(BaseHTTPRequestHandler):
         path   = parsed.path.rstrip("/")
         c      = get_conn()
 
-        if path.startswith("/api/nets/"):
+        if path.startswith("/api/hospitals/"):
+            hid = path.split("/api/hospitals/")[1]
+            c.execute("UPDATE hospitals SET active=0 WHERE id=?", (hid,))
+            c.commit()
+            return self.send_json({"ok":True})
+        elif path.startswith("/api/nets/"):
             c.execute("DELETE FROM nets WHERE id=?",(path.split("/api/nets/")[1],))
         elif path.startswith("/api/resources/"):
             c.execute("DELETE FROM resources WHERE id=?",(path.split("/api/resources/")[1],))

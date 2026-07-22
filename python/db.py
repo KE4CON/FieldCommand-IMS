@@ -257,6 +257,33 @@ CREATE TABLE IF NOT EXISTS incidents (
 );
 CREATE INDEX IF NOT EXISTS idx_inc_status ON incidents(status);
 
+-- ── Hospital Database ───────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS hospitals (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    name        TEXT NOT NULL DEFAULT '',
+    address     TEXT DEFAULT '',
+    city        TEXT DEFAULT '',
+    state       TEXT DEFAULT '',
+    county      TEXT DEFAULT '',
+    phone       TEXT DEFAULT '',
+    phone2      TEXT DEFAULT '',
+    fax         TEXT DEFAULT '',
+    lat         REAL,
+    lon         REAL,
+    trauma_level TEXT DEFAULT '',   -- Level I, II, III, IV, None
+    burn_center  INTEGER DEFAULT 0,
+    helipad      INTEGER DEFAULT 1,
+    icu          INTEGER DEFAULT 0,
+    peds_trauma  INTEGER DEFAULT 0,
+    stroke_center INTEGER DEFAULT 0,
+    cardiac_center INTEGER DEFAULT 0,
+    travel_time_min INTEGER DEFAULT 0,
+    notes       TEXT DEFAULT '',
+    active      INTEGER DEFAULT 1
+);
+CREATE INDEX IF NOT EXISTS idx_hosp_state ON hospitals(state);
+CREATE INDEX IF NOT EXISTS idx_hosp_county ON hospitals(county);
+
 -- ── ICS Operational Periods ───────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS ics_periods (
     id          TEXT PRIMARY KEY,
@@ -540,6 +567,7 @@ def init_db():
         "ALTER TABLE station_config ADD COLUMN ps_member_lookup TEXT DEFAULT 'radio_id'",
         "ALTER TABLE incidents ADD COLUMN ics_variant TEXT DEFAULT 'FEMA'",
         "ALTER TABLE net_entries ADD COLUMN ics_position TEXT DEFAULT ''",
+        """CREATE TABLE IF NOT EXISTS hospitals (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL DEFAULT '', address TEXT DEFAULT '', city TEXT DEFAULT '', state TEXT DEFAULT '', county TEXT DEFAULT '', phone TEXT DEFAULT '', phone2 TEXT DEFAULT '', fax TEXT DEFAULT '', lat REAL, lon REAL, trauma_level TEXT DEFAULT '', burn_center INTEGER DEFAULT 0, helipad INTEGER DEFAULT 1, icu INTEGER DEFAULT 0, peds_trauma INTEGER DEFAULT 0, stroke_center INTEGER DEFAULT 0, cardiac_center INTEGER DEFAULT 0, travel_time_min INTEGER DEFAULT 0, notes TEXT DEFAULT '', active INTEGER DEFAULT 1)""",
         """CREATE TABLE IF NOT EXISTS ics_meetings (id TEXT PRIMARY KEY, incident_id TEXT NOT NULL DEFAULT '', period INTEGER NOT NULL DEFAULT 1, meeting_type TEXT NOT NULL, title TEXT NOT NULL DEFAULT '', scheduled_time TEXT, location TEXT DEFAULT '', chair TEXT DEFAULT '', attendees TEXT DEFAULT '[]', agenda_items TEXT DEFAULT '[]', status TEXT DEFAULT 'scheduled', notes TEXT DEFAULT '', created TEXT NOT NULL, updated TEXT NOT NULL)""",
     ]
     for sql in migrations:
@@ -548,6 +576,7 @@ def init_db():
         except Exception:
             pass  # column already exists
     conn.commit()
+    seed_hospitals(conn)
     log.info(f"Database initialised: {DB_PATH}")
 
 
@@ -1175,3 +1204,27 @@ def _alter_existing_tables():
                 log.info(f"Added column net_entries.{col}")
             except Exception as e:
                 log.warning(f"Could not add net_entries.{col}: {e}")
+
+# ── Default hospital seeding ──────────────────────────────────────────────────
+DEFAULT_HOSPITALS = [
+    ('Northwestern Medicine Huntley Hospital','10400 Haligus Rd','Huntley','IL','McHenry','(847) 669-5000',42.1697,-88.4275,'',0,0,20,'Closest to NW McHenry County'),
+    ('Northwestern Medicine McHenry Hospital','4201 Medical Center Dr','McHenry','IL','McHenry','(815) 344-5000',42.3375,-88.2717,'',0,0,15,'Main McHenry County hospital'),
+    ('Centegra Hospital Woodstock','3701 Doty Rd','Woodstock','IL','McHenry','(815) 338-2500',42.3089,-88.4356,'',0,0,5,'Closest to Woodstock'),
+    ('Advocate Condell Medical Center','801 S Milwaukee Ave','Libertyville','IL','Lake','(847) 362-2900',42.2936,-87.9531,'Level II',0,1,30,'Trauma II, helipad, stroke/cardiac center'),
+    ('Advocate Lutheran General Hospital','1775 Dempster St','Park Ridge','IL','Cook','(847) 723-2210',42.0178,-87.8436,'Level I',1,1,55,'Trauma I, burn center, peds trauma, helipad'),
+    ('Ascension Saint Alexius','1555 Barrington Rd','Hoffman Estates','IL','Cook','(847) 843-2000',42.0325,-88.1219,'Level II',0,1,40,'Trauma II, helipad'),
+]
+
+def seed_hospitals(conn):
+    try:
+        existing = conn.execute("SELECT COUNT(*) FROM hospitals").fetchone()[0]
+        if existing == 0:
+            for h in DEFAULT_HOSPITALS:
+                conn.execute(
+                    "INSERT INTO hospitals (name,address,city,state,county,phone,lat,lon,"
+                    "trauma_level,burn_center,helipad,travel_time_min,notes) "
+                    "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)", h)
+            conn.commit()
+            log.info(f"Seeded {len(DEFAULT_HOSPITALS)} default hospitals")
+    except Exception as e:
+        log.warning(f"Hospital seeding skipped: {e}")

@@ -115,6 +115,14 @@
           <span style="color:var(--blue)">● Staged</span>
           <span style="color:var(--red)">● Out of Service</span>
         </div>
+        <div style="display:flex;gap:6px;align-items:center;margin-top:6px;flex-wrap:wrap">
+          <button onclick="sync204ToTCards()"
+            style="font-size:11px;padding:4px 12px;background:rgba(26,58,107,0.1);
+                   border-color:rgba(26,58,107,0.3);color:var(--eoc)">
+            ↓ Sync from ICS-204s
+          </button>
+          <span style="font-size:11px;color:var(--green);display:none" id="syncStatus"></span>
+        </div>
       </div>
       <div class="tcard-board" id="tcardBoard">
         <div class="tcard-col" id="col-available">
@@ -258,22 +266,206 @@ let _dragId = null;
 function dragStart(e, id) { _dragId = id; e.dataTransfer.effectAllowed = 'move'; }
 function dragOver(e)  { e.preventDefault(); e.currentTarget.classList.add('drag-over'); }
 function dragLeave(e) { e.currentTarget.classList.remove('drag-over'); }
-function drop(e, newStatus) {
+
+async function drop(e, newStatus) {
   e.preventDefault();
   e.currentTarget.classList.remove('drag-over');
   if (!_dragId) return;
   const r = resources.find(x => x.id === _dragId);
-  if (r && r.status !== newStatus) {
-    r.status = newStatus;
-    r.updated = new Date().toISOString();
-    save();
-    render();
-  }
   _dragId = null;
+  if (!r || r.status === newStatus) return;
+
+  const oldStatus = r.status;
+  r.status  = newStatus;
+  r.updated = new Date().toISOString();
+
+  // If moving to Assigned, prompt for division if not already set
+  if (newStatus === 'assigned' && !r.division_group) {
+    const div = prompt(
+      `Assigning "${r.resource_name}" — enter Division/Group:\n` +
+      `(e.g. "Division Alpha", "Group SAR", or leave blank)`,
+      r.assignment || ''
+    );
+    if (div !== null) {
+      r.division_group = div.trim();
+      r.assignment     = div.trim();
+    }
+  }
+  // If moving away from Assigned, clear division
+  if (newStatus !== 'assigned') {
+    r.division_group = '';
+  }
+
+  save();
+  render();
+
+  // ── Bidirectional sync: T-card → ICS-204 ──────────────────────────
+  // When a card is moved, update the corresponding 204 if one exists
+  await syncTCardTo204(r, oldStatus, newStatus);
 }
 
-function save(){
+async function syncTCardTo204(resource, oldStatus, newStatus) {
+  const incId = getIncidentId();
+  if (!incId) return;
+  const ICS_API = 'http://192.168.50.1:5051';
+
+  try {
+    // Find all 204s for this incident that reference this resource
+    const r = await fetch(
+      `${ICS_API}/api/ics/forms/ics204?incident_id=${incId}`
+    );
+    if (!r.ok) return;
+    const forms = await r.json();
+
+    for (const form of forms) {
+      let data = {};
+      try { data = JSON.parse(form.data || '{}'); } catch(e) { continue; }
+
+      // Check if this resource appears in this 204
+      let found = false;
+      for (let i = 0; i < 50; i++) {
+        const rid  = (data[`res204_id_${i}`] || '').trim();
+        const rldr = (data[`res204_leader_${i}`] || '').trim();
+        if (!rid && !rldr) { if (i > 15) break; continue; }
+
+        // Match by resource name or ID
+        const match =
+          rid.toLowerCase()  === resource.resource_id?.toLowerCase() ||
+          rid.toLowerCase()  === resource.resource_name?.toLowerCase() ||
+          rldr.toLowerCase() === resource.resource_name?.toLowerCase();
+
+        if (match) {
+          found = true;
+          // Update the 204 data with new status info
+          if (newStatus === 'assigned' && resource.division_group) {
+            data['division_group'] = resource.division_group;
+          }
+          if (newStatus === 'out_of_service') {
+            data[`res204_notes_${i}`] = 'OUT OF SERVICE — moved on T-card board';
+          }
+          break;
+        }
+      }
+
+      if (found) {
+        // Push updated form data back to server
+        await fetch(`${ICS_API}/api/ics/forms/ics204`, {
+          method:  'POST',
+          headers: {'Content-Type':'application/json'},
+          body:    JSON.stringify({
+            id:          form.id,
+            incident_id: incId,
+            period:      form.period,
+            summary:     form.summary,
+            data:        JSON.stringify(data),
+          })
+        });
+      }
+    }
+
+    // Also update the tcard record on the server
+    await fetch(`${ICS_API}/api/ics/tcards`, {
+      method:  'POST',
+      headers: {'Content-Type':'application/json'},
+      body:    JSON.stringify({
+        id:            resource.id,
+        incident_id:   incId,
+        resource_name: resource.resource_name,
+        resource_type: resource.resource_type || resource.type || '',
+        status:        newStatus === 'assigned'       ? 'Assigned'       :
+                       newStatus === 'out_of_service' ? 'Out of Service' :
+                       newStatus === 'staged'         ? 'Staging'        : 'Available',
+        assignment:    resource.division_group || resource.assignment || '',
+        updated:       resource.updated,
+      })
+    });
+  } catch(e) {
+    // Non-critical — T-card move still succeeded locally
+    console.warn('T-card → 204 sync error:', e.message);
+  }
+}
+
+function getIncidentId() {
+  // Try URL param first, then localStorage
+  return new URLSearchParams(location.search).get('incident') ||
+         localStorage.getItem('selectedIncident') || '';
+}
+
+function save() {
   localStorage.setItem(STORE, JSON.stringify(resources));
+}
+
+// ── Pull 204 assignments into T-card board ────────────────────────
+// Called on load and via "Sync from 204s" button
+async function sync204ToTCards() {
+  const incId  = getIncidentId();
+  if (!incId) return;
+  const ICS_API = 'http://192.168.50.1:5051';
+  try {
+    const r = await fetch(`${ICS_API}/api/ics/forms/ics204?incident_id=${incId}`);
+    if (!r.ok) return;
+    const forms = await r.json();
+    let updated = 0;
+
+    forms.forEach(form => {
+      let data = {};
+      try { data = JSON.parse(form.data || '{}'); } catch(e) { return; }
+      const div = data.division_group || '';
+
+      for (let i = 0; i < 50; i++) {
+        const rid  = (data[`res204_id_${i}`] || '').trim();
+        const rldr = (data[`res204_leader_${i}`] || '').trim();
+        const rtyp = (data[`res204_type_${i}`] || '').trim();
+        if (!rid && !rldr) { if (i > 15) break; continue; }
+        if (rid.endsWith('+')) continue;  // skip placeholders
+
+        // Find or create T-card entry
+        let card = resources.find(c =>
+          c.resource_id === rid ||
+          c.resource_name?.toLowerCase() === rldr.toLowerCase() ||
+          (rid && c.resource_name?.toLowerCase() === rid.toLowerCase())
+        );
+
+        if (card) {
+          // Update existing card
+          if (div && card.status !== 'assigned') {
+            card.status       = 'assigned';
+            card.division_group = div;
+            card.assignment   = div;
+            card.updated      = new Date().toISOString();
+            updated++;
+          }
+        } else if (rldr || rid) {
+          // Create new T-card from 204 resource
+          resources.push({
+            id:            'tc-' + Date.now() + '-' + Math.random().toString(36).slice(2,5),
+            resource_id:   rid,
+            resource_name: rldr || rid,
+            resource_type: rtyp || 'Resource',
+            type:          rtyp || 'Resource',
+            status:        div ? 'assigned' : 'available',
+            division_group: div,
+            assignment:    div,
+            updated:       new Date().toISOString(),
+          });
+          updated++;
+        }
+      }
+    });
+
+    if (updated > 0) {
+      save();
+      render();
+      const el = document.getElementById('syncStatus');
+      if (el) {
+        el.textContent = `✓ Synced ${updated} resource${updated!==1?'s':''} from ICS-204s`;
+        el.style.display = '';
+        setTimeout(() => el.style.display = 'none', 4000);
+      }
+    }
+  } catch(e) {
+    console.warn('204 → T-card sync error:', e.message);
+  }
 }
 
 function render(){
@@ -415,7 +607,11 @@ function showTab(id){
 
 function openAddAssignment(){openAddResource();}
 
-window.addEventListener('load', load);
+window.addEventListener('load', () => {
+  load();
+  // Auto-sync 204 assignments into T-card board after a brief delay
+  setTimeout(sync204ToTCards, 800);
+});
 </script>
 
 <script src="../lib/identity.js"></script>

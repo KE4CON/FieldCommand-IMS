@@ -44,6 +44,30 @@
 .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
 .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; }
 .full { grid-column: 1/-1; }
+/* ── Image/Photo insert component ─────────────────────────────── */
+.img-drop-zone {
+  border: 2px dashed var(--line); border-radius: 8px;
+  padding: 20px; text-align: center; cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  background: var(--bg); min-height: 80px;
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 6px;
+}
+.img-drop-zone:hover, .img-drop-zone.dragover {
+  border-color: var(--eoc); background: rgba(26,58,107,0.08);
+}
+.img-drop-zone.has-image { border-style: solid; border-color: var(--green); padding: 8px; }
+.img-drop-zone img { max-width: 100%; max-height: 400px; object-fit: contain; border-radius: 4px; }
+.img-drop-zone .drop-hint { font-size: 12px; color: var(--muted); }
+.img-drop-zone .drop-icon { font-size: 28px; }
+.img-toolbar {
+  display: flex; gap: 6px; margin-top: 6px; flex-wrap: wrap;
+}
+.img-toolbar button { font-size: 11px; padding: 3px 10px; }
+.img-caption { width: 100%; box-sizing: border-box; margin-top: 6px;
+  background: var(--input-bg); border: 1px solid var(--line);
+  border-radius: 4px; color: var(--txt); padding: 5px 8px; font-size: 12px;
+}
 .action-bar {
   position: sticky; bottom: 0; background: var(--panel);
   border-top: 1px solid var(--line); padding: 10px 16px;
@@ -267,6 +291,96 @@ function printForm() {
   window.print();
 }
 
+// ── Image field helper ────────────────────────────────────────────────
+function imageField(key, label, hint='') {
+  return `<div class="fg">
+    <label>${label}${hint ? `<span style="font-weight:normal;color:var(--dim);margin-left:6px">${hint}</span>` : ''}</label>
+    <div class="img-drop-zone" id="imgZone_${key}"
+      onclick="document.getElementById('imgFile_${key}').click()"
+      ondragover="event.preventDefault();this.classList.add('dragover')"
+      ondragleave="this.classList.remove('dragover')"
+      ondrop="handleImgDrop(event,'${key}')">
+      <span class="drop-icon">🖼</span>
+      <span class="drop-hint">Click to upload or drag & drop<br>PNG · JPG · GIF · SVG · PDF page</span>
+    </div>
+    <input type="file" id="imgFile_${key}" accept="image/*,application/pdf"
+      style="display:none" onchange="handleImgUpload(event,'${key}')">
+    <div class="img-toolbar" id="imgToolbar_${key}" style="display:none">
+      <button onclick="rotateImg('${key}',-90)">↺ Rotate L</button>
+      <button onclick="rotateImg('${key}',90)">↻ Rotate R</button>
+      <button onclick="clearImg('${key}')" style="background:var(--panel2)">✕ Remove</button>
+    </div>
+    <input type="text" class="img-caption" id="imgCaption_${key}"
+      data-key="${key}_caption" placeholder="Caption / description (optional)"
+      style="display:none">
+    <input type="hidden" id="imgData_${key}" data-key="${key}_img">
+  </div>`;
+}
+
+// Image handling functions
+function handleImgUpload(event, key) {
+  const file = event.target.files[0];
+  if (!file) return;
+  readImgFile(file, key);
+}
+function handleImgDrop(event, key) {
+  event.preventDefault();
+  document.getElementById('imgZone_'+key)?.classList.remove('dragover');
+  const file = event.dataTransfer.files[0];
+  if (file) readImgFile(file, key);
+}
+function readImgFile(file, key) {
+  if (file.size > 10 * 1024 * 1024) { alert('Image must be under 10 MB'); return; }
+  const reader = new FileReader();
+  reader.onload = e => setImg(key, e.target.result, file.name);
+  reader.readAsDataURL(file);
+}
+function setImg(key, dataUrl, name='') {
+  const zone    = document.getElementById('imgZone_'+key);
+  const toolbar = document.getElementById('imgToolbar_'+key);
+  const caption = document.getElementById('imgCaption_'+key);
+  const hidden  = document.getElementById('imgData_'+key);
+  if (!zone) return;
+  zone.innerHTML = `<img id="imgEl_${key}" src="${dataUrl}" alt="${name}">`;
+  zone.classList.add('has-image');
+  toolbar.style.display = 'flex';
+  caption.style.display = 'block';
+  hidden.value = dataUrl;
+  formData[key+'_img'] = dataUrl;
+  formData[key+'_name'] = name;
+}
+function clearImg(key) {
+  const zone    = document.getElementById('imgZone_'+key);
+  const toolbar = document.getElementById('imgToolbar_'+key);
+  const caption = document.getElementById('imgCaption_'+key);
+  const hidden  = document.getElementById('imgData_'+key);
+  const fileEl  = document.getElementById('imgFile_'+key);
+  zone.innerHTML = '<span class="drop-icon">🖼</span><span class="drop-hint">Click to upload or drag & drop<br>PNG · JPG · GIF · SVG</span>';
+  zone.classList.remove('has-image');
+  toolbar.style.display = 'none';
+  caption.style.display = 'none';
+  hidden.value = '';
+  if (fileEl) fileEl.value = '';
+  delete formData[key+'_img'];
+}
+let imgRotations = {};
+function rotateImg(key, deg) {
+  imgRotations[key] = ((imgRotations[key]||0) + deg + 360) % 360;
+  const el = document.getElementById('imgEl_'+key);
+  if (el) el.style.transform = `rotate(${imgRotations[key]}deg)`;
+}
+// Restore saved images on form load
+function restoreImages() {
+  Object.keys(formData).forEach(k => {
+    if (k.endsWith('_img') && formData[k]) {
+      const key = k.replace('_img','');
+      setImg(key, formData[k], formData[key+'_name']||'');
+      const caption = document.getElementById('imgCaption_'+key);
+      if (caption && formData[key+'_caption']) caption.value = formData[key+'_caption'];
+    }
+  });
+}
+
 // ── Field helper ───────────────────────────────────────────────────────
 function field(key, label, type='text', placeholder='', opts={}) {
   const v = val(key);
@@ -401,7 +515,11 @@ FORMS['201'] = {
     </div>
 
     <div class="section-card">
-      <h2>7. Attachments</h2>
+      <h2>7. Map / Sketch</h2>
+      ${imageField('ics201_map','Incident Area Map or Sketch','Upload a map, sketch, photo, or annotated image of the incident area')}
+    </div>
+    <div class="section-card">
+      <h2>8. Attachments & Notes</h2>
       <div class="grid-3">
         <div class="fg">
           <label>Organization Chart</label>
@@ -416,10 +534,8 @@ FORMS['201'] = {
           </div>
         </div>
         <div class="fg">
-          <label>Map / Sketch</label>
-          <div style="display:flex;gap:6px;align-items:center;font-size:12px">
-            <input type="checkbox" data-key="attach_map"> Attached
-          </div>
+          <label>Additional Photo / Image</label>
+          ${imageField('ics201_photo2','Additional Photo or Image','Optional second image')}
         </div>
       </div>
       ${field('notes','Additional Notes / Instructions','textarea','',{rows:3})}
@@ -534,6 +650,16 @@ FORMS['201'] = {
         <div class="sl">Date / Time: ${fd.date||''} ${fd.time_prepared||''}</div>
       </div>
     </div>
+    ${fd.ics201_map_img ? `
+    <div style="border-top:2px solid #000;padding:8px">
+      <div style="font-size:9px;text-transform:uppercase;color:#555;margin-bottom:4px">Map / Sketch — ${fd.ics201_map_caption||'Incident Area'}</div>
+      <img src="${fd.ics201_map_img}" style="max-width:100%;max-height:400px;object-fit:contain">
+    </div>` : ''}
+    ${fd.ics201_photo2_img ? `
+    <div style="border-top:1px solid #000;padding:8px">
+      <div style="font-size:9px;text-transform:uppercase;color:#555;margin-bottom:4px">Additional Image — ${fd.ics201_photo2_caption||''}</div>
+      <img src="${fd.ics201_photo2_img}" style="max-width:100%;max-height:300px;object-fit:contain">
+    </div>` : ''}
     <div class="print-footer">
       <span>${variant} · FieldCommand IMS · © 2026 James Rospopo KE4CON · CC BY-SA 4.0</span>
       <span>Printed: ${new Date().toLocaleString()}</span>
@@ -583,6 +709,8 @@ function renderForm() {
     const el = document.querySelector(`[data-key="${k}"]`);
     if (el) el.value = v;
   });
+  // Restore any saved images
+  restoreImages();
 }
 
 function buildPrintView() {

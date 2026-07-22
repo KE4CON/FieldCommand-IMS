@@ -473,28 +473,203 @@ function exportCSV() {
 function importCSV() { document.getElementById('csv-import-input').click(); }
 
 function handleCSVImport(e) {
-  const file = e.target.files[0]; if(!file) return;
+  const file = e.target.files[0]; if (!file) return;
   const reader = new FileReader();
   reader.onload = ev => {
-    const lines = ev.target.result.trim().split('\n');
-    const headers = lines[0].split(',').map(h=>h.trim().replace(/^"|"$/g,''));
-    const imported = lines.slice(1).map(line => {
-      const vals = line.match(/(".*?"|[^,]+)/g)||[];
-      const obj = {};
-      headers.forEach((h,i)=>{ obj[h]=(vals[i]||'').replace(/^"|"$/g,''); });
-      if(!obj.id) obj.id='res-'+Date.now()+Math.random();
-      return obj;
-    });
-    imported.forEach(imp => {
-      const existing = resources.findIndex(r=>r.id===imp.id);
-      if(existing>=0) resources[existing]=imp; else resources.push(imp);
-    });
-    save(); renderAll();
-    alert(`Imported ${imported.length} resource(s).`);
+    e.target.value = '';
+    try { showCSVImportModal(ev.target.result, file.name); }
+    catch(err) { alert('Could not parse CSV: ' + err.message); }
   };
   reader.readAsText(file);
-  e.target.value='';
 }
+
+// ── Smart CSV Import Modal ─────────────────────────────────────────
+const CSV_COL_MAP = {
+  name:        ['name','resource name','unit name','resource','description','title'],
+  type:        ['type','resource type','kind','category','class'],
+  status:      ['status','availability','available','state'],
+  owner:       ['owner','agency','home unit','home agency','jurisdiction'],
+  qty:         ['qty','quantity','count','number','personnel','people'],
+  location:    ['location','current location','position','loc'],
+  assigned_to: ['assigned to','assignment','division','group','section'],
+  contact:     ['contact','phone','radio','freq','frequency'],
+  serial:      ['serial','id number','unit id','resource id','iroc'],
+  notes:       ['notes','comments','remarks','special'],
+};
+
+const STATUS_NORMALIZE = {
+  'available':'Available','avail':'Available','av':'Available',
+  'assigned':'Assigned','in use':'Assigned','deployed':'Assigned',
+  'out of service':'Out of Service','oos':'Out of Service','down':'Out of Service',
+  'rest':'Rest','resting':'Rest','off shift':'Rest',
+  'staging':'Staging','staged':'Staging',
+  'enroute':'En Route','en route':'En Route','travel':'En Route',
+};
+
+const TYPE_NORMALIZE = {
+  'personnel':'Personnel','person':'Personnel','people':'Personnel',
+  'crew':'Crew','hand crew':'Crew','hotshot':'Crew',
+  'engine':'Engine','eng':'Engine',
+  'dozer':'Dozer','doz':'Dozer','bulldozer':'Dozer',
+  'vehicle':'Vehicle','veh':'Vehicle','truck':'Vehicle',
+  'helicopter':'Helicopter','helo':'Helicopter','heli':'Helicopter','air':'Helicopter',
+  'equipment':'Equipment','equip':'Equipment',
+  'facility':'Facility','fac':'Facility',
+  'water tender':'Water Tender','tender':'Water Tender',
+};
+
+function detectColumn(headers, field) {
+  const aliases = CSV_COL_MAP[field] || [field];
+  for (const alias of aliases) {
+    const idx = headers.findIndex(h => h.toLowerCase().includes(alias));
+    if (idx >= 0) return idx;
+  }
+  return -1;
+}
+
+function parseCSVLine(line) {
+  const vals = []; let current = '', inQuote = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (ch === '"') { inQuote = !inQuote; }
+    else if (ch === ',' && !inQuote) { vals.push(current.trim()); current = ''; }
+    else { current += ch; }
+  }
+  vals.push(current.trim());
+  return vals;
+}
+
+function showCSVImportModal(csvText, filename) {
+  const lines   = csvText.trim().split('\n').filter(l => l.trim());
+  if (lines.length < 2) { alert('CSV has no data rows'); return; }
+  const headers  = parseCSVLine(lines[0]).map(h => h.replace(/^"|"$/g,'').trim());
+  const dataRows = lines.slice(1).map(l => parseCSVLine(l));
+  const mapping  = {};
+  Object.keys(CSV_COL_MAP).forEach(f => { mapping[f] = detectColumn(headers, f); });
+
+  const modal = document.createElement('div');
+  modal.id = 'csvImportModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:500;display:flex;align-items:center;justify-content:center';
+
+  const colOpts = ['<option value="-1">(skip)</option>',
+    ...headers.map((h,i) => `<option value="${i}">${h}</option>`)].join('');
+
+  modal.innerHTML = `
+    <div style="background:var(--panel);border:1px solid var(--line);border-radius:10px;
+                padding:22px;width:680px;max-width:96vw;max-height:88vh;overflow-y:auto">
+      <div style="font-family:var(--font-hd);font-size:13px;color:var(--eoc);
+                  letter-spacing:1px;margin-bottom:4px">📥 IMPORT RESOURCES FROM CSV</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:14px">
+        <strong>${filename}</strong> · ${dataRows.length} data rows · ${headers.length} columns
+      </div>
+      <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;
+                  letter-spacing:.08em;margin-bottom:6px">Column Mapping</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px">
+        ${Object.keys(CSV_COL_MAP).map(field => `
+          <div style="display:flex;align-items:center;gap:8px">
+            <label style="font-size:11px;color:var(--muted);width:90px;flex-shrink:0;
+                          text-transform:uppercase;letter-spacing:.04em">${field.replace('_',' ')}</label>
+            <select id="map_${field}"
+              style="flex:1;background:var(--input-bg);border:1px solid var(--input-border);
+                     color:var(--txt);padding:4px 8px;font-size:11px;border-radius:4px">
+              ${(() => {
+                const idx = mapping[field];
+                return ['<option value="-1"'+(idx===-1?' selected':''+'>(skip)</option>'),
+                  ...headers.map((h,i) =>
+                    `<option value="${i}"${i===idx?' selected':''}>${h}</option>`)
+                ].join('');
+              })()}
+            </select>
+          </div>`).join('')}
+      </div>
+      <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;
+                  letter-spacing:.08em;margin-bottom:6px">Preview (first 5 rows)</div>
+      <div style="overflow-x:auto;margin-bottom:14px;border:1px solid var(--line);border-radius:4px">
+        <table style="width:100%;border-collapse:collapse;font-size:11px">
+          <thead><tr style="background:var(--panel2)">
+            ${headers.map(h => `<th style="padding:4px 8px;text-align:left;
+              border-right:1px solid var(--line);white-space:nowrap;font-size:10px">${h}</th>`).join('')}
+          </tr></thead>
+          <tbody>
+            ${dataRows.slice(0,5).map(vals => `<tr>${headers.map((_,i) =>
+              `<td style="padding:4px 8px;border-right:1px solid var(--line-lt);
+               max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+               ${(vals[i]||'').replace(/^"|"$/g,'')}</td>`).join('')}</tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button onclick="executeCSVImport()"
+          style="background:var(--eoc);border-color:var(--eoc);color:#fff;
+                 padding:8px 20px;font-weight:600">
+          Import ${dataRows.length} Resources
+        </button>
+        <button onclick="document.getElementById('csvImportModal').remove()"
+          style="padding:8px 16px">Cancel</button>
+        <span style="font-size:10px;color:var(--dim)">Status and type are normalized automatically</span>
+      </div>
+    </div>`;
+
+  // Store data for executeCSVImport
+  window._csvImportRows = dataRows;
+  modal.onclick = ev => { if (ev.target === modal) modal.remove(); };
+  document.body.appendChild(modal);
+}
+
+function executeCSVImport() {
+  const dataRows = window._csvImportRows || [];
+  const mapping  = {};
+  Object.keys(CSV_COL_MAP).forEach(f => {
+    const sel = document.getElementById('map_' + f);
+    mapping[f] = sel ? parseInt(sel.value) : -1;
+  });
+
+  const get = (vals, col) => col >= 0 ? (vals[col]||'').replace(/^"|"$/g,'').trim() : '';
+  let imported = 0, skipped = 0;
+
+  dataRows.forEach(vals => {
+    const name = get(vals, mapping.name);
+    if (!name) { skipped++; return; }
+
+    const rawStatus = get(vals, mapping.status).toLowerCase();
+    const status    = STATUS_NORMALIZE[rawStatus] ||
+      (rawStatus ? rawStatus.charAt(0).toUpperCase()+rawStatus.slice(1) : 'Available');
+
+    const rawType = get(vals, mapping.type).toLowerCase();
+    let type = 'Equipment';
+    for (const [key, val] of Object.entries(TYPE_NORMALIZE)) {
+      if (rawType.includes(key)) { type = val; break; }
+    }
+
+    const obj = {
+      id:          'res-'+Date.now()+'-'+Math.random().toString(36).slice(2,6),
+      name, type, status,
+      owner:       get(vals, mapping.owner),
+      qty:         parseInt(get(vals, mapping.qty)) || 1,
+      location:    get(vals, mapping.location),
+      assigned_to: get(vals, mapping.assigned_to),
+      contact:     get(vals, mapping.contact),
+      serial:      get(vals, mapping.serial),
+      notes:       get(vals, mapping.notes),
+      updated:     new Date().toISOString(),
+    };
+
+    // Merge on serial if already exists
+    if (obj.serial) {
+      const ei = resources.findIndex(r => r.serial === obj.serial);
+      if (ei >= 0) { resources[ei] = { ...resources[ei], ...obj }; }
+      else { resources.push(obj); }
+    } else {
+      resources.push(obj);
+    }
+    imported++;
+  });
+
+  save(); renderAll();
+  document.getElementById('csvImportModal')?.remove();
+  alert(`✓ Imported ${imported} resource${imported!==1?'s':''}${skipped?`, skipped ${skipped} rows without a name`:''}.`);
+}
+
 
 function timeAgo(iso) {
   const d = (Date.now()-new Date(iso).getTime())/1000;

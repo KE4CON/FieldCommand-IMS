@@ -145,6 +145,23 @@ class ICSHandler(BaseHTTPRequestHandler):
             return self.send_json({"service":"ics-platform","version":"2.0.0",
                 "utc":utcnow(),"incidents":incs,"active":active,"db":str(db.DB_PATH)})
 
+        elif path == "/api/ics/meetings":
+            inc_id=qs.get("incident_id",[None])[0]
+            period=qs.get("period",[None])[0]
+            if inc_id and period:
+                rows=c.execute("SELECT * FROM ics_meetings WHERE incident_id=? AND period=? ORDER BY scheduled_time",(inc_id,int(period))).fetchall()
+            elif inc_id:
+                rows=c.execute("SELECT * FROM ics_meetings WHERE incident_id=? ORDER BY scheduled_time",(inc_id,)).fetchall()
+            else:
+                rows=c.execute("SELECT * FROM ics_meetings ORDER BY scheduled_time DESC LIMIT 50").fetchall()
+            return self.send_json(rows_to_list(rows))
+
+        elif path.startswith("/api/ics/meetings/"):
+            mid=path.split("/api/ics/meetings/")[1]
+            row=c.execute("SELECT * FROM ics_meetings WHERE id=?",(mid,)).fetchone()
+            if not row: return self.send_json({"error":"Not found"},404)
+            return self.send_json(row_to_dict(row))
+
         else:
             self.send_json({"error":"Not found"},404)
 
@@ -263,6 +280,47 @@ class ICSHandler(BaseHTTPRequestHandler):
             return self.send_json({"ok":True,"resource":row_to_dict(
                 c.execute("SELECT * FROM ics_resources WHERE id=?",(rid,)).fetchone())})
 
+        elif path == "/api/ics/meetings":
+            mid=body.get("id") or f"meet-{int(time.time()*1000)}"
+            c.execute("""INSERT OR REPLACE INTO ics_meetings
+                (id,incident_id,period,meeting_type,title,scheduled_time,
+                 location,chair,attendees,agenda_items,status,notes,created,updated)
+                VALUES(?,?,?,?,?,?,?,?,?,?,?,?,COALESCE(
+                    (SELECT created FROM ics_meetings WHERE id=?),?),?)""",
+                (mid,
+                 body.get("incident_id",""),
+                 body.get("period",1),
+                 body.get("meeting_type","other"),
+                 body.get("title",""),
+                 body.get("scheduled_time",""),
+                 body.get("location",""),
+                 body.get("chair",""),
+                 jdump(body.get("attendees",[])),
+                 jdump(body.get("agenda_items",[])),
+                 body.get("status","scheduled"),
+                 body.get("notes",""),
+                 mid,now,now))
+            c.commit()
+            log_activity(body.get("incident_id",""),"Planning",
+                         "Meeting Scheduled",body.get("title",""))
+            return self.send_json({"ok":True,"id":mid})
+
+        elif path.startswith("/api/ics/meetings/"):
+            mid=path.split("/api/ics/meetings/")[1]
+            allowed=["title","scheduled_time","location","chair","attendees",
+                     "agenda_items","status","notes","period"]
+            sets=[]; vals=[]
+            for k in allowed:
+                if k in body:
+                    sets.append(f"{k}=?")
+                    vals.append(jdump(body[k]) if isinstance(body[k],list) else body[k])
+            if sets:
+                vals+=[now,mid]
+                c.execute(f"UPDATE ics_meetings SET {','.join(sets)},updated=? WHERE id=?",vals)
+                c.commit()
+            log_activity("","Planning","Meeting Updated",mid)
+            return self.send_json({"ok":True})
+
         else:
             self.send_json({"error":"Not found"},404)
 
@@ -272,6 +330,8 @@ class ICSHandler(BaseHTTPRequestHandler):
             c.execute("DELETE FROM ics_tcards WHERE id=?",(path.split("/api/ics/tcards/")[1],))
         elif path.startswith("/api/ics/resources/"):
             c.execute("DELETE FROM ics_resources WHERE id=?",(path.split("/api/ics/resources/")[1],))
+        elif path.startswith("/api/ics/meetings/"):
+            c.execute("DELETE FROM ics_meetings WHERE id=?",(path.split("/api/ics/meetings/")[1],))
         elif path.startswith("/api/ics/incidents/"):
             inc_id=path.split("/api/ics/incidents/")[1]
             c.execute("DELETE FROM incidents WHERE id=?",(inc_id,))

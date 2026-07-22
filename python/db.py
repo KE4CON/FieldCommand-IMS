@@ -326,6 +326,26 @@ CREATE TABLE IF NOT EXISTS activity_log (
 CREATE INDEX IF NOT EXISTS idx_act_inc  ON activity_log(incident_id);
 CREATE INDEX IF NOT EXISTS idx_act_time ON activity_log(timestamp);
 
+-- ── ICS Meetings (Planning Section scheduler) ───────────────────────────────
+CREATE TABLE IF NOT EXISTS ics_meetings (
+    id              TEXT PRIMARY KEY,
+    incident_id     TEXT NOT NULL DEFAULT '',
+    period          INTEGER NOT NULL DEFAULT 1,
+    meeting_type    TEXT NOT NULL,          -- incident_briefing, tactics, planning, ops_briefing, etc.
+    title           TEXT NOT NULL DEFAULT '',
+    scheduled_time  TEXT,                   -- ISO datetime
+    location        TEXT DEFAULT '',
+    chair           TEXT DEFAULT '',        -- who runs the meeting
+    attendees       TEXT DEFAULT '[]',      -- JSON array of names/roles
+    agenda_items    TEXT DEFAULT '[]',      -- JSON array of agenda items
+    status          TEXT DEFAULT 'scheduled', -- scheduled, completed, cancelled
+    notes           TEXT DEFAULT '',        -- minutes / action items
+    created         TEXT NOT NULL,
+    updated         TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_meet_inc  ON ics_meetings(incident_id);
+CREATE INDEX IF NOT EXISTS idx_meet_type ON ics_meetings(meeting_type);
+
 -- ── Standalone forms (ICS-213, ICS-214, NTS, etc.) ───────────────────────────
 CREATE TABLE IF NOT EXISTS forms (
     id          TEXT PRIMARY KEY,
@@ -518,6 +538,7 @@ def init_db():
         "ALTER TABLE station_config ADD COLUMN ps_member_id_label TEXT DEFAULT 'EMA ID'",
         "ALTER TABLE station_config ADD COLUMN ps_member_lookup TEXT DEFAULT 'radio_id'",
         "ALTER TABLE incidents ADD COLUMN ics_variant TEXT DEFAULT 'FEMA'",
+        """CREATE TABLE IF NOT EXISTS ics_meetings (id TEXT PRIMARY KEY, incident_id TEXT NOT NULL DEFAULT '', period INTEGER NOT NULL DEFAULT 1, meeting_type TEXT NOT NULL, title TEXT NOT NULL DEFAULT '', scheduled_time TEXT, location TEXT DEFAULT '', chair TEXT DEFAULT '', attendees TEXT DEFAULT '[]', agenda_items TEXT DEFAULT '[]', status TEXT DEFAULT 'scheduled', notes TEXT DEFAULT '', created TEXT NOT NULL, updated TEXT NOT NULL)""",
     ]
     for sql in migrations:
         try:

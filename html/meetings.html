@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Meeting Scheduler — FieldCommand IMS</title>
+<link rel="stylesheet" href="theme.css">
+<style>
+.mtg-header {
+  background: linear-gradient(135deg,#001428,#002858);
+  border-bottom: 2px solid var(--green); padding: 10px 16px;
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+}
+.mtg-badge {
+  background: var(--green); color: #fff; font-family: var(--font-hd);
+  font-size: 12px; padding: 4px 12px; border-radius: 4px; letter-spacing: 2px;
+}
+.planp-strip {
+  display: flex; gap: 0; overflow-x: auto; padding: 10px 16px;
+  background: var(--panel); border-bottom: 1px solid var(--line);
+}
+.planp-step {
+  display: flex; flex-direction: column; align-items: center;
+  min-width: 90px; padding: 6px 8px; cursor: pointer;
+  border-bottom: 3px solid transparent; transition: all 0.15s;
+  font-size: 10px; color: var(--muted); text-align: center; gap: 3px;
+}
+.planp-step:hover { color: var(--txt); border-bottom-color: var(--line); }
+.planp-step.active { color: var(--green); border-bottom-color: var(--green); }
+.planp-step.done { color: var(--blue); border-bottom-color: var(--blue); }
+.planp-step .ps-icon { font-size: 20px; }
+.planp-step .ps-name { font-family: var(--font-hd); font-size: 10px; letter-spacing: 0.5px; }
+.planp-step .ps-time { font-size: 9px; color: var(--dim); }
+.mtg-card {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 8px; padding: 14px; margin-bottom: 10px;
+  border-left: 4px solid var(--line);
+}
+.mtg-card.scheduled { border-left-color: var(--blue); }
+.mtg-card.completed { border-left-color: var(--green); }
+.mtg-card.overdue   { border-left-color: var(--red); }
+.mtg-card.cancelled { border-left-color: var(--dim); opacity: 0.6; }
+.mtg-title { font-family: var(--font-hd); font-size: 14px; margin-bottom: 4px; }
+.mtg-meta  { font-size: 11px; color: var(--muted); display: flex; gap: 14px; flex-wrap: wrap; }
+.attendee-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; border-radius: 10px; font-size: 10px;
+  border: 1px solid var(--line); margin: 2px;
+}
+.attendee-chip.required { border-color: var(--amber); color: var(--amber); background: rgba(200,118,10,0.1); }
+.attendee-chip.optional { border-color: var(--line); color: var(--muted); }
+.attendee-chip.present  { border-color: var(--green); color: var(--green); background: rgba(26,122,58,0.1); }
+.agenda-item {
+  display: flex; gap: 10px; padding: 6px 0;
+  border-bottom: 1px solid var(--line); align-items: flex-start;
+  font-size: 12px;
+}
+.agenda-num { color: var(--dim); min-width: 24px; font-family: var(--font-hd); }
+.agenda-text { flex: 1; }
+.agenda-dur  { color: var(--dim); font-size: 11px; white-space: nowrap; }
+.modal-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6); z-index: 200;
+  align-items: center; justify-content: center;
+}
+.modal-overlay.open { display: flex; }
+.modal-box {
+  background: var(--panel); border: 1px solid var(--eoc);
+  border-radius: 10px; padding: 24px; width: 680px;
+  max-width: 96vw; max-height: 90vh; overflow-y: auto;
+}
+.modal-title { font-family: var(--font-hd); font-size: 15px; color: var(--amber); letter-spacing: 2px; margin-bottom: 16px; }
+.form-group { display: flex; flex-direction: column; gap: 5px; margin-bottom: 12px; }
+.form-group label { font-size: 11px; color: var(--muted); text-transform: uppercase; }
+.form-group input, .form-group select, .form-group textarea {
+  background: var(--input-bg); border: 1px solid var(--line);
+  border-radius: 4px; color: var(--txt); padding: 8px 10px;
+  font-size: 13px; width: 100%; box-sizing: border-box;
+}
+.form-group textarea { resize: vertical; min-height: 70px; }
+.form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.req-section { background: rgba(200,118,10,0.08); border: 1px solid rgba(200,118,10,0.3); border-radius: 6px; padding: 10px 12px; margin-bottom: 12px; }
+.req-label { font-size: 10px; color: var(--amber); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; font-family: var(--font-hd); }
+.attendee-row { display: flex; gap: 6px; align-items: center; margin-bottom: 5px; font-size: 12px; }
+.attendee-row input[type=checkbox] { width: 14px; height: 14px; flex-shrink: 0; }
+.attendee-name { flex: 1; }
+.attendee-name input { padding: 4px 8px; font-size: 12px; }
+.role-tag { font-size: 10px; color: var(--dim); min-width: 80px; }
+.add-attendee-btn { font-size: 11px; padding: 4px 10px; margin-top: 4px; }
+.agenda-edit-row { display: flex; gap: 6px; margin-bottom: 6px; }
+.agenda-edit-row input { flex: 1; }
+.agenda-edit-row .dur-input { width: 80px; flex: none; }
+</style>
+</head>
+<body>
+
+<div class="mtg-header">
+  <span class="mtg-badge">PLANNING</span>
+  <span style="font-family:var(--font-hd);font-size:14px;letter-spacing:2px">MEETING SCHEDULER</span>
+  <div id="incidentBadge" style="font-size:12px;color:var(--muted)">No incident selected</div>
+  <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+    <button onclick="showScheduleModal(null)"
+      style="background:var(--green);border-color:var(--green);color:#fff;font-weight:bold">
+      + Schedule Meeting
+    </button>
+    <a href="incident.html" style="color:var(--muted);font-size:12px">← Incident</a>
+    <a href="index.html" style="color:var(--muted);font-size:12px">Dashboard</a>
+  </div>
+</div>
+
+<!-- Planning-P strip -->
+<div class="planp-strip" id="planpStrip">
+  <!-- populated by JS -->
+</div>
+
+<div class="page-wrap" style="display:grid;grid-template-columns:1fr 340px;gap:16px;padding:16px">
+
+<!-- Left: meeting list -->
+<div>
+  <div id="meetingsByPeriod">
+    <div style="color:var(--muted);text-align:center;padding:40px;font-size:12px">
+      Select an incident to view its meeting schedule
+    </div>
+  </div>
+</div>
+
+<!-- Right: selected meeting detail / agenda -->
+<div>
+  <div id="meetingDetail" style="background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:16px">
+    <div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">
+      Select a meeting to view details and agenda
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- Schedule Meeting Modal -->
+<div class="modal-overlay" id="schedModal" onclick="if(event.target===this)closeModal('schedModal')">
+<div class="modal-box">
+  <div class="modal-title" id="schedModalTitle">📅 SCHEDULE MEETING</div>
+
+  <div class="form-group">
+    <label>Meeting Type *</label>
+    <select id="sm-type" onchange="onMeetingTypeChange()">
+      <option value="">— Select Meeting Type —</option>
+      <optgroup label="Planning P Cycle">
+        <option value="incident_briefing">Incident Briefing (ICS-201)</option>
+        <option value="tactics">Tactics Meeting</option>
+        <option value="planning">Planning Meeting</option>
+        <option value="ops_briefing">Operations Briefing</option>
+        <option value="agency_rep">Agency Representative Meeting</option>
+        <option value="command_staff">Command Staff Meeting</option>
+      </optgroup>
+      <optgroup label="Public Information">
+        <option value="jic_coord">JIC Coordination Meeting</option>
+        <option value="media_briefing">Media Briefing / Press Conference</option>
+        <option value="community_meeting">Community Information Meeting</option>
+        <option value="social_media">Social Media Coordination</option>
+      </optgroup>
+      <optgroup label="Operational">
+        <option value="shift_briefing">Shift Briefing</option>
+        <option value="resource_briefing">Resource / Logistics Briefing</option>
+        <option value="finance_briefing">Finance / Admin Briefing</option>
+        <option value="demob_briefing">Demobilization Briefing</option>
+      </optgroup>
+      <optgroup label="Other">
+        <option value="training">Training / Drill</option>
+        <option value="hot_wash">Hot Wash / After Action</option>
+        <option value="other">Other Meeting</option>
+      </optgroup>
+    </select>
+  </div>
+
+  <div class="form-group">
+    <label>Meeting Title</label>
+    <input type="text" id="sm-title" placeholder="Auto-filled from type — edit if needed">
+  </div>
+
+  <div class="form-grid-2">
+    <div class="form-group">
+      <label>Date & Time *</label>
+      <input type="datetime-local" id="sm-time">
+    </div>
+    <div class="form-group">
+      <label>Operational Period</label>
+      <input type="number" id="sm-period" value="1" min="1">
+    </div>
+  </div>
+
+  <div class="form-grid-2">
+    <div class="form-group">
+      <label>Location / Room</label>
+      <input type="text" id="sm-location" placeholder="e.g. EOC Conference Room, Tent A">
+    </div>
+    <div class="form-group">
+      <label>Meeting Chair / Facilitator</label>
+      <input type="text" id="sm-chair" placeholder="Name / ICS position">
+    </div>
+  </div>
+
+  <!-- Required attendees (by ICS position) -->
+  <div class="req-section" id="reqAttendeesSection" style="display:none">
+    <div class="req-label">⚠ Required Attendees (by ICS position)</div>
+    <div id="reqAttendees"></div>
+  </div>
+
+  <!-- Optional / additional attendees -->
+  <div class="form-group">
+    <label>Additional / Optional Attendees</label>
+    <div id="optAttendees"></div>
+    <button class="add-attendee-btn" onclick="addOptAttendee()">+ Add Attendee</button>
+  </div>
+
+  <!-- Agenda -->
+  <div class="form-group">
+    <label>Agenda Items</label>
+    <div id="agendaItems"></div>
+    <button class="add-attendee-btn" onclick="addAgendaItem()">+ Add Agenda Item</button>
+  </div>
+
+  <div style="display:flex;gap:8px;margin-top:8px">
+    <button onclick="saveMeeting()"
+      style="flex:1;background:var(--green);border-color:var(--green);color:#fff;font-weight:bold;padding:10px">
+      SAVE MEETING
+    </button>
+    <button onclick="closeModal('schedModal')">Cancel</button>
+  </div>
+</div>
+</div>
+
+<!-- Minutes Modal -->
+<div class="modal-overlay" id="minutesModal" onclick="if(event.target===this)closeModal('minutesModal')">
+<div class="modal-box">
+  <div class="modal-title">📝 MEETING NOTES / MINUTES</div>
+  <div class="form-group">
+    <label>Minutes & Action Items</label>
+    <textarea id="mn-notes" rows="10" placeholder="Record key decisions, action items, and follow-ups..."></textarea>
+  </div>
+  <div class="form-group">
+    <label>Status</label>
+    <select id="mn-status">
+      <option value="scheduled">Scheduled</option>
+      <option value="completed">Completed</option>
+      <option value="cancelled">Cancelled</option>
+    </select>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:8px">
+    <button onclick="saveMinutes()"
+      style="background:var(--green);border-color:var(--green);color:#fff;font-weight:bold">Save</button>
+    <button onclick="closeModal('minutesModal')">Cancel</button>
+  </div>
+</div>
+</div>
+
+<script>
+const ICS_API = 'http://192.168.50.1:5051';
+const MAIN_API = 'http://192.168.50.1:5050';
+
+let incidentId = new URLSearchParams(location.search).get('incident');
+let currentPeriod = 1;
+let currentMeetingId = null;
+let editingMeetingId = null;
+let meetings = [];
+
+// ── Meeting type definitions ─────────────────────────────────────────
+const MEETING_TYPES = {
+  incident_briefing: {
+    title: 'Incident Briefing',
+    icon: '🚨',
+    planp_order: 1,
+    planp_label: 'Incident\nBriefing',
+    chair: 'Incident Commander (IC)',
+    required: [
+      {role:'Incident Commander (IC)', abbr:'IC'},
+      {role:'Operations Section Chief (OSC)', abbr:'OSC'},
+      {role:'Planning Section Chief (PSC)', abbr:'PSC'},
+      {role:'Logistics Section Chief (LSC)', abbr:'LSC'},
+      {role:'Finance/Admin Section Chief (FSC)', abbr:'FSC'},
+      {role:'Safety Officer (SO)', abbr:'SO'},
+      {role:'Public Information Officer (PIO)', abbr:'PIO'},
+      {role:'Liaison Officer (LO)', abbr:'LO'},
+    ],
+    optional: ['Agency Representatives','Legal Counsel','Technical Specialists'],
+    agenda: [
+      {text:'Call to order / roll call', dur:'5 min'},
+      {text:'Incident overview — situation summary', dur:'10 min'},
+      {text:'Current incident objectives', dur:'10 min'},
+      {text:'Initial resource assessment', dur:'5 min'},
+      {text:'Immediate priorities and assignments', dur:'10 min'},
+      {text:'Safety briefing', dur:'5 min'},
+      {text:'Public information strategy', dur:'5 min'},
+      {text:'Next steps / next meeting schedule', dur:'5 min'},
+      {text:'Questions', dur:'5 min'},
+    ]
+  },
+  tactics: {
+    title: 'Tactics Meeting',
+    icon: '⚔',
+    planp_order: 2,
+    planp_label: 'Tactics\nMeeting',
+    chair: 'Operations Section Chief (OSC)',
+    required: [
+      {role:'Operations Section Chief (OSC)', abbr:'OSC'},
+      {role:'Planning Section Chief (PSC)', abbr:'PSC'},
+      {role:'Safety Officer (SO)', abbr:'SO'},
+    ],
+    optional: ['Division/Group Supervisors','Air Operations Branch Director','Staging Area Manager'],
+    agenda: [
+      {text:'Review current situation / incident map', dur:'10 min'},
+      {text:'Review current period objectives (ICS-202)', dur:'5 min'},
+      {text:'Tactical options for next operational period', dur:'20 min'},
+      {text:'Assignment of Divisions and Groups (ICS-204 draft)', dur:'15 min'},
+      {text:'Resource needs and gaps (ICS-215)', dur:'10 min'},
+      {text:'Safety considerations by assignment', dur:'10 min'},
+      {text:'Air operations coordination', dur:'5 min'},
+      {text:'Confirm tactics — Planning Section to document', dur:'5 min'},
+    ]
+  },
+  planning: {
+    title: 'Planning Meeting',
+    icon: '📐',
+    planp_order: 3,
+    planp_label: 'Planning\nMeeting',
+    chair: 'Planning Section Chief (PSC)',
+    required: [
+      {role:'Incident Commander (IC)', abbr:'IC'},
+      {role:'Operations Section Chief (OSC)', abbr:'OSC'},
+      {role:'Planning Section Chief (PSC)', abbr:'PSC'},
+      {role:'Logistics Section Chief (LSC)', abbr:'LSC'},
+      {role:'Finance/Admin Section Chief (FSC)', abbr:'FSC'},
+      {role:'Safety Officer (SO)', abbr:'SO'},
+      {role:'Public Information Officer (PIO)', abbr:'PIO'},
+    ],
+    optional: ['Agency Representatives','Technical Specialists','Resources Unit Leader'],
+    agenda: [
+      {text:'Call to order — PSC chairs', dur:'2 min'},
+      {text:'Incident status briefing (current period)', dur:'8 min'},
+      {text:'Next period objectives (ICS-202 review)', dur:'10 min'},
+      {text:'Tactics review — OSC presents (from Tactics Meeting)', dur:'10 min'},
+      {text:'Resource status and assignments (ICS-204)', dur:'10 min'},
+      {text:'Support requirements — Logistics Section', dur:'8 min'},
+      {text:'Finance / cost concerns', dur:'5 min'},
+      {text:'Safety message (ICS-208)', dur:'5 min'},
+      {text:'Public information (PIO update)', dur:'5 min'},
+      {text:'Communications plan (ICS-205)', dur:'5 min'},
+      {text:'Medical plan (ICS-206)', dur:'3 min'},
+      {text:'Operations briefing schedule and location', dur:'3 min'},
+      {text:'Questions / other business', dur:'5 min'},
+    ]
+  },
+  ops_briefing: {
+    title: 'Operations Briefing',
+    icon: '📢',
+    planp_order: 4,
+    planp_label: 'Ops\nBriefing',
+    chair: 'Incident Commander (IC)',
+    required: [
+      {role:'Incident Commander (IC)', abbr:'IC'},
+      {role:'Operations Section Chief (OSC)', abbr:'OSC'},
+      {role:'Planning Section Chief (PSC)', abbr:'PSC'},
+      {role:'Logistics Section Chief (LSC)', abbr:'LSC'},
+      {role:'Safety Officer (SO)', abbr:'SO'},
+      {role:'All Division / Group Supervisors', abbr:'DIV/GRP'},
+      {role:'All Branch Directors', abbr:'BD'},
+    ],
+    optional: ['Finance/Admin Section Chief','PIO','Agency Representatives','All Assigned Resources'],
+    agenda: [
+      {text:'Call to order — IC', dur:'2 min'},
+      {text:'Incident status overview', dur:'5 min'},
+      {text:'Incident objectives (ICS-202)', dur:'8 min'},
+      {text:'Organization (ICS-203) — section chiefs introduced', dur:'5 min'},
+      {text:'Assignment lists by Division/Group (ICS-204)', dur:'15 min'},
+      {text:'Communications plan (ICS-205)', dur:'5 min'},
+      {text:'Medical plan (ICS-206)', dur:'5 min'},
+      {text:'Safety message (ICS-208)', dur:'5 min'},
+      {text:'Air operations (if applicable)', dur:'5 min'},
+      {text:'Logistics and support', dur:'5 min'},
+      {text:'Shift transition procedures', dur:'5 min'},
+      {text:'Questions', dur:'5 min'},
+    ]
+  },
+  agency_rep: {
+    title: 'Agency Representative Meeting',
+    icon: '🤝',
+    planp_order: 5,
+    planp_label: 'Agency\nReps',
+    chair: 'Incident Commander (IC) or Liaison Officer (LO)',
+    required: [
+      {role:'Incident Commander (IC)', abbr:'IC'},
+      {role:'Liaison Officer (LO)', abbr:'LO'},
+      {role:'All Agency Representatives', abbr:'AREP'},
+    ],
+    optional: ['Planning Section Chief','Operations Section Chief'],
+    agenda: [
+      {text:'Welcome and introductions', dur:'5 min'},
+      {text:'Incident overview and current status', dur:'10 min'},
+      {text:'Agency roles and responsibilities on this incident', dur:'10 min'},
+      {text:'Resource commitments and limitations', dur:'10 min'},
+      {text:'Coordination procedures and communication protocols', dur:'10 min'},
+      {text:'Specific agency concerns or issues', dur:'15 min'},
+      {text:'Demobilization expectations', dur:'5 min'},
+      {text:'Next meeting / follow-up', dur:'5 min'},
+    ]
+  },
+  command_staff: {
+    title: 'Command Staff Meeting',
+    icon: '⭐',
+    planp_order: 6,
+    planp_label: 'Command\nStaff',
+    chair: 'Incident Commander (IC)',
+    required: [
+      {role:'Incident Commander (IC)', abbr:'IC'},
+      {role:'Safety Officer (SO)', abbr:'SO'},
+      {role:'Public Information Officer (PIO)', abbr:'PIO'},
+      {role:'Liaison Officer (LO)', abbr:'LO'},
+    ],
+    optional: ['Deputy IC','Legal Counsel'],
+    agenda: [
+      {text:'Incident status and IC priorities', dur:'10 min'},
+      {text:'Safety issues and concerns (SO)', dur:'10 min'},
+      {text:'Public information strategy and media (PIO)', dur:'10 min'},
+      {text:'Agency coordination issues (LO)', dur:'10 min'},
+      {text:'Political / community concerns', dur:'10 min'},
+      {text:'Action items and follow-up', dur:'5 min'},
+    ]
+  },
+  jic_coord: {
+    title: 'JIC Coordination Meeting',
+    icon: '📰',
+    planp_order: null,
+    chair: 'Public Information Officer (PIO)',
+    required: [
+      {role:'Public Information Officer (PIO)', abbr:'PIO'},
+      {role:'Assistant PIOs / JIC Staff', abbr:'APIO'},
+    ],
+    optional: ['Agency PIOs','Legal Counsel','Social Media Coordinator'],
+    agenda: [
+      {text:'Current incident status for public messaging', dur:'10 min'},
+      {text:'Review of previous releases / public statements', dur:'5 min'},
+      {text:'Upcoming media inquiries and press schedule', dur:'10 min'},
+      {text:'Key messages for next operational period', dur:'10 min'},
+      {text:'Social media monitoring and response', dur:'5 min'},
+      {text:'Community notification needs', dur:'5 min'},
+      {text:'Draft next press release / statement', dur:'15 min'},
+      {text:'Approval and release schedule', dur:'5 min'},
+    ]
+  },
+  media_briefing: {
+    title: 'Media Briefing / Press Conference',
+    icon: '🎤',
+    planp_order: null,
+    chair: 'Public Information Officer (PIO)',
+    required: [
+      {role:'Public Information Officer (PIO)', abbr:'PIO'},
+      {role:'Incident Commander (IC) or designee', abbr:'IC'},
+    ],
+    optional: ['Subject Matter Experts','Agency Executives','Technical Specialists'],
+    agenda: [
+      {text:'Opening statement — PIO', dur:'5 min'},
+      {text:'Incident overview and current status', dur:'10 min'},
+      {text:'Actions taken and resources deployed', dur:'5 min'},
+      {text:'Public safety information and instructions', dur:'5 min'},
+      {text:'Next steps and timeline', dur:'5 min'},
+      {text:'Questions from media', dur:'15 min'},
+      {text:'Closing statement', dur:'2 min'},
+    ]
+  },
+  community_meeting: {
+    title: 'Community Information Meeting',
+    icon: '👥',
+    planp_order: null,
+    chair: 'Public Information Officer (PIO) or IC',
+    required: [
+      {role:'Incident Commander (IC) or designee', abbr:'IC'},
+      {role:'Public Information Officer (PIO)', abbr:'PIO'},
+      {role:'Liaison Officer (LO)', abbr:'LO'},
+    ],
+    optional: ['Agency Executives','Technical Specialists','Elected Officials','Interpreter/Translator'],
+    agenda: [
+      {text:'Welcome and introductions', dur:'5 min'},
+      {text:'Incident overview in plain language', dur:'10 min'},
+      {text:'Current status and projected timeline', dur:'10 min'},
+      {text:'What the public needs to know / do', dur:'10 min'},
+      {text:'Resources available to affected community', dur:'10 min'},
+      {text:'How to stay informed', dur:'5 min'},
+      {text:'Questions from community', dur:'20 min'},
+      {text:'Closing remarks', dur:'5 min'},
+    ]
+  },
+  hot_wash: {
+    title: 'Hot Wash / After Action Review',
+    icon: '🔥',
+    planp_order: null,
+    chair: 'Planning Section Chief (PSC) or IC',
+    required: [
+      {role:'Incident Commander (IC)', abbr:'IC'},
+      {role:'All Section Chiefs', abbr:'SC'},
+      {role:'Safety Officer (SO)', abbr:'SO'},
+    ],
+    optional: ['All supervisory personnel','Agency Representatives'],
+    agenda: [
+      {text:'What went well — open discussion', dur:'20 min'},
+      {text:'What could be improved', dur:'20 min'},
+      {text:'Specific issues and lessons learned', dur:'20 min'},
+      {text:'Action items for future incidents', dur:'10 min'},
+      {text:'Documentation and after-action report assignment', dur:'5 min'},
+      {text:'Closing remarks', dur:'5 min'},
+    ]
+  },
+  other: {
+    title: 'Other Meeting',
+    icon: '📋',
+    planp_order: null,
+    chair: '',
+    required: [],
+    optional: [],
+    agenda: [{text:'', dur:''}]
+  }
+};
+
+// Default for unmapped types
+const DEFAULT_TYPE = { title:'Meeting', icon:'📋', planp_order:null, chair:'', required:[], optional:[], agenda:[{text:'',dur:''}] };
+
+function getMeetingDef(type) { return MEETING_TYPES[type] || DEFAULT_TYPE; }
+
+// ── Planning-P strip ─────────────────────────────────────────────────
+function renderPlanpStrip(periodMeetings) {
+  const planpTypes = ['incident_briefing','tactics','planning','ops_briefing','agency_rep','command_staff'];
+  const strip = document.getElementById('planpStrip');
+  strip.innerHTML = planpTypes.map(t => {
+    const def = getMeetingDef(t);
+    const mtg = periodMeetings.find(m => m.meeting_type === t);
+    const cls = mtg ? (mtg.status === 'completed' ? 'done' : 'active') : '';
+    const timeStr = mtg?.scheduled_time ? new Date(mtg.scheduled_time).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : 'Not scheduled';
+    return `<div class="planp-step ${cls}" onclick="filterType('${t}')">
+      <span class="ps-icon">${def.icon}</span>
+      <span class="ps-name">${def.title.replace(' ','\n')}</span>
+      <span class="ps-time">${timeStr}</span>
+      ${mtg ? `<span style="font-size:9px;color:${mtg.status==='completed'?'var(--green)':'var(--blue)'}">${mtg.status}</span>` : ''}
+    </div>`;
+  }).join('<div style="display:flex;align-items:center;color:var(--dim);font-size:16px;padding:0 2px">→</div>');
+}
+
+// ── Load meetings ─────────────────────────────────────────────────────
+async function loadMeetings() {
+  if (!incidentId) return;
+  try {
+    const r = await fetch(`${ICS_API}/api/ics/meetings?incident_id=${incidentId}`);
+    meetings = await r.json();
+    // Group by period
+    const periods = [...new Set(meetings.map(m => m.period))].sort((a,b)=>a-b);
+    if (!periods.includes(currentPeriod)) currentPeriod = periods[0] || 1;
+    renderMeetingList(meetings);
+    renderPlanpStrip(meetings.filter(m => m.period === currentPeriod));
+  } catch(e) {
+    document.getElementById('meetingsByPeriod').innerHTML =
+      '<div style="color:var(--red);font-size:12px;padding:12px">⚠ Could not load meetings — ICS platform offline</div>';
+  }
+}
+
+function renderMeetingList(mtgs) {
+  const el = document.getElementById('meetingsByPeriod');
+  if (!mtgs.length) {
+    el.innerHTML = `<div style="color:var(--muted);text-align:center;padding:30px;font-size:12px">
+      No meetings scheduled yet.<br>
+      <button onclick="showScheduleModal(null)" style="margin-top:10px;background:var(--green);border-color:var(--green);color:#fff">
+        + Schedule First Meeting
+      </button>
+    </div>`;
+    return;
+  }
+
+  // Group by period
+  const byPeriod = {};
+  mtgs.forEach(m => {
+    if (!byPeriod[m.period]) byPeriod[m.period] = [];
+    byPeriod[m.period].push(m);
+  });
+
+  el.innerHTML = Object.keys(byPeriod).sort().map(period => {
+    const pMtgs = byPeriod[period];
+    return `<div style="margin-bottom:20px">
+      <div style="font-family:var(--font-hd);font-size:11px;letter-spacing:2px;color:var(--green);
+                  text-transform:uppercase;padding:8px 0 6px;border-bottom:1px solid var(--line);margin-bottom:8px">
+        Operational Period ${period}
+      </div>
+      ${pMtgs.map(m => meetingCard(m)).join('')}
+    </div>`;
+  }).join('');
+}
+
+function meetingCard(m) {
+  const def = getMeetingDef(m.meeting_type);
+  const timeStr = m.scheduled_time ?
+    new Date(m.scheduled_time).toLocaleString([],{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '—';
+  const attendees = parseJSON(m.attendees, []);
+  const reqCount = attendees.filter(a => a.required).length;
+  const cls = m.status || 'scheduled';
+  return `<div class="mtg-card ${cls}" onclick="selectMeeting('${m.id}')">
+    <div class="mtg-title">${def.icon} ${m.title || def.title}</div>
+    <div class="mtg-meta">
+      <span>🕐 ${timeStr}</span>
+      ${m.location ? `<span>📍 ${m.location}</span>` : ''}
+      ${m.chair ? `<span>👤 ${m.chair}</span>` : ''}
+      <span style="color:${m.status==='completed'?'var(--green)':m.status==='cancelled'?'var(--dim)':'var(--blue)'}">
+        ${m.status || 'scheduled'}
+      </span>
+    </div>
+    <div style="margin-top:6px">
+      ${attendees.slice(0,6).map(a =>
+        `<span class="attendee-chip ${a.required?'required':'optional'}">${a.role||a.name||''}</span>`
+      ).join('')}
+      ${attendees.length > 6 ? `<span class="attendee-chip">+${attendees.length-6} more</span>` : ''}
+    </div>
+    <div style="display:flex;gap:8px;margin-top:8px">
+      <button onclick="event.stopPropagation();showScheduleModal('${m.id}')"
+        style="font-size:10px;padding:3px 8px">✏ Edit</button>
+      <button onclick="event.stopPropagation();showMinutes('${m.id}')"
+        style="font-size:10px;padding:3px 8px;background:var(--green);border-color:var(--green);color:#fff">
+        📝 Minutes
+      </button>
+      <button onclick="event.stopPropagation();printAgenda('${m.id}')"
+        style="font-size:10px;padding:3px 8px">🖨 Print Agenda</button>
+      <button onclick="event.stopPropagation();deleteMeeting('${m.id}')"
+        style="font-size:10px;padding:3px 8px;background:var(--panel2)">✕</button>
+    </div>
+  </div>`;
+}
+
+// ── Select meeting — show detail panel ────────────────────────────────
+function selectMeeting(mid) {
+  currentMeetingId = mid;
+  const m = meetings.find(x => x.id === mid);
+  if (!m) return;
+  const def = getMeetingDef(m.meeting_type);
+  const agenda = parseJSON(m.agenda_items, def.agenda);
+  const attendees = parseJSON(m.attendees, []);
+  const timeStr = m.scheduled_time ?
+    new Date(m.scheduled_time).toLocaleString([],{weekday:'short',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : 'Not scheduled';
+
+  document.getElementById('meetingDetail').innerHTML = `
+    <div style="font-family:var(--font-hd);font-size:16px;margin-bottom:6px">
+      ${def.icon} ${m.title || def.title}
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:12px;display:flex;gap:12px;flex-wrap:wrap">
+      <span>🕐 ${timeStr}</span>
+      ${m.location?`<span>📍 ${m.location}</span>`:''}
+      ${m.chair?`<span>👤 Chair: ${m.chair}</span>`:''}
+      <span>Period ${m.period}</span>
+    </div>
+
+    <div style="font-size:10px;color:var(--amber);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">
+      Attendees
+    </div>
+    <div style="margin-bottom:14px">
+      ${attendees.map(a =>
+        `<span class="attendee-chip ${a.required?'required':'optional'}">
+          ${a.required?'⚠ ':''}${a.name||a.role||''}
+        </span>`
+      ).join('') || '<span style="color:var(--dim);font-size:11px">None listed</span>'}
+    </div>
+
+    <div style="font-size:10px;color:var(--amber);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">
+      Agenda
+    </div>
+    <div style="margin-bottom:14px">
+      ${agenda.map((item,i) => `
+        <div class="agenda-item">
+          <span class="agenda-num">${i+1}.</span>
+          <span class="agenda-text">${item.text||''}</span>
+          <span class="agenda-dur">${item.dur||''}</span>
+        </div>`).join('') || '<span style="color:var(--dim);font-size:11px">No agenda items</span>'}
+    </div>
+
+    ${m.notes ? `
+    <div style="font-size:10px;color:var(--green);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px">
+      Minutes / Notes
+    </div>
+    <div style="font-size:12px;color:var(--muted);white-space:pre-wrap;background:var(--bg);
+                padding:10px;border-radius:4px;margin-bottom:10px">${m.notes}</div>` : ''}
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button onclick="printAgenda('${m.id}')"
+        style="background:var(--eoc);border-color:var(--eoc);color:#fff;font-size:12px">
+        🖨 Print Agenda
+      </button>
+      <button onclick="showMinutes('${m.id}')" style="font-size:12px">
+        📝 ${m.notes?'Edit':'Add'} Minutes
+      </button>
+    </div>
+  `;
+}
+
+// ── Schedule modal ────────────────────────────────────────────────────
+function showScheduleModal(meetingId) {
+  editingMeetingId = meetingId;
+  document.getElementById('schedModalTitle').textContent =
+    meetingId ? '✏ EDIT MEETING' : '📅 SCHEDULE MEETING';
+
+  if (meetingId) {
+    const m = meetings.find(x => x.id === meetingId);
+    if (m) {
+      document.getElementById('sm-type').value = m.meeting_type || '';
+      document.getElementById('sm-title').value = m.title || '';
+      document.getElementById('sm-time').value = m.scheduled_time ? m.scheduled_time.slice(0,16) : '';
+      document.getElementById('sm-period').value = m.period || 1;
+      document.getElementById('sm-location').value = m.location || '';
+      document.getElementById('sm-chair').value = m.chair || '';
+      onMeetingTypeChange(parseJSON(m.attendees,[]), parseJSON(m.agenda_items,[]));
+    }
+  } else {
+    // Defaults
+    document.getElementById('sm-type').value = '';
+    document.getElementById('sm-title').value = '';
+    const now = new Date(); now.setMinutes(0,0,0);
+    document.getElementById('sm-time').value = now.toISOString().slice(0,16);
+    document.getElementById('sm-period').value = currentPeriod;
+    document.getElementById('sm-location').value = '';
+    document.getElementById('sm-chair').value = '';
+    document.getElementById('reqAttendeesSection').style.display = 'none';
+    document.getElementById('reqAttendees').innerHTML = '';
+    document.getElementById('optAttendees').innerHTML = '';
+    document.getElementById('agendaItems').innerHTML = '';
+  }
+  document.getElementById('schedModal').classList.add('open');
+}
+
+function onMeetingTypeChange(existingAttendees, existingAgenda) {
+  const type = document.getElementById('sm-type').value;
+  if (!type) return;
+  const def = getMeetingDef(type);
+
+  // Auto-fill title if blank
+  const titleEl = document.getElementById('sm-title');
+  if (!titleEl.value || titleEl.value === document.getElementById('sm-type').options[
+    document.getElementById('sm-type').selectedIndex - 1]?.text) {
+    titleEl.value = def.title;
+  }
+
+  // Auto-fill chair
+  const chairEl = document.getElementById('sm-chair');
+  if (!chairEl.value && def.chair) chairEl.value = def.chair;
+
+  // Required attendees
+  const reqEl = document.getElementById('reqAttendees');
+  const reqSection = document.getElementById('reqAttendeesSection');
+
+  if (def.required.length) {
+    reqSection.style.display = '';
+    reqEl.innerHTML = def.required.map((a,i) => `
+      <div class="attendee-row">
+        <input type="checkbox" id="req-${i}" checked>
+        <span class="role-tag">${a.abbr}</span>
+        <div class="attendee-name">
+          <input type="text" placeholder="${a.role}" value="${
+            existingAttendees?.find(x=>x.role===a.role)?.name||''}"
+            id="req-name-${i}" style="width:100%">
+        </div>
+        <span style="font-size:10px;color:var(--amber);white-space:nowrap">Required</span>
+      </div>`).join('');
+  } else {
+    reqSection.style.display = 'none';
+  }
+
+  // Optional attendees
+  const optEl = document.getElementById('optAttendees');
+  const optBase = existingAttendees?.filter(a=>!a.required) || [];
+  const optDefaults = def.optional.filter(o => !optBase.find(x=>x.role===o));
+  optEl.innerHTML = [...optBase.map(a => optRow(a.name||a.role||'', false)),
+    ...optDefaults.map(o => optRow(o, false))].join('');
+
+  // Agenda
+  const agEl = document.getElementById('agendaItems');
+  const agItems = existingAgenda?.length ? existingAgenda : def.agenda;
+  agEl.innerHTML = agItems.map(item => agendaRow(item.text||'', item.dur||'')).join('');
+}
+
+function optRow(val, focus) {
+  return `<div class="attendee-row" id="opt-row-${Date.now()+Math.random()}">
+    <input type="text" class="opt-attendee" placeholder="Name or role" value="${val}"
+      style="flex:1">
+    <button onclick="this.parentElement.remove()" style="font-size:10px;padding:3px 7px;background:var(--panel2)">✕</button>
+  </div>`;
+}
+
+function addOptAttendee() {
+  const el = document.getElementById('optAttendees');
+  const div = document.createElement('div');
+  div.innerHTML = optRow('', true);
+  el.appendChild(div.firstChild);
+}
+
+function agendaRow(text, dur) {
+  return `<div class="agenda-edit-row">
+    <input type="text" class="agenda-text-input" placeholder="Agenda item" value="${text}">
+    <input type="text" class="dur-input" placeholder="Duration" value="${dur}">
+    <button onclick="this.parentElement.remove()" style="font-size:10px;padding:3px 6px;background:var(--panel2)">✕</button>
+  </div>`;
+}
+
+function addAgendaItem() {
+  const el = document.getElementById('agendaItems');
+  const div = document.createElement('div');
+  div.innerHTML = agendaRow('', '');
+  el.appendChild(div.firstChild);
+}
+
+// ── Collect and save ──────────────────────────────────────────────────
+async function saveMeeting() {
+  const type = document.getElementById('sm-type').value;
+  const time = document.getElementById('sm-time').value;
+  if (!type) { alert('Select a meeting type'); return; }
+  if (!time) { alert('Set a date and time'); return; }
+
+  const def = getMeetingDef(type);
+
+  // Collect required attendees
+  const attendees = [];
+  def.required.forEach((a,i) => {
+    const cb = document.getElementById(`req-${i}`);
+    const nm = document.getElementById(`req-name-${i}`);
+    if (cb?.checked) {
+      attendees.push({role:a.role, abbr:a.abbr, name:nm?.value||'', required:true});
+    }
+  });
+  // Collect optional attendees
+  document.querySelectorAll('.opt-attendee').forEach(el => {
+    if (el.value.trim()) attendees.push({name:el.value.trim(), required:false});
+  });
+
+  // Collect agenda
+  const agenda = [];
+  const texts = document.querySelectorAll('.agenda-text-input');
+  const durs = document.querySelectorAll('.dur-input');
+  texts.forEach((t,i) => {
+    if (t.value.trim()) agenda.push({text:t.value.trim(), dur:durs[i]?.value||''});
+  });
+
+  const payload = {
+    id: editingMeetingId || undefined,
+    incident_id: incidentId,
+    period: parseInt(document.getElementById('sm-period').value) || 1,
+    meeting_type: type,
+    title: document.getElementById('sm-title').value.trim() || def.title,
+    scheduled_time: time,
+    location: document.getElementById('sm-location').value.trim(),
+    chair: document.getElementById('sm-chair').value.trim(),
+    attendees,
+    agenda_items: agenda,
+    status: 'scheduled',
+  };
+
+  try {
+    const url = editingMeetingId ?
+      `${ICS_API}/api/ics/meetings/${editingMeetingId}` :
+      `${ICS_API}/api/ics/meetings`;
+    await fetch(url, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    closeModal('schedModal');
+    await loadMeetings();
+  } catch(e) { alert('Save failed: ' + e); }
+}
+
+// ── Minutes ───────────────────────────────────────────────────────────
+function showMinutes(mid) {
+  currentMeetingId = mid;
+  const m = meetings.find(x => x.id === mid);
+  document.getElementById('mn-notes').value = m?.notes || '';
+  document.getElementById('mn-status').value = m?.status || 'scheduled';
+  document.getElementById('minutesModal').classList.add('open');
+}
+
+async function saveMinutes() {
+  const payload = {
+    notes: document.getElementById('mn-notes').value,
+    status: document.getElementById('mn-status').value,
+  };
+  await fetch(`${ICS_API}/api/ics/meetings/${currentMeetingId}`, {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(payload)
+  });
+  closeModal('minutesModal');
+  await loadMeetings();
+  selectMeeting(currentMeetingId);
+}
+
+// ── Print agenda ──────────────────────────────────────────────────────
+function printAgenda(mid) {
+  const m = meetings.find(x => x.id === mid);
+  if (!m) return;
+  const def = getMeetingDef(m.meeting_type);
+  const attendees = parseJSON(m.attendees, []);
+  const agenda = parseJSON(m.agenda_items, def.agenda);
+  const timeStr = m.scheduled_time ?
+    new Date(m.scheduled_time).toLocaleString([],{weekday:'long',year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit'}) : 'TBD';
+  const reqAttendees = attendees.filter(a=>a.required);
+  const optAttendees = attendees.filter(a=>!a.required);
+
+  const totalMin = agenda.reduce((sum,a) => {
+    const m = parseInt(a.dur)||0; return sum + m;
+  }, 0);
+
+  const html = `<!DOCTYPE html><html><head>
+  <title>Meeting Agenda — ${m.title||def.title}</title>
+  <style>
+    body{font-family:Arial,sans-serif;font-size:11px;margin:30px;color:#1a1a1a}
+    h1{font-size:18px;margin:0 0 4px;color:#1a3a6b}
+    h2{font-size:12px;color:#1a3a6b;text-transform:uppercase;letter-spacing:1px;
+       border-bottom:1px solid #1a3a6b;padding-bottom:4px;margin:14px 0 8px}
+    .meta{display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:11px;margin:10px 0}
+    .meta-item{padding:4px 8px;background:#f0f4f8;border-radius:3px}
+    .meta-label{font-weight:bold;color:#1a3a6b}
+    table{border-collapse:collapse;width:100%}
+    th{background:#1a3a6b;color:#fff;padding:5px 8px;text-align:left;font-size:10px}
+    td{padding:5px 8px;border-bottom:1px solid #ddd;vertical-align:top}
+    tr:nth-child(even){background:#f7f9fc}
+    .required{color:#c07010;font-weight:bold}
+    .footer{margin-top:20px;font-size:9px;color:#888;border-top:1px solid #ddd;padding-top:8px}
+    @media print{body{margin:15mm}}
+  </style></head><body>
+  <h1>${def.icon} ${m.title || def.title}</h1>
+  <div style="font-size:12px;color:#555;margin-bottom:12px">
+    Meeting Agenda — FieldCommand IMS Incident Management
+  </div>
+
+  <div class="meta">
+    <div class="meta-item"><span class="meta-label">Date/Time:</span> ${timeStr}</div>
+    <div class="meta-item"><span class="meta-label">Location:</span> ${m.location||'TBD'}</div>
+    <div class="meta-item"><span class="meta-label">Chair/Facilitator:</span> ${m.chair||'TBD'}</div>
+    <div class="meta-item"><span class="meta-label">Operational Period:</span> ${m.period}</div>
+    <div class="meta-item"><span class="meta-label">Estimated Duration:</span> ${totalMin} minutes</div>
+    <div class="meta-item"><span class="meta-label">Status:</span> ${m.status||'Scheduled'}</div>
+  </div>
+
+  ${reqAttendees.length ? `
+  <h2>⚠ Required Attendees</h2>
+  <table>
+    <thead><tr><th>ICS Position</th><th>Abbreviation</th><th>Name / Assigned Person</th><th>Present ☐</th></tr></thead>
+    <tbody>
+      ${reqAttendees.map(a=>`<tr>
+        <td class="required">${a.role}</td>
+        <td>${a.abbr||''}</td>
+        <td>${a.name||'___________________________'}</td>
+        <td></td>
+      </tr>`).join('')}
+    </tbody>
+  </table>` : ''}
+
+  ${optAttendees.length ? `
+  <h2>Optional / Additional Attendees</h2>
+  <table>
+    <thead><tr><th>Name / Role</th><th>Organization</th><th>Present ☐</th></tr></thead>
+    <tbody>
+      ${optAttendees.map(a=>`<tr>
+        <td>${a.name||a.role||''}</td><td></td><td></td>
+      </tr>`).join('')}
+      <tr><td>___________________________</td><td></td><td></td></tr>
+      <tr><td>___________________________</td><td></td><td></td></tr>
+    </tbody>
+  </table>` : ''}
+
+  <h2>Agenda</h2>
+  <table>
+    <thead><tr><th>#</th><th>Item</th><th>Time</th><th>Lead</th><th>Notes</th></tr></thead>
+    <tbody>
+      ${agenda.map((item,i)=>`<tr>
+        <td style="text-align:center">${i+1}</td>
+        <td>${item.text||''}</td>
+        <td style="white-space:nowrap">${item.dur||''}</td>
+        <td style="min-width:80px"></td>
+        <td style="min-width:120px"></td>
+      </tr>`).join('')}
+      <tr style="background:#f0f4f8;font-weight:bold">
+        <td colspan="2">Total Estimated Time</td>
+        <td>${totalMin} min</td><td></td><td></td>
+      </tr>
+    </tbody>
+  </table>
+
+  ${m.notes ? `<h2>Previous Minutes / Notes</h2>
+  <div style="white-space:pre-wrap;background:#f7f9fc;padding:10px;border-radius:4px;font-size:11px">${m.notes}</div>` : ''}
+
+  <div class="footer">
+    FieldCommand IMS · © 2026 James Rospopo KE4CON · AGPLv3 ·
+    Developed for McHenry County Emergency Services Volunteers (K9ESV) ·
+    Printed ${new Date().toLocaleString()}
+  </div>
+  <script>window.print()<\/script>
+  </body></html>`;
+
+  const w = window.open('','_blank');
+  w.document.write(html);
+  w.document.close();
+}
+
+// ── Delete ─────────────────────────────────────────────────────────────
+async function deleteMeeting(mid) {
+  if (!confirm('Delete this meeting?')) return;
+  await fetch(`${ICS_API}/api/ics/meetings/${mid}`, {method:'DELETE'});
+  await loadMeetings();
+  document.getElementById('meetingDetail').innerHTML =
+    '<div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">Meeting deleted</div>';
+}
+
+function filterType(type) {
+  const filtered = meetings.filter(m => m.meeting_type === type);
+  if (filtered.length) selectMeeting(filtered[0].id);
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function parseJSON(str, fallback) { try { return JSON.parse(str||'null')||fallback; } catch(e) { return fallback; } }
+
+// ── Init ──────────────────────────────────────────────────────────────
+async function init() {
+  if (incidentId) {
+    try {
+      const r = await fetch(`${ICS_API}/api/ics/incidents/${incidentId}`);
+      const data = await r.json();
+      const inc = data.incident || data;
+      currentPeriod = inc.current_period || 1;
+      document.getElementById('incidentBadge').textContent = inc.name || incidentId;
+      document.title = `Meetings — ${inc.name} — FieldCommand IMS`;
+    } catch(e) {}
+    await loadMeetings();
+  }
+}
+init();
+</script>
+</body>
+</html>

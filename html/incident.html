@@ -455,6 +455,18 @@ function renderWorkspace() {
       ${formBtn('215','Operational Planning Worksheet','Planning',inc.id,'Fire + Non-Fire')}
       ${formBtn('215A','IAP Safety Analysis','Planning',inc.id,'All-hazards')}
     </div>
+    <div style="margin-bottom:10px">
+      <a href="meetings.html?incident=${inc.id}"
+        style="display:inline-flex;align-items:center;gap:8px;background:var(--panel);
+               border:1px solid var(--green);border-radius:6px;padding:10px 16px;
+               color:var(--green);text-decoration:none;font-size:13px;
+               transition:background 0.15s"
+        onmouseover="this.style.background='rgba(26,122,58,0.15)'"
+        onmouseout="this.style.background='var(--panel)'">
+        📅 <strong>Meeting Scheduler</strong>
+        <span style="font-size:11px;color:var(--muted)">— Plan meetings, agendas, required attendees, minutes</span>
+      </a>
+    </div>
 
     <div class="section-divider" style="color:var(--amber)">LOGISTICS</div>
     <div class="form-nav">

@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Channel Library — FieldCommand IMS</title>
+<link rel="stylesheet" href="theme.css">
+<style>
+.cl-header {
+  background:linear-gradient(135deg,#001428,#002858);
+  border-bottom:2px solid var(--amber);
+  padding:10px 18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+}
+.cl-badge {
+  background:var(--amber);color:#001428;font-family:var(--font-hd);
+  font-size:11px;padding:3px 10px;border-radius:3px;letter-spacing:2px;font-weight:bold;
+}
+.ch-table { width:100%;border-collapse:collapse;font-size:12px; }
+.ch-table th {
+  background:var(--panel2);padding:7px 10px;text-align:left;
+  border-bottom:2px solid var(--line);font-size:10px;
+  text-transform:uppercase;letter-spacing:1px;color:var(--muted);
+  white-space:nowrap;position:sticky;top:0;z-index:10;
+}
+.ch-table td {
+  padding:6px 10px;border-bottom:1px solid rgba(255,255,255,0.04);
+  vertical-align:middle;
+}
+.ch-table tr:hover td { background:rgba(255,255,255,0.02); }
+.fn-badge {
+  font-size:10px;padding:2px 7px;border-radius:10px;white-space:nowrap;
+  font-family:var(--font-hd);letter-spacing:0.5px;
+}
+.fn-Command   { background:rgba(192,32,32,0.15);color:#e07070; }
+.fn-Tactical  { background:rgba(26,58,107,0.2);color:#7eb4ea; }
+.fn-Interop   { background:rgba(200,118,10,0.15);color:#f0a040; }
+.fn-Data      { background:rgba(100,50,150,0.2);color:#c0a0e0; }
+.fn-Medical   { background:rgba(192,32,128,0.15);color:#f070b0; }
+.fn-Amateur   { background:rgba(30,132,73,0.15);color:#70cc90; }
+.fn-Calling   { background:rgba(22,160,133,0.15);color:#70e0d0; }
+.fn-MutualAid,.fn-Mutual { background:rgba(120,80,20,0.15);color:#d0a060; }
+.fn-Air       { background:rgba(20,120,180,0.15);color:#80d0f0; }
+.agency-badge {
+  font-size:9px;padding:1px 5px;border-radius:3px;
+  background:rgba(200,118,10,0.2);color:var(--amber);
+  font-style:italic;margin-left:4px;
+}
+</style>
+</head>
+<body>
+
+<div class="cl-header">
+  <span class="cl-badge">COMMS</span>
+  <span style="font-family:var(--font-hd);font-size:14px;letter-spacing:2px">
+    CHANNEL LIBRARY
+  </span>
+  <div style="font-size:11px;color:rgba(255,255,255,0.4)">
+    Local channels for ICS-205 auto-fill — configure for your agency
+  </div>
+  <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+    <button onclick="showAddModal(null)"
+      style="background:var(--amber);border-color:var(--amber);
+             color:#001428;font-weight:bold;font-size:12px;padding:6px 14px">
+      + Add Channel
+    </button>
+    <button onclick="importCSV()"
+      style="font-size:12px;padding:6px 12px">
+      📥 Import CSV
+    </button>
+    <button onclick="exportCSV()"
+      style="font-size:12px;padding:6px 12px">
+      📤 Export CSV
+    </button>
+    <a href="index.html" style="color:rgba(255,255,255,0.4);font-size:12px">← Dashboard</a>
+  </div>
+</div>
+
+<!-- Notice for agencies customizing the system -->
+<div style="background:rgba(26,58,107,0.1);border-bottom:1px solid rgba(26,58,107,0.2);
+            padding:8px 18px;font-size:11px;color:var(--muted)">
+  ℹ <strong>Agency configuration:</strong> Add your local repeaters, interop channels, and
+  tactical frequencies here. These appear in the ICS-205 Channel Library picker on every form.
+  Universal channels (National Simplex, APRS, NIFOG, Mutual Aid) are always available
+  automatically — only add your agency-specific channels here.
+</div>
+
+<!-- Filter bar -->
+<div style="background:var(--panel);border-bottom:1px solid var(--line);
+            padding:8px 16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+  <input type="text" id="filterText" placeholder="Search name, frequency, function..."
+    oninput="filterChannels()"
+    style="width:260px;background:var(--input-bg);border:1px solid var(--line);
+           color:var(--txt);padding:6px 10px;font-size:12px;border-radius:4px">
+  <select id="filterFunction" onchange="filterChannels()"
+    style="background:var(--input-bg);border:1px solid var(--line);color:var(--txt);
+           padding:6px 10px;font-size:12px;border-radius:4px">
+    <option value="">All Functions</option>
+    <option>Command</option>
+    <option>Tactical</option>
+    <option>Interop</option>
+    <option>Medical</option>
+    <option>Data</option>
+    <option>Amateur</option>
+    <option>Calling</option>
+    <option>Mutual Aid</option>
+    <option>Air</option>
+  </select>
+  <div style="font-size:11px;color:var(--muted);margin-left:auto" id="chCount"></div>
+</div>
+
+<div style="padding:16px;overflow-x:auto">
+  <table class="ch-table">
+    <thead>
+      <tr>
+        <th>Channel Name</th>
+        <th>Alpha Tag</th>
+        <th>RX Freq</th>
+        <th>TX Freq</th>
+        <th>PL/DCS</th>
+        <th>Mode</th>
+        <th>Function</th>
+        <th>Division</th>
+        <th>Notes</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody id="chBody">
+      <tr><td colspan="10" style="text-align:center;padding:40px;color:var(--muted)">
+        Loading channels...
+      </td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Hidden CSV import input -->
+<input type="file" id="csvFileInput" accept=".csv" style="display:none"
+  onchange="handleCSVImport(this)">
+
+<!-- Add/Edit Modal -->
+<div id="addModal" style="display:none;position:fixed;inset:0;
+     background:rgba(0,0,0,0.6);z-index:200;align-items:center;justify-content:center"
+     onclick="if(event.target===this)closeModal()">
+<div style="background:var(--panel);border:1px solid var(--amber);border-radius:10px;
+            padding:22px;width:560px;max-width:96vw;max-height:88vh;overflow-y:auto">
+  <div style="font-family:var(--font-hd);font-size:13px;color:var(--amber);
+              letter-spacing:1px;margin-bottom:14px" id="modalTitle">+ ADD CHANNEL</div>
+  <input type="hidden" id="edit_id">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+    <div class="fg" style="grid-column:1/-1">
+      <label style="font-size:10px;color:var(--muted);text-transform:uppercase;
+                    letter-spacing:1px;display:block;margin-bottom:4px">Channel Name *</label>
+      <input type="text" id="f_name" placeholder="e.g. McHenry County Command"
+        style="width:100%;box-sizing:border-box;background:var(--input-bg);
+               border:1px solid var(--line);color:var(--txt);
+               padding:7px 10px;font-size:13px;border-radius:4px">
+    </div>
+    <div class="fg">
+      <label style="font-size:10px;color:var(--muted);text-transform:uppercase;
+                    letter-spacing:1px;display:block;margin-bottom:4px">Alpha Tag</label>
+      <input type="text" id="f_alpha_tag" placeholder="e.g. MHCO CMD" maxlength="10"
+        style="width:100%;box-sizing:border-box;background:var(--input-bg);
+               border:1px solid var(--line);color:var(--txt);
+               padding:7px 10px;font-size:13px;border-radius:4px;
+               font-family:var(--font-hd)">
+    </div>
+    <div class="fg">
+      <label style="font-size:10px;color:var(--muted);text-transform:uppercase;
+                    letter-spacing:1px;display:block;margin-bottom:4px">Function</label>
+      <select id="f_function"
+        style="width:100%;background:var(--input-bg);border:1px solid var(--line);
+               color:var(--txt);padding:7px 10px;font-size:13px;border-radius:4px">
+        <option>Command</option>
+        <option>Tactical</option>
+        <option>Interop</option>
+        <option>Medical</option>
+        <option>Data</option>
+        <option>Amateur</option>
+        <option>Calling</option>
+        <option>Mutual Aid</option>
+        <option>Air</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <div class="fg">
+      <label style="font-size:10px;color:var(--muted);text-transform:uppercase;
+                    letter-spacing:1px;display:block;margin-bottom:4px">RX Frequency (MHz) *</label>
+      <input type="text" id="f_rx_freq" placeholder="e.g. 155.3400"
+        style="width:100%;box-sizing:border-box;background:var(--input-bg);
+               border:1px solid var(--line);color:var(--txt);
+               padding:7px 10px;font-size:13px;border-radius:4px;
+               font-family:var(--font-hd)">
+    </div>
+    <div class="fg">
+      <label style="font-size:10px;color:var(--muted);text-transform:uppercase;
+                    letter-spacing:1px;display:block;margin-bottom:4px">TX Frequency (MHz)</label>
+      <input type="text" id="f_tx_freq" placeholder="Leave blank if same as RX"
+        style="width:100%;box-sizing:border-box;background:var(--input-bg);
+               border:1px solid var(--line);color:var(--txt);
+               padding:7px 10px;font-size:13px;border-radius:4px;
+               font-family:var(--font-hd)">
+    </div>
+    <div class="fg">
+      <label style="font-size:10px;color:var(--muted);text-transform:uppercase;
+                    letter-spacing:1px;display:block;margin-bottom:4px">PL Tone / DCS</label>
+      <input type="text" id="f_pl_tone" placeholder="e.g. 100.0 Hz or D023N"
+        style="width:100%;box-sizing:border-box;background:var(--input-bg);
+               border:1px solid var(--line);color:var(--txt);
+               padding:7px 10px;font-size:13px;border-radius:4px;
+               font-family:var(--font-hd)">
+    </div>
+    <div class="fg">
+      <label style="font-size:10px;color:var(--muted);text-transform:uppercase;
+                    letter-spacing:1px;display:block;margin-bottom:4px">Mode</label>
+      <select id="f_mode"
+        style="width:100%;background:var(--input-bg);border:1px solid var(--line);
+               color:var(--txt);padding:7px 10px;font-size:13px;border-radius:4px">
+        <option>FM</option>
+        <option>NFM</option>
+        <option>P25</option>
+        <option>DMR</option>
+        <option>D-STAR</option>
+        <option>C4FM</option>
+        <option>AM</option>
+        <option>SSB</option>
+        <option>Analog</option>
+      </select>
+    </div>
+    <div class="fg">
+      <label style="font-size:10px;color:var(--muted);text-transform:uppercase;
+                    letter-spacing:1px;display:block;margin-bottom:4px">
+        Division / Group Assignment
+      </label>
+      <input type="text" id="f_division" placeholder="e.g. Div A, Grp SAR, All"
+        style="width:100%;box-sizing:border-box;background:var(--input-bg);
+               border:1px solid var(--line);color:var(--txt);
+               padding:7px 10px;font-size:13px;border-radius:4px">
+    </div>
+    <div class="fg" style="grid-column:1/-1">
+      <label style="font-size:10px;color:var(--muted);text-transform:uppercase;
+                    letter-spacing:1px;display:block;margin-bottom:4px">Notes</label>
+      <input type="text" id="f_notes" placeholder="Repeater location, coverage area, special instructions..."
+        style="width:100%;box-sizing:border-box;background:var(--input-bg);
+               border:1px solid var(--line);color:var(--txt);
+               padding:7px 10px;font-size:13px;border-radius:4px">
+    </div>
+  </div>
+  <div style="display:flex;gap:8px">
+    <button onclick="saveChannel()"
+      style="flex:1;background:var(--amber);border-color:var(--amber);
+             color:#001428;font-weight:bold;padding:9px">
+      SAVE CHANNEL
+    </button>
+    <button onclick="closeModal()" style="padding:9px 16px">Cancel</button>
+  </div>
+</div>
+</div>
+
+<script>
+const API = 'http://192.168.50.1:5051';
+let allChannels = [];
+
+async function loadChannels() {
+  try {
+    const r = await fetch(`${API}/api/ics/channel_library`);
+    allChannels = r.ok ? await r.json() : [];
+    filterChannels();
+  } catch(e) {
+    document.getElementById('chBody').innerHTML =
+      `<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--red)">
+        ⚠ Cannot reach server — ${e.message}
+      </td></tr>`;
+  }
+}
+
+function fnClass(fn) {
+  const map = {
+    'Command':'Command','Tactical':'Tactical','Interop':'Interop',
+    'Medical':'Medical','Data':'Data','Amateur':'Amateur','Calling':'Calling',
+    'Mutual Aid':'MutualAid','Air':'Air'
+  };
+  return 'fn-' + (map[fn] || 'Tactical');
+}
+
+function filterChannels() {
+  const q  = document.getElementById('filterText').value.toLowerCase();
+  const fn = document.getElementById('filterFunction').value;
+  let list = allChannels;
+  if (q)  list = list.filter(c =>
+    JSON.stringify(c).toLowerCase().includes(q));
+  if (fn) list = list.filter(c => c.function === fn);
+
+  document.getElementById('chCount').textContent =
+    `${list.length} channel${list.length!==1?'s':''}`;
+
+  if (!list.length) {
+    document.getElementById('chBody').innerHTML =
+      '<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--muted)">No channels match filter.</td></tr>';
+    return;
+  }
+
+  document.getElementById('chBody').innerHTML = list.map(c => `
+    <tr>
+      <td>
+        <strong style="font-size:12px">${c.name}</strong>
+        ${!c.custom ? '<span class="agency-badge">seed</span>' : ''}
+      </td>
+      <td style="font-family:var(--font-hd);font-size:11px;color:var(--muted)">${c.alpha_tag||''}</td>
+      <td style="font-family:var(--font-hd);font-size:12px;color:var(--green)">${c.rx_freq}</td>
+      <td style="font-family:var(--font-hd);font-size:12px;color:${c.tx_freq&&c.tx_freq!==c.rx_freq?'var(--amber)':'var(--dim)'}">
+        ${c.tx_freq && c.tx_freq !== c.rx_freq ? c.tx_freq : '= RX'}
+      </td>
+      <td style="font-size:11px;color:var(--muted)">${c.pl_tone||'—'}</td>
+      <td style="font-size:11px;color:var(--muted)">${c.mode||'FM'}</td>
+      <td><span class="fn-badge ${fnClass(c.function)}">${c.function||''}</span></td>
+      <td style="font-size:11px;color:var(--blue)">${c.division||''}</td>
+      <td style="font-size:11px;color:var(--dim);max-width:200px;overflow:hidden;
+                 text-overflow:ellipsis;white-space:nowrap">${c.notes||''}</td>
+      <td style="white-space:nowrap">
+        <button onclick="showAddModal('${c.id}')"
+          style="font-size:10px;padding:2px 8px;margin-right:4px">✏</button>
+        <button onclick="deleteChannel('${c.id}')"
+          style="font-size:10px;padding:2px 8px;background:rgba(192,32,32,0.1);
+                 border-color:rgba(192,32,32,0.3);color:var(--red)">✕</button>
+      </td>
+    </tr>`).join('');
+}
+
+function showAddModal(id) {
+  const fields = ['name','alpha_tag','rx_freq','tx_freq','pl_tone','mode',
+                  'function','division','notes'];
+  if (id) {
+    const ch = allChannels.find(c => c.id === id);
+    if (!ch) return;
+    document.getElementById('modalTitle').textContent = '✏ EDIT CHANNEL';
+    document.getElementById('edit_id').value = id;
+    fields.forEach(f => {
+      const el = document.getElementById('f_'+f);
+      if (el) el.value = ch[f] || '';
+    });
+  } else {
+    document.getElementById('modalTitle').textContent = '+ ADD CHANNEL';
+    document.getElementById('edit_id').value = '';
+    fields.forEach(f => {
+      const el = document.getElementById('f_'+f);
+      if (el) el.value = '';
+    });
+    document.getElementById('f_mode').value = 'FM';
+    document.getElementById('f_function').value = 'Tactical';
+  }
+  document.getElementById('addModal').style.display = 'flex';
+  document.getElementById('f_name').focus();
+}
+
+async function saveChannel() {
+  const name   = document.getElementById('f_name').value.trim();
+  const rx     = document.getElementById('f_rx_freq').value.trim();
+  if (!name || !rx) { alert('Channel Name and RX Frequency are required'); return; }
+  const id = document.getElementById('edit_id').value ||
+             'ch-' + Date.now();
+  const payload = {
+    id, name, custom: 1, active: 1,
+    alpha_tag:  document.getElementById('f_alpha_tag').value.trim(),
+    rx_freq:    rx,
+    tx_freq:    document.getElementById('f_tx_freq').value.trim() || rx,
+    pl_tone:    document.getElementById('f_pl_tone').value.trim(),
+    mode:       document.getElementById('f_mode').value,
+    function:   document.getElementById('f_function').value,
+    division:   document.getElementById('f_division').value.trim(),
+    notes:      document.getElementById('f_notes').value.trim(),
+  };
+  try {
+    await fetch(`${API}/api/ics/channel_library`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
+    });
+    closeModal();
+    await loadChannels();
+  } catch(e) { alert('Save failed: ' + e.message); }
+}
+
+async function deleteChannel(id) {
+  if (!confirm('Delete this channel?')) return;
+  // Soft delete — set active=0
+  try {
+    await fetch(`${API}/api/ics/channel_library`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ id, active: 0 })
+    });
+    await loadChannels();
+  } catch(e) { alert('Delete failed: ' + e.message); }
+}
+
+function closeModal() {
+  document.getElementById('addModal').style.display = 'none';
+}
+
+function exportCSV() {
+  const headers = ['name','alpha_tag','rx_freq','tx_freq','pl_tone','mode',
+                   'function','division','notes'];
+  const rows = [headers.join(',')];
+  allChannels.forEach(c => {
+    rows.push(headers.map(h => `"${(c[h]||'').replace(/"/g,'""')}"`).join(','));
+  });
+  const blob = new Blob([rows.join('\n')], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'channel_library.csv';
+  a.click();
+}
+
+function importCSV() {
+  document.getElementById('csvFileInput').click();
+}
+
+async function handleCSVImport(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const text = await file.text();
+  const lines = text.split('\n').filter(l => l.trim());
+  const headers = lines[0].split(',').map(h => h.replace(/"/g,'').trim());
+  let count = 0;
+  for (let i = 1; i < lines.length; i++) {
+    const vals = lines[i].match(/(".*?"|[^,]+)(?=,|$)/g) || [];
+    const obj  = { custom: 1, active: 1,
+                   id: 'ch-csv-' + Date.now() + '-' + i };
+    headers.forEach((h,idx) => {
+      obj[h] = (vals[idx]||'').replace(/^"|"$/g,'').trim();
+    });
+    if (!obj.name || !obj.rx_freq) continue;
+    obj.tx_freq = obj.tx_freq || obj.rx_freq;
+    try {
+      await fetch(`${API}/api/ics/channel_library`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(obj)
+      });
+      count++;
+    } catch(e) {}
+  }
+  alert(`Imported ${count} channels.`);
+  input.value = '';
+  await loadChannels();
+}
+
+loadChannels();
+</script>
+</body>
+</html>

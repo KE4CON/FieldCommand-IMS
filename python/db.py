@@ -305,6 +305,39 @@ CREATE TABLE IF NOT EXISTS general_info (
     updated                 TEXT DEFAULT ''
 );
 CREATE INDEX IF NOT EXISTS idx_gi_incident ON general_info(incident_id);
+-- ── Resource Assignment History ─────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS resource_history (
+    id           TEXT PRIMARY KEY,
+    incident_id  TEXT NOT NULL,
+    period       INTEGER NOT NULL DEFAULT 1,
+    resource_id  TEXT NOT NULL DEFAULT '',
+    resource_name TEXT DEFAULT '',
+    resource_type TEXT DEFAULT '',
+    assignment   TEXT DEFAULT '',   -- Division/Group assigned to
+    date         TEXT DEFAULT '',
+    created      TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_rh_incident ON resource_history(incident_id);
+CREATE INDEX IF NOT EXISTS idx_rh_resource ON resource_history(resource_id);
+
+-- ── Radio Channel Library (for ICS-205 pre-loaded channels) ─────────────────
+CREATE TABLE IF NOT EXISTS channel_library (
+    id          TEXT PRIMARY KEY,
+    name        TEXT NOT NULL DEFAULT '',   -- e.g. "McHenry County Command"
+    alpha_tag   TEXT DEFAULT '',            -- e.g. "MHCO CMD"
+    rx_freq     TEXT DEFAULT '',            -- e.g. "155.340"
+    tx_freq     TEXT DEFAULT '',            -- e.g. "155.340"
+    pl_tone     TEXT DEFAULT '',            -- e.g. "100.0 Hz"
+    mode        TEXT DEFAULT 'FM',          -- FM, NFM, P25, DMR, etc.
+    function    TEXT DEFAULT 'Tactical',    -- Command, Tactical, Air, Medical, etc.
+    division    TEXT DEFAULT '',            -- which division this channel is assigned to
+    notes       TEXT DEFAULT '',
+    custom      INTEGER DEFAULT 1,
+    active      INTEGER DEFAULT 1,
+    created     TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_cl_name ON channel_library(name);
+
 
 
 -- ── Hospital Database ───────────────────────────────────────────────────────────
@@ -609,6 +642,35 @@ CREATE TABLE IF NOT EXISTS preflight_runs (
 """
 
 
+
+def seed_channel_library(conn):
+    """Seed channel_library with example local channels on first run.
+    These are McHenry County IL defaults — any agency should replace
+    these with their own channels via the Channel Library management page."""
+    try:
+        existing = conn.execute("SELECT COUNT(*) FROM channel_library").fetchone()[0]
+        if existing == 0:
+            import time
+            now = time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())
+            channels = [
+                # Agency-specific — configure for your jurisdiction
+                ('cl-001','MHEMA Command',       'MHEMA CMD',  '155.3400','155.3400','100.0 Hz','FM', 'Command',  '', 'McHenry County EMA primary command net', 0, 1, now),
+                ('cl-002','MHEMA Tactical',      'MHEMA TAC',  '154.3700','154.3700','100.0 Hz','FM', 'Tactical', '', 'McHenry County EMA tactical net',        0, 1, now),
+                ('cl-003','McHenry Co. Fire Disp','MHCO FIRE', '154.3700','154.3700','100.0 Hz','FM', 'Tactical', '', 'McHenry County fire dispatch',           0, 1, now),
+                ('cl-004','Starcom21 Interop',   'STCM INTR',  '155.3400','155.3400','100.0 Hz','FM', 'Interop',  '', 'Illinois Starcom21 interoperability',     0, 1, now),
+                ('cl-005','ILEMS Statewide',     'ILEMS',      '155.3400','155.3400','100.0 Hz','FM', 'Tactical', '', 'Illinois EMS statewide channel',          0, 1, now),
+                ('cl-006','EMS Med 10 (IDPH)',   'EMS MED10',  '155.3400','155.3400','',        'FM', 'Medical',  '', 'Illinois Dept of Public Health Med 10',   0, 1, now),
+                ('cl-007','McHenry ARES/RACES',  'K9ESV',      '147.0750','147.0750','107.2 Hz','FM', 'Amateur',  '', 'K9ESV ARES/RACES primary repeater',       0, 1, now),
+            ]
+            conn.executemany("""INSERT INTO channel_library
+                (id,name,alpha_tag,rx_freq,tx_freq,pl_tone,mode,function,
+                 division,notes,custom,active,created)
+                VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)""", channels)
+            conn.commit()
+            log.info(f"Seeded {len(channels)} example channels into channel_library")
+    except Exception as e:
+        log.warning(f"Channel library seeding skipped: {e}")
+
 def init_db():
     """Create all tables and indexes. Safe to call multiple times."""
     conn = db()
@@ -647,6 +709,9 @@ def init_db():
         "ALTER TABLE station_config ADD COLUMN ps_member_lookup TEXT DEFAULT 'radio_id'",
         "ALTER TABLE incidents ADD COLUMN ics_variant TEXT DEFAULT 'FEMA'",
         "ALTER TABLE net_entries ADD COLUMN ics_position TEXT DEFAULT ''",
+        "ALTER TABLE resource_history ADD COLUMN resource_type TEXT DEFAULT ''",
+        "ALTER TABLE channel_library ADD COLUMN division TEXT DEFAULT ''",
+        "ALTER TABLE channel_library ADD COLUMN function TEXT DEFAULT 'Tactical'",
         "ALTER TABLE general_info ADD COLUMN lat TEXT DEFAULT ''",
         "ALTER TABLE general_info ADD COLUMN lon TEXT DEFAULT ''",
         "ALTER TABLE general_info ADD COLUMN sunrise TEXT DEFAULT ''",
@@ -683,13 +748,15 @@ def init_db():
     conn.commit()
     seed_hospitals(conn)
     seed_resource_types(conn)
+    seed_channel_library(conn)
     log.info(f"Database initialised: {DB_PATH}")
 
 
 
 
 # ── NIMS Resource Type seeding ────────────────────────────────────────────────
-def seed_resource_types(conn):
+def seed_resource_types(conn)
+    seed_channel_library(conn):
     try:
         existing = conn.execute("SELECT COUNT(*) FROM resource_types").fetchone()[0]
         if existing == 0:

@@ -186,6 +186,38 @@ class ICSHandler(BaseHTTPRequestHandler):
             if not row: return self.send_json({"error":"Not found"},404)
             return self.send_json(row_to_dict(row))
 
+
+        # ── Resource History ────────────────────────────────────────────────
+        elif path == "/api/ics/resource_history":
+            inc_id = qs.get("incident_id",[""])[0]
+            res_id = qs.get("resource_id",[""])[0]
+            if inc_id:
+                rows = c.execute(
+                    "SELECT * FROM resource_history WHERE incident_id=? ORDER BY created DESC",
+                    (inc_id,)).fetchall()
+            elif res_id:
+                rows = c.execute(
+                    "SELECT * FROM resource_history WHERE resource_id=? ORDER BY created DESC",
+                    (res_id,)).fetchall()
+            else:
+                rows = []
+            return self.send_json(rows_to_list(rows))
+
+        # ── Channel Library ─────────────────────────────────────────────────
+        elif path == "/api/ics/channel_library":
+            q = qs.get("q",[""])[0].lower()
+            if q:
+                rows = c.execute(
+                    "SELECT * FROM channel_library WHERE active=1 AND "
+                    "(LOWER(name) LIKE ? OR LOWER(alpha_tag) LIKE ? OR rx_freq LIKE ?) "
+                    "ORDER BY name LIMIT 50",
+                    (f"%{q}%", f"%{q}%", f"%{q}%")).fetchall()
+            else:
+                rows = c.execute(
+                    "SELECT * FROM channel_library WHERE active=1 ORDER BY name"
+                ).fetchall()
+            return self.send_json(rows_to_list(rows))
+
         elif path == "/api/ics/general_info":
             inc_id = qs.get("incident_id",[""])[0]
             period = int(qs.get("period",["1"])[0])
@@ -203,6 +235,41 @@ class ICSHandler(BaseHTTPRequestHandler):
                 d["operational_period_number"] = period
                 return self.send_json(d)
             return self.send_json({})
+
+
+        # ── Resource History POST ───────────────────────────────────────────
+        elif path == "/api/ics/resource_history":
+            entries = body.get("entries", [])
+            for e in entries:
+                rh_id = f"rh-{int(time.time()*1000)}-{e.get('resource_id','')}"
+                c.execute("""INSERT OR IGNORE INTO resource_history
+                    (id, incident_id, period, resource_id, resource_name,
+                     resource_type, assignment, date, created)
+                    VALUES (?,?,?,?,?,?,?,?,?)""",
+                    (rh_id, e.get("incident_id",""), e.get("period",1),
+                     e.get("resource_id",""), e.get("resource_name",""),
+                     e.get("resource_type",""), e.get("assignment",""),
+                     e.get("date",""), now))
+            c.commit()
+            return self.send_json({"status":"ok","count":len(entries)})
+
+        # ── Channel Library POST ─────────────────────────────────────────────
+        elif path == "/api/ics/channel_library":
+            ch_id = body.get("id") or f"ch-{int(time.time()*1000)}"
+            existing = c.execute("SELECT id FROM channel_library WHERE id=?",(ch_id,)).fetchone()
+            fields = ["name","alpha_tag","rx_freq","tx_freq","pl_tone","mode",
+                      "function","division","notes","custom","active"]
+            if existing:
+                sets = ", ".join(f"{f}=?" for f in fields)
+                vals = [body.get(f,"") for f in fields] + [ch_id]
+                c.execute(f"UPDATE channel_library SET {sets} WHERE id=?", vals)
+            else:
+                cols = "id, " + ", ".join(fields) + ", created"
+                phs  = ", ".join(["?"]*(len(fields)+2))
+                vals = [ch_id] + [body.get(f,"") for f in fields] + [now]
+                c.execute(f"INSERT INTO channel_library ({cols}) VALUES ({phs})", vals)
+            c.commit()
+            return self.send_json({"status":"ok","id":ch_id})
 
         elif path == "/api/ics/general_info":
             inc_id = body.get("incident_id","")

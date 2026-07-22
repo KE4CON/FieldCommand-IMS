@@ -1979,7 +1979,24 @@ FORMS['204'] = {
           </tbody>
         </table>
       </div>
-      <button onclick="add204Row()" style="margin-top:8px;font-size:11px;padding:4px 12px">+ Add Row</button>
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+        <button onclick="add204Row()" style="font-size:11px;padding:4px 12px">+ Add Row</button>
+        <button onclick="add204Placeholder()" 
+          style="font-size:11px;padding:4px 12px;background:rgba(200,118,10,0.1);
+                 border-color:rgba(200,118,10,0.3);color:var(--amber)">
+          + Add Placeholder (STC+/DOZ+/ENG+)
+        </button>
+        <button onclick="sort204Resources()" id="sort204Btn"
+          style="font-size:11px;padding:4px 12px;background:rgba(26,58,107,0.1);
+                 border-color:rgba(26,58,107,0.3);color:var(--blue)">
+          ↕ Sort by Type
+        </button>
+        <button onclick="check204Duplicates()"
+          style="font-size:11px;padding:4px 12px;background:rgba(30,132,73,0.1);
+                 border-color:rgba(30,132,73,0.3);color:var(--green)">
+          ⚠ Check Duplicates
+        </button>
+      </div>
     </div>
     <div class="section-card">
       <h2>4. Work Assignments</h2>
@@ -2036,17 +2053,21 @@ FORMS['204'] = {
     </div>`;
   },
 
-  _resRow(i) {
+  _resRow(i, data={}) {
     const nwcg = VARIANT==='NWCG'
-      ?`<td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="res204_etd_${i}" style="width:60px;font-size:11px;padding:3px 4px"></td>`:'';
-    return `<tr id="res204row_${i}">
-      <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="res204_id_${i}" placeholder="Resource ID" style="width:100%;font-size:11px;padding:3px 4px"></td>
-      <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="res204_leader_${i}" placeholder="Name" style="width:100%;font-size:11px;padding:3px 4px"></td>
-      <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="res204_type_${i}" placeholder="Type" style="width:100%;font-size:11px;padding:3px 4px"></td>
-      <td style="border:1px solid var(--line);padding:3px;text-align:center"><input type="number" data-key="res204_personnel_${i}" placeholder="#" style="width:46px;font-size:11px;padding:3px 4px;text-align:center"></td>
-      <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="res204_contact_${i}" placeholder="Freq/Phone" style="width:100%;font-size:11px;padding:3px 4px"></td>
-      <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="res204_time_${i}" placeholder="Time" style="width:100%;font-size:11px;padding:3px 4px"></td>
-      <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="res204_location_${i}" placeholder="Location" style="width:100%;font-size:11px;padding:3px 4px"></td>
+      ?`<td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="res204_etd_${i}" value="${data.etd||formData['res204_etd_'+i]||''}" style="width:60px;font-size:11px;padding:3px 4px"></td>`:'';
+    const isPlac = (data.rid||formData['res204_id_'+i]||'').trim().endsWith('+');
+    const rowStyle = isPlac ? 'background:rgba(200,118,10,0.04)' : '';
+    const cellStyle = isPlac ? 'border:1px solid rgba(200,118,10,0.3)' : 'border:1px solid var(--line)';
+    const inputColor = isPlac ? 'color:var(--amber);font-style:italic;font-weight:bold' : '';
+    return `<tr id="res204row_${i}" style="${rowStyle}">
+      <td style="${cellStyle};padding:3px"><input type="text" data-key="res204_id_${i}" value="${data.rid||formData['res204_id_'+i]||''}" placeholder="Resource ID" style="width:100%;font-size:11px;padding:3px 4px;${inputColor}"></td>
+      <td style="${cellStyle};padding:3px"><input type="text" data-key="res204_leader_${i}" value="${data.ldr||formData['res204_leader_'+i]||''}" placeholder="Name" style="width:100%;font-size:11px;padding:3px 4px"></td>
+      <td style="${cellStyle};padding:3px"><input type="text" data-key="res204_type_${i}" value="${data.type||formData['res204_type_'+i]||''}" placeholder="Type" style="width:100%;font-size:11px;padding:3px 4px"></td>
+      <td style="${cellStyle};padding:3px;text-align:center"><input type="number" data-key="res204_personnel_${i}" value="${data.pers||formData['res204_personnel_'+i]||''}" placeholder="#" style="width:46px;font-size:11px;padding:3px 4px;text-align:center"></td>
+      <td style="${cellStyle};padding:3px"><input type="text" data-key="res204_contact_${i}" value="${data.cont||formData['res204_contact_'+i]||''}" placeholder="Freq/Phone" style="width:100%;font-size:11px;padding:3px 4px"></td>
+      <td style="${cellStyle};padding:3px"><input type="text" data-key="res204_time_${i}" value="${data.time||formData['res204_time_'+i]||''}" placeholder="Time" style="width:100%;font-size:11px;padding:3px 4px"></td>
+      <td style="${cellStyle};padding:3px"><input type="text" data-key="res204_location_${i}" value="${data.loc||formData['res204_location_'+i]||''}" placeholder="Location" style="width:100%;font-size:11px;padding:3px 4px"></td>
       ${nwcg}
     </tr>`;
   },
@@ -2132,12 +2153,153 @@ FORMS['204'] = {
 };
 
 let res204Count = 8;
+
+// ── ITEM 7: Resource placeholders ─────────────────────────────────
+const PLACEHOLDER_TYPES = [
+  'STC+','STA+','STG+','DOZ+','ENG+','ENGT+','CREW+','HELO+',
+  'AIRT+','WATR+','MEDE+','REHA+'
+];
+
 function add204Row() {
   const tbody = document.getElementById('res204Body');
   if (!tbody) return;
   const tr = document.createElement('tr');
   tr.innerHTML = FORMS['204']._resRow(res204Count++).replace(/^<tr[^>]*>/,'').replace(/<\/tr>$/,'');
   tbody.appendChild(tr);
+}
+
+function add204Placeholder() {
+  const tbody = document.getElementById('res204Body');
+  if (!tbody) return;
+  // Show picker
+  const type = prompt(
+    'Enter placeholder type (+ means unconfirmed/TBD):\n\n' +
+    PLACEHOLDER_TYPES.join('  ') + '\n\nor type any custom type ending in +',
+    'ENG+'
+  );
+  if (!type) return;
+  const label = type.toUpperCase().endsWith('+') ? type.toUpperCase() : type.toUpperCase()+'+';
+  const i = res204Count++;
+  const tr = document.createElement('tr');
+  tr.id = 'res204row_' + i;
+  // Build the row with placeholder styling
+  const nwcg = VARIANT==='NWCG'
+    ? '<td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="res204_etd_'+i+'" style="width:60px;font-size:11px;padding:3px 4px"></td>'
+    : '';
+  tr.innerHTML = \`
+    <td style="border:1px solid rgba(200,118,10,0.4);padding:3px;background:rgba(200,118,10,0.06)">
+      <input type="text" data-key="res204_id_\${i}" value="\${label}"
+        placeholder="Placeholder"
+        style="width:100%;font-size:11px;padding:3px 4px;color:var(--amber);
+               font-style:italic;font-weight:bold;background:transparent;border:none">
+    </td>
+    <td style="border:1px solid rgba(200,118,10,0.3);padding:3px;background:rgba(200,118,10,0.04)">
+      <input type="text" data-key="res204_leader_\${i}" placeholder="TBD"
+        style="width:100%;font-size:11px;padding:3px 4px;color:var(--muted);background:transparent;border:none">
+    </td>
+    <td style="border:1px solid rgba(200,118,10,0.3);padding:3px;background:rgba(200,118,10,0.04)">
+      <input type="text" data-key="res204_type_\${i}" value="\${label.replace('+','')}"
+        style="width:100%;font-size:11px;padding:3px 4px;color:var(--muted);background:transparent;border:none">
+    </td>
+    <td style="border:1px solid rgba(200,118,10,0.3);padding:3px;background:rgba(200,118,10,0.04);text-align:center">
+      <input type="number" data-key="res204_personnel_\${i}" placeholder="#"
+        style="width:46px;font-size:11px;padding:3px 4px;text-align:center;background:transparent;border:none;color:var(--muted)">
+    </td>
+    <td style="border:1px solid rgba(200,118,10,0.3);padding:3px;background:rgba(200,118,10,0.04)">
+      <input type="text" data-key="res204_contact_\${i}" placeholder="—"
+        style="width:100%;font-size:11px;padding:3px 4px;background:transparent;border:none;color:var(--muted)">
+    </td>
+    <td style="border:1px solid rgba(200,118,10,0.3);padding:3px;background:rgba(200,118,10,0.04)">
+      <input type="text" data-key="res204_time_\${i}" placeholder="TBD"
+        style="width:100%;font-size:11px;padding:3px 4px;background:transparent;border:none;color:var(--muted)">
+    </td>
+    <td style="border:1px solid rgba(200,118,10,0.3);padding:3px;background:rgba(200,118,10,0.04)">
+      <input type="text" data-key="res204_location_\${i}" placeholder="Staging"
+        style="width:100%;font-size:11px;padding:3px 4px;background:transparent;border:none;color:var(--muted)">
+    </td>
+    \${nwcg}
+  \`;
+  tbody.appendChild(tr);
+  markDirty();
+}
+
+// ── ITEM 8: Duplicate resource check ──────────────────────────────
+function check204Duplicates() {
+  const fd = collectFormData();
+  const assigned = {};
+  const dups = [];
+  for (let i = 0; i < res204Count; i++) {
+    const rid = (fd['res204_id_'+i]||'').trim().toUpperCase();
+    if (!rid || rid.endsWith('+')) continue;
+    if (assigned[rid]) {
+      dups.push(rid);
+    } else {
+      assigned[rid] = true;
+    }
+  }
+  if (dups.length) {
+    alert('⚠ DUPLICATE RESOURCES FOUND:\n\n' +
+          dups.map(d => '  • ' + d).join('\n') +
+          '\n\nThese resources appear more than once on this 204.\nCheck your assignments.');
+  } else {
+    alert('✓ No duplicate resources found on this form.\n\nNote: This only checks this single 204. ' +
+          'Cross-204 duplicate checking is available from the incident dashboard.');
+  }
+}
+
+// ── ITEM 10: Sort resources on 204 ────────────────────────────────
+function sort204Resources() {
+  const tbody = document.getElementById('res204Body');
+  if (!tbody) return;
+  const fd = collectFormData();
+  // Collect all rows with data
+  const rows = [];
+  for (let i = 0; i < res204Count; i++) {
+    const rid  = fd['res204_id_'+i] || '';
+    const ldr  = fd['res204_leader_'+i] || '';
+    const type = fd['res204_type_'+i] || '';
+    const pers = fd['res204_personnel_'+i] || '';
+    const cont = fd['res204_contact_'+i] || '';
+    const time = fd['res204_time_'+i] || '';
+    const loc  = fd['res204_location_'+i] || '';
+    if (rid || ldr) rows.push({ rid, ldr, type, pers, cont, time, loc });
+  }
+  // Sort: placeholders (ending in +) last, then by type, then by ID
+  rows.sort((a, b) => {
+    const aPlac = a.rid.endsWith('+');
+    const bPlac = b.rid.endsWith('+');
+    if (aPlac !== bPlac) return aPlac ? 1 : -1;
+    const typeOrder = ['CREW','ENG','DOZ','HELO','AIRT','WATR','MEDE'];
+    const aType = typeOrder.findIndex(t => a.type.toUpperCase().startsWith(t));
+    const bType = typeOrder.findIndex(t => b.type.toUpperCase().startsWith(t));
+    if (aType !== bType) return (aType === -1 ? 99 : aType) - (bType === -1 ? 99 : bType);
+    return a.rid.localeCompare(b.rid);
+  });
+  // Rebuild the body
+  tbody.innerHTML = '';
+  res204Count = 0;
+  rows.forEach((r, i) => {
+    const tr = document.createElement('tr');
+    tr.id = 'res204row_' + i;
+    tr.innerHTML = FORMS['204']._resRow(i, r).replace(/^<tr[^>]*>/,'').replace(/<\/tr>$/,'');
+    tbody.appendChild(tr);
+    // Store sorted values
+    formData['res204_id_'+i]        = r.rid;
+    formData['res204_leader_'+i]    = r.ldr;
+    formData['res204_type_'+i]      = r.type;
+    formData['res204_personnel_'+i] = r.pers;
+    formData['res204_contact_'+i]   = r.cont;
+    formData['res204_time_'+i]      = r.time;
+    formData['res204_location_'+i]  = r.loc;
+    res204Count++;
+  });
+  // Pad to at least 8 rows
+  while (res204Count < 8) {
+    const tr = document.createElement('tr');
+    tr.innerHTML = FORMS['204']._resRow(res204Count++).replace(/^<tr[^>]*>/,'').replace(/<\/tr>$/,'');
+    tbody.appendChild(tr);
+  }
+  markDirty();
 }
 
 
@@ -2692,6 +2854,141 @@ FORMS['204A'] = {
   buildPrint() { return ''; }
 };
 
+
+// ── ITEM 9: IAP Print Count Estimator ────────────────────────────
+async function showIAPPrintEstimator() {
+  if (!INC_ID) { alert('Select an incident first'); return; }
+  try {
+    // Fetch all 204 forms for this period to count resources by type
+    const r = await fetch(`${ICS_API}/api/ics/forms/ics204?incident_id=${INC_ID}&period=${PERIOD}`);
+    const forms = r.ok ? await r.json() : [];
+
+    let totalField = 0, totalOverhead = 0, totalAir = 0, divCount = 0;
+    const typeCounts = {};
+
+    forms.forEach(f => {
+      let d = {};
+      try { d = JSON.parse(f.data || '{}'); } catch(e) {}
+      divCount++;
+      for (let i = 0; i < 50; i++) {
+        const rid = (d['res204_id_'+i]||'').toUpperCase();
+        if (!rid) { if (i > 7) break; continue; }
+        // Categorize by resource type prefix
+        const type = (d['res204_type_'+i]||rid.replace('+','')).toUpperCase().slice(0,4);
+        typeCounts[type] = (typeCounts[type]||0) + 1;
+        if (['HELO','AIRT'].some(t => type.startsWith(t))) totalAir++;
+        else if (['IC','OSC','PSC','LSC','FSC','DIVS','RESL','SITL','DOCL'].some(t => type.startsWith(t))) totalOverhead++;
+        else totalField++;
+      }
+    });
+
+    // Standard IAP distribution:
+    // - 1 per field resource (Division/Group Supervisors)
+    // - 1 per overhead position
+    // - 1 per air resource
+    // - 5 extras for ICP/command post
+    // - 10% overage for errors
+    const base = divCount + totalOverhead + totalAir + 5;
+    const recommended = Math.ceil(base * 1.1);
+    const minimum = divCount + 3;
+
+    const typeList = Object.entries(typeCounts)
+      .sort((a,b) => b[1]-a[1])
+      .map(([t,n]) => `<tr><td style="padding:3px 8px">${t}</td><td style="padding:3px 8px;text-align:center">${n}</td></tr>`)
+      .join('');
+
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:500;display:flex;align-items:center;justify-content:center';
+    modal.innerHTML = `
+      <div style="background:var(--panel);border:1px solid var(--amber);border-radius:10px;
+                  padding:22px;width:460px;max-width:95vw;max-height:80vh;overflow-y:auto">
+        <div style="font-family:var(--font-hd);font-size:14px;color:var(--amber);
+                    letter-spacing:1px;margin-bottom:14px">
+          📄 IAP PRINT COUNT ESTIMATOR — Period ${PERIOD}
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px">
+          <div style="background:var(--panel2);border-radius:6px;padding:10px;text-align:center">
+            <div style="font-family:var(--font-hd);font-size:28px;color:var(--amber)">${recommended}</div>
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Recommended</div>
+            <div style="font-size:9px;color:var(--dim)">includes 10% buffer</div>
+          </div>
+          <div style="background:var(--panel2);border-radius:6px;padding:10px;text-align:center">
+            <div style="font-family:var(--font-hd);font-size:28px;color:var(--blue)">${minimum}</div>
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Minimum</div>
+            <div style="font-size:9px;color:var(--dim)">bare minimum</div>
+          </div>
+          <div style="background:var(--panel2);border-radius:6px;padding:10px;text-align:center">
+            <div style="font-family:var(--font-hd);font-size:28px;color:var(--green)">${divCount}</div>
+            <div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Divisions</div>
+            <div style="font-size:9px;color:var(--dim)">ICS-204 forms</div>
+          </div>
+        </div>
+        <table style="width:100%;border-collapse:collapse;font-size:12px;margin-bottom:12px">
+          <thead><tr style="background:var(--panel2)">
+            <th style="padding:5px 8px;text-align:left;font-size:10px;color:var(--muted);text-transform:uppercase">Basis</th>
+            <th style="padding:5px 8px;text-align:center;font-size:10px;color:var(--muted);text-transform:uppercase">Count</th>
+          </tr></thead>
+          <tbody>
+            <tr><td style="padding:3px 8px">Division/Group Supervisors</td><td style="padding:3px 8px;text-align:center">${divCount}</td></tr>
+            <tr><td style="padding:3px 8px">Overhead positions</td><td style="padding:3px 8px;text-align:center">${totalOverhead}</td></tr>
+            <tr><td style="padding:3px 8px">Air resources</td><td style="padding:3px 8px;text-align:center">${totalAir}</td></tr>
+            <tr><td style="padding:3px 8px">ICP / Command Post copies</td><td style="padding:3px 8px;text-align:center">5</td></tr>
+            <tr style="border-top:1px solid var(--line)"><td style="padding:3px 8px;font-weight:bold">Subtotal</td><td style="padding:3px 8px;text-align:center;font-weight:bold">${base}</td></tr>
+          </tbody>
+        </table>
+        ${typeList ? `
+        <details style="margin-bottom:12px">
+          <summary style="font-size:11px;color:var(--muted);cursor:pointer">Resource types on 204s (${Object.keys(typeCounts).length} types)</summary>
+          <table style="width:100%;border-collapse:collapse;font-size:11px;margin-top:6px">
+            <thead><tr style="background:var(--panel2)">
+              <th style="padding:4px 8px;text-align:left">Type</th>
+              <th style="padding:4px 8px;text-align:center">Count</th>
+            </tr></thead>
+            <tbody>${typeList}</tbody>
+          </table>
+        </details>` : ''}
+        <div style="display:flex;justify-content:flex-end">
+          <button onclick="this.closest('[style*=fixed]').remove()"
+            style="padding:7px 20px">Close</button>
+        </div>
+      </div>`;
+    modal.onclick = e => { if (e.target === modal) modal.remove(); };
+    document.body.appendChild(modal);
+  } catch(e) {
+    alert('Could not estimate print count: ' + e.message);
+  }
+}
+
+// ── ITEM 11: Record 204 assignments to resource history ────────────
+async function record204Assignments() {
+  // Called after saving a 204 — logs assignments to resource_history table
+  if (!INC_ID) return;
+  const fd = collectFormData();
+  const divGroup = fd.division_group || fd.branch || 'Unknown';
+  const entries = [];
+  for (let i = 0; i < res204Count; i++) {
+    const rid = (fd['res204_id_'+i]||'').trim();
+    if (!rid) continue;
+    entries.push({
+      resource_id:   rid,
+      resource_name: fd['res204_leader_'+i]||'',
+      resource_type: fd['res204_type_'+i]||'',
+      assignment:    divGroup,
+      incident_id:   INC_ID,
+      period:        PERIOD,
+      date:          new Date().toISOString().slice(0,10),
+    });
+  }
+  if (!entries.length) return;
+  try {
+    await fetch(`${ICS_API}/api/ics/resource_history`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ entries })
+    });
+  } catch(e) { /* non-critical — ignore offline */ }
+}
+
 // ══════════════════════════════════════════════════════════════════
 // ICS-205 RADIO COMMUNICATIONS PLAN
 // ══════════════════════════════════════════════════════════════════
@@ -2731,10 +3028,22 @@ FORMS['205'] = {
         Enter all radio channels assigned for this incident. Use the repeater import below to
         auto-fill from the FieldCommand repeater database.
       </p>
-      <button onclick="loadRepeatersFor205()"
-        style="margin-bottom:12px;background:var(--eoc);border-color:var(--eoc);color:#fff;font-size:12px;padding:6px 14px">
-        📡 Import from Repeater Database
-      </button>
+      <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+        <button onclick="loadRepeatersFor205()"
+          style="background:var(--eoc);border-color:var(--eoc);color:#fff;font-size:12px;padding:6px 14px">
+          📡 Import from Repeater Database
+        </button>
+        <button onclick="show205LibraryPicker()"
+          style="background:rgba(200,118,10,0.1);border-color:rgba(200,118,10,0.3);
+                 color:var(--amber);font-size:12px;padding:6px 14px">
+          📚 Channel Library
+        </button>
+        <button onclick="link205ToDivisions()"
+          style="background:rgba(26,58,107,0.1);border-color:rgba(26,58,107,0.3);
+                 color:var(--blue);font-size:12px;padding:6px 14px">
+          🔗 Link Channels to Divisions
+        </button>
+      </div>
       <div id="repeaterImportStatus" style="font-size:11px;color:var(--green);margin-bottom:8px;display:none"></div>
       <div style="overflow-x:auto">
         <table style="width:100%;border-collapse:collapse;font-size:12px">
@@ -3230,6 +3539,186 @@ async function importFrom203() {
     const statusDiv = document.querySelector('.section-card h2 + p');
     if (statusDiv) statusDiv.style.color = 'var(--green)';
   } catch(e) { alert('Import failed: ' + e); }
+}
+
+
+// ── ITEM 12: Channel Library Picker for ICS-205 ───────────────────
+async function show205LibraryPicker() {
+  // Fetch channel library
+  let channels = [];
+  try {
+    const r = await fetch(`${ICS_API}/api/ics/channel_library`);
+    if (r.ok) channels = await r.json();
+  } catch(e) {}
+
+  // Universal nationwide standard channels — these are the same everywhere
+  // Agency-specific channels (local repeaters, interop freqs, etc.) are stored
+  // in the channel_library database and managed via the Channel Library page.
+  const universalChannels = [
+    { name:'National Simplex 146.52',  alpha_tag:'CALL 146.52', rx_freq:'146.5200', tx_freq:'146.5200', pl_tone:'',         mode:'FM',  function:'Calling'   },
+    { name:'National Simplex 146.55',  alpha_tag:'2M SIMP',     rx_freq:'146.5500', tx_freq:'146.5500', pl_tone:'',         mode:'FM',  function:'Tactical'  },
+    { name:'National Simplex 446.00',  alpha_tag:'UHF SIMP',    rx_freq:'446.0000', tx_freq:'446.0000', pl_tone:'',         mode:'FM',  function:'Tactical'  },
+    { name:'APRS 144.390',             alpha_tag:'APRS',         rx_freq:'144.3900', tx_freq:'144.3900', pl_tone:'',         mode:'FM',  function:'Data'      },
+    { name:'Winlink 2m (144.275 SSB)', alpha_tag:'WL2K 2M',     rx_freq:'144.2750', tx_freq:'144.2750', pl_tone:'',         mode:'SSB', function:'Data'      },
+    { name:'Winlink VHF (145.090)',    alpha_tag:'WL2K VHF',    rx_freq:'145.0900', tx_freq:'145.0900', pl_tone:'',         mode:'FM',  function:'Data'      },
+    { name:'NIFOG Interop Ch 1',       alpha_tag:'NIFOG 1',      rx_freq:'155.3400', tx_freq:'155.3400', pl_tone:'100.0 Hz', mode:'FM',  function:'Interop'   },
+    { name:'NIFOG Interop Ch 2',       alpha_tag:'NIFOG 2',      rx_freq:'158.7375', tx_freq:'158.7375', pl_tone:'100.0 Hz', mode:'FM',  function:'Interop'   },
+    { name:'NIFOG Interop Ch 3',       alpha_tag:'NIFOG 3',      rx_freq:'153.7625', tx_freq:'153.7625', pl_tone:'100.0 Hz', mode:'FM',  function:'Interop'   },
+    { name:'Mutual Aid 1 (155.7525)',  alpha_tag:'MUTAID 1',     rx_freq:'155.7525', tx_freq:'155.7525', pl_tone:'',         mode:'FM',  function:'Mutual Aid'},
+    { name:'Mutual Aid 2 (151.1375)',  alpha_tag:'MUTAID 2',     rx_freq:'151.1375', tx_freq:'151.1375', pl_tone:'',         mode:'FM',  function:'Mutual Aid'},
+    { name:'National Guard Interop',   alpha_tag:'NG INTR',      rx_freq:'163.4875', tx_freq:'163.4875', pl_tone:'',         mode:'FM',  function:'Interop'   },
+    { name:'ICS Command (VHF)',        alpha_tag:'ICS CMD',       rx_freq:'155.3400', tx_freq:'155.3400', pl_tone:'',         mode:'FM',  function:'Command'   },
+    { name:'ICS Tactical (VHF)',       alpha_tag:'ICS TAC',       rx_freq:'154.2800', tx_freq:'154.2800', pl_tone:'',         mode:'FM',  function:'Tactical'  },
+  ];
+
+  // Merge: universal defaults + agency channels from DB (DB takes precedence on duplicates)
+  const allChannels = [
+    ...universalChannels,
+    ...channels.filter(c => !universalChannels.find(u =>
+      u.rx_freq === c.rx_freq && u.name === c.name))
+  ];
+
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:500;display:flex;align-items:center;justify-content:center';
+  modal.innerHTML = `
+    <div style="background:var(--panel);border:1px solid var(--amber);border-radius:10px;
+                padding:20px;width:680px;max-width:96vw;max-height:80vh;overflow-y:auto">
+      <div style="font-family:var(--font-hd);font-size:13px;color:var(--amber);
+                  letter-spacing:1px;margin-bottom:12px">📚 CHANNEL LIBRARY</div>
+      <input type="text" placeholder="Search channel name, frequency, function..."
+        id="clSearch"
+        style="width:100%;box-sizing:border-box;background:var(--input-bg);
+               border:1px solid var(--line);color:var(--txt);
+               padding:7px 12px;font-size:12px;border-radius:4px;margin-bottom:10px"
+        oninput="filterCL(this.value)">
+      <div id="clList" style="max-height:400px;overflow-y:auto">
+        ${allChannels.map((ch,idx) => `
+          <div onclick="selectCh205(${idx})" id="clItem_${idx}"
+            data-search="${(ch.name+' '+ch.rx_freq+' '+ch.function).toLowerCase()}"
+            style="padding:8px 12px;border-bottom:1px solid var(--line);
+                   cursor:pointer;display:flex;align-items:center;gap:10px"
+            onmouseover="this.style.background='rgba(200,118,10,0.08)'"
+            onmouseout="this.style.background=''">
+            <div style="flex:1">
+              <div style="font-size:12px;font-weight:bold">${ch.name}</div>
+              <div style="font-size:10px;color:var(--muted)">
+                ${ch.rx_freq}${ch.tx_freq&&ch.tx_freq!==ch.rx_freq?' / '+ch.tx_freq:''} MHz
+                ${ch.pl_tone?' · PL '+ch.pl_tone:''} · ${ch.mode}
+              </div>
+            </div>
+            <div style="font-size:10px;padding:2px 8px;background:rgba(26,58,107,0.2);
+                        border-radius:10px;color:var(--blue);white-space:nowrap">
+              ${ch.function||''}
+            </div>
+          </div>`).join('')}
+      </div>
+      <div style="margin-top:12px;display:flex;justify-content:flex-end">
+        <button onclick="this.closest('[style*=fixed]').remove()" style="padding:6px 16px">Close</button>
+      </div>
+    </div>`;
+
+  // Store channels for selection
+  window._clChannels = allChannels;
+
+  modal.onclick = e => { if (e.target === modal) modal.remove(); };
+  document.body.appendChild(modal);
+  document.getElementById('clSearch').focus();
+}
+
+function filterCL(q) {
+  const lq = q.toLowerCase();
+  document.querySelectorAll('[id^=clItem_]').forEach(el => {
+    el.style.display = (!lq || el.dataset.search.includes(lq)) ? '' : 'none';
+  });
+}
+
+function selectCh205(idx) {
+  const ch = window._clChannels[idx];
+  if (!ch) return;
+  // Add as a new row in the 205
+  const tbody = document.getElementById('ch205Body');
+  if (!tbody) return;
+  const i = ch205Count++;
+  const tmp = document.createElement('tbody');
+  tmp.innerHTML = FORMS['205']._chRow(i, {
+    name:     ch.name,
+    rx:       ch.rx_freq,
+    tx:       ch.tx_freq || ch.rx_freq,
+    pl:       ch.pl_tone,
+    mode:     ch.mode,
+    assign:   ch.function || 'Tactical',
+    notes:    ch.alpha_tag || '',
+    division: ch.division || '',
+  });
+  tbody.appendChild(tmp.firstChild);
+  // Close modal
+  document.querySelector('[style*="position:fixed"][style*="z-index:500"]')?.remove();
+  markDirty();
+}
+
+// ── ITEM 13: Link 205 channels to divisions → auto-populate 204 ───
+function link205ToDivisions() {
+  // Read all channel rows and show a dialog to assign each channel to a division
+  const fd = collectFormData();
+  const rows = [];
+  for (let i = 0; i < ch205Count; i++) {
+    const name = fd['ch205_name_'+i]||'';
+    const rx   = fd['ch205_rx_'+i]||'';
+    if (!name && !rx) continue;
+    rows.push({ i, name, rx, div: fd['ch205_division_'+i]||'' });
+  }
+  if (!rows.length) { alert('No channels on ICS-205 yet. Add channels first.'); return; }
+
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:500;display:flex;align-items:center;justify-content:center';
+  modal.innerHTML = `
+    <div style="background:var(--panel);border:1px solid var(--blue);border-radius:10px;
+                padding:20px;width:500px;max-width:96vw;max-height:80vh;overflow-y:auto">
+      <div style="font-family:var(--font-hd);font-size:13px;color:var(--blue);
+                  letter-spacing:1px;margin-bottom:4px">🔗 LINK CHANNELS TO DIVISIONS</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:14px">
+        Assign each channel to a Division or Group. When a 204 is built for that division,
+        the channel will auto-populate into the communications section.
+      </div>
+      ${rows.map(r => `
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;
+                    padding:7px 10px;background:var(--panel2);border-radius:5px">
+          <div style="flex:1;font-size:12px">
+            <strong>${r.name}</strong>
+            <span style="font-size:10px;color:var(--muted);margin-left:6px">${r.rx} MHz</span>
+          </div>
+          <input type="text" id="divlink_${r.i}" value="${r.div}"
+            placeholder="Div A / Grp SAR / All"
+            style="width:130px;background:var(--input-bg);border:1px solid var(--line);
+                   color:var(--txt);padding:5px 8px;font-size:12px;border-radius:3px">
+        </div>`).join('')}
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
+        <button onclick="saveDivLinks()" 
+          style="background:var(--blue);border-color:var(--blue);color:#fff;padding:7px 18px">
+          Save Links
+        </button>
+        <button onclick="this.closest('[style*=fixed]').remove()" style="padding:7px 16px">Cancel</button>
+      </div>
+    </div>`;
+  modal.onclick = e => { if (e.target === modal) modal.remove(); };
+  document.body.appendChild(modal);
+  window._divLinkRows = rows;
+}
+
+function saveDivLinks() {
+  if (!window._divLinkRows) return;
+  window._divLinkRows.forEach(r => {
+    const el = document.getElementById('divlink_'+r.i);
+    if (el) {
+      formData['ch205_division_'+r.i] = el.value;
+      // Also update the input in the table
+      const inp = document.querySelector(`[data-key="ch205_division_${r.i}"]`);
+      if (inp) inp.value = el.value;
+    }
+  });
+  markDirty();
+  document.querySelector('[style*="position:fixed"][style*="z-index:500"]')?.remove();
+  alert(`✓ Division links saved. When creating ICS-204s for each division, the assigned channel will auto-populate.`);
 }
 
 // ══════════════════════════════════════════════════════════════════

@@ -297,6 +297,10 @@ CREATE TABLE IF NOT EXISTS resource_types (
     capabilities    TEXT DEFAULT '',    -- Key capability summary
     metric_notes    TEXT DEFAULT '',    -- Specific metrics (speed, capacity, etc.)
     custom          INTEGER DEFAULT 0,  -- 1 = user-added, 0 = NIMS standard
+    definition_what TEXT DEFAULT '',    -- Plain English: what it is
+    definition_std  TEXT DEFAULT '',    -- Minimum standards
+    definition_order TEXT DEFAULT '',   -- When to order this vs others
+    definition_conf TEXT DEFAULT '',    -- Common confusion points
     active          INTEGER DEFAULT 1
 );
 CREATE INDEX IF NOT EXISTS idx_rt_category ON resource_types(category);
@@ -601,6 +605,10 @@ def init_db():
         "ALTER TABLE ics_tcards ADD COLUMN notes TEXT DEFAULT ''",
         "ALTER TABLE ics_tcards ADD COLUMN order_number TEXT DEFAULT ''",
         "ALTER TABLE ics_tcards ADD COLUMN home_agency TEXT DEFAULT ''",
+        "ALTER TABLE resource_types ADD COLUMN definition_what TEXT DEFAULT ''",
+        "ALTER TABLE resource_types ADD COLUMN definition_std TEXT DEFAULT ''",
+        "ALTER TABLE resource_types ADD COLUMN definition_order TEXT DEFAULT ''",
+        "ALTER TABLE resource_types ADD COLUMN definition_conf TEXT DEFAULT ''",
         """CREATE TABLE IF NOT EXISTS resource_types (id INTEGER PRIMARY KEY AUTOINCREMENT, nims_id TEXT DEFAULT '', kind TEXT NOT NULL, type_level TEXT DEFAULT '', category TEXT NOT NULL, mission_area TEXT DEFAULT '', description TEXT DEFAULT '', min_personnel INTEGER DEFAULT 0, capabilities TEXT DEFAULT '', metric_notes TEXT DEFAULT '', custom INTEGER DEFAULT 0, active INTEGER DEFAULT 1)""",
         """CREATE TABLE IF NOT EXISTS hospitals (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL DEFAULT '', address TEXT DEFAULT '', city TEXT DEFAULT '', state TEXT DEFAULT '', county TEXT DEFAULT '', phone TEXT DEFAULT '', phone2 TEXT DEFAULT '', fax TEXT DEFAULT '', lat REAL, lon REAL, trauma_level TEXT DEFAULT '', burn_center INTEGER DEFAULT 0, helipad INTEGER DEFAULT 1, icu INTEGER DEFAULT 0, peds_trauma INTEGER DEFAULT 0, stroke_center INTEGER DEFAULT 0, cardiac_center INTEGER DEFAULT 0, travel_time_min INTEGER DEFAULT 0, notes TEXT DEFAULT '', active INTEGER DEFAULT 1)""",
         """CREATE TABLE IF NOT EXISTS ics_meetings (id TEXT PRIMARY KEY, incident_id TEXT NOT NULL DEFAULT '', period INTEGER NOT NULL DEFAULT 1, meeting_type TEXT NOT NULL, title TEXT NOT NULL DEFAULT '', scheduled_time TEXT, location TEXT DEFAULT '', chair TEXT DEFAULT '', attendees TEXT DEFAULT '[]', agenda_items TEXT DEFAULT '[]', status TEXT DEFAULT 'scheduled', notes TEXT DEFAULT '', created TEXT NOT NULL, updated TEXT NOT NULL)""",
@@ -624,12 +632,23 @@ def seed_resource_types(conn):
         existing = conn.execute("SELECT COUNT(*) FROM resource_types").fetchone()[0]
         if existing == 0:
             from nims_resource_types import NIMS_RESOURCE_TYPES
-            conn.executemany("""INSERT INTO resource_types
-                (nims_id,kind,type_level,category,mission_area,description,
-                 min_personnel,capabilities,metric_notes,custom)
-                VALUES(?,?,?,?,?,?,?,?,?,0)""", NIMS_RESOURCE_TYPES)
+            from nims_definitions import NIMS_DEFINITIONS
+            for rt in NIMS_RESOURCE_TYPES:
+                nims_id = rt[0]
+                defn = NIMS_DEFINITIONS.get(nims_id, {})
+                conn.execute("""INSERT INTO resource_types
+                    (nims_id,kind,type_level,category,mission_area,description,
+                     min_personnel,capabilities,metric_notes,
+                     definition_what,definition_std,definition_order,definition_conf,
+                     custom)
+                    VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,0)""",
+                    (*rt,
+                     defn.get('what_it_is',''),
+                     defn.get('minimum_standards',''),
+                     defn.get('ordering_guidance',''),
+                     defn.get('common_confusion','')))
             conn.commit()
-            log.info(f"Seeded {len(NIMS_RESOURCE_TYPES)} NIMS resource types")
+            log.info(f"Seeded {len(NIMS_RESOURCE_TYPES)} NIMS resource types with definitions")
     except Exception as e:
         log.warning(f"Resource type seeding skipped: {e}")
 

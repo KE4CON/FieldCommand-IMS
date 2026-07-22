@@ -564,18 +564,19 @@ async function showResourceTypePicker(onSelect, filterCategory='') {
               ${items.map(t => `
                 <div onclick="selectRT(${JSON.stringify(t).replace(/"/g,'&quot;')})"
                   style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);
-                         border-radius:5px;padding:7px 10px;margin-bottom:4px;cursor:pointer;
+                         border-radius:5px;padding:8px 10px;margin-bottom:4px;cursor:pointer;
                          transition:all 0.1s;border-left:3px solid ${catColors[cat]||'#888'}"
                   onmouseover="this.style.background='rgba(200,118,10,0.1)'"
                   onmouseout="this.style.background='rgba(255,255,255,0.03)'">
                   <div style="display:flex;align-items:center;gap:6px;color:#fff">
                     <strong style="font-size:12px">${t.kind}</strong>
-                    ${t.type_level?`<span style="font-size:11px;color:#f5a623">${t.type_level}</span>`:''}
+                    ${t.type_level?`<span style="font-size:11px;color:#f5a623;font-weight:bold">${t.type_level}</span>`:''}
                     ${t.nims_id?`<span style="font-size:9px;color:rgba(255,255,255,0.3);font-family:monospace">${t.nims_id}</span>`:''}
                     ${t.custom?`<span style="font-size:9px;color:#f5a623;border:1px solid #f5a623;padding:0 4px;border-radius:2px">CUSTOM</span>`:''}
                   </div>
                   <div style="font-size:10px;color:rgba(255,255,255,0.5);margin-top:2px">${t.capabilities||''}</div>
-                  ${t.min_personnel?`<div style="font-size:9px;color:rgba(255,255,255,0.3)">👥 ${t.min_personnel} min personnel</div>`:''}
+                  ${t.min_personnel?`<div style="font-size:9px;color:rgba(255,255,255,0.35)">👥 min ${t.min_personnel} personnel</div>`:''}
+                  ${t.definition_what?`<div style="font-size:9px;color:rgba(255,255,255,0.25);margin-top:3px;font-style:italic;">${t.definition_what.slice(0,120)}${t.definition_what.length>120?'...':''}</div>`:''}
                 </div>`).join('')}
             </div>`).join('')}
           ${!filtered.length?'<div style="color:rgba(255,255,255,0.3);text-align:center;padding:30px">No resource types match filter.</div>':''}

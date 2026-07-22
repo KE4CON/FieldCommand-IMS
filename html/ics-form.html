@@ -1921,6 +1921,51 @@ function add204Row() {
 
 
 // ══════════════════════════════════════════════════════════════════
+// ICS-204A BRIEFING SHEET (non-standard, widely used)
+// ══════════════════════════════════════════════════════════════════
+FORMS['204A'] = {
+  title: 'ICS-204A Assignment Briefing Sheet',
+  badge: 'ICS-204A',
+  variants: { FEMA:'Branch Briefing Sheet', USCG:'Branch Briefing Sheet', NWCG:'Branch Briefing Sheet' },
+
+  render() {
+    document.getElementById('formTitle').textContent = 'ICS-204A — Assignment Briefing Sheet';
+    document.getElementById('formBadge').textContent = 'ICS-204A';
+    document.getElementById('formMeta').textContent =
+      `Branch Briefing Sheet · Period ${PERIOD} · ${incData.name||'No incident'}`;
+    return `
+    <div class="section-card" style="background:rgba(200,118,10,0.06);border-color:rgba(200,118,10,0.3)">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="font-size:28px">📋</div>
+        <div>
+          <div style="font-family:var(--font-hd);font-size:13px;color:var(--amber);letter-spacing:1px;margin-bottom:4px">
+            ICS-204A BRIEFING SHEET
+          </div>
+          <div style="font-size:12px;color:var(--muted);line-height:1.6">
+            The ICS-204A is a branch-level summary that lists every division and group within a branch
+            on one landscape page — used by Branch Directors at the morning briefing instead of flipping
+            through multiple individual ICS-204 forms.
+          </div>
+          <div style="margin-top:10px;display:flex;gap:8px">
+            <a href="briefing_204a.html?incident=${INC_ID}&period=${PERIOD}"
+              style="background:var(--amber);color:#001428;font-family:var(--font-hd);
+                     font-size:11px;letter-spacing:1px;padding:7px 16px;border-radius:4px;
+                     text-decoration:none;font-weight:bold">
+              📋 OPEN BRIEFING SHEET →
+            </a>
+            <span style="font-size:11px;color:var(--dim);align-self:center">
+              Auto-built from all ICS-204 forms for this incident and period
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  },
+
+  buildPrint() { return ''; }
+};
+
+// ══════════════════════════════════════════════════════════════════
 // ICS-205 RADIO COMMUNICATIONS PLAN
 // ══════════════════════════════════════════════════════════════════
 FORMS['205'] = {

@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ICS-204A Briefing Sheet — FieldCommand IMS</title>
+<link rel="stylesheet" href="theme.css">
+<style>
+.ba-header {
+  background:linear-gradient(135deg,#001428,#002858);
+  border-bottom:2px solid var(--amber);
+  padding:10px 18px;
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+}
+.ba-badge {
+  background:var(--amber);color:#001428;font-family:var(--font-hd);
+  font-size:11px;padding:3px 10px;border-radius:3px;letter-spacing:2px;font-weight:bold;
+}
+.ba-body { padding:16px 20px;max-width:1200px;margin:0 auto; }
+
+/* Branch cards */
+.branch-card {
+  background:var(--panel);border:1px solid var(--line);border-radius:8px;
+  margin-bottom:16px;overflow:hidden;
+}
+.branch-header {
+  padding:8px 16px;
+  display:flex;align-items:center;gap:10px;
+  border-bottom:2px solid var(--line);
+}
+.branch-name {
+  font-family:var(--font-hd);font-size:14px;letter-spacing:2px;
+}
+.branch-meta {
+  font-size:11px;color:var(--muted);margin-left:auto;
+}
+
+/* Division rows */
+.div-table {
+  width:100%;border-collapse:collapse;font-size:12px;
+}
+.div-table th {
+  background:var(--panel2);padding:6px 10px;
+  text-align:left;border-bottom:1px solid var(--line);
+  font-size:10px;text-transform:uppercase;letter-spacing:1px;
+  color:var(--muted);white-space:nowrap;
+}
+.div-table td {
+  padding:6px 10px;border-bottom:1px solid rgba(255,255,255,0.04);
+  vertical-align:top;
+}
+.div-table tr:last-child td { border-bottom:none; }
+.div-table tr:hover td { background:rgba(255,255,255,0.02); }
+
+.div-name { font-family:var(--font-hd);font-size:12px;color:var(--amber); }
+.div-supervisor { font-size:11px;color:var(--muted); }
+.div-channel { font-size:11px;color:var(--blue); }
+
+/* Resource chips */
+.res-chip {
+  display:inline-block;
+  background:rgba(26,58,107,0.2);border:1px solid rgba(26,58,107,0.4);
+  border-radius:3px;padding:2px 7px;margin:2px;
+  font-size:10px;font-family:monospace;white-space:nowrap;
+}
+.res-chip.placeholder {
+  background:rgba(200,118,10,0.1);border-color:rgba(200,118,10,0.3);
+  color:var(--amber);font-style:italic;
+}
+
+/* Summary bar */
+.summary-bar {
+  display:flex;gap:16px;flex-wrap:wrap;
+  background:rgba(200,118,10,0.06);border:1px solid rgba(200,118,10,0.2);
+  border-radius:6px;padding:10px 16px;margin-bottom:16px;font-size:12px;
+}
+.sum-item { display:flex;flex-direction:column;align-items:center;gap:2px; }
+.sum-num { font-family:var(--font-hd);font-size:20px;color:var(--amber); }
+.sum-lbl { font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:1px; }
+
+/* Filter bar */
+.filter-bar {
+  display:flex;gap:8px;align-items:center;flex-wrap:wrap;
+  margin-bottom:14px;
+}
+
+/* ── PRINT ────────────────────────────────────────────────────── */
+@media print {
+  .ba-header, .filter-bar, .print-btn, .no-print { display:none !important; }
+  body { background:#fff;color:#000; }
+  .ba-body { padding:0;max-width:none; }
+  .branch-card {
+    background:#fff;border:1px solid #ccc;
+    page-break-inside:avoid;margin-bottom:10px;
+  }
+  .branch-header { background:#1a3a6b !important;color:#fff !important;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact; }
+  .branch-name { color:#fff !important; }
+  .div-table th { background:#e8eef7 !important;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact; }
+  .div-table td { color:#000;border-bottom:1px solid #ddd; }
+  .div-name { color:#1a3a6b !important; }
+  .div-channel { color:#1a5276 !important; }
+  .div-supervisor { color:#444 !important; }
+  .res-chip { background:#e8eef7 !important;border-color:#aac !important;
+    color:#000 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact; }
+  .res-chip.placeholder { background:#fff3cd !important;border-color:#f0a040 !important;
+    color:#7a4000 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact; }
+  .summary-bar { background:#f5f5f5 !important;border-color:#ccc !important;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact; }
+  .sum-num { color:#1a3a6b !important; }
+  @page { size:landscape;margin:0.5in; }
+  .print-header { display:block !important; }
+}
+
+.print-header {
+  display:none;
+  text-align:center;margin-bottom:12px;
+}
+.print-header h1 { font-size:16px;margin:0; }
+.print-header .ph-sub { font-size:11px;color:#555; }
+</style>
+</head>
+<body>
+
+<div class="ba-header">
+  <span class="ba-badge">ICS-204A</span>
+  <span style="font-family:var(--font-hd);font-size:14px;letter-spacing:2px">
+    BRIEFING SHEET
+  </span>
+  <div style="font-size:11px;color:rgba(255,255,255,0.4)">
+    All resources by branch — for morning briefing
+  </div>
+  <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+    <button onclick="window.print()" class="print-btn"
+      style="background:var(--amber);border-color:var(--amber);
+             color:#001428;font-weight:bold;font-size:12px;padding:6px 16px">
+      🖨 Print Landscape
+    </button>
+    <button onclick="loadData()" class="no-print"
+      style="font-size:12px;padding:6px 12px">
+      ↺ Refresh
+    </button>
+    <a href="ics-form.html?form=203" id="link203"
+      style="color:rgba(255,255,255,0.4);font-size:12px" class="no-print">
+      ICS-203 →
+    </a>
+    <a href="incident.html" id="backLink"
+      style="color:rgba(255,255,255,0.4);font-size:12px" class="no-print">
+      ← Incident
+    </a>
+  </div>
+</div>
+
+<div class="ba-body">
+
+  <!-- Print header (hidden on screen) -->
+  <div class="print-header">
+    <h1>ICS-204A — ASSIGNMENT BRIEFING SHEET</h1>
+    <div class="ph-sub" id="printMeta"></div>
+  </div>
+
+  <!-- Filter / info bar -->
+  <div class="filter-bar no-print">
+    <div style="font-size:12px;color:var(--muted)" id="incidentLabel">
+      Loading...
+    </div>
+    <div style="margin-left:auto;display:flex;gap:6px">
+      <select id="branchFilter" onchange="render()"
+        style="background:var(--input-bg);border:1px solid var(--line);
+               color:var(--txt);padding:5px 10px;font-size:12px;border-radius:4px">
+        <option value="">All Branches</option>
+      </select>
+      <label style="font-size:12px;color:var(--muted);display:flex;align-items:center;gap:4px">
+        <input type="checkbox" id="showEmpty" onchange="render()">
+        Show empty divisions
+      </label>
+    </div>
+  </div>
+
+  <!-- Summary bar -->
+  <div class="summary-bar no-print" id="summaryBar" style="display:none">
+    <div class="sum-item">
+      <div class="sum-num" id="sumBranches">0</div>
+      <div class="sum-lbl">Branches</div>
+    </div>
+    <div class="sum-item">
+      <div class="sum-num" id="sumDivisions">0</div>
+      <div class="sum-lbl">Div/Groups</div>
+    </div>
+    <div class="sum-item">
+      <div class="sum-num" id="sumResources">0</div>
+      <div class="sum-lbl">Resources</div>
+    </div>
+    <div class="sum-item">
+      <div class="sum-num" id="sumPersonnel">0</div>
+      <div class="sum-lbl">Personnel</div>
+    </div>
+  </div>
+
+  <div id="briefingContent">
+    <div style="text-align:center;padding:60px;color:var(--muted)">
+      <div style="font-size:32px;margin-bottom:12px">📋</div>
+      <div style="font-family:var(--font-hd);font-size:13px;letter-spacing:2px">
+        LOADING ASSIGNMENT DATA
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const API    = 'http://192.168.50.1:5051';
+const params = new URLSearchParams(location.search);
+const INC_ID = params.get('incident') || '';
+const PERIOD = parseInt(params.get('period') || '1');
+
+// Branch colors — matches ICS standard color coding
+const BRANCH_COLORS = {
+  'I':   '#c0392b', 'II':  '#e67e22', 'III': '#f1c40f',
+  'IV':  '#27ae60', 'V':   '#2980b9', 'VI':  '#8e44ad',
+  'A':   '#c0392b', 'B':   '#e67e22', 'C':   '#f1c40f',
+  'D':   '#27ae60', 'E':   '#2980b9', 'F':   '#8e44ad',
+  '_default': '#1a5276'
+};
+
+function branchColor(name) {
+  if (!name) return BRANCH_COLORS._default;
+  const key = name.trim().toUpperCase().replace('BRANCH','').trim();
+  return BRANCH_COLORS[key] || BRANCH_COLORS._default;
+}
+
+let allForms   = [];  // all saved ics204 forms for this incident/period
+let incData    = {};
+let giData     = {};
+
+async function loadData() {
+  if (!INC_ID) {
+    document.getElementById('briefingContent').innerHTML =
+      '<div style="color:var(--red);text-align:center;padding:40px">No incident selected. '
+      + 'Open from an incident page.</div>';
+    return;
+  }
+
+  try {
+    // Fetch in parallel: incident info, general info, all 204 forms
+    const [incR, giR, formsR] = await Promise.all([
+      fetch(`${API}/api/ics/incidents/${INC_ID}`),
+      fetch(`${API}/api/ics/general_info?incident_id=${INC_ID}&period=${PERIOD}`),
+      fetch(`${API}/api/ics/forms/ics204?incident_id=${INC_ID}&period=${PERIOD}`)
+    ]);
+
+    if (incR.ok)   incData = await incR.json();
+    if (giR.ok)    giData  = await giR.json();
+    if (formsR.ok) {
+      const raw = await formsR.json();
+      // Parse data field from each form
+      allForms = raw.map(f => {
+        try { return { ...f, data: JSON.parse(f.data || '{}') }; }
+        catch(e) { return { ...f, data: {} }; }
+      });
+    }
+
+    updateUI();
+    render();
+  } catch(e) {
+    document.getElementById('briefingContent').innerHTML =
+      `<div style="color:var(--red);text-align:center;padding:40px">
+        ⚠ Could not load data<br>
+        <span style="font-size:11px;color:var(--muted)">${e.message}</span><br>
+        <span style="font-size:11px;color:var(--muted)">
+          Ensure you are connected to EMCOMM-NET and the ICS platform is running.
+        </span>
+      </div>`;
+  }
+}
+
+function updateUI() {
+  const name = giData.incident_name || incData.name || 'Unknown Incident';
+  const label = `${name} — Period ${PERIOD}`;
+  document.getElementById('incidentLabel').textContent = label;
+  document.getElementById('printMeta').textContent =
+    `${name} · Operational Period ${PERIOD} · `
+    + `${giData.operational_period_from || ''} – ${giData.operational_period_to || ''} · `
+    + `Printed: ${new Date().toLocaleString()}`;
+  document.title = `204A Briefing — ${name} P${PERIOD}`;
+  if (INC_ID) {
+    document.getElementById('backLink').href   = `incident.html?incident=${INC_ID}`;
+    document.getElementById('link203').href    =
+      `ics-form.html?form=203&incident=${INC_ID}&period=${PERIOD}`;
+  }
+}
+
+function render() {
+  const filterBranch = document.getElementById('branchFilter')?.value || '';
+  const showEmpty    = document.getElementById('showEmpty')?.checked || false;
+
+  // Group 204 forms by branch
+  const branches = {};
+  allForms.forEach(f => {
+    const d    = f.data;
+    const br   = (d.branch || 'Unassigned').trim() || 'Unassigned';
+    const div  = d.division_group || d.staging_area || '';
+    if (!branches[br]) branches[br] = [];
+    branches[br].push({ form: f, data: d, div });
+  });
+
+  // Populate branch filter
+  const bf = document.getElementById('branchFilter');
+  if (bf) {
+    const current = bf.value;
+    bf.innerHTML = '<option value="">All Branches</option>' +
+      Object.keys(branches).map(b =>
+        `<option value="${b}" ${b===current?'selected':''}>${b}</option>`
+      ).join('');
+  }
+
+  // Stats
+  let totalDivs = 0, totalRes = 0, totalPers = 0;
+  Object.values(branches).forEach(divs => {
+    totalDivs += divs.length;
+    divs.forEach(({ data: d }) => {
+      for (let i = 0; i < 50; i++) {
+        if (d[`res204_id_${i}`] || d[`res204_leader_${i}`]) {
+          totalRes++;
+          totalPers += parseInt(d[`res204_personnel_${i}`] || 0);
+        } else if (i > 7) break;
+      }
+    });
+  });
+
+  document.getElementById('sumBranches').textContent   = Object.keys(branches).length;
+  document.getElementById('sumDivisions').textContent  = totalDivs;
+  document.getElementById('sumResources').textContent  = totalRes;
+  document.getElementById('sumPersonnel').textContent  = totalPers;
+  document.getElementById('summaryBar').style.display  =
+    Object.keys(branches).length ? 'flex' : 'none';
+
+  if (!Object.keys(branches).length) {
+    document.getElementById('briefingContent').innerHTML =
+      `<div style="text-align:center;padding:50px;color:var(--muted)">
+        <div style="font-size:32px;margin-bottom:12px">📄</div>
+        <div style="font-family:var(--font-hd);font-size:13px;letter-spacing:2px;margin-bottom:8px">
+          NO ICS-204 FORMS FOUND
+        </div>
+        <div style="font-size:12px">
+          Create ICS-204 Assignment Lists for this incident and period first.<br>
+          <a href="ics-form.html?form=204&incident=${INC_ID}&period=${PERIOD}"
+            style="color:var(--amber);margin-top:8px;display:inline-block">
+            → Create ICS-204 →
+          </a>
+        </div>
+      </div>`;
+    return;
+  }
+
+  const branchesToShow = filterBranch
+    ? { [filterBranch]: branches[filterBranch] }
+    : branches;
+
+  const html = Object.entries(branchesToShow).map(([branchName, divisions]) => {
+    const color = branchColor(branchName);
+
+    // Build division rows
+    const divRows = divisions.map(({ data: d, form: f }) => {
+      const div = d.division_group || d.staging_area || '—';
+      const sup = d.division_group_supervisor || '—';
+      const ch  = d.primary_freq || d.command_freq || '—';
+      const wa  = d.work_assignments || '';
+
+      // Collect resources for this division
+      const resources = [];
+      for (let i = 0; i < 50; i++) {
+        const rid = d[`res204_id_${i}`];
+        const rl  = d[`res204_leader_${i}`];
+        const rt  = d[`res204_type_${i}`];
+        const rp  = d[`res204_personnel_${i}`];
+        if (!rid && !rl) { if (i > 7) break; continue; }
+        resources.push({ id: rid, leader: rl, type: rt, personnel: rp });
+      }
+
+      if (!showEmpty && !resources.length && !wa) return '';
+
+      const resChips = resources.length
+        ? resources.map(r => {
+            const isPlaceholder = (r.id || '').endsWith('+');
+            const label = [r.id, r.leader, r.personnel ? `👥${r.personnel}` : '']
+              .filter(Boolean).join(' · ');
+            return `<span class="res-chip${isPlaceholder?' placeholder':''}">${label}</span>`;
+          }).join('')
+        : '<span style="font-size:10px;color:var(--dim);font-style:italic">No resources assigned</span>';
+
+      return `
+        <tr>
+          <td style="min-width:100px">
+            <div class="div-name">${div}</div>
+          </td>
+          <td style="min-width:140px">
+            <div class="div-supervisor">${sup}</div>
+          </td>
+          <td style="min-width:100px">
+            <div class="div-channel">${ch}</div>
+          </td>
+          <td>
+            <div style="line-height:1.6">${resChips}</div>
+          </td>
+          <td style="min-width:180px;font-size:11px;color:var(--muted);max-width:250px">
+            ${wa ? wa.slice(0,150) + (wa.length>150?'…':'') : ''}
+          </td>
+          <td style="min-width:60px;text-align:center">
+            <a href="ics-form.html?form=204&incident=${INC_ID}&period=${PERIOD}&formid=${f.id}"
+              style="font-size:10px;color:var(--amber);white-space:nowrap"
+              class="no-print">✏ Edit</a>
+          </td>
+        </tr>`;
+    }).join('');
+
+    if (!divRows.trim()) return '';
+
+    // Count branch totals
+    let brRes = 0, brPers = 0;
+    divisions.forEach(({ data: d }) => {
+      for (let i = 0; i < 50; i++) {
+        if (d[`res204_id_${i}`] || d[`res204_leader_${i}`]) {
+          brRes++;
+          brPers += parseInt(d[`res204_personnel_${i}`] || 0);
+        } else if (i > 7) break;
+      }
+    });
+
+    return `
+      <div class="branch-card">
+        <div class="branch-header" style="border-left:5px solid ${color}">
+          <div class="branch-name" style="color:${color}">
+            ${branchName === 'Unassigned' ? '📋 UNASSIGNED / NO BRANCH' : `🌿 BRANCH ${branchName}`}
+          </div>
+          <div class="branch-meta">
+            ${divisions.length} division${divisions.length!==1?'s':''} ·
+            ${brRes} resource${brRes!==1?'s':''} ·
+            ${brPers} personnel
+          </div>
+        </div>
+        <table class="div-table">
+          <thead>
+            <tr>
+              <th>Division / Group</th>
+              <th>Supervisor</th>
+              <th>Tactical Channel</th>
+              <th>Resources Assigned</th>
+              <th>Work Assignment (brief)</th>
+              <th class="no-print"></th>
+            </tr>
+          </thead>
+          <tbody>
+            ${divRows}
+          </tbody>
+        </table>
+      </div>`;
+  }).join('');
+
+  document.getElementById('briefingContent').innerHTML = html ||
+    '<div style="color:var(--muted);text-align:center;padding:30px">No divisions match filter.</div>';
+}
+
+// Init
+if (INC_ID) {
+  document.getElementById('backLink').href = `incident.html?incident=${INC_ID}`;
+}
+loadData();
+</script>
+</body>
+</html>

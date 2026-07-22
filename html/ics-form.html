@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ICS Form — FieldCommand IMS</title>
+<link rel="stylesheet" href="theme.css">
+<style>
+.form-header {
+  background: linear-gradient(135deg,#001428,#002858);
+  border-bottom: 2px solid var(--eoc); padding: 10px 16px;
+  display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+}
+.form-badge {
+  background: var(--eoc); color: #fff; font-family: var(--font-hd);
+  font-size: 12px; padding: 4px 12px; border-radius: 4px; letter-spacing: 2px;
+}
+.variant-pills { display: flex; gap: 4px; }
+.variant-pill {
+  padding: 3px 10px; border-radius: 10px; font-size: 11px;
+  border: 1px solid var(--line); cursor: pointer; font-family: var(--font-hd);
+}
+.variant-pill.sel { background: var(--eoc); border-color: var(--eoc); color: #fff; }
+.form-wrap { max-width: 960px; margin: 0 auto; padding: 16px; }
+.section-card {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 8px; padding: 18px; margin-bottom: 14px;
+}
+.section-card h2 {
+  font-family: var(--font-hd); font-size: 11px; letter-spacing: 2px;
+  color: var(--eoc); margin: 0 0 14px; display: flex; align-items: center; gap: 10px;
+}
+.section-card h2::after { content:''; flex:1; height:1px; background:var(--line); }
+.fg { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; }
+.fg label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.3px; }
+.fg input, .fg select, .fg textarea {
+  background: var(--input-bg); border: 1px solid var(--line);
+  border-radius: 4px; color: var(--txt); padding: 7px 10px;
+  font-size: 13px; width: 100%; box-sizing: border-box;
+}
+.fg textarea { resize: vertical; }
+.fg input:focus, .fg select:focus, .fg textarea:focus { border-color:var(--eoc); outline:none; }
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+.grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; }
+.full { grid-column: 1/-1; }
+.action-bar {
+  position: sticky; bottom: 0; background: var(--panel);
+  border-top: 1px solid var(--line); padding: 10px 16px;
+  display: flex; gap: 8px; align-items: center; z-index: 10;
+}
+.save-indicator {
+  font-size: 11px; color: var(--green); display: none;
+}
+/* ICS Print Form */
+.ics-print {
+  display: none; background: #fff; color: #000;
+  font-family: Arial, sans-serif; font-size: 11px;
+  border: 1px solid #000; margin: 16px;
+}
+.ics-print.show { display: block; }
+.ics-print-header {
+  display: flex; border-bottom: 2px solid #000;
+}
+.ics-print-header .logo-cell {
+  width: 80px; border-right: 1px solid #000; padding: 6px;
+  display: flex; align-items: center; justify-content: center;
+}
+.ics-print-header .logo-cell img { max-width: 70px; max-height: 60px; object-fit: contain; }
+.ics-print-header .title-cell { flex: 1; padding: 8px 12px; text-align: center; }
+.ics-print-header .title-cell h1 { font-size: 16px; font-weight: bold; margin: 0 0 3px; }
+.ics-print-header .title-cell .sub { font-size: 11px; color: #444; }
+.ics-print-header .meta-cell {
+  border-left: 1px solid #000; padding: 6px 10px; min-width: 140px;
+  display: flex; flex-direction: column; justify-content: center; gap: 4px;
+}
+.ics-print-header .meta-cell .ml { font-size: 9px; text-transform: uppercase; color: #666; }
+.ics-print-header .meta-cell .mv { font-size: 12px; font-weight: bold; }
+.pr { display: flex; border-bottom: 1px solid #000; }
+.pr:last-child { border-bottom: none; }
+.pc { padding: 5px 8px; border-right: 1px solid #000; flex: 1; }
+.pc:last-child { border-right: none; }
+.pc .pl { font-size: 9px; text-transform: uppercase; color: #555; margin-bottom: 2px; }
+.pc .pv { font-size: 11px; min-height: 16px; white-space: pre-wrap; }
+.pc .pw { min-height: 60px; }
+.pc.w2 { flex: 2; }
+.pc.w3 { flex: 3; }
+.pc.w4 { flex: 4; }
+.sig-row { display: flex; min-height: 50px; border-top: 1px solid #000; }
+.sig-cell { flex: 1; padding: 5px 8px; border-right: 1px solid #000; }
+.sig-cell:last-child { border-right: none; }
+.sig-cell .sl { font-size: 9px; text-transform: uppercase; color: #555; }
+.sig-cell .ss { border-bottom: 1px solid #000; margin: 12px 0 4px; min-height: 18px; }
+.print-footer { border-top: 1px solid #000; padding: 4px 8px; font-size: 8px; color: #666; display: flex; justify-content: space-between; }
+@media print {
+  .form-header,.action-bar,.form-wrap { display: none !important; }
+  .ics-print { display: block !important; margin: 0; border: none; }
+}
+</style>
+</head>
+<body>
+
+<div class="form-header">
+  <span class="form-badge" id="formBadge">ICS</span>
+  <span style="font-family:var(--font-hd);font-size:14px;letter-spacing:2px" id="formTitle">ICS Form</span>
+  <div style="display:flex;flex-direction:column;gap:2px;margin-left:8px">
+    <div style="font-size:10px;color:var(--muted)">Form Variant</div>
+    <div class="variant-pills" id="variantPills">
+      <div class="variant-pill sel" onclick="setVariant('FEMA')">FEMA</div>
+      <div class="variant-pill" onclick="setVariant('USCG')">USCG</div>
+      <div class="variant-pill" onclick="setVariant('NWCG')">NWCG</div>
+    </div>
+  </div>
+  <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+    <button onclick="saveForm()"
+      style="background:var(--eoc);border-color:var(--eoc);color:#fff;font-weight:bold">
+      💾 Save
+    </button>
+    <button onclick="printForm()">🖨 Print</button>
+    <a id="backLink" href="incident.html" style="color:var(--muted);font-size:12px">← Incident</a>
+  </div>
+</div>
+
+<div class="form-wrap" id="formWrap">
+  <div style="color:var(--muted);text-align:center;padding:40px">Loading form...</div>
+</div>
+
+<div class="action-bar">
+  <button onclick="saveForm()"
+    style="background:var(--eoc);border-color:var(--eoc);color:#fff;font-weight:bold;padding:8px 24px">
+    💾 Save Form
+  </button>
+  <button onclick="printForm()" style="padding:8px 16px">🖨 Print / Export</button>
+  <span class="save-indicator" id="saveIndicator">✓ Saved</span>
+  <div style="margin-left:auto;font-size:11px;color:var(--dim)" id="formMeta"></div>
+</div>
+
+<!-- Print view (hidden until print) -->
+<div class="ics-print" id="printView"></div>
+
+<script>
+const ICS_API  = 'http://192.168.50.1:5051';
+const MAIN_API = 'http://192.168.50.1:5050';
+
+const params    = new URLSearchParams(location.search);
+const FORM_NUM  = params.get('form') || '201';
+const INC_ID    = params.get('incident') || '';
+const PERIOD    = parseInt(params.get('period') || '1');
+let   VARIANT   = 'FEMA';
+let   incData   = {};
+let   orgData   = {};
+let   savedId   = null;
+
+// ── Load org and incident context ─────────────────────────────────────
+async function loadContext() {
+  try {
+    const [orgR, incR] = await Promise.all([
+      fetch(`${MAIN_API}/api/config`),
+      INC_ID ? fetch(`${ICS_API}/api/ics/incidents/${INC_ID}`) : Promise.resolve(null)
+    ]);
+    orgData = orgR.ok ? await orgR.json() : {};
+    if (incR?.ok) {
+      const d = await incR.json();
+      incData = d.incident || d;
+    }
+    VARIANT = incData.ics_variant || orgData.ics_form_variant || 'FEMA';
+    setVariant(VARIANT, false);
+    if (INC_ID) {
+      document.getElementById('backLink').href = `incident.html?incident=${INC_ID}`;
+    }
+    // Try to load existing saved form
+    await loadSavedForm();
+    // Render the form
+    renderForm();
+  } catch(e) {
+    console.error('Context load failed', e);
+    renderForm();
+  }
+}
+
+async function loadSavedForm() {
+  if (!INC_ID) return;
+  try {
+    const r = await fetch(
+      `${ICS_API}/api/ics/forms/ics${FORM_NUM}?incident_id=${INC_ID}&period=${PERIOD}`);
+    const forms = await r.json();
+    if (forms.length) {
+      savedId = forms[0].id;
+      const data = JSON.parse(forms[0].data || '{}');
+      // Merge saved data into formData
+      Object.assign(formData, data);
+    }
+  } catch(e) {}
+}
+
+function setVariant(v, rerender=true) {
+  VARIANT = v;
+  document.querySelectorAll('.variant-pill').forEach(el => {
+    el.classList.toggle('sel', el.textContent === v);
+  });
+  if (rerender && document.getElementById('formWrap').children.length) renderForm();
+}
+
+// ── Form data store ────────────────────────────────────────────────────
+let formData = {};
+
+function val(key, def='') {
+  return formData[key] ?? incData[key] ?? orgData[key] ?? def;
+}
+function now() { return new Date().toISOString().slice(0,16); }
+function todayDate() { return new Date().toISOString().slice(0,10); }
+
+// ── Collect all form field values ─────────────────────────────────────
+function collectFormData() {
+  const data = {};
+  document.querySelectorAll('[data-key]').forEach(el => {
+    data[el.dataset.key] = el.value || el.textContent || '';
+  });
+  return data;
+}
+
+// ── Save form ──────────────────────────────────────────────────────────
+async function saveForm() {
+  const data = collectFormData();
+  data.form_type = `ics${FORM_NUM}`;
+  data.variant = VARIANT;
+  data.period = PERIOD;
+  data.incident_id = INC_ID;
+  data.updated = new Date().toISOString();
+
+  const payload = {
+    id: savedId,
+    incident_id: INC_ID,
+    period: PERIOD,
+    summary: data.incident_name || incData.name || `ICS-${FORM_NUM}`,
+    data: JSON.stringify(data),
+  };
+
+  try {
+    const r = await fetch(`${ICS_API}/api/ics/forms/ics${FORM_NUM}`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const result = await r.json();
+    if (result.ok) {
+      savedId = result.id || savedId;
+      const ind = document.getElementById('saveIndicator');
+      ind.style.display = 'inline';
+      setTimeout(() => ind.style.display = 'none', 3000);
+      Object.assign(formData, data);
+    }
+  } catch(e) {
+    // Offline — save to localStorage
+    localStorage.setItem(`ics${FORM_NUM}-${INC_ID}-${PERIOD}`, JSON.stringify(data));
+    const ind = document.getElementById('saveIndicator');
+    ind.textContent = '✓ Saved locally';
+    ind.style.display = 'inline';
+    setTimeout(() => { ind.style.display='none'; ind.textContent='✓ Saved'; }, 3000);
+  }
+}
+
+// ── Print form ─────────────────────────────────────────────────────────
+function printForm() {
+  collectFormData(); // ensure latest
+  buildPrintView();
+  window.print();
+}
+
+// ── Field helper ───────────────────────────────────────────────────────
+function field(key, label, type='text', placeholder='', opts={}) {
+  const v = val(key);
+  const tag = type === 'textarea' ? 'textarea' : 'input';
+  const rows = opts.rows || 3;
+  const inner = type === 'textarea'
+    ? `<textarea data-key="${key}" rows="${rows}" placeholder="${placeholder}">${v}</textarea>`
+    : `<input type="${type}" data-key="${key}" value="${v}" placeholder="${placeholder}">`;
+  return `<div class="fg"><label>${label}</label>${inner}</div>`;
+}
+
+function select(key, label, options, def='') {
+  const v = val(key, def);
+  const opts = options.map(o =>
+    `<option ${o===v?'selected':''}>${o}</option>`).join('');
+  return `<div class="fg"><label>${label}</label><select data-key="${key}">${opts}</select></div>`;
+}
+
+// ── Logo helper ─────────────────────────────────────────────────────────
+function logoHtml() {
+  if (orgData.logo_data && orgData.logo_mime) {
+    return `<img src="data:${orgData.logo_mime};base64,${orgData.logo_data}" style="max-width:70px;max-height:60px;object-fit:contain">`;
+  }
+  return `<div style="font-family:var(--font-hd);font-size:9px;color:#888;text-align:center">
+    ${orgData.org_short || orgData.callsign || 'ICS'}</div>`;
+}
+
+// ── Print cell builder ─────────────────────────────────────────────────
+function pc(label, key, cls='', tall=false) {
+  const v = formData[key] || incData[key] || orgData[key] || '';
+  return `<div class="pc ${cls}"><div class="pl">${label}</div><div class="pv ${tall?'pw':''}">${v}</div></div>`;
+}
+
+// ── FORM RENDERERS ─────────────────────────────────────────────────────
+const FORMS = {};
+
+// ══════════════════════════════════════════════════════════════════
+// ICS-201 INCIDENT BRIEFING
+// ══════════════════════════════════════════════════════════════════
+FORMS['201'] = {
+  title: 'ICS-201 Incident Briefing',
+  badge: 'ICS-201',
+  variants: {
+    FEMA: 'FEMA 010-0-1',
+    USCG: 'CG-5210',
+    NWCG: 'ICS-201 (NWCG)'
+  },
+  render() {
+    document.getElementById('formTitle').textContent = 'ICS-201 — Incident Briefing';
+    document.getElementById('formBadge').textContent = 'ICS-201';
+    document.getElementById('formMeta').textContent =
+      `${this.variants[VARIANT]} · Period ${PERIOD} · ${INC_ID ? incData.name : 'No incident'}`;
+
+    return `
+    <div class="section-card">
+      <h2>1. Incident Information</h2>
+      <div class="grid-3">
+        ${field('incident_name','Incident Name','text',incData.name||'')}
+        ${field('incident_number','Incident Number','text','')}
+        ${select('incident_type','Incident Type',[
+          'Wildfire','Flood','Earthquake','Winter Storm','Tornado','Hurricane',
+          'Hazmat','Mass Casualty','Search and Rescue','Planned Event',
+          'EOC Activation','Drill / Exercise','Other'
+        ],incData.type||'')}
+      </div>
+      <div class="grid-3">
+        ${field('date','Date','date',todayDate())}
+        ${field('time_prepared','Time Prepared','time',new Date().toTimeString().slice(0,5))}
+        ${field('map_sketch_page','Map / Sketch Page','')}
+      </div>
+      <div class="grid-2">
+        ${field('incident_location','Incident Location / Address','text',incData.location||'')}
+        ${field('jurisdiction','Jurisdiction','text',incData.jurisdiction||orgData.county+', '+orgData.state||'')}
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>2. Incident Commander & Staff</h2>
+      <div class="grid-2">
+        ${field('incident_commander','Incident Commander (IC)','text',incData.incident_commander||'')}
+        ${field('deputy_ic','Deputy IC','')}
+      </div>
+      <div class="grid-3">
+        ${field('safety_officer','Safety Officer (SO)','')}
+        ${field('public_info_officer','Public Information Officer (PIO)','')}
+        ${field('liaison_officer','Liaison Officer (LO)','')}
+      </div>
+      <div class="grid-2">
+        ${field('prepared_by','Prepared By (name/position)','text',orgData.personal_call||'')}
+        ${field('agency','Agency / Organization','text',
+          orgData.org_short ? `${orgData.org_name} (${orgData.org_short})` : orgData.org_name||'')}
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>3. Situation Summary / Health & Safety Briefing</h2>
+      ${field('situation_summary','Current Situation Summary','textarea','Describe the current incident situation, size, behavior, and significant factors...',{rows:5})}
+      ${field('health_safety','Health & Safety Briefing / Hazards','textarea','Known hazards, PPE requirements, medical concerns...',{rows:3})}
+    </div>
+
+    <div class="section-card">
+      <h2>4. Current & Planned Objectives</h2>
+      ${field('current_objectives','Current Objectives','textarea','List current incident objectives (will transfer to ICS-202)...',{rows:4})}
+      ${field('current_actions','Current Actions / Resources Assigned','textarea','What actions are currently being taken?',{rows:3})}
+    </div>
+
+    <div class="section-card">
+      <h2>5. Current Organization</h2>
+      <div class="grid-3">
+        ${field('ops_section_chief','Operations Section Chief','')}
+        ${field('planning_section_chief','Planning Section Chief','')}
+        ${field('logistics_section_chief','Logistics Section Chief','')}
+      </div>
+      <div class="grid-3">
+        ${field('finance_section_chief','Finance / Admin Section Chief','')}
+        ${field('air_ops_branch','Air Operations Branch Director','')}
+        ${field('staging_area_mgr','Staging Area Manager','')}
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>6. Resources Summary</h2>
+      <div id="resources-table">
+        <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 2fr;gap:4px;font-size:11px;color:var(--muted);padding:4px 0;border-bottom:1px solid var(--line);margin-bottom:6px">
+          <span>Resource / Agency</span><span>Type</span><span>Qty / #</span><span>ETA / Arrived</span><span>Assignment / Location</span>
+        </div>
+        <div id="resource-rows">
+          ${[...Array(6)].map((_,i) => resourceRow(i)).join('')}
+        </div>
+        <button onclick="addResourceRow()" style="font-size:11px;padding:4px 10px;margin-top:6px">+ Add Resource</button>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>7. Attachments</h2>
+      <div class="grid-3">
+        <div class="fg">
+          <label>Organization Chart</label>
+          <div style="display:flex;gap:6px;align-items:center;font-size:12px">
+            <input type="checkbox" data-key="attach_org_chart"> Attached / ICS-207 filed
+          </div>
+        </div>
+        <div class="fg">
+          <label>Resource Allocation List</label>
+          <div style="display:flex;gap:6px;align-items:center;font-size:12px">
+            <input type="checkbox" data-key="attach_resource_list"> Attached
+          </div>
+        </div>
+        <div class="fg">
+          <label>Map / Sketch</label>
+          <div style="display:flex;gap:6px;align-items:center;font-size:12px">
+            <input type="checkbox" data-key="attach_map"> Attached
+          </div>
+        </div>
+      </div>
+      ${field('notes','Additional Notes / Instructions','textarea','',{rows:3})}
+    </div>`;
+  },
+
+  buildPrint() {
+    const fd = collectFormData();
+    Object.assign(formData, fd);
+    const variant = FORMS['201'].variants[VARIANT];
+    const logoCell = `<div class="logo-cell">${logoHtml()}</div>`;
+    return `
+    <div class="ics-print-header">
+      ${logoCell}
+      <div class="title-cell">
+        <h1>ICS-201 INCIDENT BRIEFING</h1>
+        <div class="sub">${variant} · FieldCommand IMS</div>
+      </div>
+      <div class="meta-cell">
+        <div class="ml">Incident Number</div>
+        <div class="mv">${fd.incident_number||'—'}</div>
+        <div class="ml">Date</div>
+        <div class="mv">${fd.date||'—'}</div>
+        <div class="ml">Time</div>
+        <div class="mv">${fd.time_prepared||'—'}</div>
+      </div>
+    </div>
+
+    <div class="pr">
+      ${pc('Incident Name','incident_name','w3')}
+      ${pc('Incident Type','incident_type','w2')}
+      ${pc('Jurisdiction','jurisdiction','w2')}
+    </div>
+    <div class="pr">
+      ${pc('Incident Location / Address','incident_location','w4')}
+      ${pc('Map / Sketch Page','map_sketch_page')}
+    </div>
+    <div class="pr">
+      ${pc('Incident Commander (IC)','incident_commander','w2')}
+      ${pc('Deputy IC','deputy_ic')}
+      ${pc('Agency / Organization','agency','w2')}
+    </div>
+    <div class="pr">
+      ${pc('Safety Officer (SO)','safety_officer')}
+      ${pc('Public Information Officer (PIO)','public_info_officer')}
+      ${pc('Liaison Officer (LO)','liaison_officer')}
+    </div>
+    <div class="pr">
+      <div class="pc w4"><div class="pl">3. Situation Summary / Health & Safety Briefing</div>
+        <div class="pv pw">${fd.situation_summary||''}</div></div>
+    </div>
+    <div class="pr">
+      <div class="pc w4"><div class="pl">Health & Safety Hazards / PPE Requirements</div>
+        <div class="pv" style="min-height:40px">${fd.health_safety||''}</div></div>
+    </div>
+    <div class="pr">
+      <div class="pc w4"><div class="pl">4. Current Objectives</div>
+        <div class="pv pw">${fd.current_objectives||''}</div></div>
+    </div>
+    <div class="pr">
+      <div class="pc w4"><div class="pl">Current Actions / Resources Assigned</div>
+        <div class="pv" style="min-height:40px">${fd.current_actions||''}</div></div>
+    </div>
+    <div class="pr">
+      ${pc('Operations Section Chief','ops_section_chief')}
+      ${pc('Planning Section Chief','planning_section_chief')}
+      ${pc('Logistics Section Chief','logistics_section_chief')}
+      ${pc('Finance / Admin Section Chief','finance_section_chief')}
+    </div>
+    <div class="pr" style="border-bottom:2px solid #000">
+      <div class="pc w4">
+        <div class="pl">6. Resources Summary</div>
+        <table style="width:100%;border-collapse:collapse;font-size:10px;margin-top:4px">
+          <thead><tr style="background:#eee">
+            <th style="padding:3px;border:1px solid #ccc;text-align:left">Resource / Agency</th>
+            <th style="padding:3px;border:1px solid #ccc">Type</th>
+            <th style="padding:3px;border:1px solid #ccc">Qty</th>
+            <th style="padding:3px;border:1px solid #ccc">ETA / Arrived</th>
+            <th style="padding:3px;border:1px solid #ccc;text-align:left">Assignment</th>
+          </tr></thead>
+          <tbody>
+            ${[...Array(8)].map((_,i) => `<tr>
+              <td style="padding:3px;border:1px solid #ccc;min-height:16px">${fd[`res_name_${i}`]||''}</td>
+              <td style="padding:3px;border:1px solid #ccc">${fd[`res_type_${i}`]||''}</td>
+              <td style="padding:3px;border:1px solid #ccc">${fd[`res_qty_${i}`]||''}</td>
+              <td style="padding:3px;border:1px solid #ccc">${fd[`res_eta_${i}`]||''}</td>
+              <td style="padding:3px;border:1px solid #ccc">${fd[`res_assign_${i}`]||''}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="sig-row">
+      <div class="sig-cell">
+        <div class="sl">Prepared By (name)</div>
+        <div class="ss">${fd.prepared_by||''}</div>
+        <div class="sl">Position / Title</div>
+      </div>
+      <div class="sig-cell">
+        <div class="sl">Signature</div>
+        <div class="ss"></div>
+        <div class="sl">Date / Time</div>
+      </div>
+      <div class="sig-cell">
+        <div class="sl">Approved By (IC)</div>
+        <div class="ss">${fd.incident_commander||''}</div>
+        <div class="sl">Signature</div>
+      </div>
+      <div class="sig-cell">
+        <div class="sl">IC Signature</div>
+        <div class="ss"></div>
+        <div class="sl">Date / Time: ${fd.date||''} ${fd.time_prepared||''}</div>
+      </div>
+    </div>
+    <div class="print-footer">
+      <span>${variant} · FieldCommand IMS · © 2026 James Rospopo KE4CON · CC BY-SA 4.0</span>
+      <span>Printed: ${new Date().toLocaleString()}</span>
+    </div>`;
+  }
+};
+
+// ── Resource row builder ──────────────────────────────────────────────
+let resourceRowCount = 6;
+function resourceRow(i) {
+  return `<div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 2fr;gap:4px;margin-bottom:4px" id="res-row-${i}">
+    <input type="text" data-key="res_name_${i}" placeholder="Resource name / agency" style="font-size:12px">
+    <input type="text" data-key="res_type_${i}" placeholder="Type" style="font-size:12px">
+    <input type="text" data-key="res_qty_${i}"  placeholder="Qty" style="font-size:12px">
+    <input type="text" data-key="res_eta_${i}"  placeholder="ETA" style="font-size:12px">
+    <input type="text" data-key="res_assign_${i}" placeholder="Assignment" style="font-size:12px">
+  </div>`;
+}
+function addResourceRow() {
+  const el = document.getElementById('resource-rows');
+  const div = document.createElement('div');
+  div.innerHTML = resourceRow(resourceRowCount++);
+  el.appendChild(div.firstChild);
+}
+
+// ── Render and print ──────────────────────────────────────────────────
+function renderForm() {
+  const def = FORMS[FORM_NUM];
+  if (!def) {
+    document.getElementById('formWrap').innerHTML =
+      `<div style="color:var(--muted);text-align:center;padding:40px">
+        <div style="font-size:32px;margin-bottom:12px">🚧</div>
+        <div style="font-family:var(--font-hd);font-size:16px;letter-spacing:2px">ICS-${FORM_NUM} COMING SOON</div>
+        <div style="font-size:12px;margin-top:8px;color:var(--dim)">
+          This form is on the build list. Check back soon.
+        </div>
+        <a href="incident.html?incident=${INC_ID}" style="display:inline-block;margin-top:16px;color:var(--blue)">
+          ← Back to Incident
+        </a>
+      </div>`;
+    return;
+  }
+  document.title = `${def.title} — FieldCommand IMS`;
+  document.getElementById('formWrap').innerHTML = def.render();
+  // Restore saved values
+  Object.entries(formData).forEach(([k,v]) => {
+    const el = document.querySelector(`[data-key="${k}"]`);
+    if (el) el.value = v;
+  });
+}
+
+function buildPrintView() {
+  const def = FORMS[FORM_NUM];
+  if (!def?.buildPrint) return;
+  const pv = document.getElementById('printView');
+  pv.innerHTML = def.buildPrint();
+  pv.classList.add('show');
+}
+
+loadContext();
+</script>
+</body>
+</html>

@@ -3,342 +3,472 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>NWS Animated Radar — FieldCommand</title>
+<title>NEXRAD Radar — FieldCommand IMS</title>
 <link rel="stylesheet" href="theme.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
-body { display:flex; flex-direction:column; height:100vh; overflow:hidden; background:var(--bg); }
+html, body { height:100%;margin:0;padding:0; }
+#mapWrap { position:relative;flex:1;min-height:0; }
+#map { width:100%;height:100%; }
 
-.top-bar {
-  background:var(--eoc); border-bottom:3px solid var(--accent);
-  padding:10px 16px; display:flex; align-items:center; gap:12px;
-  flex-shrink:0; flex-wrap:wrap;
+/* Offline banner */
+#offlineBanner {
+  position:absolute;inset:0;background:rgba(0,0,0,.7);z-index:500;
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;
 }
-.top-bar a.back { color:var(--accent); font-family:var(--font-hd); font-size:13px; letter-spacing:1px; text-decoration:none; }
-.top-bar a.back:hover { color:#fff; }
-.top-bar-title { font-family:var(--font-hd); font-size:18px; color:#fff; letter-spacing:2px; flex:1; }
-.top-bar-sub   { font-size:10px; color:rgba(255,255,255,0.6); letter-spacing:1px; }
 
-.ctrl-bar {
-  background:var(--panel2); border-bottom:1px solid var(--line);
-  padding:8px 14px; display:flex; align-items:center; gap:10px;
-  flex-shrink:0; flex-wrap:wrap;
+/* Control bar */
+#controls {
+  position:absolute;bottom:0;left:0;right:0;z-index:400;
+  background:rgba(13,17,23,.88);backdrop-filter:blur(6px);
+  border-top:1px solid rgba(255,255,255,.08);
+  padding:10px 14px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;
 }
+
+/* Animation scrubber */
+#scrubber { flex:1;min-width:200px;accent-color:var(--eoc); }
+
+/* Time display */
+#frameTime {
+  font-family:var(--font-mono);font-size:12px;color:rgba(255,255,255,.7);
+  white-space:nowrap;min-width:150px;
+}
+
+/* Playback buttons */
 .ctrl-btn {
-  background:var(--eoc); color:#fff; border:none; border-radius:5px;
-  padding:6px 12px; font-family:var(--font-hd); font-size:12px;
-  letter-spacing:1px; cursor:pointer; transition:background 0.15s; white-space:nowrap;
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);
+  color:rgba(255,255,255,.8);border-radius:var(--r-sm);
+  padding:5px 12px;font-size:13px;cursor:pointer;line-height:1;
+  transition:background .1s;
 }
-.ctrl-btn:hover  { background:var(--eoc-lt); }
-.ctrl-btn.active { background:var(--green); }
-.ctrl-sep { width:1px; height:24px; background:var(--line); flex-shrink:0; }
-.ctrl-label { font-size:10px; color:var(--muted); letter-spacing:1px; white-space:nowrap; }
-select.ctrl-select {
-  background:var(--panel); border:1px solid var(--line); color:var(--txt);
-  border-radius:5px; padding:5px 8px; font-family:var(--font-ui); font-size:11px;
-}
-.loop-speed-wrap { display:flex; align-items:center; gap:6px; }
-input[type=range].speed-slider { width:90px; accent-color:var(--eoc-lt); }
-.status-pill {
-  margin-left:auto; padding:4px 12px; border-radius:12px;
-  font-family:var(--font-hd); font-size:11px; letter-spacing:1px; white-space:nowrap;
-}
-.status-pill.online  { background:var(--green); color:#fff; }
-.status-pill.offline { background:var(--red);   color:#fff; }
-.status-pill.loading { background:var(--amber);  color:#fff; }
-.frame-counter { font-size:11px; color:var(--muted); white-space:nowrap; min-width:90px; }
+.ctrl-btn:hover { background:rgba(255,255,255,.15); }
+.ctrl-btn.active { background:var(--eoc);border-color:var(--eoc);color:#fff; }
 
-#map-wrap { flex:1; position:relative; overflow:hidden; }
-#radar-map { width:100%; height:100%; }
+/* Palette selector */
+.palette-btn {
+  width:22px;height:22px;border-radius:50%;border:2px solid transparent;
+  cursor:pointer;transition:border-color .1s;
+}
+.palette-btn.active { border-color:#fff; }
 
-#offline-overlay {
-  position:absolute; inset:0; background:rgba(15,30,56,0.92);
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
-  gap:16px; z-index:1000;
+/* Legend */
+#legend {
+  position:absolute;top:10px;right:10px;z-index:400;
+  background:rgba(13,17,23,.85);border:1px solid rgba(255,255,255,.1);
+  border-radius:var(--r-md);padding:10px 12px;min-width:120px;
 }
-#offline-overlay.hidden { display:none; }
-.offline-icon  { font-size:56px; }
-.offline-title { font-family:var(--font-hd); font-size:26px; color:#fff; letter-spacing:3px; }
-.offline-sub   { font-size:13px; color:rgba(255,255,255,0.65); text-align:center; max-width:380px; line-height:1.7; }
-.offline-retry {
-  margin-top:8px; padding:8px 22px; background:var(--eoc-lt); color:#fff;
-  border:none; border-radius:6px; font-family:var(--font-hd); font-size:13px;
-  letter-spacing:1px; cursor:pointer;
+#legend .leg-title {
+  font-size:10px;text-transform:uppercase;letter-spacing:.08em;
+  color:rgba(255,255,255,.45);margin-bottom:6px;
 }
-.offline-retry:hover { background:var(--eoc); }
-.wan-hint { font-size:11px; color:var(--accent); letter-spacing:1px;
-  border:1px solid rgba(240,192,64,0.4); border-radius:5px; padding:6px 14px; }
-
-.radar-legend {
-  position:absolute; bottom:28px; right:10px; z-index:500;
-  background:rgba(255,255,255,0.93); border:1px solid var(--line);
-  border-radius:8px; padding:10px 14px; font-size:10px; min-width:140px; pointer-events:none;
-}
-.legend-title { font-family:var(--font-hd); font-size:11px; color:var(--eoc); margin-bottom:6px; letter-spacing:1px; }
-.legend-bar {
-  height:14px; border-radius:3px; margin-bottom:4px;
+.leg-bar {
+  height:10px;border-radius:3px;margin-bottom:3px;
   background:linear-gradient(to right,
-    #00e5ff 0%,#0080ff 15%,#00cc00 30%,
-    #ffff00 50%,#ff8800 65%,#ff0000 80%,
-    #cc00cc 92%,#ffffff 100%);
+    #00b4ff 0%,#00e4ff 10%,#00ff00 20%,#00d400 30%,
+    #ffff00 40%,#ffa500 55%,#ff0000 70%,#cc0000 80%,
+    #ff00ff 90%,#ffffff 100%);
 }
-.legend-labels { display:flex; justify-content:space-between; color:var(--muted); font-size:9px; }
-
-#ts-overlay {
-  position:absolute; top:10px; left:50%; transform:translateX(-50%);
-  background:rgba(15,30,56,0.78); color:#fff; border-radius:5px;
-  padding:5px 14px; font-family:var(--font-hd); font-size:12px;
-  letter-spacing:1px; z-index:500; white-space:nowrap; pointer-events:none;
+.leg-labels {
+  display:flex;justify-content:space-between;
+  font-family:var(--font-mono);font-size:9px;color:rgba(255,255,255,.4);
 }
 
-.spinner {
-  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-  width:44px; height:44px; border:4px solid var(--line);
-  border-top:4px solid var(--eoc-lt); border-radius:50%;
-  animation:spin 0.8s linear infinite; z-index:600;
+/* Top info bar */
+#infoBar {
+  position:absolute;top:0;left:0;right:0;z-index:400;
+  background:rgba(13,17,23,.82);border-bottom:1px solid rgba(255,255,255,.08);
+  padding:7px 14px;display:flex;align-items:center;gap:12px;
 }
-@keyframes spin { to { transform:translate(-50%,-50%) rotate(360deg); } }
-.spinner.hidden { display:none; }
+#radarStatus {
+  font-size:11px;color:rgba(255,255,255,.5);
+}
+#frameCount {
+  font-size:11px;color:rgba(255,255,255,.35);
+  font-family:var(--font-mono);
+}
+
+/* Loading dot */
+.loading-dot {
+  width:8px;height:8px;border-radius:50%;background:var(--amber);
+  animation:pulse 1s infinite;flex-shrink:0;
+}
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
 </style>
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 </head>
-<body>
+<body style="display:flex;flex-direction:column;height:100vh;background:#0d1117">
 
-<div class="top-bar">
-  <a class="back" href="index.html">← Dashboard</a>
-  <div>
-    <div class="top-bar-title">🌩 NWS ANIMATED RADAR</div>
-    <div class="top-bar-sub">NEXRAD Loop · McHenry County, IL · Internet Required · Auto-updates every 5 min</div>
+<!-- Minimal header -->
+<div style="display:flex;align-items:center;gap:10px;padding:8px 14px;
+            background:var(--panel);border-bottom:1px solid var(--line);
+            flex-shrink:0;z-index:600">
+  <span style="font-family:var(--font-hd);font-size:11px;letter-spacing:2px;
+               color:var(--eoc)">⛈ NEXRAD RADAR</span>
+  <span style="font-size:10px;color:var(--dim)">· Requires internet connection</span>
+  <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+    <button onclick="setLayer('reflectivity')" id="btn-reflectivity"
+      class="ctrl-btn active" style="font-size:11px;padding:4px 10px">Reflectivity</button>
+    <button onclick="setLayer('velocity')" id="btn-velocity"
+      class="ctrl-btn" style="font-size:11px;padding:4px 10px">Velocity</button>
+    <a href="index.html"
+      style="font-size:11px;color:rgba(255,255,255,.4);padding:4px 8px;
+             text-decoration:none">← Dashboard</a>
   </div>
 </div>
 
-<div class="ctrl-bar">
-  <button class="ctrl-btn active" id="btn-play" onclick="togglePlay()">⏸ PAUSE</button>
-  <button class="ctrl-btn" onclick="stepFrame(-1)" title="Previous frame">⏮</button>
-  <button class="ctrl-btn" onclick="stepFrame(1)"  title="Next frame">⏭</button>
-  <div class="ctrl-sep"></div>
-  <span class="ctrl-label">FRAMES</span>
-  <select class="ctrl-select" onchange="setFrameCount(this.value)">
-    <option value="6">6 frames (~30 min)</option>
-    <option value="10" selected>10 frames (~50 min)</option>
-    <option value="14">14 frames (~70 min)</option>
-    <option value="20">20 frames (~100 min)</option>
-  </select>
-  <div class="ctrl-sep"></div>
-  <span class="ctrl-label">SPEED</span>
-  <div class="loop-speed-wrap">
-    <span style="font-size:10px;color:var(--muted)">Slow</span>
-    <input type="range" class="speed-slider" min="200" max="1400" value="500" step="100" oninput="setSpeed(this.value)">
-    <span style="font-size:10px;color:var(--muted)">Fast</span>
-  </div>
-  <div class="ctrl-sep"></div>
-  <span class="ctrl-label">OVERLAY</span>
-  <button class="ctrl-btn active" id="btn-county"   onclick="toggleLayer('county')">Counties</button>
-  <button class="ctrl-btn active" id="btn-highways" onclick="toggleLayer('highways')">Roads</button>
-  <button class="ctrl-btn active" id="btn-labels"   onclick="toggleLayer('labels')">Labels</button>
-  <div class="ctrl-sep"></div>
-  <span class="frame-counter" id="frame-counter">Frame — / —</span>
-  <div class="status-pill loading" id="status-pill">⟳ LOADING</div>
-</div>
+<!-- Map -->
+<div id="mapWrap">
 
-<div id="map-wrap">
-  <div id="radar-map"></div>
-  <div id="ts-overlay">Loading radar…</div>
-  <div class="spinner" id="spinner"></div>
-
-  <div id="offline-overlay" class="hidden">
-    <div class="offline-icon">🌩</div>
-    <div class="offline-title">RADAR UNAVAILABLE</div>
-    <div class="offline-sub">
-      NWS NEXRAD animated radar requires an active internet connection.<br>
-      InstyConnect cellular or Starlink satellite must be online.
+  <!-- Offline overlay -->
+  <div id="offlineBanner" style="display:none">
+    <div style="font-size:48px">📡</div>
+    <div style="font-family:var(--font-hd);font-size:16px;letter-spacing:2px;
+                color:rgba(255,255,255,.8)">RADAR UNAVAILABLE OFFLINE</div>
+    <div style="font-size:13px;color:rgba(255,255,255,.4);text-align:center;
+                max-width:360px;line-height:1.6">
+      Radar requires an internet connection.<br>
+      WAN status shows offline — connect to cellular, satellite,<br>
+      or site internet to view live radar.
     </div>
-    <div class="wan-hint">WAN Status → http://192.168.50.1/wan-status.html</div>
-    <button class="offline-retry" onclick="checkAndLoad()">⟳ Retry Connection</button>
+    <a href="wan-status.html"
+      style="padding:8px 20px;background:var(--eoc);border-radius:4px;
+             color:#fff;text-decoration:none;font-size:13px;margin-top:6px">
+      → Check WAN Status
+    </a>
   </div>
 
-  <div class="radar-legend">
-    <div class="legend-title">DBZ REFLECTIVITY</div>
-    <div class="legend-bar"></div>
-    <div class="legend-labels"><span>Light</span><span>Mod</span><span>Heavy</span><span>Extreme</span></div>
+  <!-- Top info bar -->
+  <div id="infoBar">
+    <div class="loading-dot" id="loadDot" style="display:none"></div>
+    <div id="radarStatus">Loading radar frames…</div>
+    <div id="frameCount"></div>
+    <div style="margin-left:auto;display:flex;gap:6px;align-items:center">
+      <!-- Palette swatches -->
+      <span style="font-size:10px;color:rgba(255,255,255,.3)">Palette:</span>
+      <div class="palette-btn active" id="pal-default"
+        style="background:linear-gradient(135deg,#00ff00,#ff0000)"
+        title="Default" onclick="setPalette('default')"></div>
+      <div class="palette-btn" id="pal-dark"
+        style="background:linear-gradient(135deg,#004080,#ff8000)"
+        title="Dark" onclick="setPalette('dark')"></div>
+      <div class="palette-btn" id="pal-noaa"
+        style="background:linear-gradient(135deg,#0000ff,#ff00ff)"
+        title="NOAA" onclick="setPalette('noaa')"></div>
+    </div>
   </div>
-</div>
 
+  <!-- Reflectivity legend -->
+  <div id="legend">
+    <div class="leg-title">Reflectivity (dBZ)</div>
+    <div class="leg-bar"></div>
+    <div class="leg-labels">
+      <span>5</span><span>20</span><span>35</span><span>50</span><span>65+</span>
+    </div>
+    <div style="margin-top:6px;font-size:9px;color:rgba(255,255,255,.25);line-height:1.4">
+      Green = light · Yellow = moderate<br>
+      Red = heavy · Purple = extreme
+    </div>
+  </div>
+
+  <div id="map"></div>
+
+  <!-- Control bar -->
+  <div id="controls">
+    <button class="ctrl-btn active" id="playBtn" onclick="togglePlay()">⏸ Pause</button>
+    <button class="ctrl-btn" onclick="stepFrame(-1)">⏮</button>
+    <input type="range" id="scrubber" min="0" value="0"
+      oninput="scrubTo(parseInt(this.value))">
+    <button class="ctrl-btn" onclick="stepFrame(1)">⏭</button>
+    <div id="frameTime">—</div>
+    <div style="display:flex;align-items:center;gap:6px;margin-left:auto">
+      <span style="font-size:10px;color:rgba(255,255,255,.35)">Speed:</span>
+      <button class="ctrl-btn" onclick="setSpeed(1500)" id="spd-slow"
+        style="font-size:10px;padding:3px 8px">Slow</button>
+      <button class="ctrl-btn active" onclick="setSpeed(600)" id="spd-med"
+        style="font-size:10px;padding:3px 8px">Med</button>
+      <button class="ctrl-btn" onclick="setSpeed(200)" id="spd-fast"
+        style="font-size:10px;padding:3px 8px">Fast</button>
+    </div>
+    <div style="font-size:9px;color:rgba(255,255,255,.2);white-space:nowrap">
+      RadrView / NEXRAD
+    </div>
+  </div>
+
+</div><!-- /mapWrap -->
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-const CENTER     = [42.32, -88.26];
-const ZOOM       = 7;
-let map, radarLayers = [], radarFrames = [];
-let countyLayer, highwayLayer, labelLayer;
-let frameIndex = 0, playing = true, loopTimer = null;
-let frameDelay = 500, frameCount = 10, isOnline = false;
-let layerOn = { county:true, highways:true, labels:true };
+// ── Config ────────────────────────────────────────────────────────
+const RADAR_API   = 'https://radrview.com';
+const WAN_STATUS  = 'http://192.168.50.1/data/wan_status.json';
+const INITIAL_LAT = 42.31;     // Center on US by default — user can pan
+const INITIAL_LON = -88.44;
+const INITIAL_ZOOM = 7;
 
-function initMap() {
-  map = L.map('radar-map', { center:CENTER, zoom:ZOOM });
+let map, radarLayer, frames = [], currentFrame = 0;
+let playing = true, animInterval = null, speed = 600;
+let currentPalette = 'default', currentLayer = 'reflectivity';
 
-  // Dark base — radar colors pop on dark background
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_nolabels/{z}/{x}/{y}{r}.png', {
-    attribution:'© OpenStreetMap © CARTO', subdomains:'abcd', maxZoom:12
-  }).addTo(map);
-
-  // County borders from IEM
-  countyLayer = L.tileLayer(
-    'https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/usnws_county/{z}/{x}/{y}.png',
-    { maxZoom:12, opacity:0.55, attribution:'© IEM / NWS' }
-  );
-  if (layerOn.county) countyLayer.addTo(map);
-
-  // Roads
-  highwayLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-    { maxZoom:12, opacity:0.12, attribution:'© OpenStreetMap' });
-  if (layerOn.highways) highwayLayer.addTo(map);
-
-  // Labels
-  labelLayer = L.tileLayer(
-    'https://{s}.basemaps.cartocdn.com/dark_only_labels/{z}/{x}/{y}{r}.png',
-    { subdomains:'abcd', maxZoom:12, opacity:0.85, attribution:'© CARTO' }
-  );
-  if (layerOn.labels) labelLayer.addTo(map);
-
-  // McHenry County ring
-  L.circle([42.32,-88.26], { radius:22000, color:'#f0c040', weight:2.5, fill:false, dashArray:'8 5' }).addTo(map);
-  L.marker([42.32,-88.26], {
-    icon: L.divIcon({
-      html:'<div style="background:rgba(240,192,64,0.9);color:#1a3a6b;font-weight:bold;font-size:10px;padding:2px 6px;border-radius:3px;white-space:nowrap">McHenry Co.</div>',
-      className:'', iconAnchor:[-4,0]
-    })
-  }).addTo(map);
-}
-
-// IEM NEXRAD composite — free, no API key, updates every 5 min
-function buildFrames(count) {
-  const frames = [];
-  const now = new Date();
-  now.setUTCMinutes(Math.floor(now.getUTCMinutes()/5)*5, 0, 0);
-  for (let i = count-1; i >= 0; i--) {
-    const t = new Date(now.getTime() - i*5*60*1000);
-    const p = n => String(n).padStart(2,'0');
-    const ts = `${t.getUTCFullYear()}-${p(t.getUTCMonth()+1)}-${p(t.getUTCDate())}T${p(t.getUTCHours())}${p(t.getUTCMinutes())}Z`;
-    const localTime = new Date(t.getTime());
-    const localStr = localTime.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
-    frames.push({
-      ts,
-      label: `${p(t.getUTCHours())}:${p(t.getUTCMinutes())} UTC  (${localStr} local)${i===0?' ◀ LATEST':''}`,
-      url: `https://mesonet.agron.iastate.edu/cache/tile.py/1.0.0/nexrad-n0q-900913/${ts}/{z}/{x}/{y}.png`
-    });
-  }
-  return frames;
-}
-
-async function loadFrames() {
-  showSpinner(true); setPill('loading','⟳ LOADING');
-  radarLayers.forEach(l => { try { map.removeLayer(l); } catch(e){} });
-  radarLayers = [];
-  radarFrames = buildFrames(frameCount);
-  radarFrames.forEach(f => {
-    f.layer = L.tileLayer(f.url, {
-      opacity:0.80, maxZoom:12, zIndex:200,
-      attribution:'© Iowa Environmental Mesonet / NOAA NWS',
-      errorTileUrl:'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='
-    });
-    radarLayers.push(f.layer);
-  });
-  frameIndex = radarFrames.length - 1;
-  showFrame(frameIndex); updateCounter();
-  showSpinner(false); setPill('online','✓ LIVE NEXRAD');
-  if (playing) startLoop();
-}
-
-function showFrame(idx) {
-  radarLayers.forEach(l => { try { map.removeLayer(l); } catch(e){} });
-  const f = radarFrames[idx];
-  if (!f) return;
-  f.layer.addTo(map);
-  // Keep annotation layers on top
-  if (layerOn.county)   try { countyLayer.bringToFront(); } catch(e){}
-  if (layerOn.labels)   try { labelLayer.bringToFront();  } catch(e){}
-  document.getElementById('ts-overlay').textContent = `NEXRAD Composite  ·  ${f.label}`;
-}
-
-function updateCounter() {
-  document.getElementById('frame-counter').textContent = `Frame ${frameIndex+1} / ${radarFrames.length}`;
-}
-
-function startLoop() {
-  stopLoop();
-  loopTimer = setInterval(() => {
-    const next = (frameIndex + 1) % radarFrames.length;
-    frameIndex = next;
-    showFrame(frameIndex); updateCounter();
-    // Pause longer on latest frame
-    if (next === radarFrames.length - 1) {
-      stopLoop();
-      loopTimer = setTimeout(() => { if (playing) startLoop(); }, frameDelay * 3);
+// ── Check WAN before loading ───────────────────────────────────────
+async function checkWAN() {
+  try {
+    const r = await fetch(WAN_STATUS, {cache:'no-cache'});
+    const d = await r.json();
+    const src = d.active_source || 'none';
+    if (src === 'none') {
+      showOffline();
+      return false;
     }
-  }, frameDelay);
+    return true;
+  } catch(e) {
+    // If we can't reach the WAN status file, try the radar directly
+    try {
+      await fetch(`${RADAR_API}/frames?source=composite&limit=1`, {mode:'no-cors'});
+      return true;
+    } catch(e2) {
+      showOffline();
+      return false;
+    }
+  }
 }
 
-function stopLoop() {
-  if (loopTimer) { clearInterval(loopTimer); clearTimeout(loopTimer); loopTimer = null; }
+function showOffline() {
+  document.getElementById('offlineBanner').style.display = 'flex';
+  document.getElementById('infoBar').style.display = 'none';
+  document.getElementById('controls').style.display = 'none';
+  document.getElementById('legend').style.display = 'none';
+}
+
+// ── Init map ──────────────────────────────────────────────────────
+function initMap() {
+  map = L.map('map', {
+    center: [INITIAL_LAT, INITIAL_LON],
+    zoom:   INITIAL_ZOOM,
+    zoomControl: true,
+  });
+
+  // Dark basemap (CartoDB Dark Matter)
+  L.tileLayer(
+    'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    {
+      attribution: '© OpenStreetMap · © CARTO',
+      subdomains: 'abcd', maxZoom: 14,
+    }
+  ).addTo(map);
+
+  // Radar overlay (placeholder — updated by loadFrames)
+  radarLayer = L.tileLayer('', { opacity: 0.75, tms: false });
+  radarLayer.addTo(map);
+}
+
+// ── Load radar frames ─────────────────────────────────────────────
+async function loadFrames() {
+  setLoading(true);
+  document.getElementById('radarStatus').textContent = 'Fetching radar frames…';
+  try {
+    // Get available frames from RadrView
+    const r = await fetch(
+      `${RADAR_API}/frames?source=composite&limit=18`,
+      { cache:'no-cache' }
+    );
+    if (!r.ok) throw new Error(`Frames API ${r.status}`);
+    const d = await r.json();
+    frames = (d.frames || []).reverse(); // oldest first for animation
+
+    if (!frames.length) throw new Error('No radar frames returned');
+
+    const scrubber = document.getElementById('scrubber');
+    scrubber.max   = frames.length - 1;
+    scrubber.value = frames.length - 1;
+    currentFrame   = frames.length - 1;
+
+    document.getElementById('frameCount').textContent =
+      `${frames.length} frames`;
+    document.getElementById('radarStatus').textContent = 'NEXRAD CONUS composite';
+
+    showFrame(currentFrame);
+    if (playing) startAnimation();
+    setLoading(false);
+  } catch(e) {
+    document.getElementById('radarStatus').textContent =
+      `Radar unavailable: ${e.message}`;
+    setLoading(false);
+
+    // Fall back to IEM WMS if RadrView fails
+    loadIEMFallback();
+  }
+}
+
+// ── IEM WMS fallback (last 3 hours, 10-min intervals) ────────────
+function loadIEMFallback() {
+  const IEM_WMS = 'https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r-t.cgi';
+  document.getElementById('radarStatus').textContent =
+    'Using IEM NEXRAD WMS (fallback)';
+
+  // Build time-stepped frames for the last 2 hours at 10-min intervals
+  const now = new Date();
+  frames = [];
+  for (let i = 11; i >= 0; i--) {
+    const t = new Date(now.getTime() - i * 10 * 60 * 1000);
+    // Round to nearest 5 min
+    t.setMinutes(Math.floor(t.getMinutes()/5)*5, 0, 0);
+    frames.push({ timestamp: t.toISOString(), wms: true, wmsTime: t.toISOString() });
+  }
+
+  const scrubber = document.getElementById('scrubber');
+  scrubber.max   = frames.length - 1;
+  scrubber.value = frames.length - 1;
+  currentFrame   = frames.length - 1;
+  document.getElementById('frameCount').textContent = `${frames.length} frames (IEM)`;
+
+  showFrame(currentFrame);
+  if (playing) startAnimation();
+}
+
+// ── Show a specific frame ─────────────────────────────────────────
+function showFrame(idx) {
+  if (!frames.length) return;
+  idx = Math.max(0, Math.min(frames.length - 1, idx));
+  currentFrame = idx;
+  const frame = frames[idx];
+
+  let url;
+  if (frame.wms) {
+    // IEM WMS fallback
+    const wmsParams = new URLSearchParams({
+      SERVICE:'WMS', REQUEST:'GetMap', VERSION:'1.1.1',
+      LAYERS:'nexrad-n0r-wmst', FORMAT:'image/png',
+      TRANSPARENT:'true', TIME:frame.wmsTime,
+      WIDTH:'256', HEIGHT:'256', SRS:'EPSG:900913',
+    });
+    url = `https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r-t.cgi?{wmsParams}&BBOX={bbox-epsg-3857}`;
+    // Use Leaflet WMS for IEM
+    map.removeLayer(radarLayer);
+    radarLayer = L.tileLayer.wms(
+      'https://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r-t.cgi',
+      {
+        layers: 'nexrad-n0r-wmst', format:'image/png',
+        transparent:true, opacity:0.75,
+        time: frame.wmsTime,
+      }
+    );
+    radarLayer.addTo(map);
+  } else {
+    // RadrView XYZ tiles
+    url = `${RADAR_API}/tile/${frame.timestamp}/{z}/{x}/{y}?palette=${currentPalette}&source=composite`;
+    radarLayer.setUrl(url);
+  }
+
+  // Update time display
+  const ts = frame.timestamp;
+  let displayTime = ts;
+  try {
+    // Parse YYYYMMDDHHMMSS or ISO format
+    let dt;
+    if (/^\d{14}$/.test(ts)) {
+      dt = new Date(
+        parseInt(ts.slice(0,4)),   // year
+        parseInt(ts.slice(4,6))-1, // month
+        parseInt(ts.slice(6,8)),   // day
+        parseInt(ts.slice(8,10)),  // hour
+        parseInt(ts.slice(10,12)), // min
+        parseInt(ts.slice(12,14))  // sec
+      );
+    } else {
+      dt = new Date(ts);
+    }
+    displayTime = dt.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) +
+                  ' · ' + dt.toLocaleDateString([], {month:'short',day:'numeric'});
+  } catch(e) {}
+  document.getElementById('frameTime').textContent = displayTime;
+  document.getElementById('scrubber').value = idx;
+
+  // Highlight last frame
+  const isLatest = idx === frames.length - 1;
+  document.getElementById('frameTime').style.color =
+    isLatest ? 'rgba(255,200,50,.9)' : 'rgba(255,255,255,.7)';
+}
+
+// ── Animation ─────────────────────────────────────────────────────
+function startAnimation() {
+  if (animInterval) clearInterval(animInterval);
+  playing = true;
+  document.getElementById('playBtn').textContent = '⏸ Pause';
+  document.getElementById('playBtn').classList.add('active');
+  animInterval = setInterval(() => {
+    const next = (currentFrame + 1) % frames.length;
+    showFrame(next);
+  }, speed);
+}
+
+function stopAnimation() {
+  if (animInterval) clearInterval(animInterval);
+  animInterval = null;
+  playing = false;
+  document.getElementById('playBtn').textContent = '▶ Play';
+  document.getElementById('playBtn').classList.remove('active');
 }
 
 function togglePlay() {
-  playing = !playing;
-  const btn = document.getElementById('btn-play');
-  if (playing) { btn.textContent='⏸ PAUSE'; btn.classList.add('active'); startLoop(); }
-  else         { btn.textContent='⏵ PLAY';  btn.classList.remove('active'); stopLoop(); }
+  playing ? stopAnimation() : startAnimation();
 }
 
-function stepFrame(dir) {
-  stopLoop(); playing = false;
-  const btn = document.getElementById('btn-play');
-  btn.textContent='⏵ PLAY'; btn.classList.remove('active');
-  frameIndex = (frameIndex + dir + radarFrames.length) % radarFrames.length;
-  showFrame(frameIndex); updateCounter();
+function stepFrame(delta) {
+  stopAnimation();
+  showFrame(currentFrame + delta);
 }
 
-function setSpeed(val) { frameDelay = parseInt(val); if (playing) startLoop(); }
-function setFrameCount(val) { frameCount = parseInt(val); if (isOnline) loadFrames(); }
-
-function toggleLayer(name) {
-  layerOn[name] = !layerOn[name];
-  document.getElementById('btn-' + name).classList.toggle('active', layerOn[name]);
-  const layers = { county:countyLayer, highways:highwayLayer, labels:labelLayer };
-  const l = layers[name];
-  if (!l) return;
-  if (layerOn[name]) l.addTo(map); else map.removeLayer(l);
+function scrubTo(idx) {
+  stopAnimation();
+  showFrame(idx);
 }
 
-async function checkAndLoad() {
-  setPill('loading','⟳ CHECKING');
-  document.getElementById('offline-overlay').classList.add('hidden');
-  try {
-    const r = await fetch('https://mesonet.agron.iastate.edu/robots.txt',
-      { signal:AbortSignal.timeout(5000), cache:'no-store' });
-    isOnline = r.ok;
-  } catch { isOnline = false; }
-
-  if (isOnline) {
-    await loadFrames();
-  } else {
-    document.getElementById('offline-overlay').classList.remove('hidden');
-    setPill('offline','✗ NO INTERNET');
-  }
+function setSpeed(ms) {
+  speed = ms;
+  ['slow','med','fast'].forEach(s => {
+    document.getElementById('spd-'+s).classList.remove('active');
+  });
+  const label = ms===1500?'slow':ms===200?'fast':'med';
+  document.getElementById('spd-'+label).classList.add('active');
+  if (playing) startAnimation(); // restart with new speed
 }
 
-function setPill(state, text) {
-  const p = document.getElementById('status-pill');
-  p.className = 'status-pill ' + state;
-  p.textContent = text;
-}
-function showSpinner(show) {
-  document.getElementById('spinner').classList.toggle('hidden', !show);
+// ── Palette / Layer ───────────────────────────────────────────────
+function setPalette(p) {
+  currentPalette = p;
+  ['default','dark','noaa'].forEach(id => {
+    document.getElementById('pal-'+id).classList.toggle('active', id === p);
+  });
+  showFrame(currentFrame); // refresh with new palette
 }
 
-// Auto-refresh every 5 min
-setInterval(() => { if (isOnline) loadFrames(); }, 5*60*1000);
+function setLayer(layer) {
+  currentLayer = layer;
+  ['reflectivity','velocity'].forEach(l => {
+    document.getElementById('btn-'+l).classList.toggle('active', l === layer);
+  });
+  document.getElementById('legend').style.display =
+    layer === 'reflectivity' ? '' : 'none';
+  showFrame(currentFrame);
+}
 
-window.addEventListener('DOMContentLoaded', () => { initMap(); checkAndLoad(); });
+function setLoading(on) {
+  document.getElementById('loadDot').style.display = on ? '' : 'none';
+}
+
+// ── Refresh every 5 minutes ───────────────────────────────────────
+setInterval(async () => {
+  const wasPlaying = playing;
+  stopAnimation();
+  await loadFrames();
+  if (wasPlaying) startAnimation();
+}, 5 * 60 * 1000);
+
+// ── Init ──────────────────────────────────────────────────────────
+(async () => {
+  initMap();
+  const online = await checkWAN();
+  if (online) await loadFrames();
+})();
 </script>
 </body>
 </html>

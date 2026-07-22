@@ -1703,6 +1703,372 @@ function add204Row() {
   tbody.appendChild(tr);
 }
 
+
+// ══════════════════════════════════════════════════════════════════
+// ICS-205 RADIO COMMUNICATIONS PLAN
+// ══════════════════════════════════════════════════════════════════
+FORMS['205'] = {
+  title: 'ICS-205 Radio Communications Plan',
+  badge: 'ICS-205',
+  variants: { FEMA:'FEMA 010-0-5', USCG:'CG-5214', NWCG:'ICS-205 (NWCG)' },
+
+  render() {
+    document.getElementById('formTitle').textContent = 'ICS-205 — Radio Communications Plan';
+    document.getElementById('formBadge').textContent = 'ICS-205';
+    document.getElementById('formMeta').textContent =
+      `${this.variants[VARIANT]} · Period ${PERIOD} · ${incData.name||'No incident'}`;
+
+    // USCG extra note
+    const uscgNote = VARIANT==='USCG'
+      ?`<div style="background:rgba(26,58,107,0.15);border:1px solid var(--eoc);border-radius:5px;padding:7px 12px;margin-bottom:10px;font-size:11px;color:var(--blue)">
+        USCG variant: includes vessel radio fields, DSC channel, and maritime frequency allocations.</div>`:'';
+
+    return `${uscgNote}
+    <div class="section-card">
+      <h2>1. Incident Information</h2>
+      <div class="grid-3">
+        ${field('incident_name','Incident Name','text',incData.name||'')}
+        ${field('operational_period_number','Op Period #','text',String(PERIOD))}
+        ${field('date_prepared','Date Prepared','date',todayDate())}
+      </div>
+      <div class="grid-2">
+        ${field('operational_period_from','Op Period From','datetime-local','')}
+        ${field('operational_period_to','Op Period To','datetime-local','')}
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>2. Basic Radio Channel Assignments</h2>
+      <p style="font-size:11px;color:var(--muted);margin:0 0 10px">
+        Enter all radio channels assigned for this incident. Use the repeater import below to
+        auto-fill from the FieldCommand repeater database.
+      </p>
+      <button onclick="loadRepeatersFor205()"
+        style="margin-bottom:12px;background:var(--eoc);border-color:var(--eoc);color:#fff;font-size:12px;padding:6px 14px">
+        📡 Import from Repeater Database
+      </button>
+      <div id="repeaterImportStatus" style="font-size:11px;color:var(--green);margin-bottom:8px;display:none"></div>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="background:var(--panel2)">
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:60px">Zone / Ch #</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">Channel Name / Function</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:50px">Assignment</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:90px">RX Freq (MHz)</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:90px">TX Freq (MHz)</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:70px">Mode / Band</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:70px">PL/NAC/Color</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">Remarks</th>
+            ${VARIANT==='USCG'?'<th style="padding:6px 8px;border:1px solid var(--line);min-width:60px">DSC</th>':''}
+          </tr></thead>
+          <tbody id="ch205Body">
+            ${[...Array(12)].map((_,i)=>FORMS['205']._chRow(i)).join('')}
+          </tbody>
+        </table>
+      </div>
+      <button onclick="add205Row()" style="margin-top:8px;font-size:11px;padding:4px 12px">+ Add Channel</button>
+    </div>
+
+    <div class="section-card">
+      <h2>3. Special Instructions</h2>
+      ${field('comms_special_instructions','Communications Special Instructions / Notes','textarea',
+        'Radio discipline requirements, encryption use, backup procedures, interoperability channels...',{rows:4})}
+    </div>
+
+    <div class="section-card">
+      <h2>4. Prepared By</h2>
+      <div class="grid-2">
+        ${field('prepared_by_coml','Prepared By (Communications Unit Leader / COML)','text',
+          orgData.personal_call?`${orgData.personal_call} — Communications Unit Leader`:'')}
+        ${field('date_time_prepared','Date / Time','datetime-local','')}
+      </div>
+      <div class="grid-2">
+        ${field('approved_by_lsc','Approved By (Logistics Section Chief)','text',
+          formData.logistics_section_chief||incData.logistics_section_chief||'')}
+        ${field('date_time_approved','Date / Time Approved','datetime-local','')}
+      </div>
+    </div>`;
+  },
+
+  _chRow(i, data={}) {
+    const uscg = VARIANT==='USCG'
+      ?`<td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ch205_dsc_${i}" value="${data.dsc||''}" style="width:55px;font-size:11px;padding:3px 4px"></td>`:'';
+    return `<tr id="ch205row_${i}">
+      <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ch205_zone_${i}" value="${data.zone||''}" placeholder="1-1" style="width:50px;font-size:11px;padding:3px 4px"></td>
+      <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ch205_name_${i}" value="${data.name||''}" placeholder="Command" style="width:100%;font-size:11px;padding:3px 4px"></td>
+      <td style="border:1px solid var(--line);padding:3px">
+        <select data-key="ch205_assign_${i}" style="width:100%;font-size:11px;padding:3px 4px;background:var(--input-bg);color:var(--txt);border:none">
+          <option ${data.assign==='All'?'selected':''}>All</option>
+          <option ${data.assign==='Command'?'selected':''}>Command</option>
+          <option ${data.assign==='Ops'?'selected':''}>Ops</option>
+          <option ${data.assign==='Tactical'?'selected':''}>Tactical</option>
+          <option ${data.assign==='Logistics'?'selected':''}>Logistics</option>
+          <option ${data.assign==='Air'?'selected':''}>Air</option>
+          <option ${data.assign==='Medical'?'selected':''}>Medical</option>
+          <option ${data.assign==='Public'?'selected':''}>Public</option>
+        </select>
+      </td>
+      <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ch205_rx_${i}" value="${data.rx||''}" placeholder="146.940" style="width:100%;font-size:11px;padding:3px 4px;font-family:var(--font-hd)"></td>
+      <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ch205_tx_${i}" value="${data.tx||''}" placeholder="146.340" style="width:100%;font-size:11px;padding:3px 4px;font-family:var(--font-hd)"></td>
+      <td style="border:1px solid var(--line);padding:3px">
+        <select data-key="ch205_mode_${i}" style="width:100%;font-size:11px;padding:3px 4px;background:var(--input-bg);color:var(--txt);border:none">
+          <option ${data.mode==='FM'||!data.mode?'selected':''}>FM</option>
+          <option ${data.mode==='NFM'?'selected':''}>NFM</option>
+          <option ${data.mode==='P25'?'selected':''}>P25</option>
+          <option ${data.mode==='DMR'?'selected':''}>DMR</option>
+          <option ${data.mode==='DSTAR'?'selected':''}>D-STAR</option>
+          <option ${data.mode==='C4FM'?'selected':''}>C4FM</option>
+          <option ${data.mode==='AM'?'selected':''}>AM</option>
+          <option ${data.mode==='SSB'?'selected':''}>SSB</option>
+          <option ${data.mode==='Analog'?'selected':''}>Analog</option>
+        </select>
+      </td>
+      <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ch205_pl_${i}" value="${data.pl||''}" placeholder="100.0 Hz" style="width:100%;font-size:11px;padding:3px 4px;font-family:var(--font-hd)"></td>
+      <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ch205_remarks_${i}" value="${data.remarks||''}" placeholder="Notes" style="width:100%;font-size:11px;padding:3px 4px"></td>
+      ${uscg}
+    </tr>`;
+  },
+
+  buildPrint() {
+    const fd = collectFormData();
+    Object.assign(formData, fd);
+    const variant = FORMS['205'].variants[VARIANT];
+    let chRows = '';
+    for (let i=0; i<ch205Count; i++) {
+      if (!fd[`ch205_rx_${i}`] && !fd[`ch205_name_${i}`]) continue;
+      chRows += `<tr>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`ch205_zone_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`ch205_name_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`ch205_assign_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc;font-family:monospace">${fd[`ch205_rx_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc;font-family:monospace">${fd[`ch205_tx_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`ch205_mode_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc;font-family:monospace">${fd[`ch205_pl_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`ch205_remarks_${i}`]||''}</td>
+      </tr>`;
+    }
+    return `
+    <div class="ics-print-header">
+      <div class="logo-cell">${logoHtml()}</div>
+      <div class="title-cell"><h1>ICS-205 RADIO COMMUNICATIONS PLAN</h1>
+        <div class="sub">${variant} · FieldCommand IMS</div></div>
+      <div class="meta-cell">
+        <div class="ml">Incident Name</div><div class="mv" style="font-size:10px">${fd.incident_name||'—'}</div>
+        <div class="ml">Op Period</div><div class="mv">${fd.operational_period_number||PERIOD}</div>
+        <div class="ml">Date</div><div class="mv">${fd.date_prepared||'—'}</div>
+      </div>
+    </div>
+    <div class="pr">
+      <div class="pc w2"><div class="pl">Op Period From</div><div class="pv">${fd.operational_period_from||''}</div></div>
+      <div class="pc w2"><div class="pl">Op Period To</div><div class="pv">${fd.operational_period_to||''}</div></div>
+    </div>
+    <div class="pr"><div class="pc" style="flex:4">
+      <div class="pl">2. Radio Channel Assignments</div>
+      <table style="width:100%;border-collapse:collapse;font-size:9px;margin-top:4px">
+        <thead><tr style="background:#e8eef7">
+          <th style="padding:3px 4px;border:1px solid #ccc">Zone/Ch</th>
+          <th style="padding:3px 4px;border:1px solid #ccc;text-align:left">Channel / Function</th>
+          <th style="padding:3px 4px;border:1px solid #ccc">Assignment</th>
+          <th style="padding:3px 4px;border:1px solid #ccc">RX Freq</th>
+          <th style="padding:3px 4px;border:1px solid #ccc">TX Freq</th>
+          <th style="padding:3px 4px;border:1px solid #ccc">Mode</th>
+          <th style="padding:3px 4px;border:1px solid #ccc">PL/NAC</th>
+          <th style="padding:3px 4px;border:1px solid #ccc;text-align:left">Remarks</th>
+        </tr></thead>
+        <tbody>${chRows||'<tr><td colspan="8" style="padding:6px;color:#888;text-align:center">No channels entered</td></tr>'}</tbody>
+      </table>
+    </div></div>
+    <div class="pr">
+      <div class="pc" style="flex:4">
+        <div class="pl">3. Special Instructions</div>
+        <div class="pv" style="min-height:40px">${fd.comms_special_instructions||''}</div>
+      </div>
+    </div>
+    <div class="sig-row">
+      <div class="sig-cell"><div class="sl">Prepared By (COML)</div>
+        <div class="ss">${fd.prepared_by_coml||''}</div>
+        <div class="sl">Date/Time: ${fd.date_time_prepared||''}</div></div>
+      <div class="sig-cell"><div class="sl">Signature</div><div class="ss"></div></div>
+      <div class="sig-cell"><div class="sl">Approved By (LSC)</div>
+        <div class="ss">${fd.approved_by_lsc||''}</div>
+        <div class="sl">Date/Time: ${fd.date_time_approved||''}</div></div>
+      <div class="sig-cell"><div class="sl">LSC Signature</div><div class="ss"></div></div>
+    </div>
+    <div class="print-footer">
+      <span>${variant} · FieldCommand IMS · © 2026 James Rospopo KE4CON · CC BY-SA 4.0</span>
+      <span>Printed: ${new Date().toLocaleString()}</span>
+    </div>`;
+  }
+};
+
+let ch205Count = 12;
+
+function add205Row() {
+  const tbody = document.getElementById('ch205Body');
+  if (!tbody) return;
+  const tr = document.createElement('tr');
+  const tmp = document.createElement('tbody');
+  tmp.innerHTML = FORMS['205']._chRow(ch205Count++);
+  tbody.appendChild(tmp.firstChild);
+}
+
+async function loadRepeatersFor205() {
+  const statusEl = document.getElementById('repeaterImportStatus');
+  statusEl.textContent = 'Loading repeaters...';
+  statusEl.style.display = 'block';
+  try {
+    const r = await fetch(`${MAIN_API}/api/repeaters?limit=20`);
+    const repeaters = await r.json();
+    if (!repeaters.length) {
+      statusEl.textContent = 'No repeaters in database. Go to Repeaters page to add some.';
+      statusEl.style.color = 'var(--amber)';
+      return;
+    }
+    // Show picker modal
+    showRepeaterPicker(repeaters);
+    statusEl.style.display = 'none';
+  } catch(e) {
+    statusEl.textContent = 'Could not load repeaters — API offline.';
+    statusEl.style.color = 'var(--red)';
+  }
+}
+
+function showRepeaterPicker(repeaters) {
+  const existing = document.getElementById('repPickerModal');
+  if (existing) existing.remove();
+
+  const modal = document.createElement('div');
+  modal.id = 'repPickerModal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:300;display:flex;align-items:center;justify-content:center';
+  modal.innerHTML = `
+    <div style="background:var(--panel);border:1px solid var(--eoc);border-radius:10px;
+                padding:20px;width:700px;max-width:96vw;max-height:80vh;display:flex;flex-direction:column">
+      <div style="font-family:var(--font-hd);font-size:14px;color:var(--amber);margin-bottom:12px;letter-spacing:1px">
+        📡 SELECT REPEATERS TO IMPORT
+      </div>
+      <p style="font-size:11px;color:var(--muted);margin:0 0 10px">
+        Select repeaters to add to the ICS-205 channel plan. Each selected repeater becomes one channel row.
+      </p>
+      <div style="overflow-y:auto;flex:1;border:1px solid var(--line);border-radius:6px">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead style="position:sticky;top:0;background:var(--panel2)">
+            <tr>
+              <th style="padding:6px 8px;text-align:left;border-bottom:1px solid var(--line)">✓</th>
+              <th style="padding:6px 8px;text-align:left;border-bottom:1px solid var(--line)">Callsign</th>
+              <th style="padding:6px 8px;text-align:left;border-bottom:1px solid var(--line)">Output Freq</th>
+              <th style="padding:6px 8px;text-align:left;border-bottom:1px solid var(--line)">Input Freq</th>
+              <th style="padding:6px 8px;text-align:left;border-bottom:1px solid var(--line)">Mode</th>
+              <th style="padding:6px 8px;text-align:left;border-bottom:1px solid var(--line)">Tone</th>
+              <th style="padding:6px 8px;text-align:left;border-bottom:1px solid var(--line)">City</th>
+              <th style="padding:6px 8px;text-align:left;border-bottom:1px solid var(--line)">Use</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${repeaters.map((rep,i) => `
+              <tr style="border-bottom:1px solid var(--line)" id="reprow_${i}">
+                <td style="padding:5px 8px">
+                  <input type="checkbox" id="repchk_${i}" value="${i}"
+                    style="width:15px;height:15px">
+                </td>
+                <td style="padding:5px 8px;font-family:var(--font-hd)">${rep.callsign||''}</td>
+                <td style="padding:5px 8px;font-family:monospace">${rep.output_freq||''}</td>
+                <td style="padding:5px 8px;font-family:monospace">${rep.input_freq||''}</td>
+                <td style="padding:5px 8px">${rep.mode||'FM'}</td>
+                <td style="padding:5px 8px;font-family:monospace">${rep.tone||''}</td>
+                <td style="padding:5px 8px">${rep.city||''}</td>
+                <td style="padding:5px 8px">
+                  <span style="font-size:10px;padding:1px 5px;border-radius:3px;
+                    background:${rep.ares?'rgba(26,122,58,0.2)':'var(--bg)'};
+                    border:1px solid ${rep.ares?'var(--green)':'var(--line)'};
+                    color:${rep.ares?'var(--green)':'var(--dim)'}"
+                  >${rep.ares?'ARES':rep.use_type||'Open'}</span>
+                </td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:12px;align-items:center">
+        <button onclick="selectAllRepeaters(${repeaters.length})"
+          style="font-size:11px;padding:4px 10px">Select All ARES</button>
+        <button onclick="importSelectedRepeaters(${JSON.stringify(repeaters).replace(/"/g,'&quot;')})"
+          style="background:var(--eoc);border-color:var(--eoc);color:#fff;font-weight:bold;padding:7px 20px">
+          Import Selected
+        </button>
+        <button onclick="document.getElementById('repPickerModal').remove()"
+          style="background:var(--panel2)">Cancel</button>
+        <span style="font-size:11px;color:var(--muted);margin-left:auto">
+          ${repeaters.length} repeaters in database
+        </span>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+  // Store repeaters data
+  modal._repeaters = repeaters;
+}
+
+function selectAllRepeaters(count) {
+  for (let i=0; i<count; i++) {
+    const chk = document.getElementById(`repchk_${i}`);
+    const modal = document.getElementById('repPickerModal');
+    if (chk && modal && modal._repeaters) {
+      // Auto-select ARES repeaters
+      if (modal._repeaters[i]?.ares) chk.checked = true;
+    }
+  }
+}
+
+function importSelectedRepeaters(repeaters) {
+  const tbody = document.getElementById('ch205Body');
+  if (!tbody) return;
+
+  let imported = 0;
+  repeaters.forEach((rep, i) => {
+    const chk = document.getElementById(`repchk_${i}`);
+    if (!chk?.checked) return;
+
+    // Find first empty row or add new row
+    let rowIdx = ch205Count;
+    for (let r=0; r<ch205Count; r++) {
+      const rxEl = document.querySelector(`[data-key="ch205_rx_${r}"]`);
+      if (rxEl && !rxEl.value) { rowIdx = r; break; }
+    }
+
+    if (rowIdx === ch205Count) {
+      // Need new row
+      const tr = document.createElement('tr');
+      const tmp = document.createElement('tbody');
+      tmp.innerHTML = FORMS['205']._chRow(ch205Count);
+      tbody.appendChild(tmp.firstChild);
+      rowIdx = ch205Count++;
+    }
+
+    // Fill in the row
+    const setField = (key, val) => {
+      const el = document.querySelector(`[data-key="${key}"]`);
+      if (el) el.value = val;
+    };
+    setField(`ch205_zone_${rowIdx}`, `${imported+1}`);
+    setField(`ch205_name_${rowIdx}`, `${rep.callsign||''} ${rep.city?'('+rep.city+')':''}`);
+    setField(`ch205_rx_${rowIdx}`, rep.output_freq||'');
+    setField(`ch205_tx_${rowIdx}`, rep.input_freq||'');
+    setField(`ch205_mode_${rowIdx}`, rep.mode||'FM');
+    setField(`ch205_pl_${rowIdx}`, rep.tone||'');
+    setField(`ch205_remarks_${rowIdx}`, rep.sponsor||rep.use_type||'');
+    // Set assignment dropdown
+    const assignEl = document.querySelector(`[data-key="ch205_assign_${rowIdx}"]`);
+    if (assignEl) assignEl.value = rep.ares ? 'All' : 'Tactical';
+    imported++;
+  });
+
+  document.getElementById('repPickerModal')?.remove();
+  const statusEl = document.getElementById('repeaterImportStatus');
+  if (statusEl) {
+    statusEl.textContent = `✓ Imported ${imported} repeater${imported!==1?'s':''} into the channel plan.`;
+    statusEl.style.display = 'block';
+    statusEl.style.color = 'var(--green)';
+  }
+}
+
 </script>
 <!-- Map Picker Modal -->
 <div class="map-picker-modal" id="mapPickerModal">

@@ -972,6 +972,252 @@ function renderObjectives202() {
 const _origCollect = collectFormData;
 // Patch saveForm to include 202 objectives
 const _origSave = saveForm;
+
+// ══════════════════════════════════════════════════════════════════
+// ICS-203 ORGANIZATION ASSIGNMENT LIST
+// ══════════════════════════════════════════════════════════════════
+FORMS['203'] = {
+  title: 'ICS-203 Organization Assignment List',
+  badge: 'ICS-203',
+  variants: { FEMA:'FEMA 010-0-3', USCG:'CG-5212', NWCG:'ICS-203 (NWCG)' },
+
+  render() {
+    document.getElementById('formTitle').textContent = 'ICS-203 — Organization Assignment List';
+    document.getElementById('formBadge').textContent = 'ICS-203';
+    document.getElementById('formMeta').textContent =
+      `${this.variants[VARIANT]} · Period ${PERIOD} · ${incData.name||'No incident'}`;
+    const ic  = formData.incident_commander || incData.incident_commander || '';
+    const osc = formData.ops_section_chief  || incData.ops_section_chief  || '';
+    const psc = formData.planning_section_chief || incData.planning_section_chief || '';
+    const lsc = formData.logistics_section_chief || incData.logistics_section_chief || '';
+    const fsc = formData.finance_section_chief || incData.finance_section_chief || '';
+    const so  = formData.safety_officer || incData.safety_officer || '';
+    const pio = formData.public_info_officer || incData.public_info_officer || '';
+    const lo  = formData.liaison_officer || incData.liaison_officer || '';
+    return `
+    <div class="section-card">
+      <h2>1. Incident & Period Information</h2>
+      <div class="grid-3">
+        ${field('incident_name','Incident Name','text',incData.name||'')}
+        ${field('operational_period_number','Op Period #','text',String(PERIOD))}
+        ${field('date_prepared','Date Prepared','date',todayDate())}
+      </div>
+      <div class="grid-2">
+        ${field('operational_period_from','Op Period From','datetime-local','')}
+        ${field('operational_period_to','Op Period To','datetime-local','')}
+      </div>
+    </div>
+    <div class="section-card">
+      <h2>2. Incident Commander & Command Staff</h2>
+      <div style="background:rgba(26,58,107,0.15);border:1px solid var(--eoc);border-radius:5px;padding:8px 12px;margin-bottom:10px;font-size:11px;color:var(--blue)">
+        ℹ Auto-populated from ICS-201 where available — edit as needed for this period
+      </div>
+      <div class="grid-2">
+        ${field('incident_commander','Incident Commander (IC)','text',ic)}
+        ${field('deputy_ic_1','Deputy IC — Operations','text','')}
+      </div>
+      <div class="grid-2">
+        ${field('deputy_ic_2','Deputy IC — Other','text','')}
+        ${field('ic_assistant','IC Assistant / Aide','text','')}
+      </div>
+      <div style="margin-top:10px;margin-bottom:6px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Command Staff</div>
+      <div class="grid-3">
+        ${field('safety_officer','Safety Officer (SO)','text',so)}
+        ${field('asst_safety_officer','Assistant Safety Officer','text','')}
+        ${field('public_info_officer','Public Information Officer (PIO)','text',pio)}
+      </div>
+      <div class="grid-3">
+        ${field('asst_pio','Assistant PIO','text','')}
+        ${field('liaison_officer','Liaison Officer (LO)','text',lo)}
+        ${field('agency_reps','Agency Representatives','text','')}
+      </div>
+    </div>
+    <div class="section-card">
+      <h2>3. Operations Section</h2>
+      <div class="grid-2">
+        ${field('ops_section_chief','Operations Section Chief (OSC)','text',osc)}
+        ${field('deputy_osc','Deputy OSC','text','')}
+      </div>
+      <div style="margin-top:10px;margin-bottom:6px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Branch I</div>
+      <div style="background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:10px;margin-bottom:8px">
+        <div class="grid-2" style="margin-bottom:6px">
+          ${field('branch1_dir','Branch I Director','')}
+          ${field('branch1_loc','Branch I Location / Frequency','')}
+        </div>
+        <div class="grid-3">
+          ${field('div_a_sup','Division / Group A Supervisor','')}
+          ${field('div_b_sup','Division / Group B Supervisor','')}
+          ${field('div_c_sup','Division / Group C Supervisor','')}
+        </div>
+      </div>
+      <div style="margin-top:6px;margin-bottom:6px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Branch II</div>
+      <div style="background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:10px;margin-bottom:8px">
+        <div class="grid-2" style="margin-bottom:6px">
+          ${field('branch2_dir','Branch II Director','')}
+          ${field('branch2_loc','Branch II Location / Frequency','')}
+        </div>
+        <div class="grid-3">
+          ${field('div_d_sup','Division / Group D Supervisor','')}
+          ${field('div_e_sup','Division / Group E Supervisor','')}
+          ${field('div_f_sup','Division / Group F Supervisor','')}
+        </div>
+      </div>
+      <div style="margin-top:6px;margin-bottom:6px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Additional Groups / Task Forces / Air Ops</div>
+      <div class="grid-2">
+        ${field('taskforce1_ldr','Task Force / Strike Team Leader 1','')}
+        ${field('taskforce2_ldr','Task Force / Strike Team Leader 2','')}
+      </div>
+      <div class="grid-2">
+        ${field('air_ops_branch_dir','Air Operations Branch Director','')}
+        ${field('staging_area_mgr','Staging Area Manager','')}
+      </div>
+    </div>
+    <div class="section-card">
+      <h2>4. Planning Section</h2>
+      <div class="grid-2">
+        ${field('planning_section_chief','Planning Section Chief (PSC)','text',psc)}
+        ${field('deputy_psc','Deputy PSC','text','')}
+      </div>
+      <div class="grid-3">
+        ${field('resources_unit_ldr','Resources Unit Leader (RESL)','')}
+        ${field('situation_unit_ldr','Situation Unit Leader (SITL)','')}
+        ${field('documentation_unit_ldr','Documentation Unit Leader (DOCL)','')}
+      </div>
+      <div class="grid-3">
+        ${field('demob_unit_ldr','Demobilization Unit Leader (DMOB)','')}
+        ${field('tech_specialist_1','Technical Specialist 1','')}
+        ${field('tech_specialist_2','Technical Specialist 2','')}
+      </div>
+    </div>
+    <div class="section-card">
+      <h2>5. Logistics Section</h2>
+      <div class="grid-2">
+        ${field('logistics_section_chief','Logistics Section Chief (LSC)','text',lsc)}
+        ${field('deputy_lsc','Deputy LSC','text','')}
+      </div>
+      <div style="margin-top:8px;margin-bottom:4px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Service Branch</div>
+      <div class="grid-3">
+        ${field('service_branch_dir','Service Branch Director','')}
+        ${field('comms_unit_ldr','Communications Unit Leader (COML)','')}
+        ${field('medical_unit_ldr','Medical Unit Leader (MEDL)','')}
+      </div>
+      <div class="grid-2">
+        ${field('food_unit_ldr','Food Unit Leader (FDUL)','')}
+        ${field('water_unit_ldr','Water Unit Leader','')}
+      </div>
+      <div style="margin-top:8px;margin-bottom:4px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px">Support Branch</div>
+      <div class="grid-3">
+        ${field('support_branch_dir','Support Branch Director','')}
+        ${field('supply_unit_ldr','Supply Unit Leader (SPUL)','')}
+        ${field('facilities_unit_ldr','Facilities Unit Leader (FACL)','')}
+      </div>
+      <div class="grid-2">
+        ${field('ground_support_unit_ldr','Ground Support Unit Leader (GSUL)','')}
+        ${field('security_manager','Security Manager','')}
+      </div>
+    </div>
+    <div class="section-card">
+      <h2>6. Finance / Administration Section</h2>
+      <div class="grid-2">
+        ${field('finance_section_chief','Finance / Admin Section Chief (FSC)','text',fsc)}
+        ${field('deputy_fsc','Deputy FSC','text','')}
+      </div>
+      <div class="grid-4">
+        ${field('time_unit_ldr','Time Unit Leader (TIME)','')}
+        ${field('procurement_unit_ldr','Procurement Unit Leader (PROC)','')}
+        ${field('comp_claims_unit_ldr','Comp/Claims Unit Leader (COMP)','')}
+        ${field('cost_unit_ldr','Cost Unit Leader (COST)','')}
+      </div>
+    </div>
+    <div class="section-card">
+      <h2>7. Prepared By</h2>
+      <div class="grid-2">
+        ${field('prepared_by','Prepared By (name / position)','text',
+          orgData.personal_call ? `${orgData.personal_call} — Resources Unit Leader` : '')}
+        ${field('date_time_prepared','Date / Time','datetime-local','')}
+      </div>
+    </div>`;
+  },
+
+  buildPrint() {
+    const fd = collectFormData();
+    Object.assign(formData, fd);
+    const variant = FORMS['203'].variants[VARIANT];
+    function row(l1,k1,l2,k2) {
+      return `<div class="pr">
+        <div class="pc w2"><div class="pl">${l1}</div><div class="pv">${fd[k1]||''}</div></div>
+        <div class="pc w2"><div class="pl">${l2||''}</div><div class="pv">${fd[k2]||''}</div></div>
+      </div>`;
+    }
+    function sectionHdr(title) {
+      return `<div class="pr" style="background:#e8eef7">
+        <div class="pc" style="flex:4"><div class="pl" style="font-weight:bold;font-size:10px;color:#1a3a6b;text-transform:uppercase;letter-spacing:1px">${title}</div></div>
+      </div>`;
+    }
+    return `
+    <div class="ics-print-header">
+      <div class="logo-cell">${logoHtml()}</div>
+      <div class="title-cell">
+        <h1>ICS-203 ORGANIZATION ASSIGNMENT LIST</h1>
+        <div class="sub">${variant} · FieldCommand IMS</div>
+      </div>
+      <div class="meta-cell">
+        <div class="ml">Incident Name</div><div class="mv" style="font-size:10px">${fd.incident_name||'—'}</div>
+        <div class="ml">Op Period</div><div class="mv">${fd.operational_period_number||PERIOD}</div>
+        <div class="ml">Date</div><div class="mv">${fd.date_prepared||'—'}</div>
+      </div>
+    </div>
+    <div class="pr">
+      <div class="pc w2"><div class="pl">Op Period From</div><div class="pv">${fd.operational_period_from||''}</div></div>
+      <div class="pc w2"><div class="pl">Op Period To</div><div class="pv">${fd.operational_period_to||''}</div></div>
+    </div>
+    ${sectionHdr('Incident Commander & Command Staff')}
+    ${row('Incident Commander (IC)','incident_commander','Deputy IC','deputy_ic_1')}
+    ${row('Safety Officer (SO)','safety_officer','Asst Safety Officer','asst_safety_officer')}
+    ${row('Public Information Officer (PIO)','public_info_officer','Asst PIO','asst_pio')}
+    ${row('Liaison Officer (LO)','liaison_officer','Agency Representatives','agency_reps')}
+    ${sectionHdr('Operations Section')}
+    ${row('Operations Section Chief (OSC)','ops_section_chief','Deputy OSC','deputy_osc')}
+    ${row('Branch I Director','branch1_dir','Branch I Location/Freq','branch1_loc')}
+    ${row('Division/Group A Supervisor','div_a_sup','Division/Group B Supervisor','div_b_sup')}
+    ${row('Division/Group C Supervisor','div_c_sup','Branch II Director','branch2_dir')}
+    ${row('Division/Group D Supervisor','div_d_sup','Division/Group E Supervisor','div_e_sup')}
+    ${row('Division/Group F Supervisor','div_f_sup','Staging Area Manager','staging_area_mgr')}
+    ${row('Air Ops Branch Director','air_ops_branch_dir','Task Force Leader 1','taskforce1_ldr')}
+    ${sectionHdr('Planning Section')}
+    ${row('Planning Section Chief (PSC)','planning_section_chief','Deputy PSC','deputy_psc')}
+    ${row('Resources Unit Leader (RESL)','resources_unit_ldr','Situation Unit Leader (SITL)','situation_unit_ldr')}
+    ${row('Documentation Unit Leader (DOCL)','documentation_unit_ldr','Demob Unit Leader (DMOB)','demob_unit_ldr')}
+    ${row('Technical Specialist','tech_specialist_1','Technical Specialist','tech_specialist_2')}
+    ${sectionHdr('Logistics Section')}
+    ${row('Logistics Section Chief (LSC)','logistics_section_chief','Deputy LSC','deputy_lsc')}
+    ${row('Communications Unit Leader (COML)','comms_unit_ldr','Medical Unit Leader (MEDL)','medical_unit_ldr')}
+    ${row('Food Unit Leader (FDUL)','food_unit_ldr','Supply Unit Leader (SPUL)','supply_unit_ldr')}
+    ${row('Facilities Unit Leader (FACL)','facilities_unit_ldr','Ground Support Unit Leader (GSUL)','ground_support_unit_ldr')}
+    ${sectionHdr('Finance / Administration Section')}
+    ${row('Finance/Admin Section Chief (FSC)','finance_section_chief','Deputy FSC','deputy_fsc')}
+    ${row('Time Unit Leader (TIME)','time_unit_ldr','Procurement Unit Leader (PROC)','procurement_unit_ldr')}
+    ${row('Comp/Claims Unit Leader (COMP)','comp_claims_unit_ldr','Cost Unit Leader (COST)','cost_unit_ldr')}
+    <div class="sig-row">
+      <div class="sig-cell"><div class="sl">Prepared By (Resources Unit Leader)</div>
+        <div class="ss">${fd.prepared_by||''}</div>
+        <div class="sl">Date/Time: ${fd.date_time_prepared||''}</div>
+      </div>
+      <div class="sig-cell"><div class="sl">Signature</div><div class="ss"></div></div>
+      <div class="sig-cell"><div class="sl">Op Period From / To</div>
+        <div class="ss">${fd.operational_period_from||''}</div>
+        <div class="sl">To: ${fd.operational_period_to||''}</div>
+      </div>
+      <div class="sig-cell"><div class="sl">Incident Name</div>
+        <div class="ss">${fd.incident_name||''}</div>
+      </div>
+    </div>
+    <div class="print-footer">
+      <span>${variant} · FieldCommand IMS · © 2026 James Rospopo KE4CON · CC BY-SA 4.0</span>
+      <span>Printed: ${new Date().toLocaleString()}</span>
+    </div>`;
+  }
+};
 </script>
 </body>
 </html>

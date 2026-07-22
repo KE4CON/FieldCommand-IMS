@@ -3036,6 +3036,737 @@ FORMS['209'] = {
   }
 };
 
+
+// ══════════════════════════════════════════════════════════════════
+// ICS-213RR RESOURCE REQUEST
+// ══════════════════════════════════════════════════════════════════
+FORMS['213RR'] = {
+  title: 'ICS-213RR Resource Request',
+  badge: 'ICS-213RR',
+  variants: { FEMA:'FEMA 010-0-13RR', USCG:'CG-5222', NWCG:'ICS-213RR (NWCG)' },
+
+  render() {
+    document.getElementById('formTitle').textContent = 'ICS-213RR \u2014 Resource Request';
+    document.getElementById('formBadge').textContent = 'ICS-213RR';
+    document.getElementById('formMeta').textContent =
+      `${this.variants[VARIANT]} \u00b7 Period ${PERIOD} \u00b7 ${incData.name||'No incident'}`;
+    return `
+    <div class="section-card">
+      <h2>1. Request Header</h2>
+      <div class="grid-3">
+        ${field('incident_name','Incident Name','text',incData.name||'')}
+        ${field('request_number','Request # (log #)','text','')}
+        ${field('date_time_request','Date / Time of Request','datetime-local','')}
+      </div>
+      <div class="grid-3">
+        ${field('requested_by','Requested By (name / position)','text','')}
+        ${field('section','Section Requesting','text','')}
+        ${field('priority','Priority','text','')}
+      </div>
+      <div class="fg">
+        <label>Priority Level</label>
+        <div style="display:flex;gap:16px;font-size:13px;margin-top:4px">
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+            <input type="radio" name="priority_level" data-key="priority_level" value="Routine"> Routine
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+            <input type="radio" name="priority_level" data-key="priority_level" value="Priority"> Priority
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer">
+            <input type="radio" name="priority_level" data-key="priority_level" value="Emergency"> Emergency
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>2. Resources Requested</h2>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="background:var(--panel2)">
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:50px">Qty</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:120px">Kind / Type</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">Category</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">Needed by (date/time)</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:100px">Reporting Location</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:100px">Suggested Source</th>
+          </tr></thead>
+          <tbody id="rr213Body">
+            ${[...Array(6)].map((_,i)=>`<tr>
+              <td style="border:1px solid var(--line);padding:3px"><input type="number" data-key="rr_qty_${i}" style="width:50px;font-size:11px;padding:3px 4px;text-align:center"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="rr_type_${i}" placeholder="e.g. Type I Engine" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px">
+                <select data-key="rr_cat_${i}" style="width:100%;font-size:11px;padding:3px 4px;background:var(--input-bg);color:var(--txt);border:none">
+                  <option></option><option>Personnel</option><option>Equipment</option>
+                  <option>Supply</option><option>Vehicle</option><option>Aircraft</option>
+                  <option>Facility</option><option>Other</option>
+                </select>
+              </td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="rr_needed_${i}" placeholder="Date/time" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="rr_loc_${i}" placeholder="Staging / ICP" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="rr_source_${i}" placeholder="Agency / vendor" style="width:100%;font-size:11px;padding:3px 4px"></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <button onclick="addRR213Row()" style="margin-top:8px;font-size:11px;padding:4px 12px">+ Add Row</button>
+    </div>
+
+    <div class="section-card">
+      <h2>3. Justification & Special Requirements</h2>
+      ${field('rr_justification','Justification / Reason for Request','textarea','',{rows:3})}
+      ${field('rr_special_req','Special Requirements / Specifications','textarea',
+        'Training requirements, equipment specifications, certifications needed...',{rows:2})}
+    </div>
+
+    <div class="section-card">
+      <h2>4. Logistics Section Action</h2>
+      <div class="grid-2">
+        ${field('rr_supply_unit','Assigned to (Supply Unit Leader)','text','')}
+        ${field('rr_order_number','Order / Request Number','text','')}
+      </div>
+      <div class="grid-2">
+        ${field('rr_eta','ETA to Incident','text','')}
+        ${field('rr_status','Status','text','Pending')}
+      </div>
+      ${field('rr_notes','Logistics Notes','textarea','',{rows:2})}
+    </div>
+
+    <div class="section-card">
+      <h2>5. Authorization</h2>
+      <div class="grid-2">
+        ${field('authorized_by','Authorized By (Section Chief / IC)','text',
+          formData.incident_commander||incData.incident_commander||'')}
+        ${field('date_time_authorized','Date / Time','datetime-local','')}
+      </div>
+    </div>`;
+  },
+
+  buildPrint() {
+    const fd = collectFormData();
+    Object.assign(formData, fd);
+    const variant = FORMS['213RR'].variants[VARIANT];
+    let rrRows = '';
+    for (let i=0; i<rr213Count; i++) {
+      if (!fd[`rr_qty_${i}`] && !fd[`rr_type_${i}`]) continue;
+      rrRows += `<tr>
+        <td style="padding:3px 5px;border:1px solid #ccc;text-align:center">${fd[`rr_qty_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`rr_type_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`rr_cat_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`rr_needed_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`rr_loc_${i}`]||''}</td>
+        <td style="padding:3px 5px;border:1px solid #ccc">${fd[`rr_source_${i}`]||''}</td>
+      </tr>`;
+    }
+    return `
+    <div class="ics-print-header">
+      <div class="logo-cell">${logoHtml()}</div>
+      <div class="title-cell"><h1>ICS-213RR RESOURCE REQUEST</h1>
+        <div class="sub">${variant} \u00b7 FieldCommand IMS</div></div>
+      <div class="meta-cell">
+        <div class="ml">Incident Name</div><div class="mv" style="font-size:10px">${fd.incident_name||'\u2014'}</div>
+        <div class="ml">Request #</div><div class="mv">${fd.request_number||'\u2014'}</div>
+        <div class="ml">Priority</div><div class="mv" style="color:${fd.priority_level==='Emergency'?'#c00':fd.priority_level==='Priority'?'#c07010':'inherit'}">${fd.priority_level||'Routine'}</div>
+      </div>
+    </div>
+    <div class="pr">
+      <div class="pc w2"><div class="pl">Requested By</div><div class="pv">${fd.requested_by||''}</div></div>
+      <div class="pc"><div class="pl">Section</div><div class="pv">${fd.section||''}</div></div>
+      <div class="pc"><div class="pl">Date/Time of Request</div><div class="pv">${fd.date_time_request||''}</div></div>
+    </div>
+    <div class="pr"><div class="pc" style="flex:4">
+      <div class="pl">2. Resources Requested</div>
+      <table style="width:100%;border-collapse:collapse;font-size:10px;margin-top:3px">
+        <thead><tr style="background:#e8eef7">
+          <th style="padding:3px 5px;border:1px solid #ccc">Qty</th>
+          <th style="padding:3px 5px;border:1px solid #ccc;text-align:left">Kind / Type</th>
+          <th style="padding:3px 5px;border:1px solid #ccc">Category</th>
+          <th style="padding:3px 5px;border:1px solid #ccc">Needed By</th>
+          <th style="padding:3px 5px;border:1px solid #ccc;text-align:left">Reporting Location</th>
+          <th style="padding:3px 5px;border:1px solid #ccc;text-align:left">Suggested Source</th>
+        </tr></thead>
+        <tbody>${rrRows||'<tr><td colspan="6" style="padding:5px;color:#888;text-align:center">No resources entered</td></tr>'}</tbody>
+      </table>
+    </div></div>
+    <div class="pr"><div class="pc w4"><div class="pl">3. Justification</div><div class="pv" style="min-height:40px">${fd.rr_justification||''}</div></div></div>
+    <div class="pr">
+      <div class="pc w2"><div class="pl">Order / Request Number</div><div class="pv">${fd.rr_order_number||''}</div></div>
+      <div class="pc"><div class="pl">ETA</div><div class="pv">${fd.rr_eta||''}</div></div>
+      <div class="pc"><div class="pl">Status</div><div class="pv">${fd.rr_status||''}</div></div>
+    </div>
+    <div class="sig-row">
+      <div class="sig-cell"><div class="sl">Requested By</div><div class="ss">${fd.requested_by||''}</div></div>
+      <div class="sig-cell"><div class="sl">Signature</div><div class="ss"></div></div>
+      <div class="sig-cell"><div class="sl">Authorized By (IC/SC)</div><div class="ss">${fd.authorized_by||''}</div><div class="sl">Date/Time: ${fd.date_time_authorized||''}</div></div>
+      <div class="sig-cell"><div class="sl">Authorization Signature</div><div class="ss"></div></div>
+    </div>
+    <div class="print-footer">
+      <span>${variant} \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
+      <span>Printed: ${new Date().toLocaleString()}</span>
+    </div>`;
+  }
+};
+
+let rr213Count = 6;
+function addRR213Row() {
+  const tbody = document.getElementById('rr213Body');
+  if (!tbody) return;
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td style="border:1px solid var(--line);padding:3px"><input type="number" data-key="rr_qty_${rr213Count}" style="width:50px;font-size:11px;padding:3px 4px;text-align:center"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="rr_type_${rr213Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+    <td style="border:1px solid var(--line);padding:3px"><select data-key="rr_cat_${rr213Count}" style="width:100%;font-size:11px;padding:3px 4px;background:var(--input-bg);color:var(--txt);border:none"><option></option><option>Personnel</option><option>Equipment</option><option>Supply</option><option>Vehicle</option><option>Aircraft</option><option>Facility</option><option>Other</option></select></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="rr_needed_${rr213Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="rr_loc_${rr213Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="rr_source_${rr213Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>`;
+  tbody.appendChild(tr);
+  rr213Count++;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ICS-214 ACTIVITY LOG (standalone wrapper — links to ics214.html)
+// Note: Full ICS-214 already built as ics214.html — this form
+// entry just redirects there with incident context
+// ══════════════════════════════════════════════════════════════════
+FORMS['214'] = {
+  title: 'ICS-214 Activity Log',
+  badge: 'ICS-214',
+  variants: { FEMA:'FEMA 010-0-14', USCG:'CG-5223', NWCG:'ICS-214 (NWCG)' },
+
+  render() {
+    document.getElementById('formTitle').textContent = 'ICS-214 \u2014 Activity Log';
+    document.getElementById('formBadge').textContent = 'ICS-214';
+    document.getElementById('formMeta').textContent =
+      `${this.variants[VARIANT]} \u00b7 Period ${PERIOD} \u00b7 ${incData.name||'No incident'}`;
+    return `
+    <div class="section-card">
+      <h2>1. Unit / Personnel Information</h2>
+      <div class="grid-3">
+        ${field('incident_name','Incident Name','text',incData.name||'')}
+        ${field('unit_name','Unit Name / Designator','text','')}
+        ${field('operational_period_number','Op Period #','text',String(PERIOD))}
+      </div>
+      <div class="grid-3">
+        ${field('unit_leader','Unit Leader (Name / Position)','text','')}
+        ${field('date_prepared','Date Prepared','date',todayDate())}
+        ${field('time_prepared','Time Prepared','time',new Date().toTimeString().slice(0,5))}
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>2. Personnel Roster for This Log</h2>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="background:var(--panel2)">
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:130px">Name</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:100px">ICS Position / Title</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">Home Agency</th>
+          </tr></thead>
+          <tbody id="pers214Body">
+            ${[...Array(6)].map((_,i)=>`<tr>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="p214_name_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="p214_pos_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="p214_agency_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <button onclick="add214Person()" style="margin-top:6px;font-size:11px;padding:4px 12px">+ Add Person</button>
+    </div>
+
+    <div class="section-card">
+      <h2>3. Activity Log</h2>
+      <p style="font-size:11px;color:var(--muted);margin:0 0 10px">
+        Record all significant activities, decisions, and events in chronological order.
+        Use UTC time. Entries should be objective and factual.
+      </p>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="background:var(--panel2)">
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">Date/Time (UTC)</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line)">Notable Activities / Events</th>
+          </tr></thead>
+          <tbody id="act214Body">
+            ${[...Array(12)].map((_,i)=>`<tr>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="a214_time_${i}" placeholder="YYYY-MM-DD HHmm" style="width:130px;font-size:11px;padding:3px 4px;font-family:var(--font-hd)"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="a214_activity_${i}" placeholder="Activity / event description" style="width:100%;font-size:11px;padding:3px 4px"></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <button onclick="add214Activity()" style="margin-top:6px;font-size:11px;padding:4px 12px">+ Add Entry</button>
+    </div>
+
+    <div class="section-card">
+      <h2>4. Prepared By</h2>
+      <div class="grid-2">
+        ${field('prepared_by_214','Prepared By (Unit Leader)','text',
+          formData.unit_leader||orgData.personal_call||'')}
+        ${field('date_time_prepared_214','Date / Time','datetime-local','')}
+      </div>
+    </div>`;
+  },
+
+  buildPrint() {
+    const fd = collectFormData();
+    Object.assign(formData, fd);
+    const variant = FORMS['214'].variants[VARIANT];
+    const persRows = [...Array(pers214Count)].map((_,i) =>
+      fd[`p214_name_${i}`]
+        ? `<tr><td style="padding:3px 5px;border:1px solid #ccc">${fd[`p214_name_${i}`]}</td>
+           <td style="padding:3px 5px;border:1px solid #ccc">${fd[`p214_pos_${i}`]||''}</td>
+           <td style="padding:3px 5px;border:1px solid #ccc">${fd[`p214_agency_${i}`]||''}</td></tr>` : ''
+    ).join('');
+    const actRows = [...Array(act214Count)].map((_,i) =>
+      fd[`a214_activity_${i}`]
+        ? `<tr><td style="padding:3px 5px;border:1px solid #ccc;font-family:monospace;white-space:nowrap">${fd[`a214_time_${i}`]||''}</td>
+           <td style="padding:3px 5px;border:1px solid #ccc">${fd[`a214_activity_${i}`]}</td></tr>` : ''
+    ).join('');
+    return `
+    <div class="ics-print-header">
+      <div class="logo-cell">${logoHtml()}</div>
+      <div class="title-cell"><h1>ICS-214 ACTIVITY LOG</h1>
+        <div class="sub">${variant} \u00b7 FieldCommand IMS</div></div>
+      <div class="meta-cell">
+        <div class="ml">Incident Name</div><div class="mv" style="font-size:10px">${fd.incident_name||'\u2014'}</div>
+        <div class="ml">Unit / Designator</div><div class="mv">${fd.unit_name||'\u2014'}</div>
+        <div class="ml">Op Period</div><div class="mv">${fd.operational_period_number||PERIOD}</div>
+      </div>
+    </div>
+    <div class="pr">
+      <div class="pc w2"><div class="pl">Unit Leader</div><div class="pv">${fd.unit_leader||''}</div></div>
+      <div class="pc"><div class="pl">Date</div><div class="pv">${fd.date_prepared||''}</div></div>
+      <div class="pc"><div class="pl">Time Prepared</div><div class="pv">${fd.time_prepared||''}</div></div>
+    </div>
+    ${persRows?`<div class="pr"><div class="pc" style="flex:4">
+      <div class="pl">2. Personnel Roster</div>
+      <table style="width:100%;border-collapse:collapse;font-size:10px;margin-top:3px">
+        <thead><tr style="background:#e8eef7">
+          <th style="padding:3px 5px;border:1px solid #ccc;text-align:left">Name</th>
+          <th style="padding:3px 5px;border:1px solid #ccc;text-align:left">Position</th>
+          <th style="padding:3px 5px;border:1px solid #ccc;text-align:left">Agency</th>
+        </tr></thead><tbody>${persRows}</tbody>
+      </table>
+    </div></div>`:''}
+    <div class="pr"><div class="pc" style="flex:4">
+      <div class="pl">3. Activity Log</div>
+      <table style="width:100%;border-collapse:collapse;font-size:10px;margin-top:3px">
+        <thead><tr style="background:#e8eef7">
+          <th style="padding:3px 5px;border:1px solid #ccc;text-align:left;min-width:100px">Date/Time (UTC)</th>
+          <th style="padding:3px 5px;border:1px solid #ccc;text-align:left">Notable Activities / Events</th>
+        </tr></thead>
+        <tbody>${actRows||'<tr><td colspan="2" style="padding:20px;color:#888;text-align:center">No activities recorded</td></tr>'}</tbody>
+      </table>
+    </div></div>
+    <div class="sig-row">
+      <div class="sig-cell"><div class="sl">Prepared By (Unit Leader)</div>
+        <div class="ss">${fd.prepared_by_214||''}</div>
+        <div class="sl">Date/Time: ${fd.date_time_prepared_214||''}</div></div>
+      <div class="sig-cell"><div class="sl">Signature</div><div class="ss"></div></div>
+      <div class="sig-cell"></div><div class="sig-cell"></div>
+    </div>
+    <div class="print-footer">
+      <span>${variant} \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
+      <span>Printed: ${new Date().toLocaleString()}</span>
+    </div>`;
+  }
+};
+
+let pers214Count = 6;
+let act214Count = 12;
+function add214Person() {
+  const tbody = document.getElementById('pers214Body');
+  if (!tbody) return;
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="p214_name_${pers214Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="p214_pos_${pers214Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="p214_agency_${pers214Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>`;
+  tbody.appendChild(tr);
+  pers214Count++;
+}
+function add214Activity() {
+  const tbody = document.getElementById('act214Body');
+  if (!tbody) return;
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="a214_time_${act214Count}" placeholder="YYYY-MM-DD HHmm" style="width:130px;font-size:11px;padding:3px 4px;font-family:var(--font-hd)"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="a214_activity_${act214Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>`;
+  tbody.appendChild(tr);
+  act214Count++;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ICS-215 OPERATIONAL PLANNING WORKSHEET
+// ══════════════════════════════════════════════════════════════════
+FORMS['215'] = {
+  title: 'ICS-215 Operational Planning Worksheet',
+  badge: 'ICS-215',
+  variants: { FEMA:'FEMA 010-0-15', USCG:'CG-5224', NWCG:'ICS-215 (NWCG Fire)' },
+
+  render() {
+    document.getElementById('formTitle').textContent = 'ICS-215 \u2014 Operational Planning Worksheet';
+    document.getElementById('formBadge').textContent = 'ICS-215';
+    document.getElementById('formMeta').textContent =
+      `${this.variants[VARIANT]} \u00b7 Period ${PERIOD+1} (Planning for next period) \u00b7 ${incData.name||'No incident'}`;
+    return `
+    <div class="section-card">
+      <h2>1. Planning Information</h2>
+      <p style="font-size:11px;color:var(--muted);margin:0 0 10px">
+        The ICS-215 is completed during the Tactics Meeting by Operations and Planning.
+        It plans resources for the <strong>next</strong> operational period.
+      </p>
+      <div class="grid-3">
+        ${field('incident_name','Incident Name','text',incData.name||'')}
+        ${field('planning_for_period','Planning for Op Period #','text',String(PERIOD+1))}
+        ${field('date_prepared','Date Prepared','date',todayDate())}
+      </div>
+      <div class="grid-2">
+        ${field('next_period_from','Next Period From','datetime-local','')}
+        ${field('next_period_to','Next Period To','datetime-local','')}
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>2. Control Operations / Work Assignments by Division/Group</h2>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:11px">
+          <thead><tr style="background:var(--panel2)">
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:70px">Div/Group</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:130px">Work Assignment / Objective</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">Supervisor</th>
+            <th style="padding:6px 8px;text-align:center;border:1px solid var(--line);min-width:60px">Personnel</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:90px">Equipment Needed</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">Overhead Needed</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">Special Equipment / Supplies</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line);min-width:80px">Reporting Location / Time</th>
+          </tr></thead>
+          <tbody id="ops215Body">
+            ${[...Array(8)].map((_,i)=>`<tr>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ops215_div_${i}" placeholder="${String.fromCharCode(65+i)}" style="width:55px;font-size:11px;padding:3px 4px;font-family:var(--font-hd)"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ops215_work_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ops215_sup_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px;text-align:center"><input type="number" data-key="ops215_pers_${i}" style="width:50px;font-size:11px;padding:3px 4px;text-align:center"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ops215_equip_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ops215_overhead_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ops215_special_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ops215_report_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <button onclick="add215Row()" style="margin-top:6px;font-size:11px;padding:4px 12px">+ Add Division/Group</button>
+    </div>
+
+    <div class="section-card">
+      <h2>3. Special Instructions / Contingencies</h2>
+      ${field('ops215_special_instructions','Special Instructions / Contingency Planning','textarea',
+        'What-if scenarios, fallback plans, coordination with neighboring jurisdictions...',{rows:4})}
+    </div>
+
+    ${VARIANT==='NWCG'?`
+    <div class="section-card">
+      <h2>4. Suppression Repair (NWCG Fire)</h2>
+      ${field('nwcg_suppression_repair','Suppression Repair Instructions','textarea','',{rows:3})}
+    </div>`:''}
+
+    <div class="section-card">
+      <h2>${VARIANT==='NWCG'?'5':'4'}. Prepared By</h2>
+      <div class="grid-3">
+        ${field('prepared_by_osc','Operations Section Chief','text',
+          formData.ops_section_chief||incData.ops_section_chief||'')}
+        ${field('prepared_by_psc','Planning Section Chief','text',
+          formData.planning_section_chief||incData.planning_section_chief||'')}
+        ${field('date_time_prepared','Date / Time','datetime-local','')}
+      </div>
+    </div>`;
+  },
+
+  buildPrint() {
+    const fd = collectFormData();
+    Object.assign(formData, fd);
+    const variant = FORMS['215'].variants[VARIANT];
+    const opsRows = [...Array(ops215Count)].map((_,i) =>
+      fd[`ops215_div_${i}`]||fd[`ops215_work_${i}`]
+        ? `<tr>
+           <td style="padding:3px 4px;border:1px solid #ccc;font-family:monospace;font-weight:bold">${fd[`ops215_div_${i}`]||''}</td>
+           <td style="padding:3px 4px;border:1px solid #ccc">${fd[`ops215_work_${i}`]||''}</td>
+           <td style="padding:3px 4px;border:1px solid #ccc">${fd[`ops215_sup_${i}`]||''}</td>
+           <td style="padding:3px 4px;border:1px solid #ccc;text-align:center">${fd[`ops215_pers_${i}`]||''}</td>
+           <td style="padding:3px 4px;border:1px solid #ccc">${fd[`ops215_equip_${i}`]||''}</td>
+           <td style="padding:3px 4px;border:1px solid #ccc">${fd[`ops215_overhead_${i}`]||''}</td>
+           <td style="padding:3px 4px;border:1px solid #ccc">${fd[`ops215_special_${i}`]||''}</td>
+           <td style="padding:3px 4px;border:1px solid #ccc">${fd[`ops215_report_${i}`]||''}</td>
+           </tr>` : ''
+    ).join('');
+    return `
+    <div class="ics-print-header">
+      <div class="logo-cell">${logoHtml()}</div>
+      <div class="title-cell"><h1>ICS-215 OPERATIONAL PLANNING WORKSHEET</h1>
+        <div class="sub">${variant} \u00b7 Planning for Period ${parseInt(fd.planning_for_period)||PERIOD+1} \u00b7 FieldCommand IMS</div></div>
+      <div class="meta-cell">
+        <div class="ml">Incident Name</div><div class="mv" style="font-size:10px">${fd.incident_name||'\u2014'}</div>
+        <div class="ml">Next Period</div><div class="mv">${fd.next_period_from||'\u2014'}</div>
+        <div class="ml">Date</div><div class="mv">${fd.date_prepared||'\u2014'}</div>
+      </div>
+    </div>
+    <div class="pr"><div class="pc" style="flex:4">
+      <div class="pl">2. Control Operations by Division/Group</div>
+      <table style="width:100%;border-collapse:collapse;font-size:9px;margin-top:3px">
+        <thead><tr style="background:#e8eef7">
+          <th style="padding:2px 4px;border:1px solid #ccc">Div/Grp</th>
+          <th style="padding:2px 4px;border:1px solid #ccc;text-align:left">Work Assignment</th>
+          <th style="padding:2px 4px;border:1px solid #ccc">Supervisor</th>
+          <th style="padding:2px 4px;border:1px solid #ccc">Personnel</th>
+          <th style="padding:2px 4px;border:1px solid #ccc;text-align:left">Equipment</th>
+          <th style="padding:2px 4px;border:1px solid #ccc;text-align:left">Overhead</th>
+          <th style="padding:2px 4px;border:1px solid #ccc;text-align:left">Special</th>
+          <th style="padding:2px 4px;border:1px solid #ccc;text-align:left">Report</th>
+        </tr></thead>
+        <tbody>${opsRows||'<tr><td colspan="8" style="padding:6px;color:#888;text-align:center">No divisions/groups entered</td></tr>'}</tbody>
+      </table>
+    </div></div>
+    <div class="pr"><div class="pc" style="flex:4"><div class="pl">3. Special Instructions</div>
+      <div class="pv" style="min-height:40px">${fd.ops215_special_instructions||''}</div>
+    </div></div>
+    <div class="sig-row">
+      <div class="sig-cell"><div class="sl">Operations Section Chief</div><div class="ss">${fd.prepared_by_osc||''}</div></div>
+      <div class="sig-cell"><div class="sl">OSC Signature</div><div class="ss"></div></div>
+      <div class="sig-cell"><div class="sl">Planning Section Chief</div><div class="ss">${fd.prepared_by_psc||''}</div></div>
+      <div class="sig-cell"><div class="sl">PSC Signature</div><div class="ss"></div><div class="sl">Date/Time: ${fd.date_time_prepared||''}</div></div>
+    </div>
+    <div class="print-footer">
+      <span>${variant} \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
+      <span>Printed: ${new Date().toLocaleString()}</span>
+    </div>`;
+  }
+};
+
+let ops215Count = 8;
+function add215Row() {
+  const tbody = document.getElementById('ops215Body');
+  if (!tbody) return;
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ops215_div_${ops215Count}" style="width:55px;font-size:11px;padding:3px 4px;font-family:var(--font-hd)"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ops215_work_${ops215Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ops215_sup_${ops215Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="number" data-key="ops215_pers_${ops215Count}" style="width:50px;font-size:11px;padding:3px 4px;text-align:center"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ops215_equip_${ops215Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ops215_overhead_${ops215Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ops215_special_${ops215Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ops215_report_${ops215Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>`;
+  tbody.appendChild(tr);
+  ops215Count++;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ICS-221 DEMOBILIZATION CHECK-OUT
+// ══════════════════════════════════════════════════════════════════
+FORMS['221'] = {
+  title: 'ICS-221 Demobilization Check-Out',
+  badge: 'ICS-221',
+  variants: { FEMA:'FEMA 010-0-21', USCG:'CG-5230', NWCG:'ICS-221 (NWCG)' },
+
+  render() {
+    document.getElementById('formTitle').textContent = 'ICS-221 \u2014 Demobilization Check-Out';
+    document.getElementById('formBadge').textContent = 'ICS-221';
+    document.getElementById('formMeta').textContent =
+      `${this.variants[VARIANT]} \u00b7 ${incData.name||'No incident'}`;
+    return `
+    <div class="section-card">
+      <h2>1. Incident & Resource Information</h2>
+      <div class="grid-3">
+        ${field('incident_name','Incident Name','text',incData.name||'')}
+        ${field('incident_number','Incident Number','text','')}
+        ${field('demob_date','Demobilization Date','date',todayDate())}
+      </div>
+      <div class="grid-3">
+        ${field('resource_name','Resource / Unit Name','text','')}
+        ${field('resource_leader','Resource Leader / IC','text','')}
+        ${field('home_agency','Home Agency / Organization','text',
+          orgData.org_short||orgData.org_name||'')}
+      </div>
+      <div class="grid-3">
+        ${field('release_datetime','Scheduled Release Date/Time','datetime-local','')}
+        ${field('actual_release_datetime','Actual Release Date/Time','datetime-local','')}
+        ${field('destination','Destination after Release','text','')}
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>2. Check-Out Checklist</h2>
+      <p style="font-size:11px;color:var(--muted);margin:0 0 12px">
+        Each section below must be cleared before resource is released.
+        Section representative initials in the box and signs off below.
+      </p>
+      ${[
+        {section:'Operations Section',items:['All assignments completed or properly transferred','ICS-214 Activity Log submitted','Briefed incoming personnel on status and open issues']},
+        {section:'Planning Section',items:['All ICS forms completed and submitted to Documentation Unit','Check-out recorded in resource tracking system','Travel itinerary filed with Demob Unit Leader']},
+        {section:'Logistics Section',items:['All equipment, vehicles, and supplies returned / accounted for','Fuel card / credit card returned','Facility / quarters cleaned and keys returned']},
+        {section:'Finance / Admin Section',items:['Time sheets completed and submitted (all personnel)','All receipts and purchase orders submitted','Cost coding complete']},
+        {section:'Communications Unit',items:['All radios, chargers, and batteries returned','Radio programming removed if required','Pager / satellite device returned']},
+        {section:'Medical Unit',items:['Medical screening completed if required','Any injuries documented on Workers\' Compensation forms']},
+      ].map((s,si)=>`
+        <div style="background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:12px;margin-bottom:10px">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <div style="font-family:var(--font-hd);font-size:12px;color:var(--amber);letter-spacing:1px">${s.section}</div>
+            <div style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)">
+              Cleared by:
+              <input type="text" data-key="demob_initial_${si}" placeholder="Initials" style="width:60px;font-size:12px;text-align:center;padding:3px 5px">
+            </div>
+          </div>
+          ${s.items.map((item,ii)=>`
+          <label style="display:flex;align-items:flex-start;gap:8px;font-size:12px;margin-bottom:4px;cursor:pointer">
+            <input type="checkbox" data-key="demob_chk_${si}_${ii}" style="margin-top:2px;flex-shrink:0">
+            <span>${item}</span>
+          </label>`).join('')}
+        </div>`).join('')}
+    </div>
+
+    <div class="section-card">
+      <h2>3. Personnel Demobilized</h2>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="background:var(--panel2)">
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line)">Name</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line)">ICS Position</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line)">Home Agency</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line)">Release Time</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line)">Destination</th>
+          </tr></thead>
+          <tbody id="pers221Body">
+            ${[...Array(6)].map((_,i)=>`<tr>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="dp221_name_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="dp221_pos_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="dp221_agency_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="dp221_time_${i}" style="width:100%;font-size:11px;padding:3px 4px;font-family:var(--font-hd)"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="dp221_dest_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <button onclick="add221Person()" style="margin-top:6px;font-size:11px;padding:4px 12px">+ Add Person</button>
+    </div>
+
+    <div class="section-card">
+      <h2>4. Notes / Outstanding Issues</h2>
+      ${field('demob_notes','Outstanding Issues / Action Items for Remaining Personnel','textarea','',{rows:3})}
+    </div>
+
+    <div class="section-card">
+      <h2>5. Final Sign-Off</h2>
+      <div class="grid-2">
+        ${field('demob_by','Demobilization Cleared By (Demob Unit Leader)','text',
+          formData.demob_unit_ldr||'')}
+        ${field('demob_cleared_datetime','Date / Time Cleared','datetime-local','')}
+      </div>
+      <div class="grid-2">
+        ${field('demob_approved_ic','Approved By (IC or designee)','text',
+          formData.incident_commander||incData.incident_commander||'')}
+        ${field('demob_approved_datetime','Date / Time','datetime-local','')}
+      </div>
+    </div>`;
+  },
+
+  buildPrint() {
+    const fd = collectFormData();
+    Object.assign(formData, fd);
+    const variant = FORMS['221'].variants[VARIANT];
+    const persRows = [...Array(pers221Count)].map((_,i) =>
+      fd[`dp221_name_${i}`]
+        ? `<tr><td style="padding:3px 5px;border:1px solid #ccc">${fd[`dp221_name_${i}`]}</td>
+           <td style="padding:3px 5px;border:1px solid #ccc">${fd[`dp221_pos_${i}`]||''}</td>
+           <td style="padding:3px 5px;border:1px solid #ccc">${fd[`dp221_agency_${i}`]||''}</td>
+           <td style="padding:3px 5px;border:1px solid #ccc">${fd[`dp221_time_${i}`]||''}</td>
+           <td style="padding:3px 5px;border:1px solid #ccc">${fd[`dp221_dest_${i}`]||''}</td></tr>` : ''
+    ).join('');
+    const sections = ['Operations Section','Planning Section','Logistics Section',
+                      'Finance / Admin Section','Communications Unit','Medical Unit'];
+    const checklistRows = sections.map((s,si) =>
+      `<tr><td style="padding:4px 6px;border:1px solid #ccc;font-weight:bold">${s}</td>
+       <td style="padding:4px 6px;border:1px solid #ccc;text-align:center">${fd[`demob_initial_${si}`]||''}</td>
+       <td style="padding:4px 6px;border:1px solid #ccc;text-align:center">${fd[`demob_initial_${si}`]?'\u2713':'\u25a1'}</td>
+       </tr>`
+    ).join('');
+    return `
+    <div class="ics-print-header">
+      <div class="logo-cell">${logoHtml()}</div>
+      <div class="title-cell"><h1>ICS-221 DEMOBILIZATION CHECK-OUT</h1>
+        <div class="sub">${variant} \u00b7 FieldCommand IMS</div></div>
+      <div class="meta-cell">
+        <div class="ml">Incident Name</div><div class="mv" style="font-size:10px">${fd.incident_name||'\u2014'}</div>
+        <div class="ml">Demob Date</div><div class="mv">${fd.demob_date||'\u2014'}</div>
+        <div class="ml">Resource / Unit</div><div class="mv" style="font-size:10px">${fd.resource_name||'\u2014'}</div>
+      </div>
+    </div>
+    <div class="pr">
+      <div class="pc w2"><div class="pl">Resource Leader</div><div class="pv">${fd.resource_leader||''}</div></div>
+      <div class="pc"><div class="pl">Home Agency</div><div class="pv">${fd.home_agency||''}</div></div>
+      <div class="pc"><div class="pl">Destination</div><div class="pv">${fd.destination||''}</div></div>
+    </div>
+    <div class="pr">
+      <div class="pc w2"><div class="pl">Scheduled Release</div><div class="pv">${fd.release_datetime||''}</div></div>
+      <div class="pc w2"><div class="pl">Actual Release</div><div class="pv">${fd.actual_release_datetime||''}</div></div>
+    </div>
+    <div class="pr"><div class="pc" style="flex:4">
+      <div class="pl">2. Check-Out Checklist</div>
+      <table style="width:100%;border-collapse:collapse;font-size:10px;margin-top:3px">
+        <thead><tr style="background:#e8eef7">
+          <th style="padding:3px 6px;border:1px solid #ccc;text-align:left">Section / Unit</th>
+          <th style="padding:3px 6px;border:1px solid #ccc">Initials</th>
+          <th style="padding:3px 6px;border:1px solid #ccc">Cleared</th>
+        </tr></thead>
+        <tbody>${checklistRows}</tbody>
+      </table>
+    </div></div>
+    ${persRows?`<div class="pr"><div class="pc" style="flex:4">
+      <div class="pl">3. Personnel Demobilized</div>
+      <table style="width:100%;border-collapse:collapse;font-size:10px;margin-top:3px">
+        <thead><tr style="background:#e8eef7">
+          <th style="padding:3px 5px;border:1px solid #ccc;text-align:left">Name</th>
+          <th style="padding:3px 5px;border:1px solid #ccc;text-align:left">Position</th>
+          <th style="padding:3px 5px;border:1px solid #ccc;text-align:left">Agency</th>
+          <th style="padding:3px 5px;border:1px solid #ccc">Release Time</th>
+          <th style="padding:3px 5px;border:1px solid #ccc;text-align:left">Destination</th>
+        </tr></thead><tbody>${persRows}</tbody>
+      </table>
+    </div></div>`:''}
+    ${fd.demob_notes?`<div class="pr"><div class="pc" style="flex:4">
+      <div class="pl">4. Outstanding Issues</div><div class="pv">${fd.demob_notes}</div>
+    </div></div>`:''}
+    <div class="sig-row">
+      <div class="sig-cell"><div class="sl">Demob Unit Leader</div>
+        <div class="ss">${fd.demob_by||''}</div>
+        <div class="sl">Date/Time: ${fd.demob_cleared_datetime||''}</div></div>
+      <div class="sig-cell"><div class="sl">DMOB Signature</div><div class="ss"></div></div>
+      <div class="sig-cell"><div class="sl">Approved By (IC or designee)</div>
+        <div class="ss">${fd.demob_approved_ic||''}</div>
+        <div class="sl">Date/Time: ${fd.demob_approved_datetime||''}</div></div>
+      <div class="sig-cell"><div class="sl">Approval Signature</div><div class="ss"></div></div>
+    </div>
+    <div class="print-footer">
+      <span>${variant} \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
+      <span>Printed: ${new Date().toLocaleString()}</span>
+    </div>`;
+  }
+};
+
+let pers221Count = 6;
+function add221Person() {
+  const tbody = document.getElementById('pers221Body');
+  if (!tbody) return;
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="dp221_name_${pers221Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="dp221_pos_${pers221Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="dp221_agency_${pers221Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="dp221_time_${pers221Count}" style="width:100%;font-size:11px;padding:3px 4px;font-family:var(--font-hd)"></td>
+    <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="dp221_dest_${pers221Count}" style="width:100%;font-size:11px;padding:3px 4px"></td>`;
+  tbody.appendChild(tr);
+  pers221Count++;
+}
+
 </script>
 <!-- Map Picker Modal -->
 <div class="map-picker-modal" id="mapPickerModal">

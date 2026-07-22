@@ -269,6 +269,13 @@ function renderMembers(members) {
         </div>
         <div style="margin-top:6px">${certDots}</div>
       </div>
+      <button onclick="event.stopPropagation();showQR('${m.id}','${(m.barcode_id||m.member_id||'').replace(/'/g,"\\'")}','${((m.first_name||'')+' '+(m.last_name||'')).trim().replace(/'/g,"\\'")}','${(m.callsign||'').replace(/'/g,"\\'")}' )"
+        style="flex-shrink:0;font-size:11px;padding:4px 8px;
+               background:var(--panel2);border:1px solid var(--line);
+               color:var(--muted);border-radius:4px;margin-left:4px"
+        title="Show QR check-in code">
+        QR
+      </button>
     </div>`;
   }).join("");
 }
@@ -552,5 +559,134 @@ loadRoster();
 </script>
 
 <script src="/lib/identity.js"></script>
+
+<!-- QR Check-In Code Modal -->
+<div id="qrModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);
+     z-index:300;align-items:center;justify-content:center"
+     onclick="if(event.target===this)this.style.display='none'">
+<div style="background:#fff;border-radius:12px;padding:24px;
+            width:340px;max-width:96vw;text-align:center">
+  <div style="font-size:13px;font-weight:700;color:#1a3a6b;
+              letter-spacing:1px;margin-bottom:4px" id="qrModalName"></div>
+  <div style="font-size:11px;color:#666;margin-bottom:14px" id="qrModalSub"></div>
+  <canvas id="qrCanvas" style="display:block;margin:0 auto 10px;
+    border:1px solid #eee;border-radius:4px"></canvas>
+  <div style="font-family:monospace;font-size:13px;color:#1a3a6b;
+              background:#f0f4f8;border-radius:4px;padding:6px;margin-bottom:14px"
+       id="qrCode"></div>
+  <div style="font-size:10px;color:#999;margin-bottom:14px;line-height:1.5">
+    Scan this code with the FieldCommand QR Check-In page.<br>
+    Or use the ID/callsign printed below as a manual code.
+  </div>
+  <div style="display:flex;gap:8px">
+    <button onclick="printQR()"
+      style="flex:1;padding:9px;background:#1a3a6b;border:none;
+             color:#fff;border-radius:6px;cursor:pointer">🖨 Print</button>
+    <button onclick="downloadQR()"
+      style="flex:1;padding:9px;background:#f0f4f8;border:1px solid #ddd;
+             border-radius:6px;cursor:pointer">💾 Save PNG</button>
+    <button onclick="document.getElementById('qrModal').style.display='none'"
+      style="padding:9px 14px;background:#f0f4f8;border:1px solid #ddd;
+             border-radius:6px;cursor:pointer">Close</button>
+  </div>
+</div>
+</div>
+
+<script>
+// ── QR Code generator (pure JS, no library) ───────────────────────
+// We use the QR Server API (online) or generate inline SVG
+// For offline use: encode the barcode_id as text and display prominently
+
+let _qrMember = null;
+
+function showQR(memberId, barcodeId, name, callsign) {
+  _qrMember = { memberId, barcodeId, name, callsign };
+  const code = barcodeId || callsign || memberId;
+
+  document.getElementById('qrModalName').textContent = name || 'Member';
+  document.getElementById('qrModalSub').textContent  =
+    (callsign ? callsign + ' · ' : '') + code;
+  document.getElementById('qrCode').textContent = code;
+
+  // Generate QR using canvas — simple URL-based approach
+  // Uses the Google Charts API when online, or a minimal inline fallback
+  const canvas = document.getElementById('qrCanvas');
+  canvas.width  = 200;
+  canvas.height = 200;
+  const ctx = canvas.getContext('2d');
+
+  // Try to load QR image from Google Charts (needs internet)
+  const qrUrl = `https://chart.googleapis.com/chart?cht=qr&chs=200x200&chl=${encodeURIComponent(code)}&choe=UTF-8`;
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = () => {
+    ctx.clearRect(0,0,200,200);
+    ctx.drawImage(img,0,0,200,200);
+  };
+  img.onerror = () => {
+    // Offline fallback: draw a simple placeholder with the code as text
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0,0,200,200);
+    ctx.strokeStyle = '#1a3a6b';
+    ctx.lineWidth = 4;
+    ctx.strokeRect(10,10,180,180);
+    // Draw a simple QR-like pattern border
+    for (let i=0;i<3;i++) {
+      ctx.strokeRect(10+i*4,10+i*4,24-i*8,24-i*8);
+      ctx.strokeRect(166-i*4,10+i*4,24-i*8,24-i*8);
+      ctx.strokeRect(10+i*4,166-i*4,24-i*8,24-i*8);
+    }
+    // Print the code prominently
+    ctx.fillStyle = '#1a3a6b';
+    ctx.font = 'bold 16px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(code, 100, 95);
+    ctx.font = '11px sans-serif';
+    ctx.fillStyle = '#666';
+    ctx.fillText('(Offline — use code above)', 100, 115);
+    ctx.fillText('Scan manually at check-in', 100, 130);
+  };
+  img.src = qrUrl;
+
+  document.getElementById('qrModal').style.display = 'flex';
+}
+
+function printQR() {
+  const canvas  = document.getElementById('qrCanvas');
+  const name    = document.getElementById('qrModalName').textContent;
+  const sub     = document.getElementById('qrModalSub').textContent;
+  const code    = document.getElementById('qrCode').textContent;
+  const dataUrl = canvas.toDataURL('image/png');
+  const win     = window.open('','_blank','width=400,height=500');
+  win.document.write(`<!DOCTYPE html><html><head><title>QR: ${name}</title>
+    <style>body{font-family:Arial;text-align:center;padding:24px}
+    img{border:1px solid #eee;border-radius:4px}
+    h2{margin:12px 0 4px;color:#1a3a6b}
+    .code{font-family:monospace;font-size:16px;background:#f0f4f8;
+          padding:6px 14px;border-radius:4px;display:inline-block;margin:8px 0}
+    .sub{font-size:12px;color:#666;margin-bottom:12px}
+    </style></head><body onload="window.print()">
+    <img src="${dataUrl}" width="200" height="200">
+    <h2>${name}</h2>
+    <div class="code">${code}</div>
+    <div class="sub">${sub}</div>
+    <div style="font-size:10px;color:#999;margin-top:8px">
+      FieldCommand IMS Check-In Code<br>
+      Scan at: http://192.168.50.1/scan_checkin.html
+    </div>
+  </body></html>`);
+  win.document.close();
+}
+
+function downloadQR() {
+  const canvas = document.getElementById('qrCanvas');
+  const name   = (document.getElementById('qrModalName').textContent || 'member')
+    .replace(/\s+/g,'_').toLowerCase();
+  const a = document.createElement('a');
+  a.href     = canvas.toDataURL('image/png');
+  a.download = `checkin_qr_${name}.png`;
+  a.click();
+}
+</script>
 </body>
 </html>

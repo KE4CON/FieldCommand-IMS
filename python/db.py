@@ -2140,6 +2140,20 @@ def _alter_existing_tables():
             except Exception as e:
                 log.warning(f"incidents.{col}: {e}")
 
+    # roster — barcode/QR check-in support
+    ros_existing = {r[1] for r in conn.execute("PRAGMA table_info(roster)").fetchall()}
+    if 'barcode_id' not in ros_existing:
+        try:
+            # barcode_id: unique scan code for this member — defaults to member_id
+            # Can be overridden with a facility badge number or custom ID
+            conn.execute("ALTER TABLE roster ADD COLUMN barcode_id TEXT DEFAULT ''")
+            # Backfill: set barcode_id = member_id for existing members
+            conn.execute("UPDATE roster SET barcode_id = member_id WHERE barcode_id = '' OR barcode_id IS NULL")
+            conn.commit()
+            log.info("Added roster.barcode_id column and backfilled from member_id")
+        except Exception as e:
+            log.warning(f"roster.barcode_id: {e}")
+
     # net_entries new columns
     ne_existing = {r[1] for r in conn.execute("PRAGMA table_info(net_entries)").fetchall()}
     ne_additions = [

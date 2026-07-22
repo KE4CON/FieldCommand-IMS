@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<title>Scan Check-In — FieldCommand IMS</title>
+<link rel="stylesheet" href="theme.css">
+<style>
+body { background:var(--bg);font-size:15px; }
+
+.ci-header {
+  background:linear-gradient(135deg,var(--eoc),var(--eoc-lt));
+  border-bottom:3px solid var(--accent);padding:12px 18px;
+}
+.ci-title {
+  font-family:var(--font-hd);font-size:15px;color:#fff;
+  letter-spacing:2px;text-transform:uppercase;
+}
+.ci-sub { font-size:12px;color:rgba(255,255,255,.6);margin-top:2px; }
+
+/* Camera viewfinder */
+#scanArea {
+  position:relative;background:#000;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+}
+#scanVideo {
+  width:100%;max-width:500px;display:block;
+}
+#scanOverlay {
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  pointer-events:none;
+}
+.scan-frame {
+  width:220px;height:220px;position:relative;
+}
+.scan-frame::before, .scan-frame::after,
+.scan-frame span::before, .scan-frame span::after {
+  content:'';position:absolute;width:30px;height:30px;border-color:#fff;border-style:solid;
+}
+.scan-frame::before  { top:0;left:0;border-width:3px 0 0 3px; }
+.scan-frame::after   { top:0;right:0;border-width:3px 3px 0 0; }
+.scan-frame span::before { bottom:0;left:0;border-width:0 0 3px 3px; }
+.scan-frame span::after  { bottom:0;right:0;border-width:0 3px 3px 0; }
+.scan-line {
+  position:absolute;left:10%;right:10%;height:2px;
+  background:rgba(37,88,160,.8);box-shadow:0 0 8px rgba(37,88,160,.9);
+  animation:scanline 2s linear infinite;
+}
+@keyframes scanline { 0%{top:10%} 50%{top:85%} 100%{top:10%} }
+
+/* Manual fallback */
+#manualEntry {
+  padding:16px 18px;border-top:1px solid var(--line);
+}
+.manual-row {
+  display:flex;gap:8px;align-items:center;
+}
+.manual-input {
+  flex:1;font-size:16px;padding:10px 12px;
+  background:var(--input-bg);border:1px solid var(--input-border);
+  color:var(--txt);border-radius:var(--r-md);font-family:var(--font-mono);
+  text-transform:uppercase;letter-spacing:2px;
+}
+
+/* Form fill area */
+#formArea {
+  padding:16px 18px;display:none;
+}
+.field-row {
+  margin-bottom:12px;
+}
+.field-row label {
+  display:block;font-size:11px;font-weight:600;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px;
+}
+.field-row input, .field-row select {
+  width:100%;font-size:16px;padding:10px 12px;
+  background:var(--input-bg);border:1px solid var(--input-border);
+  color:var(--txt);border-radius:var(--r-md);-webkit-appearance:none;
+}
+.field-row input.autofilled { border-color:var(--green); }
+
+.scan-result-banner {
+  background:var(--green-bg);border:1px solid #86efac;border-radius:var(--r-md);
+  padding:10px 14px;margin-bottom:14px;font-size:12px;color:var(--green);
+  display:flex;align-items:center;gap:8px;
+}
+
+.submit-btn {
+  width:100%;padding:15px;font-size:16px;font-weight:700;
+  background:var(--green);border:none;color:#fff;
+  border-radius:var(--r-md);cursor:pointer;margin-top:6px;
+  text-transform:uppercase;letter-spacing:.05em;
+}
+.submit-btn:disabled { background:var(--dim);cursor:not-allowed; }
+
+.success-box {
+  display:none;background:var(--green-bg);border:2px solid #86efac;
+  border-radius:var(--r-lg);padding:24px;text-align:center;margin:16px;
+}
+.success-icon { font-size:44px;margin-bottom:10px; }
+.success-msg {
+  font-family:var(--font-hd);font-size:15px;color:var(--green);
+  letter-spacing:1px;margin-bottom:6px;
+}
+
+.not-found-banner {
+  background:var(--red-bg);border:1px solid #fca5a5;border-radius:var(--r-md);
+  padding:10px 14px;margin:10px 18px;font-size:12px;color:var(--red);display:none;
+}
+
+/* Scan history */
+#scanHistory {
+  padding:10px 18px;border-top:1px solid var(--line);
+  max-height:160px;overflow-y:auto;
+}
+.hist-item {
+  display:flex;justify-content:space-between;padding:5px 0;
+  border-bottom:1px solid var(--line-lt);font-size:11px;
+}
+</style>
+</head>
+<body>
+
+<div class="ci-header">
+  <div class="ci-title">📷 Scan Check-In</div>
+  <div class="ci-sub">Scan QR code or barcode · or type ID manually</div>
+</div>
+
+<!-- Camera viewfinder -->
+<div id="scanArea" style="max-height:300px">
+  <video id="scanVideo" autoplay playsinline muted></video>
+  <div id="scanOverlay">
+    <div class="scan-frame">
+      <span></span>
+      <div class="scan-line"></div>
+    </div>
+  </div>
+  <div id="scanStatus"
+    style="position:absolute;bottom:10px;left:0;right:0;text-align:center;
+           font-size:12px;color:rgba(255,255,255,.7)">
+    Point camera at QR code or barcode
+  </div>
+</div>
+
+<!-- Camera controls -->
+<div style="display:flex;gap:8px;padding:10px 18px;border-bottom:1px solid var(--line)">
+  <button onclick="startCamera()" id="startCamBtn"
+    style="flex:1;font-size:12px;padding:7px">
+    📷 Start Camera
+  </button>
+  <button onclick="stopCamera()" id="stopCamBtn"
+    style="flex:1;font-size:12px;padding:7px;display:none">
+    ⏹ Stop Camera
+  </button>
+  <select id="cameraSelect" style="flex:1;font-size:12px;padding:7px;
+    background:var(--input-bg);border:1px solid var(--input-border);color:var(--txt);
+    border-radius:var(--r-sm)">
+    <option value="">Default camera</option>
+  </select>
+</div>
+
+<!-- Manual ID entry -->
+<div id="manualEntry">
+  <div style="font-size:12px;color:var(--muted);margin-bottom:8px">
+    Or type a member ID, callsign, or radio ID:
+  </div>
+  <div class="manual-row">
+    <input type="text" id="manualCode" class="manual-input"
+      placeholder="KE4CON  or  ESV-001  or  412"
+      onkeydown="if(event.key==='Enter') lookupCode(this.value)">
+    <button onclick="lookupCode(document.getElementById('manualCode').value)"
+      style="font-size:13px;padding:10px 16px;background:var(--eoc);
+             border-color:var(--eoc);color:#fff">
+      Look Up
+    </button>
+  </div>
+</div>
+
+<!-- Not found -->
+<div class="not-found-banner" id="notFoundBanner"></div>
+
+<!-- Success box -->
+<div class="success-box" id="successBox">
+  <div class="success-icon">✅</div>
+  <div class="success-msg">CHECK-IN COMPLETE</div>
+  <div style="font-size:13px;color:var(--muted)" id="successName"></div>
+  <div style="font-size:12px;color:var(--dim);margin-top:4px" id="successTime"></div>
+  <button onclick="resetScan()"
+    style="margin-top:16px;padding:10px 24px;background:var(--eoc);
+           border:none;color:#fff;border-radius:var(--r-md);font-size:14px;cursor:pointer">
+    Scan Next Person
+  </button>
+</div>
+
+<!-- Form area (after scan resolves) -->
+<div id="formArea">
+  <div class="scan-result-banner" id="resultBanner" style="display:none">
+    <span style="font-size:20px">✓</span>
+    <div id="resultText"></div>
+  </div>
+
+  <div class="field-row">
+    <label>Full Name *</label>
+    <input type="text" id="ci_name" autocomplete="name" placeholder="First Last">
+  </div>
+  <div class="field-row">
+    <label>Callsign / ID</label>
+    <input type="text" id="ci_id" style="font-family:var(--font-mono)"
+      placeholder="KE4CON or Unit 412">
+  </div>
+  <div class="field-row">
+    <label>Agency</label>
+    <input type="text" id="ci_agency" placeholder="MCESV or mutual aid agency">
+  </div>
+  <div class="field-row">
+    <label>ICS Position</label>
+    <select id="ci_position">
+      <option value="">Select position...</option>
+      <option>Incident Commander (IC)</option>
+      <option>Safety Officer (SOFR)</option>
+      <option>Operations Section Chief (OSC)</option>
+      <option>Planning Section Chief (PSC)</option>
+      <option>Logistics Section Chief (LSC)</option>
+      <option>Finance/Admin Section Chief (FSC)</option>
+      <option>Branch Director</option>
+      <option>Division/Group Supervisor (DIVS)</option>
+      <option>Net Control</option>
+      <option>Amateur Radio Operator</option>
+      <option>Emergency Medical</option>
+      <option>Volunteer</option>
+      <option>Other</option>
+    </select>
+  </div>
+  <div class="field-row">
+    <label>Resource Type</label>
+    <select id="ci_rtype">
+      <option value="">Select type...</option>
+      <option>Personnel</option>
+      <option>Amateur Radio</option>
+      <option>Engine</option><option>Crew</option>
+      <option>Vehicle</option><option>Equipment</option><option>Other</option>
+    </select>
+  </div>
+
+  <button class="submit-btn" onclick="submitCheckin()" id="submitBtn">
+    ✓ Check In
+  </button>
+</div>
+
+<!-- Scan history -->
+<div id="scanHistory" style="display:none">
+  <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;
+              color:var(--muted);margin-bottom:6px">Recent Check-Ins This Session</div>
+  <div id="histList"></div>
+</div>
+
+<!-- Incident selector (hidden, pre-filled from URL) -->
+<div style="padding:10px 18px;border-top:1px solid var(--line);
+            font-size:11px;color:var(--dim)" id="incBadge">
+  No incident selected — use from
+  <a href="iap_compile.html" style="color:var(--blue)">ICS-211 Share URL</a>
+</div>
+
+<script>
+const ICS_API = 'http://192.168.50.1:5051';
+const API     = 'http://192.168.50.1:5050';
+const params  = new URLSearchParams(location.search);
+const INC_ID  = params.get('incident') || localStorage.getItem('selectedIncident') || '';
+const PERIOD  = parseInt(params.get('period') || '1');
+
+let videoStream   = null;
+let detector      = null;
+let scanLoop      = null;
+let lastScanned   = '';
+let lastScanTime  = 0;
+let sessionCheckins = [];
+let scannerActive = false;
+
+// ── Init ───────────────────────────────────────────────────────────
+async function init() {
+  // Set incident badge
+  if (INC_ID) {
+    try {
+      const r = await fetch(`${ICS_API}/api/ics/incidents/${INC_ID}`).catch(() => null);
+      const inc = r?.ok ? await r.json() : null;
+      document.getElementById('incBadge').innerHTML =
+        `Incident: <strong style="color:var(--eoc)">${inc?.name || INC_ID}</strong> · Period ${PERIOD}`;
+    } catch(e) {}
+  }
+
+  // Check BarcodeDetector support
+  if (typeof BarcodeDetector === 'undefined') {
+    document.getElementById('scanStatus').textContent =
+      '⚠ Camera scanning not supported in this browser — use manual entry below';
+    document.getElementById('startCamBtn').disabled = true;
+  } else {
+    // Enumerate cameras
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const cameras = devices.filter(d => d.kind === 'videoinput');
+      const sel = document.getElementById('cameraSelect');
+      cameras.forEach((cam, i) => {
+        const opt = document.createElement('option');
+        opt.value = cam.deviceId;
+        opt.textContent = cam.label || `Camera ${i+1}`;
+        sel.appendChild(opt);
+      });
+    } catch(e) {}
+  }
+}
+
+// ── Camera ────────────────────────────────────────────────────────
+async function startCamera() {
+  if (typeof BarcodeDetector === 'undefined') {
+    alert('BarcodeDetector API not available in this browser.\nUse manual ID entry instead.');
+    return;
+  }
+
+  try {
+    const deviceId = document.getElementById('cameraSelect').value;
+    const constraints = {
+      video: deviceId
+        ? { deviceId: { exact: deviceId }, facingMode: 'environment' }
+        : { facingMode: 'environment', width:{ideal:1280}, height:{ideal:720} }
+    };
+    videoStream = await navigator.mediaDevices.getUserMedia(constraints);
+    const video = document.getElementById('scanVideo');
+    video.srcObject = videoStream;
+    await video.play();
+
+    detector = new BarcodeDetector({
+      formats: ['qr_code','code_128','code_39','ean_13','ean_8',
+                'data_matrix','pdf417','aztec']
+    });
+
+    scannerActive = true;
+    document.getElementById('startCamBtn').style.display = 'none';
+    document.getElementById('stopCamBtn').style.display  = '';
+    document.getElementById('scanStatus').textContent    = 'Scanning…';
+    startScanLoop();
+  } catch(e) {
+    document.getElementById('scanStatus').textContent = 'Camera error: ' + e.message;
+  }
+}
+
+function stopCamera() {
+  scannerActive = false;
+  if (scanLoop) { clearInterval(scanLoop); scanLoop = null; }
+  if (videoStream) {
+    videoStream.getTracks().forEach(t => t.stop());
+    videoStream = null;
+  }
+  document.getElementById('startCamBtn').style.display = '';
+  document.getElementById('stopCamBtn').style.display  = 'none';
+  document.getElementById('scanStatus').textContent    = 'Camera stopped';
+}
+
+function startScanLoop() {
+  if (scanLoop) clearInterval(scanLoop);
+  scanLoop = setInterval(scanFrame, 250);  // 4 frames/sec — enough for QR
+}
+
+async function scanFrame() {
+  if (!detector || !scannerActive) return;
+  const video = document.getElementById('scanVideo');
+  if (video.readyState < 2) return;
+
+  try {
+    const codes = await detector.detect(video);
+    if (!codes.length) return;
+
+    const code     = codes[0].rawValue;
+    const now      = Date.now();
+    // Debounce — same code within 3 seconds = ignore
+    if (code === lastScanned && now - lastScanTime < 3000) return;
+    lastScanned  = code;
+    lastScanTime = now;
+
+    // Flash feedback
+    document.getElementById('scanStatus').textContent = `✓ Scanned: ${code}`;
+    // Brief haptic if available
+    if (navigator.vibrate) navigator.vibrate(50);
+
+    await lookupCode(code);
+  } catch(e) {
+    // Detection errors are normal (e.g. blurry frame) — ignore
+  }
+}
+
+// ── Code lookup ────────────────────────────────────────────────────
+async function lookupCode(raw) {
+  const code = (raw || '').trim().toUpperCase();
+  if (!code) return;
+
+  hideNotFound();
+
+  try {
+    const r = await fetch(`${API}/api/barcode_lookup?code=${encodeURIComponent(code)}`);
+    const d = await r.json();
+
+    if (d.found) {
+      // Roster member found — auto-fill form
+      document.getElementById('formArea').style.display = '';
+      document.getElementById('resultBanner').style.display = '';
+      document.getElementById('resultText').innerHTML =
+        `<strong>${d.name}</strong> · ${d.callsign || d.radio_id || d.member_id} · ${d.agency}
+        <br><span style="font-size:10px;color:var(--muted)">
+          ${d.member_type === 'visitor' ? '👤 Visitor' : '✓ Roster member'}
+        </span>`;
+
+      setField('ci_name',     d.name,         true);
+      setField('ci_id',       d.callsign || d.radio_id || d.barcode_id, true);
+      setField('ci_agency',   d.agency,        true);
+      if (d.suggested_position) {
+        setSelect('ci_position', d.suggested_position);
+      }
+      // Auto-submit after brief review delay (1.5s)
+      // for high-throughput check-in scenarios
+      // (disabled by default — user clicks the button)
+      document.getElementById('submitBtn').focus();
+    } else {
+      // Not in roster — show manual form with the code pre-filled
+      document.getElementById('formArea').style.display = '';
+      document.getElementById('resultBanner').style.display = 'none';
+      showNotFound(`"${code}" not in roster. Fill in details manually.`);
+      setField('ci_id', raw.trim(), false);
+      document.getElementById('ci_name').focus();
+    }
+  } catch(e) {
+    showNotFound('Server error: ' + e.message);
+    document.getElementById('formArea').style.display = '';
+    document.getElementById('resultBanner').style.display = 'none';
+    setField('ci_id', raw.trim(), false);
+  }
+}
+
+function setField(id, val, markFilled) {
+  const el = document.getElementById(id);
+  if (!el || !val) return;
+  el.value = val;
+  if (markFilled) el.classList.add('autofilled');
+}
+
+function setSelect(id, val) {
+  const sel = document.getElementById(id);
+  if (!sel) return;
+  for (const opt of sel.options) {
+    if (opt.value === val || opt.text === val) {
+      sel.value = opt.value;
+      return;
+    }
+  }
+}
+
+// ── Submit ─────────────────────────────────────────────────────────
+async function submitCheckin() {
+  const name = document.getElementById('ci_name').value.trim();
+  if (!name) { alert('Name is required'); return; }
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Submitting…';
+
+  const now     = new Date();
+  const timeStr = now.toTimeString().slice(0,5);
+  const payload = {
+    incident_id:   INC_ID,
+    period:        PERIOD,
+    name,
+    callsign_id:   document.getElementById('ci_id').value.trim(),
+    agency:        document.getElementById('ci_agency').value.trim(),
+    ics_position:  document.getElementById('ci_position').value,
+    resource_type: document.getElementById('ci_rtype').value,
+    check_in_time: now.toISOString().slice(0,16),
+    status:        'Checked In',
+    synced_to_211: 0,
+  };
+
+  try {
+    const r = await fetch(`${ICS_API}/api/ics/checkin`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+
+    if (r.ok) {
+      // Add to session history
+      sessionCheckins.unshift({ name, id: payload.callsign_id, time: timeStr });
+      renderHistory();
+
+      // Show success
+      document.getElementById('formArea').style.display   = 'none';
+      document.getElementById('successBox').style.display = 'block';
+      document.getElementById('successName').textContent  =
+        `${name} · ${payload.callsign_id || payload.agency}`;
+      document.getElementById('successTime').textContent  = `Checked in at ${timeStr}`;
+
+      if (navigator.vibrate) navigator.vibrate([50, 50, 100]);
+    } else {
+      alert('Check-in failed — check server connection');
+      btn.disabled = false;
+      btn.textContent = '✓ Check In';
+    }
+  } catch(e) {
+    alert('Error: ' + e.message);
+    btn.disabled = false;
+    btn.textContent = '✓ Check In';
+  }
+}
+
+// ── Reset for next scan ────────────────────────────────────────────
+function resetScan() {
+  document.getElementById('successBox').style.display   = 'none';
+  document.getElementById('formArea').style.display     = 'none';
+  document.getElementById('resultBanner').style.display = 'none';
+  document.getElementById('manualCode').value           = '';
+  ['ci_name','ci_id','ci_agency'].forEach(id => {
+    const el = document.getElementById(id);
+    el.value = '';
+    el.classList.remove('autofilled');
+  });
+  document.getElementById('ci_position').value = '';
+  document.getElementById('ci_rtype').value    = '';
+  const btn = document.getElementById('submitBtn');
+  btn.disabled    = false;
+  btn.textContent = '✓ Check In';
+  hideNotFound();
+  lastScanned = '';  // allow same code to scan again
+  if (scannerActive) {
+    document.getElementById('scanStatus').textContent = 'Scanning…';
+  }
+}
+
+// ── History ────────────────────────────────────────────────────────
+function renderHistory() {
+  if (!sessionCheckins.length) return;
+  document.getElementById('scanHistory').style.display = '';
+  document.getElementById('histList').innerHTML = sessionCheckins.slice(0,10).map(c =>
+    `<div class="hist-item">
+      <span><strong>${c.name}</strong> ${c.id ? '· ' + c.id : ''}</span>
+      <span style="color:var(--muted)">${c.time}</span>
+    </div>`
+  ).join('');
+}
+
+function showNotFound(msg) {
+  const el = document.getElementById('notFoundBanner');
+  el.textContent = '⚠ ' + msg;
+  el.style.display = '';
+}
+function hideNotFound() {
+  document.getElementById('notFoundBanner').style.display = 'none';
+}
+
+init();
+</script>
+</body>
+</html>

@@ -183,6 +183,19 @@ def member_vals(m, mid, now):
             m.get("created", now), now]
 
 # ── HTTP Handler ──────────────────────────────────────────────────────────────
+
+def _suggest_position(role):
+    """Map roster role to suggested ICS position."""
+    role = (role or "").lower()
+    if "commander" in role or "director" in role: return "Incident Commander (IC)"
+    if "safety" in role: return "Safety Officer (SOFR)"
+    if "pio" in role or "public info" in role: return "Public Information Officer (PIO)"
+    if "logistics" in role: return "Logistics Section Chief (LSC)"
+    if "finance" in role: return "Finance/Admin Section Chief (FSC)"
+    if "net control" in role or "net_control" in role: return "Net Control"
+    if "operator" in role: return "Amateur Radio Operator"
+    return ""
+
 class Handler(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args): pass
 
@@ -315,6 +328,45 @@ class Handler(BaseHTTPRequestHandler):
         elif path == "/api/resmap":
             row = c.execute("SELECT * FROM resmap_state WHERE id=1").fetchone()
             return self.send_json({"markers":jload(row["markers"],[]) if row else []})
+
+
+        # ── Barcode / QR Check-In Lookup ────────────────────────────────────
+        # GET /api/barcode_lookup?code=XXXX
+        # Looks up a roster member by barcode_id, member_id, callsign, or radio_id
+        # Returns pre-filled check-in data so the scan can auto-complete the form
+        elif path == "/api/barcode_lookup":
+            code = qs.get("code",[""])[0].strip().upper()
+            if not code:
+                return self.send_json({"found":False,"error":"No code provided"},400)
+
+            # Try barcode_id first, then member_id, callsign, radio_id
+            row = None
+            for col in ["barcode_id","member_id","callsign","radio_id"]:
+                row = c.execute(
+                    f"SELECT * FROM roster WHERE UPPER({col})=? AND {col}!='' LIMIT 1",
+                    (code,)
+                ).fetchone()
+                if row:
+                    break
+
+            if not row:
+                return self.send_json({"found":False,"error":f"No roster member found for code: {code}"})
+
+            r = dict(row)
+            # Build pre-fill data for the check-in form
+            return self.send_json({
+                "found":        True,
+                "member_id":    r.get("member_id",""),
+                "barcode_id":   r.get("barcode_id",""),
+                "name":         f"{r.get('first_name','')} {r.get('last_name','')}".strip(),
+                "callsign":     r.get("callsign",""),
+                "radio_id":     r.get("radio_id",""),
+                "agency":       r.get("visitor_agency","") or "MCESV",
+                "role":         r.get("role",""),
+                "member_type":  r.get("member_type",""),
+                # Suggest ICS position based on role
+                "suggested_position": _suggest_position(r.get("role","")),
+            })
 
         elif path == "/api/hospitals":
             county = qs.get("county",[None])[0]

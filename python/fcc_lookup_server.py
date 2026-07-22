@@ -229,6 +229,26 @@ class Handler(BaseHTTPRequestHandler):
                     "modified":datetime.fromtimestamp(stat.st_mtime).isoformat()})
             return self.send_json({"exists":False,"age_days":None,"records":0})
 
+        elif path == "/api/config":
+            row = c.execute("""SELECT callsign,personal_call,org_name,org_short,
+                agency_name,agency_short,contact_email,contact_phone,
+                city,state,county,lat,lon,ics_form_variant,
+                logo_data,logo_mime,software_author,software_url,
+                setup_complete,configured_at,active_modules,
+                ps_system_name,ps_system_type,ps_id_label,ps_dispatch,
+                ps_system2_name,ps_system2_type,ps_member_id_label,ps_member_lookup
+                FROM station_config WHERE id=1""").fetchone()
+            if row:
+                keys = ['callsign','personal_call','org_name','org_short',
+                        'agency_name','agency_short','contact_email','contact_phone',
+                        'city','state','county','lat','lon','ics_form_variant',
+                        'logo_data','logo_mime','software_author','software_url',
+                        'setup_complete','configured_at','active_modules',
+                        'ps_system_name','ps_system_type','ps_id_label','ps_dispatch',
+                        'ps_system2_name','ps_system2_type','ps_member_id_label','ps_member_lookup']
+                return self.send_json(dict(zip(keys, row)))
+            return self.send_json({})
+
         elif path == "/api/position":
             return self.send_json(get_station_position())
 
@@ -377,6 +397,24 @@ class Handler(BaseHTTPRequestHandler):
         body   = self.read_body()
         c      = get_conn()
         now    = utcnow()
+
+        if path == "/api/config":
+            fields = ['callsign','personal_call','org_name','org_short',
+                      'agency_name','agency_short','contact_email','contact_phone',
+                      'city','state','county','lat','lon','ics_form_variant',
+                      'logo_data','logo_mime','setup_complete','active_modules',
+                      'ps_system_name','ps_system_type','ps_id_label','ps_dispatch',
+                      'ps_system2_name','ps_system2_type','ps_member_id_label','ps_member_lookup']
+            sets = [f"{f}=?" for f in fields if f in body]
+            vals = [body[f] for f in fields if f in body]
+            if sets:
+                vals.append(now)
+                vals.append(1)
+                c.execute(
+                    f"UPDATE station_config SET {','.join(sets)},configured_at=?,setup_complete=? WHERE id=1",
+                    vals)
+                c.commit()
+            return self.send_json({"ok": True})
 
         if path == "/api/nets":
             net_id = body.get("id") or f"net-{int(time.time())}"

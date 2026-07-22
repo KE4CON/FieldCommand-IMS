@@ -1,0 +1,696 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Organization Setup — FieldCommand IMS</title>
+<link rel="stylesheet" href="theme.css">
+<style>
+.setup-wrap {
+  max-width: 820px; margin: 0 auto; padding: 24px 16px;
+}
+.setup-header {
+  background: linear-gradient(135deg, var(--panel) 0%, var(--bg) 100%);
+  border: 1px solid var(--eoc); border-radius: 10px;
+  padding: 24px; margin-bottom: 24px; text-align: center;
+}
+.setup-header h1 {
+  font-family: var(--font-hd); font-size: 22px; letter-spacing: 3px;
+  color: var(--amber); margin: 0 0 6px;
+}
+.setup-header p {
+  color: rgba(255,255,255,0.7); font-size: 13px; margin: 0;
+}
+.setup-section {
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 8px; padding: 20px; margin-bottom: 16px;
+}
+.setup-section h2 {
+  font-family: var(--font-hd); font-size: 12px; letter-spacing: 2px;
+  color: var(--eoc); text-transform: uppercase; margin: 0 0 16px;
+  padding-bottom: 8px; border-bottom: 1px solid var(--line);
+}
+.form-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
+}
+.form-grid.full { grid-template-columns: 1fr; }
+.form-group { display: flex; flex-direction: column; gap: 5px; }
+.form-group label {
+  font-size: 11px; color: rgba(255,255,255,0.6);
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.form-group input, .form-group select {
+  background: var(--input-bg); border: 1px solid var(--line);
+  border-radius: 4px; color: var(--txt); padding: 8px 10px;
+  font-size: 13px; width: 100%; box-sizing: border-box;
+}
+.form-group input:focus, .form-group select:focus {
+  border-color: var(--eoc); outline: none;
+}
+.form-group .hint {
+  font-size: 10px; color: var(--dim); margin-top: 2px;
+}
+.logo-preview {
+  width: 120px; height: 120px; border: 2px dashed var(--line);
+  border-radius: 8px; display: flex; align-items: center;
+  justify-content: center; cursor: pointer; overflow: hidden;
+  background: var(--bg); flex-shrink: 0;
+}
+.logo-preview img { width: 100%; height: 100%; object-fit: contain; }
+.logo-preview .placeholder {
+  font-size: 11px; color: var(--dim); text-align: center; padding: 8px;
+}
+.logo-row { display: flex; gap: 16px; align-items: flex-start; }
+.logo-info { flex: 1; }
+.variant-cards {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+}
+.variant-card {
+  border: 2px solid var(--line); border-radius: 8px; padding: 14px;
+  cursor: pointer; transition: border-color 0.15s, background 0.15s;
+  text-align: center;
+}
+.variant-card.selected {
+  border-color: var(--eoc); background: rgba(26,58,107,0.3);
+}
+.variant-card .v-name {
+  font-family: var(--font-hd); font-size: 14px; color: var(--amber);
+  letter-spacing: 1px; margin-bottom: 4px;
+}
+.variant-card .v-full {
+  font-size: 11px; color: rgba(255,255,255,0.6);
+}
+.variant-card .v-forms {
+  font-size: 10px; color: var(--dim); margin-top: 6px;
+}
+.module-card {
+  background: var(--bg); border: 2px solid var(--line);
+  border-radius: 8px; padding: 14px; cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.module-card:hover { border-color: var(--eoc); }
+.module-card.active { border-color: var(--eoc); background: rgba(26,58,107,0.2); }
+.mod-name { font-size: 13px; font-weight: bold; color: var(--txt); }
+.mod-desc { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 3px; }
+.mod-req { font-size: 10px; color: var(--dim); margin-top: 8px; }
+.mod-always { font-size: 10px; color: var(--green); margin-top: 8px; }
+  background: var(--bg); border: 1px solid var(--line); border-radius: 6px;
+  padding: 12px 14px; font-size: 11px; color: rgba(255,255,255,0.5);
+  line-height: 1.7;
+}
+.attribution-box strong { color: rgba(255,255,255,0.8); }
+.save-row {
+  display: flex; gap: 12px; align-items: center; margin-top: 8px;
+}
+.btn-save {
+  background: var(--eoc); border: none; border-radius: 6px;
+  color: #fff; font-family: var(--font-hd); font-size: 13px;
+  letter-spacing: 1px; padding: 10px 28px; cursor: pointer;
+}
+.btn-save:hover { background: #2d6ab4; }
+.btn-dashboard {
+  background: var(--panel2); border: 1px solid var(--line);
+  border-radius: 6px; color: var(--txt); font-size: 13px;
+  padding: 10px 20px; cursor: pointer; text-decoration: none;
+  display: inline-block;
+}
+.status-msg {
+  font-size: 12px; padding: 6px 12px; border-radius: 4px;
+  display: none;
+}
+.status-msg.ok { background: rgba(26,122,58,0.3); color: var(--green); display: block; }
+.status-msg.err { background: rgba(192,32,32,0.2); color: var(--red); display: block; }
+.setup-complete-banner {
+  background: rgba(26,122,58,0.2); border: 1px solid var(--green);
+  border-radius: 8px; padding: 12px 16px; margin-bottom: 16px;
+  font-size: 13px; color: var(--green); display: none;
+}
+@media (max-width: 600px) {
+  .form-grid { grid-template-columns: 1fr; }
+  .variant-cards { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="setup-wrap">
+
+  <div class="setup-header">
+    <h1>⚙ FIELDCOMMAND IMS SETUP</h1>
+    <p>Configure your organization, branding, and ICS form defaults.<br>
+    These settings appear on all ICS forms, IAP documents, and printed materials.</p>
+  </div>
+
+  <div id="completeBanner" class="setup-complete-banner">
+    ✓ Setup complete — FieldCommand IMS is configured for your organization.
+    <a href="index.html" style="color:var(--green);margin-left:12px">Go to Dashboard →</a>
+  </div>
+
+  <!-- Section 1: Callsign & Identity -->
+  <div class="setup-section">
+    <h2>📡 Callsign &amp; Identity</h2>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Club / Station Callsign *</label>
+        <input type="text" id="callsign" placeholder="K9ESV" maxlength="10"
+               style="font-family:var(--font-hd);font-size:18px;letter-spacing:3px;text-transform:uppercase">
+        <span class="hint">Primary callsign displayed on dashboard and all documents</span>
+      </div>
+      <div class="form-group">
+        <label>Personal Callsign (Operator/Developer)</label>
+        <input type="text" id="personal_call" placeholder="KE4CON" maxlength="10"
+               style="font-family:var(--font-hd);font-size:18px;letter-spacing:3px;text-transform:uppercase">
+        <span class="hint">Individual operator callsign for net control and ICS forms</span>
+      </div>
+      <div class="form-group">
+        <label>Organization Full Name *</label>
+        <input type="text" id="org_name" placeholder="McHenry County Emergency Services Volunteers">
+        <span class="hint">Appears on all ICS forms and IAP documents</span>
+      </div>
+      <div class="form-group">
+        <label>Organization Abbreviation</label>
+        <input type="text" id="org_short" placeholder="MCESV" maxlength="20">
+        <span class="hint">Short form used in headers and badges</span>
+      </div>
+      <div class="form-group">
+        <label>Associated Agency Name</label>
+        <input type="text" id="agency_name" placeholder="McHenry County Emergency Management Agency">
+        <span class="hint">County/state EMA or partner agency (if applicable)</span>
+      </div>
+      <div class="form-group">
+        <label>Agency Abbreviation</label>
+        <input type="text" id="agency_short" placeholder="MCEMA" maxlength="20">
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 2: Location -->
+  <div class="setup-section">
+    <h2>📍 Location</h2>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>City</label>
+        <input type="text" id="city" placeholder="Woodstock">
+      </div>
+      <div class="form-group">
+        <label>County</label>
+        <input type="text" id="county" placeholder="McHenry County">
+      </div>
+      <div class="form-group">
+        <label>State</label>
+        <input type="text" id="state" placeholder="Illinois" maxlength="30">
+      </div>
+      <div class="form-group">
+        <label>Contact Email</label>
+        <input type="email" id="contact_email" placeholder="ke4con@example.com">
+      </div>
+      <div class="form-group">
+        <label>Latitude (decimal)</label>
+        <input type="number" id="lat" placeholder="42.3247" step="0.0001">
+        <span class="hint">Used for NWS weather, sunrise/sunset, maps</span>
+      </div>
+      <div class="form-group">
+        <label>Longitude (decimal)</label>
+        <input type="number" id="lon" placeholder="-88.3822" step="0.0001">
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 3: Logo -->
+  <div class="setup-section">
+    <h2>🏅 Organization Logo</h2>
+    <div class="logo-row">
+      <div class="logo-preview" id="logoPreview" onclick="document.getElementById('logoFile').click()">
+        <div class="placeholder" id="logoPlaceholder">Click to upload<br>logo<br>(PNG/JPG/SVG)</div>
+        <img id="logoImg" style="display:none">
+      </div>
+      <div class="logo-info">
+        <p style="font-size:13px;color:rgba(255,255,255,0.7);margin:0 0 12px">
+          Upload your organization or IMT logo. It will appear on all printed ICS forms,
+          IAP cover pages, and exported documents.
+        </p>
+        <input type="file" id="logoFile" accept="image/png,image/jpeg,image/svg+xml"
+               style="display:none" onchange="handleLogoUpload(event)">
+        <button onclick="document.getElementById('logoFile').click()"
+          style="margin-right:8px">📁 Choose Logo File</button>
+        <button onclick="clearLogo()" style="background:var(--panel2)">✕ Clear Logo</button>
+        <p style="font-size:11px;color:var(--dim);margin:10px 0 0">
+          Recommended: PNG with transparent background, square or landscape format.<br>
+          Max size: 2 MB. Stored locally on the FieldCommand Pi.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 4: ICS Form Variant Default -->
+  <div class="setup-section">
+    <h2>📋 Default ICS Form Variant</h2>
+    <p style="font-size:12px;color:rgba(255,255,255,0.6);margin:0 0 14px">
+      Select your agency's standard form variant. This sets the default when creating any ICS form.
+      You can override this per-incident or per-form at any time — forms can be mixed and matched.
+    </p>
+    <div class="variant-cards">
+      <div class="variant-card selected" id="var-FEMA" onclick="selectVariant('FEMA')">
+        <div class="v-name">FEMA</div>
+        <div class="v-full">Federal Emergency Management Agency</div>
+        <div class="v-forms">010-0-x series · All-hazards standard<br>Most common for ARES/RACES/CERT</div>
+      </div>
+      <div class="variant-card" id="var-USCG" onclick="selectVariant('USCG')">
+        <div class="v-name">USCG</div>
+        <div class="v-full">US Coast Guard</div>
+        <div class="v-forms">CG-52xx series · Maritime/coastal ops<br>Adds vessel/waterway fields</div>
+      </div>
+      <div class="variant-card" id="var-NWCG" onclick="selectVariant('NWCG')">
+        <div class="v-name">NWCG</div>
+        <div class="v-full">National Wildfire Coordinating Group</div>
+        <div class="v-forms">Wildfire-specific variants<br>ICS-204, 215, 215A fire versions</div>
+      </div>
+    </div>
+    <p style="font-size:11px;color:var(--dim);margin:10px 0 0">
+      Note: Not all forms have USCG or NWCG variants — those forms will use FEMA format regardless.
+      At time of form creation you can always choose a different variant for that specific form.
+    </p>
+  </div>
+
+  <!-- Section 5: Active Modules -->
+  <div class="setup-section">
+    <h2>🔌 Active Modules</h2>
+    <p style="font-size:12px;color:rgba(255,255,255,0.6);margin:0 0 16px">
+      Select which capabilities are active for your deployment.
+      Disabled modules are hidden from the dashboard and navigation.
+      ICS/IAP is always on — it cannot be disabled.
+    </p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+
+      <div class="module-card" id="mod-ics" style="pointer-events:none;opacity:0.6">
+        <div style="display:flex;align-items:center;gap:10px">
+          <input type="checkbox" id="mod_ics" checked disabled style="width:18px;height:18px">
+          <div>
+            <div class="mod-name">📋 ICS / NIMS Incident Management</div>
+            <div class="mod-desc">Full IAP form set · All ICS forms · FEMA/USCG/NWCG variants</div>
+          </div>
+        </div>
+        <div class="mod-always">Always active</div>
+      </div>
+
+      <div class="module-card" id="mod-amateur-card" onclick="toggleModule('amateur')">
+        <div style="display:flex;align-items:center;gap:10px">
+          <input type="checkbox" id="mod_amateur" style="width:18px;height:18px" onclick="event.stopPropagation();toggleModule('amateur')">
+          <div>
+            <div class="mod-name">📡 Amateur Radio (EMCOMM)</div>
+            <div class="mod-desc">Net logger · FCC callsign lookup · APRS map · Winlink · 44Net</div>
+          </div>
+        </div>
+        <div class="mod-req">Requires FCC amateur radio license</div>
+      </div>
+
+      <div class="module-card" id="mod-pubsafety-card" onclick="toggleModule('pubsafety')">
+        <div style="display:flex;align-items:center;gap:10px">
+          <input type="checkbox" id="mod_pubsafety" style="width:18px;height:18px" onclick="event.stopPropagation();toggleModule('pubsafety')">
+          <div>
+            <div class="mod-name">🚔 Public Safety Radio</div>
+            <div class="mod-desc">Net logger for any public safety radio system · P25 · DMR · VHF/UHF</div>
+          </div>
+        </div>
+        <div class="mod-req">Configure system name below when enabled</div>
+      </div>
+
+      <div class="module-card" id="mod-winlink-card" onclick="toggleModule('winlink')">
+        <div style="display:flex;align-items:center;gap:10px">
+          <input type="checkbox" id="mod_winlink" style="width:18px;height:18px" onclick="event.stopPropagation();toggleModule('winlink')">
+          <div>
+            <div class="mod-name">✉ Winlink / HF Digital</div>
+            <div class="mod-desc">Winlink Express · VARA HF/FM · PAT · HF email gateway</div>
+          </div>
+        </div>
+        <div class="mod-req">Requires HF station and amateur license</div>
+      </div>
+
+      <div class="module-card" id="mod-aprs-card" onclick="toggleModule('aprs')">
+        <div style="display:flex;align-items:center;gap:10px">
+          <input type="checkbox" id="mod_aprs" style="width:18px;height:18px" onclick="event.stopPropagation();toggleModule('aprs')">
+          <div>
+            <div class="mod-name">🗺 APRS Tactical Map</div>
+            <div class="mod-desc">Live APRS overlay · offline tiles · resource positions</div>
+          </div>
+        </div>
+        <div class="mod-req">Requires TNC or internet APRS-IS feed</div>
+      </div>
+
+      <div class="module-card" id="mod-44net-card" onclick="toggleModule('44net')">
+        <div style="display:flex;align-items:center;gap:10px">
+          <input type="checkbox" id="mod_44net" style="width:18px;height:18px" onclick="event.stopPropagation();toggleModule('44net')">
+          <div>
+            <div class="mod-name">🛰 44Net / AMPRNet Gateway</div>
+            <div class="mod-desc">AMPRNet routing · WireGuard tunnel · 44.0.0.0/8 reachability</div>
+          </div>
+        </div>
+        <div class="mod-req">Requires amateur license and AMPRNet allocation</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Section 6: Public Safety Radio Config (shown when pub safety module enabled) -->
+  <div class="setup-section" id="pubsafety-config" style="display:none">
+    <h2>🚔 Public Safety Radio System Configuration</h2>
+    <p style="font-size:12px;color:rgba(255,255,255,0.6);margin:0 0 16px">
+      Configure your public safety radio system. These names appear throughout the net logger,
+      ICS-205 Radio Plan, and all printed forms. You can add multiple systems if your
+      jurisdiction uses more than one.
+    </p>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Primary System Name *</label>
+        <input type="text" id="ps_system_name" placeholder="e.g. Starcom21, MABAS, IREACH, P25 Zone 1">
+        <span class="hint">Displayed as the tab/section name on the dashboard</span>
+      </div>
+      <div class="form-group">
+        <label>System Type</label>
+        <select id="ps_system_type">
+          <option value="P25">P25 (APCO Project 25)</option>
+          <option value="DMR">DMR (Digital Mobile Radio)</option>
+          <option value="Analog">Conventional Analog VHF/UHF</option>
+          <option value="Mixed">Mixed Analog/Digital</option>
+          <option value="LTE">FirstNet / LTE</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Unit ID Field Label *</label>
+        <input type="text" id="ps_id_label" placeholder="e.g. Radio ID, Unit #, Badge #, Apparatus #">
+        <span class="hint">Label shown on check-in form and ICS-211 log</span>
+      </div>
+      <div class="form-group">
+        <label>Dispatch Center Name</label>
+        <input type="text" id="ps_dispatch" placeholder="e.g. McHenry County Sheriff Dispatch">
+      </div>
+      <div class="form-group">
+        <label>Secondary System Name</label>
+        <input type="text" id="ps_system2_name" placeholder="Optional — e.g. MABAS, Mutual Aid">
+        <span class="hint">Leave blank if only one system</span>
+      </div>
+      <div class="form-group">
+        <label>Secondary System Type</label>
+        <select id="ps_system2_type">
+          <option value="">— None —</option>
+          <option value="P25">P25</option>
+          <option value="DMR">DMR</option>
+          <option value="Analog">Conventional Analog</option>
+          <option value="Mixed">Mixed</option>
+          <option value="LTE">FirstNet / LTE</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+    </div>
+    <div style="margin-top:14px">
+      <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-bottom:8px;text-transform:uppercase;letter-spacing:1px">
+        Member ID / EMA ID Field
+      </div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Member ID Label</label>
+          <input type="text" id="ps_member_id_label" placeholder="e.g. EMA ID, Member #, Badge #">
+          <span class="hint">Label for your organization's internal member identifier</span>
+        </div>
+        <div class="form-group">
+          <label>Member Lookup</label>
+          <select id="ps_member_lookup">
+            <option value="radio_id">By Unit/Radio ID (match check-in ID to roster)</option>
+            <option value="name">By Name only</option>
+            <option value="none">No automatic lookup</option>
+          </select>
+          <span class="hint">How to auto-populate Member ID on check-in</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 7: Software Attribution (read-only) -->
+  <div class="setup-section">
+    <h2>ℹ Software Attribution</h2>
+    <div class="attribution-box">
+      <strong>FieldCommand IMS</strong> was conceived and developed by
+      <strong>James Rospopo KE4CON</strong>.<br>
+      This software is open source under the
+      <strong>GNU Affero General Public License v3.0 (AGPLv3)</strong>.<br>
+      Documentation is licensed under <strong>CC BY-SA 4.0</strong>.<br>
+      Source: <strong>https://github.com/KE4CON/FieldCommand-IMS</strong><br><br>
+      Your organization information above identifies the <em>deploying organization</em> —
+      it does not change the authorship or copyright of the software.
+      Per the AGPLv3 license, any modifications must also be released under AGPLv3.
+    </div>
+  </div>
+
+  <!-- Save -->
+  <div class="setup-section">
+    <div class="save-row">
+      <button class="btn-save" onclick="saveConfig()">💾 SAVE CONFIGURATION</button>
+      <a href="index.html" class="btn-dashboard">← Back to Dashboard</a>
+      <span id="statusMsg" class="status-msg"></span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const API = 'http://192.168.50.1:5050';
+let selectedVariant = 'FEMA';
+let logoData = '';
+let logoMime = '';
+
+// ── Module state ─────────────────────────────────────────────────────
+const modules = {
+  amateur: false, pubsafety: false, winlink: false, aprs: false, '44net': false
+};
+
+function toggleModule(mod) {
+  modules[mod] = !modules[mod];
+  const cb = document.getElementById(`mod_${mod.replace('-','')}`);
+  const card = document.getElementById(`mod-${mod}-card`);
+  if (cb) cb.checked = modules[mod];
+  if (card) card.classList.toggle('active', modules[mod]);
+  // Show/hide public safety config
+  if (mod === 'pubsafety') {
+    document.getElementById('pubsafety-config').style.display =
+      modules.pubsafety ? '' : 'none';
+  }
+}
+
+function setModules(cfg) {
+  const mods = cfg.active_modules ? JSON.parse(cfg.active_modules) : {};
+  Object.keys(modules).forEach(m => {
+    if (mods[m]) {
+      modules[m] = true;
+      const cb = document.getElementById(`mod_${m.replace('-','')}`);
+      const card = document.getElementById(`mod-${m}-card`);
+      if (cb) cb.checked = true;
+      if (card) card.classList.add('active');
+    }
+  });
+  if (modules.pubsafety) {
+    document.getElementById('pubsafety-config').style.display = '';
+  }
+}
+  try {
+    const r = await fetch(`${API}/api/config`);
+    if (!r.ok) return;
+    const cfg = await r.json();
+
+    // Populate fields
+    const fields = ['callsign','personal_call','org_name','org_short',
+                    'agency_name','agency_short','city','county','state',
+                    'contact_email','lat','lon'];
+    fields.forEach(f => {
+      const el = document.getElementById(f);
+      if (el && cfg[f]) el.value = cfg[f];
+    });
+
+    // Uppercase callsigns
+    ['callsign','personal_call'].forEach(f => {
+      const el = document.getElementById(f);
+      if (el) el.value = (el.value || '').toUpperCase();
+    });
+
+    // Form variant
+    if (cfg.ics_form_variant) selectVariant(cfg.ics_form_variant);
+
+    // Logo
+    if (cfg.logo_data && cfg.logo_mime) {
+      logoData = cfg.logo_data;
+      logoMime = cfg.logo_mime;
+      showLogo(`data:${cfg.logo_mime};base64,${cfg.logo_data}`);
+    }
+
+    // Setup complete banner
+    if (cfg.setup_complete) {
+      document.getElementById('completeBanner').style.display = 'block';
+    }
+  } catch(e) {
+    console.log('Config load failed — running offline or first run', e);
+  }
+}
+
+function selectVariant(v) {
+  selectedVariant = v;
+  ['FEMA','USCG','NWCG'].forEach(x => {
+    document.getElementById(`var-${x}`).classList.toggle('selected', x === v);
+  });
+}
+
+function handleLogoUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  if (file.size > 2 * 1024 * 1024) {
+    alert('Logo file must be under 2 MB');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = e => {
+    const dataUrl = e.target.result;
+    // Extract base64 and mime
+    const [header, b64] = dataUrl.split(',');
+    logoMime = header.match(/:(.*?);/)[1];
+    logoData = b64;
+    showLogo(dataUrl);
+  };
+  reader.readAsDataURL(file);
+}
+
+function showLogo(dataUrl) {
+  const img = document.getElementById('logoImg');
+  const placeholder = document.getElementById('logoPlaceholder');
+  img.src = dataUrl;
+  img.style.display = 'block';
+  placeholder.style.display = 'none';
+}
+
+function clearLogo() {
+  logoData = '';
+  logoMime = '';
+  document.getElementById('logoImg').style.display = 'none';
+  document.getElementById('logoImg').src = '';
+  document.getElementById('logoPlaceholder').style.display = 'block';
+  document.getElementById('logoFile').value = '';
+}
+
+async function saveConfig() {
+  const callsign = document.getElementById('callsign').value.trim().toUpperCase();
+  const orgName  = document.getElementById('org_name').value.trim();
+
+  // Callsign not required — IAP-only deployments may not have one
+  if (!orgName) { showStatus('Organization name is required', false); return; }
+
+  const payload = {
+    callsign:         callsign,
+    personal_call:    document.getElementById('personal_call').value.trim().toUpperCase(),
+    org_name:         orgName,
+    org_short:        document.getElementById('org_short').value.trim().toUpperCase(),
+    agency_name:      document.getElementById('agency_name').value.trim(),
+    agency_short:     document.getElementById('agency_short').value.trim().toUpperCase(),
+    city:             document.getElementById('city').value.trim(),
+    county:           document.getElementById('county').value.trim(),
+    state:            document.getElementById('state').value.trim(),
+    contact_email:    document.getElementById('contact_email').value.trim(),
+    lat:              parseFloat(document.getElementById('lat').value) || 42.3247,
+    lon:              parseFloat(document.getElementById('lon').value) || -88.3822,
+    ics_form_variant: selectedVariant,
+    logo_data:        logoData,
+    logo_mime:        logoMime,
+    // Modules
+    active_modules:   JSON.stringify(modules),
+    // Public safety radio
+    ps_system_name:   document.getElementById('ps_system_name').value.trim(),
+    ps_system_type:   document.getElementById('ps_system_type').value,
+    ps_id_label:      document.getElementById('ps_id_label').value.trim(),
+    ps_dispatch:      document.getElementById('ps_dispatch').value.trim(),
+    ps_system2_name:  document.getElementById('ps_system2_name').value.trim(),
+    ps_system2_type:  document.getElementById('ps_system2_type').value,
+    ps_member_id_label: document.getElementById('ps_member_id_label').value.trim(),
+    ps_member_lookup: document.getElementById('ps_member_lookup').value,
+    setup_complete:   1,
+  };
+
+  try {
+    const r = await fetch(`${API}/api/config`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    });
+    const data = await r.json();
+    if (data.ok) {
+      showStatus('✓ Configuration saved successfully', true);
+      document.getElementById('completeBanner').style.display = 'block';
+      document.title = `${callsign || orgName} — FieldCommand IMS Setup`;
+    } else {
+      showStatus('Save failed — check server connection', false);
+    }
+  } catch(e) {
+    localStorage.setItem('fieldcommand_config', JSON.stringify(payload));
+    showStatus('✓ Saved to local storage (offline mode)', true);
+  }
+}
+
+async function loadConfig() {
+  try {
+    const r = await fetch(`${API}/api/config`);
+    if (!r.ok) return;
+    const cfg = await r.json();
+
+    const fields = ['callsign','personal_call','org_name','org_short',
+                    'agency_name','agency_short','city','county','state',
+                    'contact_email','lat','lon',
+                    'ps_system_name','ps_id_label','ps_dispatch',
+                    'ps_system2_name','ps_member_id_label'];
+    fields.forEach(f => {
+      const el = document.getElementById(f);
+      if (el && cfg[f]) el.value = cfg[f];
+    });
+
+    // Select fields
+    ['ps_system_type','ps_system2_type','ps_member_lookup'].forEach(f => {
+      const el = document.getElementById(f);
+      if (el && cfg[f]) el.value = cfg[f];
+    });
+
+    // Uppercase callsigns
+    ['callsign','personal_call'].forEach(f => {
+      const el = document.getElementById(f);
+      if (el) el.value = (el.value || '').toUpperCase();
+    });
+
+    if (cfg.ics_form_variant) selectVariant(cfg.ics_form_variant);
+    if (cfg.active_modules)   setModules(cfg);
+
+    if (cfg.logo_data && cfg.logo_mime) {
+      logoData = cfg.logo_data;
+      logoMime = cfg.logo_mime;
+      showLogo(`data:${cfg.logo_mime};base64,${cfg.logo_data}`);
+    }
+    if (cfg.setup_complete) {
+      document.getElementById('completeBanner').style.display = 'block';
+    }
+  } catch(e) {
+    try {
+      const cfg = JSON.parse(localStorage.getItem('fieldcommand_config') || '{}');
+      if (cfg.active_modules) setModules(cfg);
+    } catch(e2) {}
+  }
+}
+
+function showStatus(msg, ok) {
+  const el = document.getElementById('statusMsg');
+  el.textContent = msg;
+  el.className = `status-msg ${ok ? 'ok' : 'err'}`;
+  setTimeout(() => el.className = 'status-msg', 5000);
+}
+
+// Uppercase callsign fields as you type
+['callsign','personal_call','org_short','agency_short'].forEach(id => {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('input', () => el.value = el.value.toUpperCase());
+});
+
+loadConfig();
+</script>
+</body>
+</html>

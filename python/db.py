@@ -366,15 +366,49 @@ CREATE TABLE IF NOT EXISTS resmap_state (
 );
 INSERT OR IGNORE INTO resmap_state(id) VALUES(1);
 
--- ── Station configuration (singleton) ────────────────────────────────────────
+-- ── Station / Organization configuration (singleton) ────────────────────────
 CREATE TABLE IF NOT EXISTS station_config (
     id              INTEGER PRIMARY KEY DEFAULT 1,
+    -- Callsign & identity
     callsign        TEXT NOT NULL DEFAULT 'W8EOC',
+    personal_call   TEXT DEFAULT '',          -- personal callsign of operator/developer
+    org_name        TEXT DEFAULT '',          -- full organization name
+    org_short       TEXT DEFAULT '',          -- abbreviation (e.g. MCESV)
+    agency_name     TEXT DEFAULT '',          -- associated agency (e.g. McHenry County EMA)
+    agency_short    TEXT DEFAULT '',          -- agency abbreviation
+    -- Contact
+    contact_email   TEXT DEFAULT '',
+    contact_phone   TEXT DEFAULT '',
+    -- Location
+    city            TEXT DEFAULT '',
+    state           TEXT DEFAULT '',
+    county          TEXT DEFAULT '',
     lat             REAL NOT NULL DEFAULT 42.3247,
     lon             REAL NOT NULL DEFAULT -88.3822,
     gps_enabled     INTEGER NOT NULL DEFAULT 1,
     gps_device      TEXT DEFAULT '/dev/gps0',
     gps_last_fix    TEXT,
+    -- ICS form defaults
+    ics_form_variant TEXT DEFAULT 'FEMA',    -- FEMA, USCG, or NWCG
+    -- Branding
+    logo_data       TEXT DEFAULT '',          -- base64 encoded logo image
+    logo_mime       TEXT DEFAULT '',          -- image/png, image/jpeg, image/svg+xml
+    -- Attribution (read-only display)
+    software_author TEXT DEFAULT 'James Rospopo KE4CON',
+    software_url    TEXT DEFAULT 'https://github.com/KE4CON/FieldCommand-IMS',
+    -- Setup state
+    setup_complete  INTEGER NOT NULL DEFAULT 0,
+    -- Active modules (JSON object)
+    active_modules  TEXT DEFAULT '{}',
+    -- Public safety radio configuration
+    ps_system_name  TEXT DEFAULT '',      -- e.g. Starcom21, MABAS, P25 Zone 1
+    ps_system_type  TEXT DEFAULT 'P25',   -- P25, DMR, Analog, Mixed, LTE, Other
+    ps_id_label     TEXT DEFAULT 'Radio ID', -- Unit #, Badge #, Apparatus #, etc.
+    ps_dispatch     TEXT DEFAULT '',      -- dispatch center name
+    ps_system2_name TEXT DEFAULT '',      -- secondary system
+    ps_system2_type TEXT DEFAULT '',
+    ps_member_id_label TEXT DEFAULT 'EMA ID',
+    ps_member_lookup   TEXT DEFAULT 'radio_id',
     configured_at   TEXT
 );
 INSERT OR IGNORE INTO station_config(id) VALUES(1);
@@ -456,6 +490,32 @@ def init_db():
         "ALTER TABLE nets ADD COLUMN net_closed TEXT",
         "ALTER TABLE net_entries ADD COLUMN checkout_time TEXT",
         "ALTER TABLE net_entries ADD COLUMN ema_id TEXT DEFAULT ''",
+        # station_config expansions
+        "ALTER TABLE station_config ADD COLUMN personal_call TEXT DEFAULT ''",
+        "ALTER TABLE station_config ADD COLUMN org_name TEXT DEFAULT ''",
+        "ALTER TABLE station_config ADD COLUMN org_short TEXT DEFAULT ''",
+        "ALTER TABLE station_config ADD COLUMN agency_name TEXT DEFAULT ''",
+        "ALTER TABLE station_config ADD COLUMN agency_short TEXT DEFAULT ''",
+        "ALTER TABLE station_config ADD COLUMN contact_email TEXT DEFAULT ''",
+        "ALTER TABLE station_config ADD COLUMN contact_phone TEXT DEFAULT ''",
+        "ALTER TABLE station_config ADD COLUMN city TEXT DEFAULT ''",
+        "ALTER TABLE station_config ADD COLUMN state TEXT DEFAULT ''",
+        "ALTER TABLE station_config ADD COLUMN county TEXT DEFAULT ''",
+        "ALTER TABLE station_config ADD COLUMN ics_form_variant TEXT DEFAULT 'FEMA'",
+        "ALTER TABLE station_config ADD COLUMN logo_data TEXT DEFAULT ''",
+        "ALTER TABLE station_config ADD COLUMN logo_mime TEXT DEFAULT ''",
+        "ALTER TABLE station_config ADD COLUMN software_author TEXT DEFAULT 'James Rospopo KE4CON'",
+        "ALTER TABLE station_config ADD COLUMN software_url TEXT DEFAULT 'https://github.com/KE4CON/FieldCommand-IMS'",
+        "ALTER TABLE station_config ADD COLUMN setup_complete INTEGER NOT NULL DEFAULT 0",
+        "ALTER TABLE station_config ADD COLUMN active_modules TEXT DEFAULT '{}'",
+        "ALTER TABLE station_config ADD COLUMN ps_system_name TEXT DEFAULT ''",
+        "ALTER TABLE station_config ADD COLUMN ps_system_type TEXT DEFAULT 'P25'",
+        "ALTER TABLE station_config ADD COLUMN ps_id_label TEXT DEFAULT 'Radio ID'",
+        "ALTER TABLE station_config ADD COLUMN ps_dispatch TEXT DEFAULT ''",
+        "ALTER TABLE station_config ADD COLUMN ps_system2_name TEXT DEFAULT ''",
+        "ALTER TABLE station_config ADD COLUMN ps_system2_type TEXT DEFAULT ''",
+        "ALTER TABLE station_config ADD COLUMN ps_member_id_label TEXT DEFAULT 'EMA ID'",
+        "ALTER TABLE station_config ADD COLUMN ps_member_lookup TEXT DEFAULT 'radio_id'",
     ]
     for sql in migrations:
         try:

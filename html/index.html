@@ -543,6 +543,12 @@
     <div class="card-desc">44Net WireGuard tunnel · 44.0.0.0/8 routing · gateway Pi status</div>
     <div class="card-port" id="ampr-card-status">Checking...</div>
   </a>
+  <a class="op-card" href="setup.html" style="--card-color:var(--amber)">
+    <div class="card-icon">⚙</div>
+    <div class="card-name">Organization Setup</div>
+    <div class="card-desc">Callsign · org name · agency · logo · ICS form variant defaults</div>
+    <div class="card-port">FieldCommand IMS Configuration</div>
+  </a>
 </div>
 </div><!-- /ms-amateur-system -->
 
@@ -656,6 +662,12 @@
     <div class="card-name">AMPRNet Gateway</div>
     <div class="card-desc">44Net WireGuard tunnel · 44.0.0.0/8 routing · gateway Pi status</div>
     <div class="card-port" id="ampr-card-status-sc">Checking...</div>
+  </a>
+  <a class="op-card" href="setup.html" style="--card-color:var(--amber)">
+    <div class="card-icon">⚙</div>
+    <div class="card-name">Organization Setup</div>
+    <div class="card-desc">Callsign · org name · agency · logo · ICS form variant defaults</div>
+    <div class="card-port">FieldCommand IMS Configuration</div>
   </a>
 </div>
 </div><!-- /ms-starcom-system -->
@@ -940,12 +952,61 @@
 </div><!-- end page grid -->
 
 <script>
-// ── Station config (edit these for your station) ──────────────────────
-const STATION_LAT = 42.3153;   // Default: Woodstock IL (McHenry County seat) — updated by installer
-const STATION_LON = -88.4473;  // Default: Woodstock IL (McHenry County seat) — updated by installer
-const STATION_CALL = "W8EXX";  // Your callsign
+// ── Station config — loaded from API ──────────────────────────────────
+let STATION_LAT = 42.3153;
+let STATION_LON = -88.4473;
+let STATION_CALL = "EMCOMM-NET";
 
-document.getElementById("stationCall").textContent = STATION_CALL;
+async function loadStationConfig() {
+  try {
+    const r = await fetch(`${API}/api/config`);
+    if (!r.ok) return;
+    const cfg = await r.json();
+    if (cfg.callsign) {
+      STATION_CALL = cfg.callsign;
+      document.getElementById("stationCall").textContent = cfg.callsign;
+    }
+    if (cfg.lat) STATION_LAT = cfg.lat;
+    if (cfg.lon) STATION_LON = cfg.lon;
+    // Show org name under callsign if set
+    if (cfg.org_name) {
+      let orgEl = document.getElementById("orgName");
+      if (!orgEl) {
+        orgEl = document.createElement("div");
+        orgEl.id = "orgName";
+        orgEl.style.cssText = "font-size:11px;color:rgba(255,255,255,0.6);letter-spacing:1px;margin-top:2px";
+        document.getElementById("stationCall").after(orgEl);
+      }
+      orgEl.textContent = cfg.org_short ? `${cfg.org_name} (${cfg.org_short})` : cfg.org_name;
+    }
+    // Show logo if set
+    if (cfg.logo_data && cfg.logo_mime) {
+      let logoEl = document.getElementById("stationLogo");
+      if (!logoEl) {
+        logoEl = document.createElement("img");
+        logoEl.id = "stationLogo";
+        logoEl.style.cssText = "height:48px;width:auto;object-fit:contain;border-radius:4px;margin-right:8px";
+        const heroLeft = document.querySelector(".hero-left");
+        if (heroLeft) heroLeft.prepend(logoEl);
+      }
+      logoEl.src = `data:${cfg.logo_mime};base64,${cfg.logo_data}`;
+    }
+    // Prompt setup if not configured
+    if (!cfg.setup_complete) {
+      const banner = document.createElement("div");
+      banner.style.cssText = "background:rgba(192,118,10,0.2);border:1px solid var(--amber);border-radius:6px;padding:10px 16px;margin-bottom:12px;font-size:12px;color:var(--amber)";
+      banner.innerHTML = '⚙ <strong>FieldCommand IMS is not configured.</strong> <a href="setup.html" style="color:var(--amber);font-weight:bold">Run the organization setup wizard →</a>';
+      document.querySelector(".page-wrap")?.prepend(banner);
+    }
+  } catch(e) {
+    // Offline fallback — try localStorage
+    try {
+      const cfg = JSON.parse(localStorage.getItem('fieldcommand_config') || '{}');
+      if (cfg.callsign) document.getElementById("stationCall").textContent = cfg.callsign;
+    } catch(e2) {}
+  }
+}
+loadStationConfig();
 
 // ── UTC Clock ─────────────────────────────────────────────────────────
 function updateClock() {

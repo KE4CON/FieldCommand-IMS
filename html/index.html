@@ -262,10 +262,15 @@
     </div>
   </div>
   <div>
-    <div class="utc-clock" id="utcClock">--:--:-- UTC</div>
-    <div style="font-size:11px;color:var(--muted);text-align:right" id="utcDate">----/--/--</div>
-    <div class="utc-clock" id="localClock" style="font-size:16px;margin-top:4px">--:--:-- LCL</div>
-    <div style="font-size:11px;color:var(--muted);text-align:right" id="localDate">----/--/--</div>
+    <div id="clockWrap" style="text-align:right">
+      <!-- Primary clock: UTC for amateur radio, local time for ICS and public safety -->
+      <div style="font-family:var(--font-mono);font-size:22px;color:#fff;letter-spacing:1px" id="primaryClock">--:--:--</div>
+      <div style="font-size:10px;color:rgba(255,255,255,0.5);letter-spacing:2px;text-transform:uppercase" id="primaryLabel">UTC</div>
+      <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:2px" id="primaryDate">----/--/--</div>
+      <!-- Secondary clock: smaller, opposite of primary -->
+      <div style="font-family:var(--font-mono);font-size:13px;color:rgba(255,255,255,0.5);margin-top:6px;letter-spacing:1px" id="secondaryClock">--:--:--</div>
+      <div style="font-size:9px;color:rgba(255,255,255,0.3);letter-spacing:2px;text-transform:uppercase" id="secondaryLabel">LCL</div>
+    </div>
     <div style="text-align:right;margin-top:5px">
       <span class="mode-pill amateur" id="modePill">📻 Amateur Radio Mode</span>
     </div>
@@ -997,25 +1002,29 @@ loadStationConfig();
 function updateClock() {
   const now = new Date();
 
-  // UTC clock
-  const hh = String(now.getUTCHours()).padStart(2,"0");
-  const mm = String(now.getUTCMinutes()).padStart(2,"0");
-  const ss = String(now.getUTCSeconds()).padStart(2,"0");
-  document.getElementById("utcClock").textContent = `${hh}:${mm}:${ss} UTC`;
-  const yr = now.getUTCFullYear();
-  const mo = String(now.getUTCMonth()+1).padStart(2,"0");
-  const dy = String(now.getUTCDate()).padStart(2,"0");
-  document.getElementById("utcDate").textContent = `${yr}/${mo}/${dy}`;
+  // Build both time strings
+  const utcH  = String(now.getUTCHours()).padStart(2,"0");
+  const utcM  = String(now.getUTCMinutes()).padStart(2,"0");
+  const utcS  = String(now.getUTCSeconds()).padStart(2,"0");
+  const utcTime = `${utcH}:${utcM}:${utcS}`;
+  const utcDate = `${now.getUTCFullYear()}/${String(now.getUTCMonth()+1).padStart(2,"0")}/${String(now.getUTCDate()).padStart(2,"0")}`;
 
-  // Local 24-hour clock
-  const lhh = String(now.getHours()).padStart(2,"0");
-  const lmm = String(now.getMinutes()).padStart(2,"0");
-  const lss = String(now.getSeconds()).padStart(2,"0");
-  document.getElementById("localClock").textContent = `${lhh}:${lmm}:${lss} LCL`;
-  const lyr = now.getFullYear();
-  const lmo = String(now.getMonth()+1).padStart(2,"0");
-  const ldy = String(now.getDate()).padStart(2,"0");
-  document.getElementById("localDate").textContent = `${lyr}/${lmo}/${ldy}`;
+  const lclH  = String(now.getHours()).padStart(2,"0");
+  const lclM  = String(now.getMinutes()).padStart(2,"0");
+  const lclS  = String(now.getSeconds()).padStart(2,"0");
+  const lclTime = `${lclH}:${lclM}:${lclS}`;
+  const lclDate = `${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,"0")}/${String(now.getDate()).padStart(2,"0")}`;
+
+  // Mode-aware display:
+  // Amateur radio → UTC primary (worldwide comms standard)
+  // ICS / Public Safety → Local time primary (FEMA 502-2: "local time is typically used")
+  const utcPrimary = (currentMode === 'amateur');
+
+  document.getElementById("primaryClock").textContent   = utcPrimary ? utcTime : lclTime;
+  document.getElementById("primaryLabel").textContent   = utcPrimary ? "UTC" : "LOCAL";
+  document.getElementById("primaryDate").textContent    = utcPrimary ? utcDate : lclDate;
+  document.getElementById("secondaryClock").textContent = utcPrimary ? lclTime : utcTime;
+  document.getElementById("secondaryLabel").textContent = utcPrimary ? "LCL" : "UTC";
 }
 setInterval(updateClock, 1000);
 updateClock();
@@ -1430,6 +1439,10 @@ function openJS8Call(e) {
 
     // Update page title tint
     document.body.dataset.mode = mode;
+
+    // Swap clock hierarchy: UTC primary for amateur, local time primary for ICS/public safety
+    currentMode = mode;
+    updateClock();
   }
 
   // Expose globally

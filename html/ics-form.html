@@ -2587,6 +2587,455 @@ async function showHospitalPicker() {
   }
 }
 
+
+// ══════════════════════════════════════════════════════════════════
+// ICS-208 SAFETY MESSAGE / PLAN
+// ══════════════════════════════════════════════════════════════════
+FORMS['208'] = {
+  title: 'ICS-208 Safety Message/Plan',
+  badge: 'ICS-208',
+  variants: { FEMA:'FEMA 010-0-8', USCG:'CG-5217', NWCG:'ICS-208 (NWCG)' },
+
+  render() {
+    document.getElementById('formTitle').textContent = 'ICS-208 \u2014 Safety Message / Plan';
+    document.getElementById('formBadge').textContent = 'ICS-208';
+    document.getElementById('formMeta').textContent =
+      `${this.variants[VARIANT]} \u00b7 Period ${PERIOD} \u00b7 ${incData.name||'No incident'}`;
+    return `
+    <div class="section-card">
+      <h2>1. Incident Information</h2>
+      <div class="grid-3">
+        ${field('incident_name','Incident Name','text',incData.name||'')}
+        ${field('operational_period_number','Op Period #','text',String(PERIOD))}
+        ${field('date_prepared','Date Prepared','date',todayDate())}
+      </div>
+      <div class="grid-2">
+        ${field('operational_period_from','Op Period From','datetime-local','')}
+        ${field('operational_period_to','Op Period To','datetime-local','')}
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>2. Safety Message</h2>
+      <p style="font-size:11px;color:var(--muted);margin:0 0 10px">
+        The safety message is read aloud at every Operations Briefing. Keep it concise,
+        specific to this incident, and actionable.
+      </p>
+      ${field('safety_message','Safety Message for this Operational Period','textarea',
+        '',{rows:6})}
+    </div>
+
+    <div class="section-card">
+      <h2>3. Known Hazards</h2>
+      <div id="hazardList">
+        ${[...Array(6)].map((_,i)=>`
+        <div style="display:grid;grid-template-columns:1fr 2fr 1fr;gap:8px;margin-bottom:8px">
+          ${field('hazard_type_'+i,'Hazard Type','text','')}
+          ${field('hazard_desc_'+i,'Description / Location','text','')}
+          ${field('hazard_control_'+i,'Control Measure','text','')}
+        </div>`).join('')}
+      </div>
+      <button onclick="add208Hazard()" style="font-size:11px;padding:4px 12px">+ Add Hazard</button>
+    </div>
+
+    <div class="section-card">
+      <h2>4. PPE Requirements</h2>
+      <div class="grid-2">
+        ${field('ppe_general','General PPE (all personnel)','text',
+          'Hard hat, safety glasses, high-visibility vest, steel-toed boots')}
+        ${field('ppe_special','Special / Task-Specific PPE','text','')}
+      </div>
+      ${field('ppe_notes','PPE Notes / Exceptions','textarea','',{rows:2})}
+    </div>
+
+    <div class="section-card">
+      <h2>5. Emergency Signals & Procedures</h2>
+      <div class="grid-2">
+        ${field('emergency_evac_signal','Emergency Evacuation Signal','text',
+          'Three blasts on air horn / Radio: ALL UNITS EVACUATE IMMEDIATELY')}
+        ${field('emergency_assembly','Assembly Point','text','')}
+      </div>
+      <div class="grid-2">
+        ${field('emergency_channel','Emergency Radio Channel','text','')}
+        ${field('emergency_contact','Emergency Contact / Medical','text','')}
+      </div>
+      ${field('emergency_procedures','Emergency Procedures','textarea',
+        'In event of emergency: 1) Sound evacuation signal  2) Account for all personnel at assembly point  3) Report to Safety Officer',{rows:3})}
+    </div>
+
+    <div class="section-card">
+      <h2>6. Site Safety Map</h2>
+      ${imageField('ics208_map1','Site Safety Map / Diagram',
+        'Map showing hazard zones, evacuation routes, assembly points, and exclusion areas')}
+    </div>
+
+    <div class="section-card">
+      <h2>7. Additional Safety Diagrams / Photos</h2>
+      ${imageField('ics208_map2','Additional Safety Image',
+        'Hazard detail, equipment diagram, zone boundary photo, or supplemental map')}
+    </div>
+
+    <div class="section-card">
+      <h2>8. Prepared By</h2>
+      <div class="grid-2">
+        ${field('prepared_by_so','Prepared By (Safety Officer)','text',
+          formData.safety_officer||incData.safety_officer||'')}
+        ${field('date_time_prepared','Date / Time','datetime-local','')}
+      </div>
+      <div class="grid-2">
+        ${field('approved_by_ic','Approved By (Incident Commander)','text',
+          formData.incident_commander||incData.incident_commander||'')}
+        ${field('date_time_approved','Date / Time Approved','datetime-local','')}
+      </div>
+    </div>`;
+  },
+
+  buildPrint() {
+    const fd = collectFormData();
+    Object.assign(formData, fd);
+    const variant = FORMS['208'].variants[VARIANT];
+
+    const hazards = [...Array(haz208Count)].map((_,i) =>
+      fd[`hazard_type_${i}`]||fd[`hazard_desc_${i}`]
+        ? `<tr><td style="padding:3px 5px;border:1px solid #ccc">${fd[`hazard_type_${i}`]||''}</td>
+           <td style="padding:3px 5px;border:1px solid #ccc">${fd[`hazard_desc_${i}`]||''}</td>
+           <td style="padding:3px 5px;border:1px solid #ccc">${fd[`hazard_control_${i}`]||''}</td></tr>`
+        : ''
+    ).join('');
+
+    return `
+    <div class="ics-print-header">
+      <div class="logo-cell">${logoHtml()}</div>
+      <div class="title-cell"><h1>ICS-208 SAFETY MESSAGE / PLAN</h1>
+        <div class="sub">${variant} \u00b7 FieldCommand IMS</div></div>
+      <div class="meta-cell">
+        <div class="ml">Incident Name</div><div class="mv" style="font-size:10px">${fd.incident_name||'\u2014'}</div>
+        <div class="ml">Op Period</div><div class="mv">${fd.operational_period_number||PERIOD}</div>
+        <div class="ml">Date</div><div class="mv">${fd.date_prepared||'\u2014'}</div>
+      </div>
+    </div>
+    <div class="pr">
+      <div class="pc w2"><div class="pl">Safety Officer</div><div class="pv">${fd.prepared_by_so||''}</div></div>
+      <div class="pc w2"><div class="pl">Op Period From / To</div>
+        <div class="pv">${fd.operational_period_from||''} \u2014 ${fd.operational_period_to||''}</div>
+      </div>
+    </div>
+    <div class="pr"><div class="pc" style="flex:4">
+      <div class="pl">2. Safety Message</div>
+      <div class="pv pw" style="white-space:pre-wrap">${fd.safety_message||''}</div>
+    </div></div>
+    <div class="pr"><div class="pc" style="flex:4">
+      <div class="pl">3. Known Hazards</div>
+      <table style="width:100%;border-collapse:collapse;font-size:10px;margin-top:3px">
+        <thead><tr style="background:#e8eef7">
+          <th style="padding:3px 5px;border:1px solid #ccc;text-align:left">Hazard Type</th>
+          <th style="padding:3px 5px;border:1px solid #ccc;text-align:left">Description / Location</th>
+          <th style="padding:3px 5px;border:1px solid #ccc;text-align:left">Control Measure</th>
+        </tr></thead>
+        <tbody>${hazards||'<tr><td colspan="3" style="padding:5px;color:#888">None identified</td></tr>'}</tbody>
+      </table>
+    </div></div>
+    <div class="pr">
+      <div class="pc w2"><div class="pl">4. General PPE</div><div class="pv">${fd.ppe_general||''}</div></div>
+      <div class="pc w2"><div class="pl">Special PPE</div><div class="pv">${fd.ppe_special||''}</div></div>
+    </div>
+    <div class="pr">
+      <div class="pc w2"><div class="pl">Evacuation Signal</div><div class="pv">${fd.emergency_evac_signal||''}</div></div>
+      <div class="pc"><div class="pl">Assembly Point</div><div class="pv">${fd.emergency_assembly||''}</div></div>
+      <div class="pc"><div class="pl">Emergency Channel</div><div class="pv">${fd.emergency_channel||''}</div></div>
+    </div>
+    <div class="pr"><div class="pc" style="flex:4">
+      <div class="pl">Emergency Procedures</div>
+      <div class="pv">${fd.emergency_procedures||''}</div>
+    </div></div>
+    ${fd.ics208_map1_img?`<div style="border-top:2px solid #000;padding:8px">
+      <div style="font-size:9px;text-transform:uppercase;color:#555;margin-bottom:4px">
+        Site Safety Map \u2014 ${fd.ics208_map1_caption||'Hazard Zones & Evacuation Routes'}
+      </div>
+      <img src="${fd.ics208_map1_img}" style="max-width:100%;max-height:400px;object-fit:contain">
+    </div>`:''}
+    ${fd.ics208_map2_img?`<div style="border-top:1px solid #000;padding:8px">
+      <div style="font-size:9px;text-transform:uppercase;color:#555;margin-bottom:4px">
+        ${fd.ics208_map2_caption||'Additional Safety Diagram'}
+      </div>
+      <img src="${fd.ics208_map2_img}" style="max-width:100%;max-height:300px;object-fit:contain">
+    </div>`:''}
+    <div class="sig-row">
+      <div class="sig-cell"><div class="sl">Prepared By (Safety Officer)</div>
+        <div class="ss">${fd.prepared_by_so||''}</div>
+        <div class="sl">Date/Time: ${fd.date_time_prepared||''}</div></div>
+      <div class="sig-cell"><div class="sl">SO Signature</div><div class="ss"></div></div>
+      <div class="sig-cell"><div class="sl">Approved By (IC)</div>
+        <div class="ss">${fd.approved_by_ic||''}</div>
+        <div class="sl">Date/Time: ${fd.date_time_approved||''}</div></div>
+      <div class="sig-cell"><div class="sl">IC Signature</div><div class="ss"></div></div>
+    </div>
+    <div class="print-footer">
+      <span>${variant} \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
+      <span>Printed: ${new Date().toLocaleString()}</span>
+    </div>`;
+  }
+};
+
+let haz208Count = 6;
+function add208Hazard() {
+  const el = document.getElementById('hazardList');
+  if (!el) return;
+  const div = document.createElement('div');
+  div.style.cssText = 'display:grid;grid-template-columns:1fr 2fr 1fr;gap:8px;margin-bottom:8px';
+  div.innerHTML = `
+    ${field('hazard_type_'+haz208Count,'Hazard Type','')}
+    ${field('hazard_desc_'+haz208Count,'Description / Location','')}
+    ${field('hazard_control_'+haz208Count,'Control Measure','')}`;
+  el.appendChild(div);
+  haz208Count++;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ICS-209 INCIDENT STATUS SUMMARY
+// ══════════════════════════════════════════════════════════════════
+FORMS['209'] = {
+  title: 'ICS-209 Incident Status Summary',
+  badge: 'ICS-209',
+  variants: { FEMA:'FEMA 010-0-9', USCG:'CG-5218', NWCG:'ICS-209 (NWCG)' },
+
+  render() {
+    document.getElementById('formTitle').textContent = 'ICS-209 \u2014 Incident Status Summary';
+    document.getElementById('formBadge').textContent = 'ICS-209';
+    document.getElementById('formMeta').textContent =
+      `${this.variants[VARIANT]} \u00b7 Period ${PERIOD} \u00b7 ${incData.name||'No incident'}`;
+
+    const nwcgFire = VARIANT==='NWCG'
+      ?`<div class="section-card">
+          <h2>NWCG Fire Behavior</h2>
+          <div class="grid-3">
+            ${field('fire_behavior','Fire Behavior','text','')}
+            ${field('fire_size_acres','Size (acres)','text','')}
+            ${field('fire_containment','% Contained','text','')}
+          </div>
+          <div class="grid-3">
+            ${field('fire_cause','Cause','text','')}
+            ${field('fire_terrain','Terrain','text','')}
+            ${field('fire_fuel','Fuel Type','text','')}
+          </div>
+        </div>` : '';
+
+    return `
+    <div class="section-card">
+      <h2>1. Report Header</h2>
+      <div class="grid-3">
+        ${field('incident_name','Incident Name','text',incData.name||'')}
+        ${field('incident_number','Incident Number','text','')}
+        ${field('report_version','Report Version / #','text','1')}
+      </div>
+      <div class="grid-3">
+        ${field('report_date_time','Report Date / Time','datetime-local','')}
+        ${field('operational_period_number','Op Period #','text',String(PERIOD))}
+        ${field('incident_type','Incident Type','text',incData.type||'')}
+      </div>
+      <div class="grid-2">
+        ${field('incident_location','Incident Location','text',incData.location||'')}
+        ${field('jurisdiction','Jurisdiction / County','text',incData.jurisdiction||'')}
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>2. Incident Commander & Unified Command</h2>
+      <div class="grid-2">
+        ${field('incident_commander','Incident Commander (IC)','text',
+          incData.incident_commander||formData.incident_commander||'')}
+        ${field('agency','Home Agency / Organization','text',
+          orgData.org_short?`${orgData.org_name} (${orgData.org_short})`:orgData.org_name||'')}
+      </div>
+      <div class="grid-2">
+        ${field('unified_command','Unified Command (if applicable)','text','')}
+        ${field('ic_phone','IC Phone / Radio','text','')}
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>3. Situation Summary</h2>
+      ${field('situation_summary','Current Situation Summary','textarea',
+        '',{rows:5})}
+      <div class="grid-3" style="margin-top:10px">
+        ${field('threatened_values','Threatened Values / Areas','text','')}
+        ${field('current_threats','Current Threats','text','')}
+        ${field('expected_completion','Expected Incident Completion','text','')}
+      </div>
+    </div>
+
+    ${nwcgFire}
+
+    <div class="section-card">
+      <h2>4. Resources Committed</h2>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:12px">
+          <thead><tr style="background:var(--panel2)">
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line)">Resource Type</th>
+            <th style="padding:6px 8px;text-align:center;border:1px solid var(--line)">Ordered</th>
+            <th style="padding:6px 8px;text-align:center;border:1px solid var(--line)">Assigned</th>
+            <th style="padding:6px 8px;text-align:center;border:1px solid var(--line)">Available</th>
+            <th style="padding:6px 8px;text-align:left;border:1px solid var(--line)">Notes</th>
+          </tr></thead>
+          <tbody>
+            ${['Personnel','Engines / Apparatus','Aircraft','Helicopters',
+               'Water Tenders','Crews / Teams','Dozers / Heavy Equipment','Other'].map((t,i)=>`
+            <tr>
+              <td style="border:1px solid var(--line);padding:5px 8px;font-weight:bold;color:var(--muted)">${t}</td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="number" data-key="res209_ordered_${i}" style="width:60px;text-align:center;font-size:12px;padding:3px"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="number" data-key="res209_assigned_${i}" style="width:60px;text-align:center;font-size:12px;padding:3px"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="number" data-key="res209_available_${i}" style="width:60px;text-align:center;font-size:12px;padding:3px"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="res209_notes_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>5. Injuries / Fatalities</h2>
+      <div class="grid-4">
+        ${field('injuries_responder','Responder Injuries','text','0')}
+        ${field('injuries_civilian','Civilian Injuries','text','0')}
+        ${field('fatalities_responder','Responder Fatalities','text','0')}
+        ${field('fatalities_civilian','Civilian Fatalities','text','0')}
+      </div>
+      ${field('casualty_notes','Casualty Notes / Details','textarea','',{rows:2})}
+    </div>
+
+    <div class="section-card">
+      <h2>6. Evacuations & Structures</h2>
+      <div class="grid-3">
+        ${field('evacuations_ordered','Evacuations Ordered','text','')}
+        ${field('evacuations_warnings','Evacuation Warnings','text','')}
+        ${field('persons_evacuated','Persons Evacuated (est.)','text','0')}
+      </div>
+      <div class="grid-3">
+        ${field('structures_threatened','Structures Threatened','text','0')}
+        ${field('structures_damaged','Structures Damaged','text','0')}
+        ${field('structures_destroyed','Structures Destroyed','text','0')}
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>7. Cost Summary</h2>
+      <div class="grid-3">
+        ${field('cost_today','Today\'s Cost (est.)','text','$')}
+        ${field('cost_total','Total Cost to Date (est.)','text','$')}
+        ${field('cost_projected','Projected Final Cost (est.)','text','$')}
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>8. Incident Map / Situation Image</h2>
+      ${imageField('ics209_map','Incident Situation Map',
+        'Current incident map, perimeter, affected areas, or key geographic features')}
+    </div>
+
+    <div class="section-card">
+      <h2>9. Prepared By</h2>
+      <div class="grid-2">
+        ${field('prepared_by','Prepared By (Situation Unit Leader / PSC)','text',
+          formData.situation_unit_ldr||formData.planning_section_chief||'')}
+        ${field('date_time_prepared','Date / Time','datetime-local','')}
+      </div>
+      <div class="grid-2">
+        ${field('approved_by_ic','Approved By (Incident Commander)','text',
+          formData.incident_commander||incData.incident_commander||'')}
+        ${field('date_time_approved','Date / Time Approved','datetime-local','')}
+      </div>
+    </div>`;
+  },
+
+  buildPrint() {
+    const fd = collectFormData();
+    Object.assign(formData, fd);
+    const variant = FORMS['209'].variants[VARIANT];
+    const resTypes = ['Personnel','Engines/Apparatus','Aircraft','Helicopters',
+                      'Water Tenders','Crews/Teams','Dozers/Heavy Equipment','Other'];
+    const resRows = resTypes.map((t,i) =>
+      fd[`res209_ordered_${i}`]||fd[`res209_assigned_${i}`]
+        ? `<tr><td style="padding:3px 5px;border:1px solid #ccc">${t}</td>
+           <td style="padding:3px 5px;border:1px solid #ccc;text-align:center">${fd[`res209_ordered_${i}`]||''}</td>
+           <td style="padding:3px 5px;border:1px solid #ccc;text-align:center">${fd[`res209_assigned_${i}`]||''}</td>
+           <td style="padding:3px 5px;border:1px solid #ccc;text-align:center">${fd[`res209_available_${i}`]||''}</td>
+           <td style="padding:3px 5px;border:1px solid #ccc">${fd[`res209_notes_${i}`]||''}</td></tr>`
+        : ''
+    ).join('');
+
+    return `
+    <div class="ics-print-header">
+      <div class="logo-cell">${logoHtml()}</div>
+      <div class="title-cell"><h1>ICS-209 INCIDENT STATUS SUMMARY</h1>
+        <div class="sub">${variant} \u00b7 FieldCommand IMS</div></div>
+      <div class="meta-cell">
+        <div class="ml">Incident Name</div><div class="mv" style="font-size:10px">${fd.incident_name||'\u2014'}</div>
+        <div class="ml">Op Period</div><div class="mv">${fd.operational_period_number||PERIOD}</div>
+        <div class="ml">Report</div><div class="mv">${fd.report_date_time||'\u2014'}</div>
+      </div>
+    </div>
+    <div class="pr">
+      <div class="pc w2"><div class="pl">Incident Commander</div><div class="pv">${fd.incident_commander||''}</div></div>
+      <div class="pc"><div class="pl">Incident Type</div><div class="pv">${fd.incident_type||''}</div></div>
+      <div class="pc"><div class="pl">Jurisdiction</div><div class="pv">${fd.jurisdiction||''}</div></div>
+    </div>
+    <div class="pr"><div class="pc" style="flex:4">
+      <div class="pl">3. Situation Summary</div>
+      <div class="pv pw">${fd.situation_summary||''}</div>
+    </div></div>
+    <div class="pr"><div class="pc" style="flex:4">
+      <div class="pl">4. Resources Committed</div>
+      <table style="width:100%;border-collapse:collapse;font-size:10px;margin-top:3px">
+        <thead><tr style="background:#e8eef7">
+          <th style="padding:3px 5px;border:1px solid #ccc;text-align:left">Resource Type</th>
+          <th style="padding:3px 5px;border:1px solid #ccc">Ordered</th>
+          <th style="padding:3px 5px;border:1px solid #ccc">Assigned</th>
+          <th style="padding:3px 5px;border:1px solid #ccc">Available</th>
+          <th style="padding:3px 5px;border:1px solid #ccc;text-align:left">Notes</th>
+        </tr></thead>
+        <tbody>${resRows||'<tr><td colspan="5" style="padding:5px;color:#888">No resources entered</td></tr>'}</tbody>
+      </table>
+    </div></div>
+    <div class="pr">
+      <div class="pc"><div class="pl">Responder Injuries</div><div class="pv">${fd.injuries_responder||'0'}</div></div>
+      <div class="pc"><div class="pl">Civilian Injuries</div><div class="pv">${fd.injuries_civilian||'0'}</div></div>
+      <div class="pc"><div class="pl">Responder Fatalities</div><div class="pv">${fd.fatalities_responder||'0'}</div></div>
+      <div class="pc"><div class="pl">Civilian Fatalities</div><div class="pv">${fd.fatalities_civilian||'0'}</div></div>
+    </div>
+    <div class="pr">
+      <div class="pc"><div class="pl">Evacuations Ordered</div><div class="pv">${fd.evacuations_ordered||''}</div></div>
+      <div class="pc"><div class="pl">Persons Evacuated</div><div class="pv">${fd.persons_evacuated||'0'}</div></div>
+      <div class="pc"><div class="pl">Structures Damaged</div><div class="pv">${fd.structures_damaged||'0'}</div></div>
+      <div class="pc"><div class="pl">Structures Destroyed</div><div class="pv">${fd.structures_destroyed||'0'}</div></div>
+    </div>
+    <div class="pr">
+      <div class="pc"><div class="pl">Today's Cost</div><div class="pv">${fd.cost_today||''}</div></div>
+      <div class="pc"><div class="pl">Total Cost to Date</div><div class="pv">${fd.cost_total||''}</div></div>
+      <div class="pc w2"><div class="pl">Projected Final Cost</div><div class="pv">${fd.cost_projected||''}</div></div>
+    </div>
+    ${fd.ics209_map_img?`<div style="border-top:2px solid #000;padding:8px">
+      <div style="font-size:9px;text-transform:uppercase;color:#555;margin-bottom:4px">
+        Incident Map \u2014 ${fd.ics209_map_caption||'Situation Overview'}
+      </div>
+      <img src="${fd.ics209_map_img}" style="max-width:100%;max-height:350px;object-fit:contain">
+    </div>`:''}
+    <div class="sig-row">
+      <div class="sig-cell"><div class="sl">Prepared By (SITL / PSC)</div>
+        <div class="ss">${fd.prepared_by||''}</div>
+        <div class="sl">Date/Time: ${fd.date_time_prepared||''}</div></div>
+      <div class="sig-cell"><div class="sl">Signature</div><div class="ss"></div></div>
+      <div class="sig-cell"><div class="sl">Approved By (IC)</div>
+        <div class="ss">${fd.approved_by_ic||''}</div>
+        <div class="sl">Date/Time: ${fd.date_time_approved||''}</div></div>
+      <div class="sig-cell"><div class="sl">IC Signature</div><div class="ss"></div></div>
+    </div>
+    <div class="print-footer">
+      <span>${variant} \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
+      <span>Printed: ${new Date().toLocaleString()}</span>
+    </div>`;
+  }
+};
+
 </script>
 <!-- Map Picker Modal -->
 <div class="map-picker-modal" id="mapPickerModal">

@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SARTopo GeoJSON Import — FieldCommand IMS</title>
+<link rel="stylesheet" href="theme.css">
+<style>
+.feature-card {
+  background:var(--panel);border:1px solid var(--line);
+  border-radius:var(--r-md);padding:14px 16px;
+  margin-bottom:8px;box-shadow:var(--shadow-sm);
+  display:flex;align-items:flex-start;gap:12px;
+}
+.feature-card.selected { border-color:var(--eoc);background:var(--eoc-tint); }
+.feature-check { flex-shrink:0;margin-top:2px; }
+.feature-icon { font-size:20px;flex-shrink:0;margin-top:2px; }
+.feature-name { font-family:var(--font-hd);font-size:13px;color:var(--txt); }
+.feature-meta { font-size:11px;color:var(--muted);margin-top:2px; }
+.feature-type { font-size:10px;padding:1px 7px;border-radius:10px;
+  background:var(--panel2);color:var(--muted);border:1px solid var(--line);
+  font-weight:600;text-transform:uppercase;letter-spacing:.06em; }
+
+.field-row { display:flex;align-items:center;gap:8px;margin-bottom:6px; }
+.field-row label { font-size:11px;font-weight:600;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.06em;width:140px;flex-shrink:0; }
+.field-row input, .field-row select {
+  flex:1;background:var(--input-bg);border:1px solid var(--input-border);
+  color:var(--txt);padding:5px 9px;font-size:12px;border-radius:var(--r-sm);
+}
+
+.drop-zone {
+  border:3px dashed var(--line);border-radius:var(--r-lg);
+  padding:40px 20px;text-align:center;cursor:pointer;
+  transition:border-color .15s,background .15s;background:var(--panel3);
+}
+.drop-zone:hover,.drop-zone.dragover {
+  border-color:var(--eoc);background:var(--eoc-tint);
+}
+.drop-zone.has-file { border-style:solid;border-color:var(--green);padding:20px; }
+
+.step { display:none; }
+.step.active { display:block; }
+
+.step-tabs { display:flex;gap:0;border-bottom:2px solid var(--line);margin-bottom:16px; }
+.step-tab {
+  padding:8px 16px;font-family:var(--font-hd);font-size:11px;
+  letter-spacing:.08em;text-transform:uppercase;color:var(--dim);
+  border-bottom:3px solid transparent;margin-bottom:-2px;cursor:default;
+}
+.step-tab.active { color:var(--eoc);border-bottom-color:var(--eoc); }
+.step-tab.done { color:var(--green); }
+</style>
+</head>
+<body>
+
+<div class="page-header">
+  <span class="page-header-badge">SAR</span>
+  <span class="page-header-title">SARTopo / CalTopo GeoJSON Import</span>
+  <div class="page-header-sub">Import geographic features → auto-create ICS-204 Assignment Lists</div>
+  <a href="index.html" class="back-link">← Dashboard</a>
+</div>
+
+<div class="page-wrap" style="max-width:860px">
+
+  <!-- Step tabs -->
+  <div class="step-tabs">
+    <div class="step-tab active" id="tab1">1 · Upload</div>
+    <div class="step-tab" id="tab2">2 · Configure</div>
+    <div class="step-tab" id="tab3">3 · Map Features</div>
+    <div class="step-tab" id="tab4">4 · Create Forms</div>
+  </div>
+
+  <!-- ── STEP 1: Upload ──────────────────────────────────────────── -->
+  <div class="step active" id="step1">
+    <div class="section-card">
+      <h2>Export from SARTopo / CalTopo</h2>
+      <div style="font-size:12px;color:var(--muted);line-height:1.7;margin-bottom:12px">
+        In SARTopo or CalTopo, go to <strong>Menu → Export → GeoJSON</strong>.
+        Export your map or select specific folders/features to export.
+        All feature types are supported: polygons (search segments, areas),
+        lines (routes, roads), and points (assignments, staging areas, hazards).
+      </div>
+      <div class="drop-zone" id="dropZone"
+        onclick="document.getElementById('fileInput').click()"
+        ondragover="event.preventDefault();this.classList.add('dragover')"
+        ondragleave="this.classList.remove('dragover')"
+        ondrop="handleDrop(event)">
+        <div id="dropContent">
+          <div style="font-size:36px;margin-bottom:10px">📂</div>
+          <div style="font-family:var(--font-hd);font-size:13px;color:var(--eoc);
+                      letter-spacing:1px;margin-bottom:6px">DROP GEOJSON FILE HERE</div>
+          <div style="font-size:11px;color:var(--muted)">
+            or click to browse · .geojson or .json
+          </div>
+        </div>
+      </div>
+      <input type="file" id="fileInput" accept=".geojson,.json"
+        style="display:none" onchange="loadFile(this)">
+    </div>
+
+    <!-- Paste option -->
+    <div class="section-card">
+      <h2>Or Paste GeoJSON</h2>
+      <textarea id="pasteArea" rows="6"
+        placeholder='{"type":"FeatureCollection","features":[...]}'
+        style="width:100%;font-family:var(--font-mono);font-size:11px;
+               background:var(--input-bg);border:1px solid var(--input-border);
+               color:var(--txt);padding:8px;border-radius:var(--r-sm);resize:vertical">
+      </textarea>
+      <button onclick="loadPasted()" style="margin-top:8px">Parse GeoJSON</button>
+    </div>
+  </div>
+
+  <!-- ── STEP 2: Configure ──────────────────────────────────────── -->
+  <div class="step" id="step2">
+    <div class="section-card">
+      <h2>Incident & Period</h2>
+      <div class="field-row">
+        <label>Incident</label>
+        <select id="incidentSel" style="flex:1"
+          onchange="loadIncidentPeriods()">
+          <option value="">Select incident...</option>
+        </select>
+      </div>
+      <div class="field-row">
+        <label>Op Period</label>
+        <input type="number" id="periodInput" value="1" min="1" style="width:80px;flex:none">
+      </div>
+      <div class="field-row">
+        <label>Branch (default)</label>
+        <input type="text" id="defaultBranch" placeholder="Leave blank or e.g. I">
+      </div>
+      <div class="field-row">
+        <label>Date Prepared</label>
+        <input type="date" id="datePrepared">
+      </div>
+    </div>
+
+    <div class="section-card">
+      <h2>Feature Filters</h2>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px">
+        Choose which feature types to create 204s for.
+        Points are usually assignments or staging; polygons are search segments or areas.
+      </div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap">
+        <label style="font-size:12px;display:flex;align-items:center;gap:6px">
+          <input type="checkbox" id="filterPoly" checked>
+          Polygons / Areas
+        </label>
+        <label style="font-size:12px;display:flex;align-items:center;gap:6px">
+          <input type="checkbox" id="filterLine" checked>
+          Lines / Routes
+        </label>
+        <label style="font-size:12px;display:flex;align-items:center;gap=6px">
+          <input type="checkbox" id="filterPoint">
+          Points / Markers
+        </label>
+      </div>
+      <div class="field-row" style="margin-top:10px">
+        <label>Name filter</label>
+        <input type="text" id="nameFilter"
+          placeholder="Only import features containing this text (blank = all)">
+      </div>
+    </div>
+
+    <div style="display:flex;gap:8px">
+      <button onclick="goStep(1)" style="padding:8px 16px">← Back</button>
+      <button onclick="goStep(3)"
+        style="background:var(--eoc);border-color:var(--eoc);color:#fff;
+               padding:8px 20px;font-weight:600">
+        Next: Map Features →
+      </button>
+    </div>
+  </div>
+
+  <!-- ── STEP 3: Map Features ───────────────────────────────────── -->
+  <div class="step" id="step3">
+    <div style="display:flex;justify-content:space-between;align-items:center;
+                margin-bottom:10px;flex-wrap:wrap;gap:8px">
+      <div style="font-size:12px;color:var(--muted)" id="featureCountLabel"></div>
+      <div style="display:flex;gap:6px">
+        <button onclick="selectAllFeatures(true)"
+          style="font-size:11px;padding:4px 10px">Select All</button>
+        <button onclick="selectAllFeatures(false)"
+          style="font-size:11px;padding:4px 10px">Deselect All</button>
+      </div>
+    </div>
+
+    <div id="featureList"></div>
+
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button onclick="goStep(2)" style="padding:8px 16px">← Back</button>
+      <button onclick="goStep(4)"
+        style="background:var(--eoc);border-color:var(--eoc);color:#fff;
+               padding:8px 20px;font-weight:600">
+        Next: Preview & Create →
+      </button>
+    </div>
+  </div>
+
+  <!-- ── STEP 4: Create Forms ──────────────────────────────────── -->
+  <div class="step" id="step4">
+    <div class="section-card">
+      <h2>Preview & Create ICS-204 Forms</h2>
+      <div id="previewList" style="margin-bottom:14px"></div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <button onclick="createForms()"
+          style="background:var(--green);border-color:var(--green);
+                 color:#fff;padding:9px 22px;font-weight:600;font-size:13px">
+          ✓ Create ICS-204 Assignment Lists
+        </button>
+        <button onclick="goStep(3)" style="padding:8px 16px">← Back</button>
+      </div>
+      <div id="createStatus" style="margin-top:10px;font-size:12px;color:var(--muted)"></div>
+    </div>
+  </div>
+
+</div><!-- /page-wrap -->
+
+<script>
+const API     = 'http://192.168.50.1:5050';
+const ICS_API = 'http://192.168.50.1:5051';
+
+let currentStep = 1;
+let geoData     = null;   // parsed GeoJSON FeatureCollection
+let features    = [];     // filtered + enriched features
+let incidents   = [];
+
+// ── Step navigation ────────────────────────────────────────────────
+function goStep(n) {
+  if (n === 3) buildFeatureList();
+  if (n === 4) buildPreview();
+  document.querySelectorAll('.step').forEach((s,i) => {
+    s.classList.toggle('active', i+1 === n);
+  });
+  document.querySelectorAll('.step-tab').forEach((t,i) => {
+    t.classList.remove('active','done');
+    if (i+1 === n) t.classList.add('active');
+    else if (i+1 < n) t.classList.add('done');
+  });
+  currentStep = n;
+}
+
+// ── File loading ───────────────────────────────────────────────────
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('dropZone').classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file) parseFile(file);
+}
+
+function loadFile(input) {
+  if (input.files[0]) parseFile(input.files[0]);
+}
+
+function loadPasted() {
+  const text = document.getElementById('pasteArea').value.trim();
+  if (!text) { alert('Paste GeoJSON first'); return; }
+  try {
+    const parsed = JSON.parse(text);
+    processGeoJSON(parsed, 'Pasted GeoJSON');
+  } catch(e) {
+    alert('Invalid GeoJSON: ' + e.message);
+  }
+}
+
+function parseFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      processGeoJSON(parsed, file.name);
+    } catch(err) {
+      alert('Could not parse file: ' + err.message);
+    }
+  };
+  reader.readAsText(file);
+}
+
+function processGeoJSON(parsed, filename) {
+  // Accept FeatureCollection or single Feature
+  if (parsed.type === 'Feature') {
+    parsed = { type:'FeatureCollection', features:[parsed] };
+  }
+  if (parsed.type !== 'FeatureCollection' || !Array.isArray(parsed.features)) {
+    alert('File must be a GeoJSON FeatureCollection');
+    return;
+  }
+  geoData = parsed;
+  const count = parsed.features.length;
+
+  const dz = document.getElementById('dropZone');
+  dz.classList.add('has-file');
+  dz.innerHTML = `
+    <div style="font-size:24px;margin-bottom:6px">✓</div>
+    <div style="font-family:var(--font-hd);font-size:13px;color:var(--green)">
+      ${filename}
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:4px">
+      ${count} feature${count!==1?'s':''} loaded
+    </div>
+    <div style="font-size:10px;color:var(--dim);margin-top:6px">Click to load different file</div>`;
+
+  loadIncidents();
+  goStep(2);
+}
+
+// ── Load incidents for selector ────────────────────────────────────
+async function loadIncidents() {
+  try {
+    const r = await fetch(`${API}/api/incidents`);
+    incidents = r.ok ? await r.json() : [];
+    const sel = document.getElementById('incidentSel');
+    sel.innerHTML = '<option value="">Select incident...</option>' +
+      incidents.map(i =>
+        `<option value="${i.id}">${i.name} (${i.incident_type||''})</option>`
+      ).join('');
+    // Pre-select from localStorage
+    const saved = localStorage.getItem('selectedIncident');
+    if (saved) sel.value = saved;
+  } catch(e) {}
+
+  // Set today's date
+  document.getElementById('datePrepared').value =
+    new Date().toISOString().slice(0,10);
+}
+
+function loadIncidentPeriods() {
+  const incId = document.getElementById('incidentSel').value;
+  if (incId) localStorage.setItem('selectedIncident', incId);
+}
+
+// ── Feature type detection ─────────────────────────────────────────
+function geomType(feature) {
+  const t = (feature.geometry?.type || '').toLowerCase();
+  if (t.includes('polygon')) return 'polygon';
+  if (t.includes('line'))    return 'line';
+  if (t.includes('point'))   return 'point';
+  return 'unknown';
+}
+
+function featureIcon(type) {
+  return type === 'polygon' ? '⬡' : type === 'line' ? '〰' : '📍';
+}
+
+function featureName(feature) {
+  const p = feature.properties || {};
+  return p.name || p.title || p.label || p.description || p.Name ||
+         `${geomType(feature)} feature`;
+}
+
+function featureArea(feature) {
+  // Rough area/length description from coordinates
+  const geom = feature.geometry;
+  if (!geom) return '';
+  try {
+    if (geom.type === 'Polygon') {
+      const coords = geom.coordinates[0];
+      return `${coords.length} vertices`;
+    }
+    if (geom.type === 'LineString') {
+      return `${geom.coordinates.length} points`;
+    }
+    if (geom.type === 'Point') {
+      return `${geom.coordinates[1].toFixed(4)}, ${geom.coordinates[0].toFixed(4)}`;
+    }
+  } catch(e) {}
+  return '';
+}
+
+// ── Build feature list (Step 3) ────────────────────────────────────
+function buildFeatureList() {
+  const filterPoly  = document.getElementById('filterPoly').checked;
+  const filterLine  = document.getElementById('filterLine').checked;
+  const filterPoint = document.getElementById('filterPoint').checked;
+  const nameFilter  = document.getElementById('nameFilter').value.toLowerCase();
+
+  features = (geoData?.features || []).filter(f => {
+    const t = geomType(f);
+    if (t === 'polygon' && !filterPoly)  return false;
+    if (t === 'line'    && !filterLine)  return false;
+    if (t === 'point'   && !filterPoint) return false;
+    if (nameFilter && !featureName(f).toLowerCase().includes(nameFilter)) return false;
+    return true;
+  });
+
+  document.getElementById('featureCountLabel').textContent =
+    `${features.length} feature${features.length!==1?'s':''} match filter`;
+
+  if (!features.length) {
+    document.getElementById('featureList').innerHTML =
+      `<div style="text-align:center;padding:30px;color:var(--muted)">
+        No features match the current filter settings.
+      </div>`;
+    return;
+  }
+
+  document.getElementById('featureList').innerHTML = features.map((f, i) => {
+    const type = geomType(f);
+    const name = featureName(f);
+    const area = featureArea(f);
+    const p    = f.properties || {};
+
+    return `
+      <div class="feature-card" id="fc_${i}">
+        <input type="checkbox" class="feature-check feat-sel" data-idx="${i}" checked
+          onchange="document.getElementById('fc_${i}').classList.toggle('selected',this.checked)">
+        <div class="feature-icon">${featureIcon(type)}</div>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+            <div class="feature-name">${name}</div>
+            <span class="feature-type">${type}</span>
+          </div>
+          <div class="feature-meta">${area}${p.description && p.description !== name ? ' · ' + p.description.slice(0,80) : ''}</div>
+          <!-- Per-feature overrides -->
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:8px">
+            <div>
+              <div style="font-size:9px;color:var(--dim);text-transform:uppercase;
+                           letter-spacing:.06em;margin-bottom:2px">Division/Group</div>
+              <input type="text" id="div_${i}" value="${p.division||p.div||name.slice(0,20)}"
+                style="width:100%;font-size:11px;padding:3px 6px;background:var(--input-bg);
+                       border:1px solid var(--input-border);border-radius:3px;color:var(--txt)">
+            </div>
+            <div>
+              <div style="font-size:9px;color:var(--dim);text-transform:uppercase;
+                           letter-spacing:.06em;margin-bottom:2px">Branch</div>
+              <input type="text" id="branch_${i}"
+                value="${p.branch||document.getElementById('defaultBranch').value||''}"
+                style="width:100%;font-size:11px;padding:3px 6px;background:var(--input-bg);
+                       border:1px solid var(--input-border);border-radius:3px;color:var(--txt)">
+            </div>
+            <div>
+              <div style="font-size:9px;color:var(--dim);text-transform:uppercase;
+                           letter-spacing:.06em;margin-bottom:2px">Supervisor</div>
+              <input type="text" id="sup_${i}" value="${p.supervisor||p.leader||''}"
+                placeholder="TBD"
+                style="width:100%;font-size:11px;padding:3px 6px;background:var(--input-bg);
+                       border:1px solid var(--input-border);border-radius:3px;color:var(--txt)">
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  // Mark selected cards
+  document.querySelectorAll('.feat-sel').forEach(cb => {
+    document.getElementById('fc_'+cb.dataset.idx)?.classList.toggle('selected', cb.checked);
+  });
+}
+
+function selectAllFeatures(state) {
+  document.querySelectorAll('.feat-sel').forEach((cb,i) => {
+    cb.checked = state;
+    document.getElementById('fc_'+cb.dataset.idx)?.classList.toggle('selected', state);
+  });
+}
+
+// ── Build preview (Step 4) ─────────────────────────────────────────
+function buildPreview() {
+  const selected = [...document.querySelectorAll('.feat-sel:checked')]
+    .map(cb => parseInt(cb.dataset.idx));
+
+  if (!selected.length) {
+    document.getElementById('previewList').innerHTML =
+      '<div style="color:var(--muted)">No features selected.</div>';
+    return;
+  }
+
+  const incName = document.getElementById('incidentSel')
+    .selectedOptions[0]?.text || 'Unknown Incident';
+  const period = document.getElementById('periodInput').value;
+
+  document.getElementById('previewList').innerHTML = `
+    <div style="background:var(--eoc-tint);border:1px solid var(--line);
+                border-radius:var(--r-sm);padding:10px 14px;margin-bottom:12px;font-size:12px">
+      Creating <strong>${selected.length} ICS-204 Assignment List${selected.length!==1?'s':''}</strong>
+      for <strong>${incName}</strong>, Op Period ${period}
+    </div>
+    ${selected.map(i => {
+      const f    = features[i];
+      const type = geomType(f);
+      const div  = document.getElementById('div_'+i)?.value || featureName(f);
+      const br   = document.getElementById('branch_'+i)?.value || '';
+      const sup  = document.getElementById('sup_'+i)?.value || '';
+      return `
+        <div style="display:flex;align-items:center;gap:10px;padding:6px 10px;
+                    border-bottom:1px solid var(--line-lt);font-size:12px">
+          <span style="font-size:16px">${featureIcon(type)}</span>
+          <div style="flex:1">
+            <strong>${div}</strong>
+            ${br ? `<span style="color:var(--muted);margin-left:6px">Branch ${br}</span>` : ''}
+            ${sup ? `<span style="color:var(--muted);margin-left:6px">· Sup: ${sup}</span>` : ''}
+          </div>
+          <span style="font-size:10px;color:var(--dim)">${type}</span>
+        </div>`;
+    }).join('')}`;
+}
+
+// ── Create ICS-204 forms ───────────────────────────────────────────
+async function createForms() {
+  const incId  = document.getElementById('incidentSel').value;
+  const period = parseInt(document.getElementById('periodInput').value) || 1;
+  const date   = document.getElementById('datePrepared').value;
+
+  if (!incId) { alert('Select an incident first'); return; }
+
+  const selected = [...document.querySelectorAll('.feat-sel:checked')]
+    .map(cb => parseInt(cb.dataset.idx));
+
+  if (!selected.length) { alert('No features selected'); return; }
+
+  const statusEl = document.getElementById('createStatus');
+  statusEl.textContent = 'Creating forms…';
+  statusEl.style.color = 'var(--amber)';
+
+  let created = 0, errors = 0;
+
+  for (const i of selected) {
+    const f      = features[i];
+    const type   = geomType(f);
+    const p      = f.properties || {};
+    const div    = document.getElementById('div_'+i)?.value || featureName(f);
+    const branch = document.getElementById('branch_'+i)?.value || '';
+    const sup    = document.getElementById('sup_'+i)?.value || '';
+    const geom   = f.geometry;
+
+    // Build the work assignment description from GeoJSON properties + geometry
+    let workAssign = p.description || p.notes || p.comment || '';
+    if (!workAssign && type === 'polygon') {
+      workAssign = `Search/work area: ${div}. Verify boundaries with IC before entry.`;
+    } else if (!workAssign && type === 'line') {
+      workAssign = `Route/corridor: ${div}. Travel path as defined on SARTopo map.`;
+    } else if (!workAssign && type === 'point') {
+      workAssign = `Assignment point: ${div}.`;
+    }
+
+    // Build coordinates note for the map/area description
+    let coordNote = '';
+    try {
+      if (type === 'polygon' && geom?.coordinates?.[0]) {
+        const c = geom.coordinates[0];
+        const lats = c.map(p=>p[1]), lons = c.map(p=>p[0]);
+        const minLat = Math.min(...lats).toFixed(4), maxLat = Math.max(...lats).toFixed(4);
+        const minLon = Math.min(...lons).toFixed(4), maxLon = Math.max(...lons).toFixed(4);
+        coordNote = `Bounds: ${minLat}–${maxLat}N, ${minLon}–${maxLon}W`;
+      } else if (type === 'point' && geom?.coordinates) {
+        coordNote = `Location: ${geom.coordinates[1].toFixed(5)}, ${geom.coordinates[0].toFixed(5)}`;
+      }
+    } catch(e) {}
+
+    // Build form data matching ICS-204 field names
+    const formData = {
+      incident_id:              incId,
+      period,
+      incident_name:            document.getElementById('incidentSel').selectedOptions[0]?.text?.split(' (')[0] || '',
+      operational_period_number: String(period),
+      date_prepared:            date,
+      branch,
+      division_group:           div,
+      division_group_supervisor: sup,
+      work_assignments:         workAssign + (coordNote ? '\n' + coordNote : ''),
+      special_instructions:     p.hazards || p.special_instructions || p.notes || '',
+      sartopo_feature_type:     type,
+      sartopo_feature_name:     featureName(f),
+    };
+
+    // Add SARTopo properties as notes
+    const propKeys = Object.keys(p).filter(k =>
+      !['name','title','label','description','division','branch',
+        'supervisor','leader','hazards','notes'].includes(k));
+    if (propKeys.length) {
+      formData.special_instructions +=
+        (formData.special_instructions ? '\n' : '') +
+        'SARTopo: ' + propKeys.map(k => `${k}: ${p[k]}`).join(', ');
+    }
+
+    try {
+      const r = await fetch(`${ICS_API}/api/ics/forms/ics204`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...formData,
+          summary: `204 · ${div}${branch ? ' Br '+branch : ''} · P${period}`,
+          data:    JSON.stringify(formData),
+        })
+      });
+      if (r.ok) created++; else errors++;
+    } catch(e) { errors++; }
+  }
+
+  if (created > 0) {
+    statusEl.style.color = 'var(--green)';
+    statusEl.innerHTML = `
+      ✓ Created ${created} ICS-204 form${created!==1?'s':''}.
+      ${errors ? `${errors} failed.` : ''}
+      <a href="ics-form.html?form=204&incident=${incId}&period=${period}"
+        style="color:var(--blue);margin-left:8px">→ Open ICS-204</a>
+      <a href="briefing_204a.html?incident=${incId}&period=${period}"
+        style="color:var(--amber);margin-left:8px">→ 204A Briefing Sheet</a>`;
+  } else {
+    statusEl.style.color = 'var(--red)';
+    statusEl.textContent = `Failed to create forms. Check server connection.`;
+  }
+}
+
+// ── Init ──────────────────────────────────────────────────────────
+document.getElementById('fc_0')?.classList.add('selected');
+</script>
+</body>
+</html>

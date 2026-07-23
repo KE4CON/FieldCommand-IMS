@@ -155,17 +155,17 @@ class NC(canvas.Canvas):
             self.setFont('Helvetica', 7)
             self.drawString(M+1.0*inch, PAGE_H-0.34*inch, ORG)
         self.setFillColor(EOC)
-        self.rect(0, 0, PAGE_W, 0.30*inch, fill=1, stroke=0)
+        self.rect(0, 0, PAGE_W, 0.38*inch, fill=1, stroke=0)
         self.setFillColor(GOLD)
-        self.rect(0, 0.30*inch, PAGE_W, 0.013*inch, fill=1, stroke=0)
+        self.rect(0, 0.38*inch, PAGE_W, 0.013*inch, fill=1, stroke=0)
         self.setFillColor(white)
         self.setFont('Helvetica', 6.5)
         if n > 1:
-            self.drawString(M, 0.10*inch,
+            self.drawString(M, 0.17*inch,
                 'EMCOMM-NET  ·  http://192.168.50.1  ·  For Authorized Personnel Only  ·  '
-                '© 2026 James Rospopo KE4CON  ·  CC BY-SA 4.0  ·  creativecommons.org/licenses/by-sa/4.0')
-            self.drawRightString(PAGE_W-M, 0.10*inch,
-                f'Page {n} of {total}  ·  {TODAY}')
+                '© 2026 James Rospopo KE4CON  ·  CC BY-SA 4.0')
+            self.drawString(M, 0.06*inch,
+                f'Page {n} of {total}  ·  {TODAY}  ·  creativecommons.org/licenses/by-sa/4.0')
         else:
             self.drawCentredString(PAGE_W/2, 0.10*inch,
                 f'FieldCommand IMS v1.0  ·  {ORG}  ·  {TODAY}')
@@ -219,7 +219,7 @@ def steps_tbl(rows):
                            textColor=EOC_LT, alignment=TA_CENTER, leading=11)),
             P(desc, S('td', fontSize=8.5, leading=12)),
         ])
-    t = Table(data, colWidths=[0.36*inch, CW-0.36*inch])
+    t = Table(data, colWidths=[0.50*inch, CW-0.50*inch])
     t.setStyle(TableStyle([
         ('BACKGROUND',    (0,0), (-1,0),  EOC),
         ('TEXTCOLOR',     (0,0), (-1,0),  white),
@@ -274,511 +274,499 @@ def tip(txt, color=EOC_LT, bg=EOC_BG):
 # ══════════════════════════════════════════════════════════════════════════════
 story = []
 
-# ── COVER ─────────────────────────────────────────────────────────────────────
-story.append(SP(50))
-cover = Table([[Table([[
-    P('FieldCommand Incident Management System',
-      S('co', fontName='Helvetica', fontSize=10, textColor=GOLD,
-        alignment=TA_CENTER, leading=13)),
-    SP(6),
-    P('FieldCommand IMS v1.0',
-      S('ct', fontName='Helvetica-Bold', fontSize=30, textColor=white,
-        alignment=TA_CENTER, leading=35)),
-    SP(4),
-    P('FIELD QUICK-REFERENCE',
-      S('cs', fontName='Helvetica-Bold', fontSize=18, textColor=GOLD,
-        alignment=TA_CENTER, leading=22)),
-    SP(16),
-    P('Connect to <b>EMCOMM-NET</b>',
-      S('ca', fontName='Helvetica-Bold', fontSize=14, textColor=white,
-        alignment=TA_CENTER, leading=18)),
-    P('Open browser  →  <b>http://192.168.50.1</b>',
-      S('ca', fontName='Helvetica-Bold', fontSize=14, textColor=GOLD,
-        alignment=TA_CENTER, leading=18)),
-    SP(16),
-    HR(GOLD, 0.5),
-    SP(8),
-    P('Amateur Radio  ·  Starcom / Public Safety  ·  ICS Incident Command',
-      S('cm', fontName='Helvetica', fontSize=10, textColor=HexColor('#c0d4f0'),
-        alignment=TA_CENTER, leading=14)),
-    SP(4),
-    P('No internet  ·  No app  ·  No login  ·  Any browser',
-      S('cm', fontName='Helvetica', fontSize=9, textColor=HexColor('#8090b0'),
-        alignment=TA_CENTER, leading=13)),
-]], colWidths=[CW])]], colWidths=[CW])
-cover.setStyle(TableStyle([
-    ('BACKGROUND',    (0,0), (-1,-1), EOC),
-    ('TOPPADDING',    (0,0), (-1,-1), 40),
-    ('BOTTOMPADDING', (0,0), (-1,-1), 40),
-    ('LEFTPADDING',   (0,0), (-1,-1), 30),
-    ('RIGHTPADDING',  (0,0), (-1,-1), 30),
-]))
-story.append(cover)
-story.append(SP(20))
-
-qc = Table([[
-    P('QUICK CONNECT', S('qch', fontName='Helvetica-Bold', fontSize=8,
-                          textColor=EOC, leading=10)),
-    P('<b>1.</b> Wi-Fi: connect to <b>EMCOMM-NET</b>  &nbsp;&nbsp;'
-      '<b>2.</b> Browser: <b>http://192.168.50.1</b>  &nbsp;&nbsp;'
-      '<b>3.</b> Enter your callsign, Radio ID, or name when prompted',
-      S('qcb', fontSize=9, leading=12)),
-]], colWidths=[1.1*inch, CW-1.1*inch])
-qc.setStyle(TableStyle([
-    ('BACKGROUND',    (0,0), (-1,-1), LGRAY),
-    ('BACKGROUND',    (0,0), (0,-1),  EOC_BG),
-    ('GRID',          (0,0), (-1,-1), 0.5, LINE),
-    ('TOPPADDING',    (0,0), (-1,-1), 8),
-    ('BOTTOMPADDING', (0,0), (-1,-1), 8),
-    ('LEFTPADDING',   (0,0), (-1,-1), 8),
-    ('RIGHTPADDING',  (0,0), (-1,-1), 8),
-    ('VALIGN',        (0,0), (-1,-1), 'MIDDLE'),
-]))
-story.append(qc)
+#
+# ══════════════════════════════════════════════════════════════════════════════
+# PAGE 1 — COVER  (drawn by NC canvas class)
+# ══════════════════════════════════════════════════════════════════════════════
 story.append(PB())
 
-# ── PAGE 2 — DASHBOARD ────────────────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════════════════════
+# PAGE 2 — GETTING STARTED & DASHBOARD
+# ══════════════════════════════════════════════════════════════════════════════
 story.append(section_hdr('🖥', 'Getting Started & Dashboard',
-                         'http://192.168.50.1/', EOC, EOC_BG))
+                         'http://192.168.50.1', EOC, EOC_BG))
 story.append(SP(6))
 story.append(steps_tbl([
-    ('1', '<b>Connect to EMCOMM-NET</b> — select it from your device\'s Wi-Fi list. No password required on the field network.'),
-    ('2', '<b>Open any browser</b> — type <b>http://192.168.50.1</b> in the address bar and press Enter.'),
-    ('3', '<b>Enter your identity</b> — type your callsign, Radio ID, or name when the prompt appears. Optionally add your ICS position. This is remembered by your browser.'),
-    ('4', '<b>Select a dashboard mode</b> from the three buttons at the top of the page:'),
+    ('1', '<b>Connect to EMCOMM-NET</b> — open Wi-Fi on your device and select EMCOMM-NET.'),
+    ('2', '<b>Open any browser</b> — type <b>http://192.168.50.1</b> and press Enter.'),
+    ('3', '<b>Select a mode</b> — three tabs at the top: Amateur Radio · Public Safety · All-Hazards ICS.'),
+    ('4', '<b>Bookmark it</b> — on a phone tap Share → Add to Home Screen for one-tap access.'),
 ]))
 story.append(SP(6))
 story.append(ref_tbl(
-    ['MODE', 'BUTTON', 'USE IT FOR'],
+    ['MODE', 'USE IT FOR'],
     [
-        ['Amateur Radio',           '📻', 'ARES/RACES nets, APRS, Winlink, JS8Call, NTS, callsign lookup, propagation'],
-        ['Starcom / Public Safety', '🚔', 'Starcom nets, SAR nets, weather nets, resource tracking, unit roster'],
-        ['ICS',                     '🏛', 'Incident command — all five ICS sections plus Planning P and ICS forms'],
-    ],
-    [1.5*inch, 0.5*inch, CW-2.0*inch]))
-story.append(SP(8))
-story.append(P('Dashboard Elements', S('h2', fontName='Helvetica-Bold', fontSize=10,
-                                        textColor=EOC, leading=13)))
-story.append(SP(4))
-story.append(ref_tbl(
-    ['ELEMENT', 'WHAT IT DOES'],
-    [
-        ['Hero bar (top)',        'Station callsign, system name, live UTC clock and local 24-hr clock'],
-        ['NWS Weather Alerts',   'Live alerts color-coded by severity — click any alert to expand full details'],
-        ['Operation cards',      'Quick-launch tiles for every tool in the current mode — click to open'],
-        ['APRS station table',   'Live stations heard by Graywolf, with callsign, distance, and comment'],
-        ['Status sidebar',       'CPU/memory/disk/temp, service health dots (green=running), GPS, Dead Man\'s Switch state'],
+        ['All-Hazards ICS',       'Incident management, IAP, T-cards, FEMA costs, personnel check-in'],
+        ['Amateur Radio EMCOMM',  'ARES/RACES nets, APRS, Winlink, JS8Call, AMPRNet, callsign lookup'],
+        ['Public Safety',         'Starcom/P25 nets, resource map, weather radar, hospital directory'],
     ],
     [1.6*inch, CW-1.6*inch]))
 story.append(SP(6))
-story.append(tip('The dashboard remembers your last-used mode between sessions. '
-                 'Return to Starcom mode directly from Starcom pages using the '
-                 '🚔 Starcom Dashboard back link.'))
+story.append(ref_tbl(
+    ['INDICATOR', 'MEANING'],
+    [
+        ['🟢 Green — Cellular',  'Primary internet active — all live features enabled'],
+        ['🔵 Blue — Satellite',  'Satellite failover active — all live features enabled'],
+        ['🔴 Red — Offline',     'No internet — ALL core ICS tools still fully operational'],
+        ['🟢 AMPRNet UP',        '44Net WireGuard tunnel active (gateway Pi)'],
+    ],
+    [1.8*inch, CW-1.8*inch]))
+story.append(SP(4))
+story.append(tip('A red WAN indicator does NOT mean FieldCommand is down. '
+                 'Net loggers, ICS forms, T-cards, roster, check-in, and all local tools run offline.'))
 story.append(PB())
 
-# ── PAGE 3 — NET LOGGERS ──────────────────────────────────────────────────────
+# ══════════════════════════════════════════════════════════════════════════════
+# PAGE 3 — NET LOGGERS (AMATEUR + PUBLIC SAFETY)
+# ══════════════════════════════════════════════════════════════════════════════
 story.append(section_hdr('📻', 'Amateur Net Control Logger',
                          'http://192.168.50.1/netcontrol.html', EOC, EOC_BG))
 story.append(SP(6))
 story.append(steps_tbl([
-    ('1', '<b>Open a net</b> — click <b>+ New Net</b>, enter the net name, frequency, mode, and type. Click <b>Open Net</b>.'),
-    ('2', '<b>Log a check-in</b> — type a callsign and press <b>Enter</b>. FCC data fills automatically. Add location and remarks if needed.'),
-    ('3', '<b>Log traffic</b> — click <b>+ Traffic</b>, enter message number, type, sender, addressee, and subject.'),
-    ('4', '<b>Close the net</b> — click <b>Close Net</b>. The log is saved and available for export.'),
-    ('5', '<b>Export ICS-309</b> — click <b>Export ICS-309</b> to generate the printable comms log.'),
-    ('6', '<b>Share observer link</b> — click <b>🔗 Observer Link</b> to copy a read-only view URL for the EOC or served agencies.'),
+    ('1', '<b>Open a net</b> — enter net name, frequency, and mode. Click <b>Open Net</b>.'),
+    ('2', '<b>Check in a station</b> — type callsign and press Enter. Name auto-fills from offline FCC database.'),
+    ('3', '<b>Log traffic</b> — click <b>+ Traffic</b> — enter precedence, from, to, and message info.'),
+    ('4', '<b>Check out a station</b> — click <b>Check Out</b>. Duration recorded to nearest ¼ hour.'),
+    ('5', '<b>Close the net</b> — click <b>Close Net</b>. All remaining stations auto-checked out.'),
+    ('6', '<b>Export ICS-309</b> — downloads formatted comms log with all check-ins and durations.'),
+    ('7', '<b>Observer link</b> — click 🔗 to share a read-only live view with EOC or served agency.'),
 ]))
 story.append(SP(6))
-story.append(ref_tbl(
-    ['FEATURE', 'HOW TO USE'],
-    [
-        ['Multiple nets',      'Each net has its own tab. Click a tab to switch between active nets.'],
-        ['FCC auto-fill',      'Type any US callsign — name and license class fill automatically from the offline FCC database.'],
-        ['Precedence levels',  'ROUTINE / WELFARE / PRIORITY / EMERGENCY — set per check-in or traffic entry.'],
-        ['Dead Man\'s Switch', 'Click ⚠ Arm on the Dead Man\'s Switch page to monitor this net for inactivity.'],
-    ],
-    [1.5*inch, CW-1.5*inch]))
-story.append(SP(8))
-
-story.append(section_hdr('🚔', 'Starcom Net Logger',
+story.append(section_hdr('🚔', 'Public Safety Net Logger',
                          'http://192.168.50.1/starcom.html', SGREEN, SGREEN_BG))
-story.append(SP(6))
-story.append(steps_tbl([
-    ('1', '<b>Open a net</b> — click <b>+ New Net</b>. Choose net type: Starcom General / Weather Net / SAR Net / Observer Net.'),
-    ('2', '<b>Log a check-in</b> — enter <b>Radio ID</b> (unit number) and <b>Unit Name</b>. Press <b>Enter</b> or click <b>+ Check In</b>.'),
-    ('3', '<b>Set unit status</b> — click the status badge on any check-in row to cycle: Available → Deployed → Staging → Out of Service.'),
-    ('4', '<b>Run multiple nets simultaneously</b> — click <b>+ New Net</b> again for each additional net. Each open net appears as a badge in the active nets panel on the left. Click any badge to switch between nets. Each net keeps its own independent check-in log and traffic log.'),
-    ('5', '<b>Close a net</b> — select the net, then click <b>Close Net</b>. All check-ins and traffic are archived.'),
-]))
-story.append(SP(6))
+story.append(SP(4))
 story.append(ref_tbl(
     ['FIELD', 'DESCRIPTION'],
     [
-        ['Radio ID',      'Starcom unit number (e.g. 2301, 4710). Required for every check-in.'],
-        ['Unit Name',     'Agency and unit description (e.g. "your area SO — Unit 12")'],
-        ['Dispatch Ctr',  'Dispatching agency or center (e.g. MCECC, IDOT)'],
-        ['Weather / SAR', 'Use the quick-launch cards on the Starcom dashboard to pre-set net type'],
-        ['Multiple nets', 'Typical activation: Starcom General + Weather Net + SAR Net all open simultaneously'],
+        ['Radio ID',      'Trunked/P25 unit number — required for every check-in'],
+        ['Unit Name',     'Agency and unit description. Roster auto-fills if Radio ID matches.'],
+        ['Dispatch Ctr',  'Dispatching agency (e.g. MCECC, IDOT)'],
+        ['Export ICS-309','Radio IDs appear in station column — same export as amateur logger'],
     ],
-    [1.1*inch, CW-1.1*inch]))
+    [1.2*inch, CW-1.2*inch]))
 story.append(PB())
 
-# ── PAGE 4 — ROSTER + RESOURCE BOARD + RESOURCE MAP ──────────────────────────
-story.append(section_hdr('👥', 'Member Roster',
+# ══════════════════════════════════════════════════════════════════════════════
+# PAGE 4 — ROSTER, QR CHECK-IN & PERSONNEL ACCOUNTABILITY
+# ══════════════════════════════════════════════════════════════════════════════
+story.append(section_hdr('👥', 'Member Roster & QR Check-In Codes',
                          'http://192.168.50.1/roster.html', EOC, EOC_BG))
-story.append(SP(6))
+story.append(SP(4))
 story.append(ref_tbl(
-    ['TAB', 'WHAT TO DO THERE'],
+    ['ACTION', 'HOW'],
     [
-        ['Members',       'Add/edit members. Fields: callsign, name, Radio ID, phone, address, license class, email, notes.'],
-        ['Certifications','Check off ICS-100/200/300/400/700/800, EmComm I/II, CERT, First Aid, FEMA IS courses.'],
-        ['Equipment',     'Check off capabilities: HF/VHF/UHF radio, Winlink, JS8Call, APRS, generator, antenna, laptop, go-kit.'],
-        ['Activations',   'Log check-ins for this incident. Click <b>+ Check In</b> to mark a member as activated. Walk-ins can be added here.'],
-        ['Import/Export', 'Export roster to CSV. Import from a previous activation CSV to pre-populate for the next event.'],
+        ['Add member',        'Click + Add Member — enter Member ID, name, callsign or Radio ID, role'],
+        ['Import CSV',        'Click 📥 Import CSV — required column: member_id. All others optional.'],
+        ['Generate QR code',  'Click QR button on any member card — print or save PNG for their badge'],
+        ['Export roster',     'Click 📤 Export CSV — downloads all members for backup or transfer'],
     ],
-    [1.4*inch, CW-1.4*inch]))
-story.append(SP(8))
-
-story.append(section_hdr('📦', 'Resource Board',
-                         'http://192.168.50.1/resources.html', AMBER, AMBER_BG))
+    [1.5*inch, CW-1.5*inch]))
 story.append(SP(6))
+story.append(section_hdr('📷', 'Scan Check-In (QR/Barcode)',
+                         'http://192.168.50.1/scan_checkin.html', EOC_LT, EOC_BG))
+story.append(SP(4))
 story.append(steps_tbl([
-    ('1', '<b>Add a resource</b> — click <b>+ Add Resource</b>. Enter name, type, owner/callsign, location, and initial status.'),
-    ('2', '<b>Change status</b> — click the colored status badge on any card to cycle through the five states.'),
-    ('3', '<b>Filter</b> — use the Type and Status dropdowns to show only the resources you need.'),
+    ('1', '<b>Open Scan Check-In</b> on a camera device. Click <b>📷 Start Camera</b>.'),
+    ('2', '<b>Scan QR code</b> — point camera at member\'s QR. Name auto-fills from roster.'),
+    ('3', '<b>Manual fallback</b> — type member ID, callsign, or Radio ID and press Enter.'),
+    ('4', '<b>Check In</b> — confirm fields and click ✓ Check In. Success screen appears.'),
+]))
+story.append(SP(6))
+story.append(section_hdr('🔴', 'Personnel Accountability (PAR)',
+                         'http://192.168.50.1/accountability.html', RED, HexColor('#fef2f2')))
+story.append(SP(4))
+story.append(ref_tbl(
+    ['TAB', 'WHAT IT SHOWS'],
+    [
+        ['ICS-211 Check-In List', 'All checked-in personnel · Check Out button · PAR confirm button'],
+        ['T-Card Personnel',      'Personnel grouped by resource · PAR per resource group'],
+        ['⚠ Unaccounted',         'Personnel not yet confirmed in current PAR — contact supervisor immediately'],
+        ['Cross-Reference',       'Checked-in but no T-card · On T-card but no check-in (safety gap)'],
+    ],
+    [1.8*inch, CW-1.8*inch]))
+story.append(SP(4))
+story.append(tip('Click 🔴 Conduct PAR to start a PAR cycle. '
+                 'Click ✓ PAR on each person as supervisors report in. '
+                 'Reset PAR to begin a new cycle.'))
+story.append(PB())
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PAGE 5 — T-CARD RESOURCE BOARD & GPS RESOURCE MAP
+# ══════════════════════════════════════════════════════════════════════════════
+story.append(section_hdr('📦', 'T-Card Resource Board & Personnel',
+                         'http://192.168.50.1/resources.html', AMBER, AMBER_BG))
+story.append(SP(4))
+story.append(steps_tbl([
+    ('1', '<b>Add resource</b> — click + Add Resource. Enter name, type, status, assignment, leader.'),
+    ('2', '<b>Change status</b> — click status badge to cycle: Available → Assigned → Staging → Out of Service.'),
+    ('3', '<b>Add personnel</b> — click any T-card → 👤 PERSONNEL tab → type name → select from roster suggestion.'),
+    ('4', '<b>Set ICS position</b> — choose the person\'s role on THIS resource (Crew Boss, EMT, Operator, etc.).'),
 ]))
 story.append(SP(4))
 story.append(ref_tbl(
     ['STATUS', 'COLOR', 'MEANING'],
     [
-        ['Available',     'Green', 'On scene and ready for assignment'],
-        ['Assigned',      'Amber', 'Actively tasked'],
-        ['Staging',       'Blue',  'En route or at staging area'],
-        ['Out of Service','Red',   'Unavailable — hold, mechanical, or medical'],
-        ['Demobilized',   'Gray',  'Released and departed'],
+        ['Available',      'Green',  'On scene and ready for assignment'],
+        ['Assigned',       'Blue',   'Actively tasked to a division or group'],
+        ['Staging',        'Lt Blue','En route or waiting at staging area'],
+        ['Out of Service', 'Red',    'Unavailable — mechanical, medical, or released'],
     ],
-    [1.2*inch, 0.7*inch, CW-1.9*inch]))
-story.append(SP(8))
-
-story.append(section_hdr('🗺️', 'Resource Tracking Map',
-                         'http://192.168.50.1/resmap.html', SGREEN, SGREEN_BG))
+    [1.2*inch, 0.8*inch, CW-2.0*inch]))
 story.append(SP(6))
+story.append(section_hdr('📍', 'GPS-Tracked Resource Map',
+                         'http://192.168.50.1/resource_map.html', SGREEN, SGREEN_BG))
+story.append(SP(4))
 story.append(ref_tbl(
-    ['ACTION', 'HOW'],
+    ['METHOD', 'HOW TO SET POSITION'],
     [
-        ['Place a unit',  'Click <b>+ Add Unit</b> → enter Radio ID, unit name, type, status → click <b>📍 Pick on Map</b> or enter lat/lon → Save.'],
-        ['Move a unit',   'Drag the unit marker to its new position on the map. Coordinates update automatically.'],
-        ['Change status', 'Click the marker → Edit → change Status dropdown → Save. Color updates immediately.'],
-        ['Draw a zone',   'Click <b>Draw Zone</b> → click map points to define boundary → double-click to finish → enter zone name.'],
+        ['Device GPS',     'Click 📍 Use Device GPS — browser gets your GPS coordinates automatically'],
+        ['Click map',      'Click 🗺 Click Map to Place — crosshair cursor, click the map to set position'],
+        ['Manual coords',  'Type decimal latitude and longitude directly into the fields'],
     ],
     [1.3*inch, CW-1.3*inch]))
+story.append(SP(4))
+story.append(tip('Resource pins are color-coded by status. '
+                 'Resources without GPS show as dashed circles in the sidebar. '
+                 'Enable Auto-refresh 30s for moving resources.'))
 story.append(PB())
 
-# ── PAGE 5 — ICS PLATFORM ─────────────────────────────────────────────────────
-story.append(section_hdr('🏛', 'ICS Platform — All Five Sections',
+# ══════════════════════════════════════════════════════════════════════════════
+# PAGE 6 — ICS PLATFORM — FIVE SECTIONS
+# ══════════════════════════════════════════════════════════════════════════════
+story.append(section_hdr('🏛', 'ICS Platform — Five-Section Structure',
                          'http://192.168.50.1/ics/', EOC, EOC_BG))
-story.append(SP(6))
-story.append(P('Starting an Incident',
-               S('h2', fontName='Helvetica-Bold', fontSize=10, textColor=EOC, leading=13)))
 story.append(SP(4))
 story.append(steps_tbl([
-    ('1', 'Go to <b>http://192.168.50.1/ics/</b> — or click the ICS Platform card from the ICS dashboard mode.'),
-    ('2', 'Click <b>🆕 New Incident</b>. Fill in: Incident Name, Type, Location, Incident Commander, Op Period Duration.'),
-    ('3', 'Click <b>Activate Incident</b>. All five sections are now active with this incident loaded.'),
-    ('4', 'Navigate between sections using the tabs at the top: ⭐ Command · 🔴 Operations · 📋 Planning · 🟢 Logistics · 💜 Finance'),
-    ('5', 'Click <b>⏭ Advance Period</b> at the start of each new operational period.'),
+    ('1', '<b>Create incident</b> — go to http://192.168.50.1/incident.html → + New Incident.'),
+    ('2', '<b>Navigate sections</b> — tabs at top: ⭐ Command · 🔴 Operations · 📋 Planning · 🟢 Logistics · 💜 Finance.'),
+    ('3', '<b>Advance period</b> — click + New Period at start of each operational period.'),
+    ('4', '<b>Use event template</b> — event_templates.html → Activate → select type → instant pre-built incident.'),
 ]))
-story.append(SP(8))
-story.append(P('What Each Section Does',
-               S('h2', fontName='Helvetica-Bold', fontSize=10, textColor=EOC, leading=13)))
 story.append(SP(4))
 story.append(ref_tbl(
-    ['SECTION', 'KEY TOOLS'],
+    ['SECTION', 'KEY TOOLS & FORMS'],
     [
         ['⭐ Command',
-         'Incident objectives (100-item dropdown + free text), safety message, weather summary, '
-         'situation report, command staff roster. Forms: ICS-201, ICS-202, ICS-203.'],
+         'ICS-201 briefing · ICS-202 objectives · ICS-203 org chart · '
+         'ICS-208 safety message · Position checklists · Meeting scheduler'],
         ['🔴 Operations',
-         'T-card board — drag resources between Available / Assigned / Staging / Out of Service / Released. '
-         'Click any card for assignment details. Forms: ICS-204.'],
+         'T-card resource board · ICS-204 assignment lists · '
+         'GPS resource map · Resource personnel rosters'],
         ['📋 Planning',
-         'IAP form tracker, resource status table, incident documentation log, operational period notes. '
-         'Forms: ICS-209.'],
+         'IAP assembly · ICS-205 comms plan · ICS-206 medical plan · '
+         'ICS-209 status summary · ICS-211 check-in list · Planning P cycle'],
         ['🟢 Logistics',
-         'Communications plan (ICS-205) with pre-filled your county channels, supply tracking, '
-         'meal log, personnel check-in list. Forms: ICS-205, ICS-206, ICS-211.'],
+         'ICS-205 radio comms (COML develops) · ICS-205A comms list · '
+         'ICS-206 medical plan (MEDL develops) · Channel library · Facilities · ICS-218'],
         ['💜 Finance/Admin',
-         'Expenditure log, personnel time tracking, procurement orders. Export to CSV for agency reporting.'],
+         'FEMA PA cost tracking · Force Account Labor · Equipment · '
+         'Materials · Contracts · Cost dashboard · ICS-214 activity log'],
     ],
-    [1.3*inch, CW-1.3*inch]))
-story.append(SP(6))
-story.append(tip(
-    'The 100-item objectives dropdown in Command section is organized into 13 groups. '
-    'Select an objective → it pre-fills the text box → edit if needed → click + Add. '
-    'Your agency-specific objectives are in the last group.',
-    AMBER, AMBER_BG))
+    [1.15*inch, CW-1.15*inch]))
+story.append(SP(4))
+story.append(tip('Under Unified Command (UC): enter "Unified Command" in the IC field. '
+                 'List UC members in the ICS-203 Organization Assignment List. '
+                 'All forms and T-cards work identically under UC.'))
 story.append(PB())
 
-# ── PAGE 6 — ICS FORMS + PLANNING P ──────────────────────────────────────────
-story.append(section_hdr('📋', 'ICS Forms Quick-Reference',
-                         'http://192.168.50.1/', PURPLE, HexColor('#f0e8fc')))
-story.append(SP(6))
+# ══════════════════════════════════════════════════════════════════════════════
+# PAGE 7 — ICS FORMS, SIGNATURES & IAP PDF
+# ══════════════════════════════════════════════════════════════════════════════
+story.append(section_hdr('📋', 'ICS Forms, Digital Signatures & IAP Compilation',
+                         'http://192.168.50.1/ics-form.html', PURPLE, HexColor('#f0e8fc')))
+story.append(SP(4))
 story.append(ref_tbl(
-    ['FORM', 'URL', 'WHAT IT DOES'],
+    ['FORM', 'TITLE', 'DEVELOPED BY'],
     [
-        ['ICS-213 General Message', '/ics213.html',
-         'Formal written message. Fill sender, receiver, subject, message body. Print or save to incident.'],
-        ['ICS-214 Activity Log', '/ics214.html',
-         'Unit activity log. Add personnel, then log timestamped activities. Print for IAP.'],
-        ['ICS-309 Comms Log', '/ics309.html',
-         'Formal communications log. Add entries with timestamp, from, to, subject. Save to incident.'],
-        ['NTS Radiogram', '/nts.html',
-         'ARRL formatted radiogram. Auto-fills date/time/number. All preamble fields. Print when complete.'],
-        ['Winlink Import', '/winlink-import.html',
-         'Drag-and-drop ICS form XML from Winlink Express. Review fields, then archive to active incident.'],
-        ['Print Center', '/printcenter.html',
-         'Print any blank ICS form, cheat sheet, or operator access card from one location. '
-         'Printer options: A) own printer, B) USB printer shared via Pi/CUPS '
-         '(admin: http://192.168.50.1:631), C) network printer on EMCOMM-NET.'],
+        ['ICS-202', 'Incident Objectives',           'Planning Section Chief / IC'],
+        ['ICS-203', 'Org Assignment List',           'Resources Unit Leader (RESL)'],
+        ['ICS-204', 'Assignment List',               'RESL — distributed to Operations'],
+        ['ICS-205', 'Radio Comms Plan',              'Comms Unit Leader (COML) — Logistics'],
+        ['ICS-206', 'Medical Plan',                  'Medical Unit Leader (MEDL) — Logistics'],
+        ['ICS-207', 'Org Chart',                     'Resources Unit Leader (RESL)'],
+        ['ICS-208', 'Safety Message',                'Safety Officer (SOFR) — Command Staff'],
+        ['ICS-209', 'Status Summary',                'Situation Unit Leader (SITL)'],
+        ['ICS-211', 'Check-In List',                 'Resources Unit Leader (RESL)'],
+        ['ICS-213', 'General Message',               'Any ICS position'],
+        ['ICS-214', 'Activity Log',                  'All supervisors — every section'],
+        ['ICS-215A','IAP Safety Analysis',           'Safety Officer (SOFR) with Ops input'],
+        ['ICS-218', 'Support Vehicle Inventory',     'Ground Support Unit Leader (GSUL)'],
+        ['ICS-221', 'Demobilization Check-Out',      'Demob Unit Leader (DMOB)'],
+        ['ICS-309', 'Communications Log',            'Comms Unit Leader (COML) / any operator'],
     ],
-    [1.3*inch, 1.1*inch, CW-2.4*inch]))
-story.append(SP(8))
-
-story.append(section_hdr('🅿', 'Planning P — 15-Phase Cycle Guide',
-                         'http://192.168.50.1/ics/planningp.html', AMBER, AMBER_BG))
-story.append(SP(6))
-story.append(P('Click the <b>🅿 Planning P</b> tab on any ICS page. '
-               'Click a phase button → see the standard agenda, required forms, and who should attend. '
-               'Click <b>Generate briefing sheet</b> to print a one-page phase cover for the IAP.',
-               S('bd', fontSize=9, leading=13)))
-story.append(SP(6))
+    [0.75*inch, 1.55*inch, CW-2.3*inch]))
+story.append(SP(4))
 story.append(ref_tbl(
-    ['COLOR', 'PHASES', 'GROUP'],
+    ['TASK', 'HOW'],
     [
-        ['Gray',   'Phases 1–5',   'Initial Response — incident through incident brief'],
-        ['Yellow', 'Phases 6–7',   'Establish Objectives — IC/UC objectives + C&G Staff Meeting'],
-        ['Red',    'Phases 8–11',  'Develop the Plan — tactics meeting through planning meeting'],
-        ['Green',  'Phases 12–13', 'Prepare & Disseminate — IAP prep + operations briefing'],
-        ['Teal',   'Phases 14–15', 'Execute, Evaluate & Revise — execute plan + new ops period'],
+        ['Digital signature',   'Click any Prepared By / Approved By field — sign with mouse, touch, or stylus → Accept'],
+        ['Compile IAP PDF',     'Go to iap_compile.html → check forms to include → click 📄 Compile IAP PDF (5–15 sec)'],
+        ['Print IAP',           'Go to printcenter.html → select IAP PDF → print to any CUPS printer on the network'],
     ],
-    [0.7*inch, 0.9*inch, CW-1.6*inch]))
+    [1.4*inch, CW-1.4*inch]))
 story.append(PB())
 
-# ── PAGE 7 — TOOLS QUICK-REFERENCE ────────────────────────────────────────────
-story.append(section_hdr('🔧', 'Tools Quick-Reference',
+# ══════════════════════════════════════════════════════════════════════════════
+# PAGE 8 — FEMA DOCUMENTATION & COST DASHBOARD
+# ══════════════════════════════════════════════════════════════════════════════
+story.append(section_hdr('💰', 'FEMA PA Cost Documentation',
+                         'http://192.168.50.1/fema_costs.html', AMBER, AMBER_BG))
+story.append(SP(4))
+story.append(ref_tbl(
+    ['CATEGORY', 'WHAT TO ENTER', 'FEMA REQUIREMENT'],
+    [
+        ['Force Account Labor',
+         'Employee name, title, regular hours, overtime hours, hourly rate, fringe %',
+         'Only overtime is reimbursable for employees; all hours for volunteers'],
+        ['Equipment',
+         'Click 📋 Lookup → select FEMA category → rate auto-fills → enter hours and unit ID',
+         'Must use FEMA Schedule of Equipment Rates (44 categories pre-loaded)'],
+        ['Materials',
+         'Vendor, description, PO number, unit cost, quantity',
+         'Source documentation required — attach receipts to Project Worksheet'],
+        ['Contracts',
+         'Vendor, description, contract number, total amount',
+         'Contract documentation required — competitive bid or sole-source justification'],
+    ],
+    [1.3*inch, 2.1*inch, CW-3.4*inch]))
+story.append(SP(4))
+story.append(steps_tbl([
+    ('1', '<b>Update FEMA rates</b> — go to fema_rates.html annually when FEMA publishes new schedule.'),
+    ('2', '<b>Import ICS-214</b> — on Force Account Labor tab, click Import from ICS-214 to pull hours.'),
+    ('3', '<b>Export PW text</b> — click 📄 Export PW Text for a formatted Project Worksheet summary.'),
+]))
+story.append(SP(6))
+story.append(section_hdr('📊', 'Real-Time Cost Dashboard',
+                         'http://192.168.50.1/cost_dashboard.html', EOC_LT, EOC_BG))
+story.append(SP(4))
+story.append(ref_tbl(
+    ['PANEL', 'WHAT IT SHOWS'],
+    [
+        ['Total incident cost',     'Running total — updates every 2 minutes automatically'],
+        ['Cost by category',        'Labor · Equipment · Materials · Contracts — amount and % of total'],
+        ['Cost projection',         'Extrapolated cost based on current burn rate × remaining periods'],
+        ['Budget tracker',          'Enter authorized budget to see remaining balance and % used'],
+        ['Per-period breakdown',    'Costs attributed by operational period — for AAR documentation'],
+    ],
+    [1.6*inch, CW-1.6*inch]))
+story.append(PB())
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PAGE 9 — SITUATIONAL AWARENESS: RADAR, APRS, WEATHER
+# ══════════════════════════════════════════════════════════════════════════════
+story.append(section_hdr('🌩', 'NEXRAD Animated Radar',
+                         'http://192.168.50.1/radar.html', EOC_LT, EOC_BG))
+story.append(SP(4))
+story.append(ref_tbl(
+    ['CONTROL', 'FUNCTION'],
+    [
+        ['▶ / ⏸ Play/Pause',  'Start or stop animation loop'],
+        ['◀ ▶ Step',          'Advance one frame at a time'],
+        ['Scrubber',          'Jump to any point in the loop'],
+        ['Speed',             '0.5× · 1× · 2× · 4× playback speed'],
+        ['Station',           'Select nearest NEXRAD radar station for your area'],
+        ['Palette',           'Standard (reflectivity) · Dual-pol · Enhanced'],
+        ['Auto-refresh',      'New tiles load every 5 minutes when WAN is active'],
+    ],
+    [1.4*inch, CW-1.4*inch]))
+story.append(SP(4))
+story.append(tip('WAN REQUIRED for radar tiles. '
+                 'When offline, last loaded frame displays with timestamp. '
+                 'Radar resumes automatically when WAN returns.'))
+story.append(SP(6))
+story.append(section_hdr('🗺', 'Tactical APRS Map',
+                         'http://192.168.50.1/tactical.html', EOC, EOC_BG))
+story.append(SP(4))
+story.append(ref_tbl(
+    ['SOURCE', 'REQUIRES WAN?', 'NOTES'],
+    [
+        ['RF APRS (TNC/direwolf)',  '✗ Always offline', 'Live RF stations from local TNC — always available'],
+        ['APRS-IS internet feed',   '✓ WAN required',   'Internet feed pauses when offline; RF continues'],
+        ['SARTopo GeoJSON overlay', '✗ Once imported',  'Import at sartopo_import.html — persists on map'],
+        ['NWS weather polygons',    '✓ WAN required',   'Alert polygons overlay on the map'],
+    ],
+    [1.8*inch, 1.1*inch, CW-2.9*inch]))
+story.append(PB())
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PAGE 10 — AMATEUR RADIO EMCOMM TOOLS
+# ══════════════════════════════════════════════════════════════════════════════
+story.append(section_hdr('📡', 'Amateur Radio EMCOMM Tools',
                          'http://192.168.50.1/', EOC, EOC_BG))
-story.append(SP(6))
+story.append(SP(4))
 story.append(ref_tbl(
     ['TOOL', 'URL', 'QUICK USE'],
     [
-        ['FCC Callsign Lookup', '/callsign.html',
-         'Type callsign → Enter. Results from local FCC database (~800K licensees). Click + Add to Roster.'],
-        ['APRS Tactical Map', '/tactical.html',
-         'Live APRS stations from Graywolf/YAAC. Click station to center. Draw overlays with toolbar tools.'],
-        ['HF Propagation', '/propagation.html',
-         'Live SFI, K-index, A-index from HamQSL. Band-by-band conditions. Useful for frequency selection.'],
-        ['Repeater Database', '/repeaters.html',
-         'Filter by band, tone, mode, ARES affiliation. Click a row to copy frequency to clipboard.'],
-        ['Grid Square Calc', '/grid.html',
-         'Enter lat/lon → get Maidenhead grid. Enter grid → get lat/lon + distance/bearing from you.'],
-        ['Pre-Flight Check', '/preflight.html',
-         'GO / CAUTION / NO-GO readiness verdict. Run before every activation. Export report for records.'],
-        ['Dead Man\'s Switch', '/deadmans.html',
-         'Click ⚠ Arm next to a net. Alerts you if the net goes silent beyond the configured threshold.'],
-        ['Observer Mode', '/observer.html',
-         'Read-only live net view. Share the URL with EOC or served agencies — no identity prompt needed.'],
-        ['Reference Library', '/refs.html',
-         'Upload PDFs/docs up to 200 MB. Tag, search, and share field documents across all devices.'],
-        ['Kiwix Library', ':8081/',
-         'Offline Wikipedia, WikiMed, iFixit, Wikivoyage. No internet needed. Open from dashboard card.'],
-        ['Health Monitor', ':5051/health',
-         'Live CPU/memory/disk/temp, all service status dots, GPS fix quality, internet status.'],
-        ['WAN Status', '/wan-status.html',
-         'Active WAN source (cellular modem or satellite internet), signal strength, '
-         'carrier, latency, connectivity tests, and WAN event log.'],
-        ['AMPRNet Gateway', '192.168.50.2:9000',
-         'WireGuard tunnel state, AMPRNet 44.x.x.x address, traffic stats. '
-         'Requires FCC callsign login. Tunnel control requires gateway Pi keyboard.'],
-        ['Facilities Directory', '/facilities.html',
-         'EOC, shelters, hospitals, staging areas with address, phone, and radio frequencies.'],
-        ['Radio Cheat Sheets', '/cheatsheets.html',
-         'Phonetic alphabet, Q-codes, prowords, band plan, CTCSS tones, ICS position titles.'],
-        ['JS8Call', 'dashboard card',
-         'Click the JS8Call card → enter Windows laptop IP when prompted → opens JS8Call web interface.'],
+        ['FCC Callsign Lookup',  '/callsign.html',
+         'Type callsign → Enter. 800K+ licensees, fully offline. Click + Add to Roster.'],
+        ['NTS Radiogram',        '/nts.html',
+         'Fill preamble fields — word count auto-calculates. Print for traffic handling.'],
+        ['Winlink Import',       '/winlink-import.html',
+         'Drag Winlink XML form attachment → Review → Archive to active incident.'],
+        ['JS8Call',              'Windows laptop',
+         'Click JS8Call dashboard card → enter laptop IP → opens JS8Call web interface.'],
+        ['HF Propagation',       '/propagation.html',
+         'SFI · K-index · A-index from NOAA SWPC. Band-by-band conditions. WAN required.'],
+        ['AMPRNet Gateway',      '192.168.50.2',
+         '44Net WireGuard tunnel status · callsign-authenticated · Part 97 access log.'],
+        ['Observer Mode',        '/observer.html',
+         'Read-only live net view. Share URL with EOC — auto-refreshes every 15 seconds.'],
+        ['Dead Man\'s Switch',   '/deadmans.html',
+         'Arm next to a net. Audible alert if net goes silent beyond configured interval.'],
+        ['ICS-309 Manual',       '/ics309.html',
+         'Manual comms log entries. Add timestamp · from · to · subject · precedence.'],
+        ['ICS-213 Message',      '/ics213.html',
+         'Formal written message with digital signature. Print or send via Winlink.'],
     ],
-    [1.4*inch, 1.0*inch, CW-2.4*inch]))
+    [1.5*inch, 1.15*inch, CW-2.65*inch]))
 story.append(PB())
 
-# ── PAGE 8 — WINLINK + TROUBLESHOOTING ────────────────────────────────────────
-story.append(section_hdr('📡', 'Winlink & Digital Comms',
-                         'Windows laptop + IC-7300', PURPLE, HexColor('#f0e8fc')))
-story.append(SP(6))
+# ══════════════════════════════════════════════════════════════════════════════
+# PAGE 11 — REFERENCE TOOLS & ADMIN URLS
+# ══════════════════════════════════════════════════════════════════════════════
+story.append(section_hdr('🔧', 'Reference Tools',
+                         'http://192.168.50.1/', EOC, EOC_BG))
+story.append(SP(4))
 story.append(ref_tbl(
-    ['METHOD', 'HOW TO USE'],
+    ['TOOL', 'URL', 'QUICK USE'],
     [
-        ['Winlink Express\n(primary)',
-         'Runs on Windows laptop. IC-7300 connected via single USB-A→USB-B cable. '
-         'Use VARA HF or VARA FM mode. After sending/receiving an ICS form, '
-         'save the RMS_Express_Form_*.xml and import it at /winlink-import.html.'],
-        ['Pat Winlink\n(backup)',
-         'Runs on the Pi at port 8090. Open from dashboard card. Browser-based. '
-         'Use when Windows laptop is unavailable.'],
-        ['JS8Call\n(digital messaging)',
-         'Runs on Windows laptop. Enable API at File → Settings → API → port 2442. '
-         'Click the JS8Call dashboard card → enter Windows laptop IP. '
-         'Recommended frequency: 7.078 MHz USB-D (40m calling).'],
+        ['Repeater Database',     '/repeaters.html',
+         'Filter by band/mode/CTCSS. Add local repeaters. Feeds ICS-205 channel picker.'],
+        ['Channel Library',       '/channel_library.html',
+         'Pre-loaded interop channels (NIFOG/VTAC). Add custom agency channels.'],
+        ['Grid Square Calc',      '/grid.html',
+         'Grid ↔ lat/lon · distance and bearing between two grids.'],
+        ['Hospital Directory',    '/hospitals.html',
+         'Trauma level · helipad · phone. Feeds ICS-206 medical plan.'],
+        ['Facilities Directory',  '/facilities.html',
+         'ICP · staging areas · shelters · supply depots. Links to T-card assignments.'],
+        ['NIMS Resource Types',   '/resource_types.html',
+         'Pre-loaded NIMS types. Add custom types — available instantly in T-card board.'],
+        ['Radio Cheat Sheets',    '/cheatsheets.html',
+         'Phonetic alphabet · Q-codes · RST scale · ICS structure · HF calling frequencies.'],
+        ['Position Checklists',   '/position_checklists.html',
+         'NIMS activation checklists for IC, SOFR, OSC, PSC, LSC, FSC and unit leaders.'],
+        ['Reference Library',     '/refs.html',
+         'Kiwix offline Wikipedia, WikiMed, iFixit. No internet needed.'],
+        ['Pre-Flight Check',      '/preflight.html',
+         'GO/CAUTION/NO-GO readiness verdict. Run before every activation.'],
+        ['Event Templates',       '/event_templates.html',
+         '6 built-in templates (Shelter/SAR/HazMat/Weather/Mass Gathering/Exercise). '
+         'Activate → incident pre-loaded with objectives, resources, channels, org.'],
+        ['Incident Archive',      '/incident_mgmt.html',
+         'Archive to USB · Restore from USB · Hard delete · Beta/Scenario Reset.'],
     ],
-    [1.4*inch, CW-1.4*inch]))
-story.append(SP(8))
+    [1.55*inch, 1.15*inch, CW-2.7*inch]))
+story.append(PB())
 
-story.append(section_hdr('🌐', 'Network — Admin URLs & IP Reference',
-                         'All addresses on EMCOMM-NET (192.168.50.0/24)', EOC, EOC_BG))
+# ══════════════════════════════════════════════════════════════════════════════
+# PAGE 12 — WAN, NETWORK & ADMIN
+# ══════════════════════════════════════════════════════════════════════════════
+story.append(section_hdr('📶', 'WAN Configuration & Network Reference',
+                         'http://192.168.50.1/wan_settings.html', EOC_LT, EOC_BG))
+story.append(SP(4))
+story.append(ref_tbl(
+    ['SETTING', 'OPTIONS'],
+    [
+        ['Role',            'Preferred (used first) · Fallback (used when preferred fails)'],
+        ['Type',            'Cellular · Satellite · Hotspot · Fixed broadband · Other'],
+        ['Detection',       'internet_only (hotspots/dongles) · ping (gateway IP) · admin_reachable (modem UI)'],
+        ['Swap roles',      'Click ⇄ Swap Roles — preferred and fallback swap immediately'],
+        ['Enable/disable',  'Toggle a source on or off without deleting its configuration'],
+    ],
+    [1.3*inch, CW-1.3*inch]))
 story.append(SP(6))
+story.append(section_hdr('🌐', 'Admin URLs & IP Reference',
+                         'http://192.168.50.1/', EOC, EOC_BG))
+story.append(SP(4))
 story.append(ref_tbl(
     ['DEVICE / SERVICE', 'ADDRESS', 'NOTES'],
     [
-        ['FieldCommand dashboard', 'http://192.168.50.1', 'Main entry point — all 32 tools'],
-        ['WAN Status dashboard', '/wan-status.html',
-         'cellular antenna + satellite dish + WAN event log'],
-        ['AMPRNet gateway status', 'http://192.168.50.2:9000',
-         'Requires FCC callsign login'],
-        ['ASUS router admin  (primary)', 'http://192.168.50.254',
-         'Wi-Fi settings, dual WAN failover, AiMesh'],
-        ['cellular antenna modem admin', 'http://10.1.1.1  or  http://my.insty',
-         'Connect to cellular antenna Wi-Fi first'],
-        ['satellite dish dish admin', 'http://192.168.100.1',
-         'Or use satellite dish app on phone'],
-        ['CUPS print server', 'http://192.168.50.1:631',
-         'Printer management and shared queue'],
-        ['Pat Winlink', 'http://192.168.50.1:8090',
-         'Browser-based Winlink backup'],
-        ['Kiwix offline library', 'http://192.168.50.1:8081',
-         'Wikipedia, WikiMed, iFixit offline'],
-        ['Health monitor API', 'http://192.168.50.1:5051/health',
-         'JSON health data for all services'],
-        ['44Net tunnel control', 'http://localhost:9001',
-         'Gateway Pi keyboard only — callsign login required'],
+        ['FieldCommand dashboard',     'http://192.168.50.1',          'Main entry — all tools'],
+        ['WAN status detail',          '/wan-status.html',              'Both sources · last check · event log'],
+        ['ICS platform',               'http://192.168.50.1/ics/',      'Five-section ICS structure'],
+        ['AMPRNet gateway status',     'http://192.168.50.2',           'Read-only port 9000'],
+        ['Primary router admin',       'http://192.168.50.254',         'ASUS RT-BE58 Go · AiMesh · WAN config'],
+        ['CUPS printer admin',         'http://192.168.50.1:631',       'Add/manage USB printers'],
+        ['Health monitor',             'http://192.168.50.1:5051/health','CPU · disk · service dots · GPS'],
+        ['FCC lookup API',             'http://192.168.50.1:5050',      'Port 5050 — callsign, roster, WAN config'],
+        ['ICS platform API',           'http://192.168.50.1:5051',      'Port 5051 — forms, T-cards, FEMA, GPS'],
+        ['Kiwix library',              'http://192.168.50.1:8080',      'Offline Wikipedia and reference docs'],
+        ['AMPRNet gateway',            'http://192.168.50.2',           '44Net status · callsign auth · Part 97 log'],
+        ['Planning P cycle',           '/ics/planningp.html',           '15-phase IAP cycle guide with agenda and required forms'],
+        ['Starcom resource map',       '/resmap.html',                  'Public safety unit positions — separate from ICS resource map'],
+        ['ICS-214 Activity Log',       '/ics214.html',                  'Unit log — export hours directly to FEMA Force Account Labor'],
+        ['Meeting scheduler',          '/meetings.html',                'Schedule operational briefings — time, location, attendees'],
+        ['Org setup',                  '/setup.html',                   'Configure org name, callsign, grid square, time zone'],
+        ['ICS-204A Briefing Sheet',    '/briefing_204a.html',           'Assignment briefing sheet for branch/division supervisors'],
     ],
-    [2.0*inch, 1.8*inch, CW-3.8*inch]))
-story.append(SP(6))
-
-story.append(section_hdr('📡', 'WAN Connectivity Quick Reference',
-                         'cellular antenna Primary  ·  satellite dish Automatic Failover', AMBER, AMBER_BG))
-story.append(SP(6))
-story.append(ref_tbl(
-    ['WAN SOURCE', 'HOW CONNECTED', 'WHEN ACTIVE'],
-    [
-        ['cellular antenna Drum',
-         'PoE cable from outdoor antenna to ASUS WAN port',
-         'Default — primary WAN at all activations  ·  10.1.1.1'],
-        ['cellular antenna Switchblade',
-         'Same PoE cable to same ASUS WAN port  (swap Drum)',
-         'When Drum signal is poor — aim toward tower  ·  10.1.1.1'],
-        ['satellite internet',
-         'Ethernet adapter + USB adapter → ASUS USB WAN',
-         'Auto when cellular drops — switches in 60s  ·  192.168.100.1'],
-        ['Site Ethernet',
-         'Site cable to ASUS WAN port',
-         'Manual — when site internet available  ·  192.168.50.254'],
-    ],
-    [1.6*inch, 2.3*inch, CW-3.9*inch]))
-story.append(SP(6))
-
-story.append(section_hdr('🛰', 'EMCOMM-NET Coverage — AiMesh Nodes',
-                         'Three ASUS RT-BE58 Go routers — same SSID, seamless roaming', EOC, EOC_BG))
-story.append(SP(6))
-story.append(ref_tbl(
-    ['ROUTER', 'SWITCH PORT', 'PLACEMENT'],
-    [
-        ['ASUS RT-BE58 Go  (primary)',
-         'Uplink — Port 1',
-         'Central position — command post or EOC entrance. Manages WAN and DHCP.'],
-        ['ASUS RT-BE58 Go  (mesh node 1)',
-         'Port 11',
-         'Secondary room, opposite wing, or upper floor.'],
-        ['ASUS RT-BE58 Go  (mesh node 2)',
-         'Port 12',
-         'Third coverage zone — outdoor staging, parking, or far wing.'],
-    ],
-    [1.8*inch, 1.0*inch, CW-2.8*inch]))
+    [1.9*inch, 1.9*inch, CW-3.8*inch]))
 story.append(SP(4))
-story.append(tip(
-    'All three routers broadcast EMCOMM-NET on 2.4 GHz and 5 GHz. '
-    'Devices roam between them automatically — no reconnection or password re-entry needed. '
-    'Pairing a new mesh node to the primary takes under 5 minutes via '
-    'http://192.168.50.254 → AiMesh → Add Node.',
-    EOC, EOC_BG))
+story.append(ref_tbl(
+    ['MESH NODE', 'SWITCH PORT', 'PLACEMENT'],
+    [
+        ['FieldCommand Pi 5',          'Port 1',  'Primary server — rack or case shelf'],
+        ['44Net Gateway Pi 5',         'Port 2',  'AMPRNet gateway — rack or case shelf'],
+        ['ASUS RT-BE58 Go (primary)',  'Port 3',  'ICP primary Wi-Fi · AiMesh controller'],
+        ['RT-BE58 Go (node 1)',        'Port 4',  'Coverage extension — second room or floor'],
+        ['RT-BE58 Go (node 2)',        'Port 5',  'Coverage extension — outdoor or staging'],
+    ],
+    [1.9*inch, 0.9*inch, CW-2.8*inch]))
 story.append(PB())
 
-story.append(section_hdr('⚠', 'Troubleshooting',
-                         '', RED, RED_BG))
-story.append(SP(6))
+# ══════════════════════════════════════════════════════════════════════════════
+# PAGE 13 — TROUBLESHOOTING
+# ══════════════════════════════════════════════════════════════════════════════
+story.append(section_hdr('🛠', 'Troubleshooting',
+                         'http://192.168.50.1/', RED, RED_BG))
+story.append(SP(4))
 story.append(ref_tbl(
     ['SYMPTOM', 'LIKELY CAUSE', 'FIX'],
     [
-        ['Cards give errors',
-         'Not on EMCOMM-NET — device is on a different network',
-         'Check Wi-Fi — must show EMCOMM-NET. Reconnect if needed.'],
-        ['Cannot reach http://192.168.50.1',
-         'Pi not running or ASUS router not powered',
-         'Check Pi power (green LED). Check ASUS router power. Wait 60s after Pi boot.'],
-        ['FCC lookup no results',
-         'FCC database not built or not a US amateur callsign',
-         'Run: sudo systemctl start fcc-refresh.service (needs internet)'],
-        ['APRS map no stations',
-         'Graywolf/YAAC not running or no RF received yet',
-         'Check Health Monitor for service status. Confirm antenna connected to IC-7300.'],
-        ['Winlink import fails',
-         'Wrong file — must be the XML attachment, not message body',
-         'In Winlink Express, right-click the .xml attachment → Save As → then import that file.'],
-        ['Service dot is red',
-         'A background service has stopped',
-         'SSH to Pi: sudo systemctl restart <service-name>  (e.g. fcc-lookup, ics-platform)'],
-        ['WAN shows offline',
-         'cellular antenna disconnected or plan inactive',
-         'Check Drum LED. Try Switchblade. Check plan at instyconnect.com. '
-         'If satellite dish is connected, failover should be automatic.'],
-        ['satellite dish failover not working',
-         'USB adapter not seated or ASUS Dual WAN not enabled',
-         'Check ASUS admin → WAN → Dual WAN → must be ON with USB as secondary.'],
-        ['AMPRNet login fails',
-         'Callsign not in FCC DB or FieldCommand Pi unreachable',
-         'Verify callsign is valid at http://192.168.50.1/callsign.html. '
-         'If FCC DB offline, format-only validation is used as fallback.'],
-        ['Cannot reach 192.168.50.2:9000',
-         'Gateway Pi off or not on EMCOMM-NET',
-         'Check gateway Pi power (green LED). It must be connected to UniFi switch.'],
+        ['Cannot reach 192.168.50.1',
+         'Not on EMCOMM-NET Wi-Fi',
+         'Check Wi-Fi — must show EMCOMM-NET. Some devices auto-switch networks.'],
+        ['Page loads but tools error',
+         'API server not running',
+         'SSH to Pi: sudo systemctl restart fieldcommand-main fieldcommand-fcc'],
+        ['Callsign lookup fails',
+         'FCC database missing or callsign not US licensed',
+         'Run: sudo python3 /opt/fieldcommand/scripts/build_fcc_db.py'],
+        ['APRS map shows no stations',
+         'No RF or APRS-IS unavailable',
+         'Check TNC/direwolf connection. WAN needed for APRS-IS feed.'],
+        ['Radar shows offline',
+         'No internet connection',
+         'Red WAN indicator means no radar tiles. All other tools still work.'],
+        ['QR scan not working',
+         'Browser does not support BarcodeDetector',
+         'Use Chrome or Edge. Use manual ID entry on Firefox/Safari.'],
+        ['IAP PDF takes too long',
+         'Many forms or large signatures',
+         'Normal 5–20 sec. If over 60 sec check server health at :5051/health.'],
+        ['WAN shows red but internet works',
+         'Detection method misconfigured',
+         'Go to wan_settings.html. Change detection to internet_only.'],
+        ['T-card personnel not saving',
+         'No active incident selected',
+         'Confirm incident is active at incident.html before adding personnel.'],
+        ['Gateway Pi unreachable',
+         'Gateway Pi off or not on switch',
+         'Check gateway Pi power (green LED). Confirm connected to UniFi switch.'],
+        ['PAR shows wrong count',
+         'Personnel checked in without ICS-211',
+         'Run Cross-Reference tab on accountability.html to find gaps.'],
     ],
-    [1.5*inch, 1.9*inch, CW-3.4*inch]))
-story.append(SP(8))
+    [1.55*inch, 1.85*inch, CW-3.4*inch]))
+story.append(SP(4))
 story.append(tip(
     'For any issue not covered here — open the Health Monitor at '
-    'http://192.168.50.1:5051/health or check the system log with: '
-    'journalctl -u fcc-lookup -n 50',
+    'http://192.168.50.1:5051/health or check the service log: '
+    'journalctl -u fieldcommand-main -n 50',
     RED, RED_BG))
-story.append(SP(10))
-story.append(HR(EOC_LT, 0.8))
-story.append(SP(8))
+story.append(PB())
 
-bm = Table([[
-    P('FieldCommand Incident Management System',
-      S('bm', fontName='Helvetica-Bold', fontSize=9, textColor=EOC, leading=13)),
-    P('RACES · ARES · Starcom\nhttp://192.168.50.1',
-      S('bm', fontName='Helvetica-Bold', fontSize=9, textColor=EOC,
-        leading=13, alignment=TA_CENTER)),
-    P(f'FieldCommand IMS v1.0\n{TODAY}',
-      S('bm', fontName='Helvetica', fontSize=8, textColor=MUTED,
-        leading=12, alignment=TA_LEFT)),
-]], colWidths=[CW*0.45, CW*0.30, CW*0.25])
-bm.setStyle(TableStyle([
-    ('VALIGN',        (0,0), (-1,-1), 'MIDDLE'),
-    ('TOPPADDING',    (0,0), (-1,-1), 6),
-    ('BOTTOMPADDING', (0,0), (-1,-1), 6),
-    ('LINEABOVE',     (0,0), (-1,-1), 0.3, LINE),
-]))
-story.append(bm)
 
-# ── Build ─────────────────────────────────────────────────────────────────────
 out = '/mnt/user-data/outputs/FieldCommand_Field_Quick_Reference.pdf'
 doc = SimpleDocTemplate(
     out, pagesize=letter,

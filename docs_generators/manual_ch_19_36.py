@@ -132,20 +132,18 @@ def ch21():
         'assignment — must complete ICS-211 check-in. This is the foundation of personnel '
         'accountability. There are three ways to check in:'))
     s.append(SP(4))
-    s.append(tbl(['METHOD', 'PAGE', 'BEST FOR'], [
-        ['Quick Response (QR) code/barcode camera scan',
-         'scan_checkin.html',
-         'High-throughput check-in stations; members with personal QR codes '
-         'from the roster page. Scan detects automatically — no typing required.'],
-        ['Manual form entry',
-         'checkin.html',
-         'Walk-in personnel, mutual aid, or any person without a QR code. '
-         'Full ICS-211 form with position dropdown and agency field.'],
-        ['Scan page manual fallback',
-         'scan_checkin.html',
-         'When camera unavailable — type the member ID, callsign, or radio ID '
-         'directly into the manual entry field.'],
-    ], widths=[1.4*inch, 1.2*inch, CW-2.6*inch]))
+    s.append(tbl(['METHOD', 'BEST FOR'], [
+        ['Camera scan (scan_checkin.html)',
+         'High-throughput check-in stations and members with personal '
+         'Quick Response (QR) codes or barcodes. '
+         'Scan detects automatically at 4 frames per second — no typing required.'],
+        ['Manual form entry (checkin.html)',
+         'Walk-in personnel, mutual aid, or any person without a Quick Response (QR) code. '
+         'Full ICS-211 form with ICS position dropdown and agency field.'],
+        ['Scan page manual fallback (scan_checkin.html)',
+         'When camera is unavailable — type the member ID, callsign, or radio ID '
+         'directly into the manual entry field on the scan page.'],
+    ], widths=[2.2*inch, CW-2.2*inch]))
     s.append(SP(6))
 
     s.append(P('21.3  ICS-211 Check-Out', H2))

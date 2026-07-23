@@ -139,6 +139,99 @@ def note(text, kind='note'):
     ]))
     return t
 
+
+# ── Abbreviation master list & helper ─────────────────────────────────────────
+ABBREVIATIONS = {
+    'AMPRNet':   'Amateur Packet Radio Network (44.0.0.0/8)',
+    'AP':        'Access Point (Wi-Fi)',
+    'API':       'Application Programming Interface',
+    'APRS':      'Automatic Packet Reporting System',
+    'ARES':      'Amateur Radio Emergency Service',
+    'ARRL':      'American Radio Relay League',
+    'AUXCOMM':   'Auxiliary Communications',
+    'CGNAT':     'Carrier-Grade Network Address Translation',
+    'COML':      'Communications Unit Leader (Logistics Section)',
+    'CTCSS':     'Continuous Tone-Coded Squelch System',
+    'CUPS':      'Common Unix Printing System',
+    'DCS':       'Digital-Coded Squelch',
+    'DHCP':      'Dynamic Host Configuration Protocol',
+    'DIVS':      'Division/Group Supervisor',
+    'DMR':       'Digital Mobile Radio',
+    'DMOB':      'Demobilization Unit Leader (Planning Section)',
+    'EMCOMM':    'Emergency Communications',
+    'EOC':       'Emergency Operations Center',
+    'ETA':       'Estimated Time of Arrival',
+    'FCC':       'Federal Communications Commission',
+    'FEMA':      'Federal Emergency Management Agency',
+    'FSC':       'Finance/Administration Section Chief',
+    'GPS':       'Global Positioning System',
+    'GSUL':      'Ground Support Unit Leader (Logistics Section)',
+    'HF':        'High Frequency (3-30 MHz radio)',
+    'IAP':       'Incident Action Plan',
+    'IC':        'Incident Commander',
+    'ICS':       'Incident Command System',
+    'JSON':      'JavaScript Object Notation',
+    'LAN':       'Local Area Network',
+    'LOFR':      'Liaison Officer',
+    'LSC':       'Logistics Section Chief',
+    'MAC':       'Multi-Agency Coordination',
+    'MEDL':      'Medical Unit Leader (Logistics Section)',
+    'NEXRAD':    'Next Generation Radar (NWS WSR-88D network)',
+    'NIFOG':     'National Interoperability Field Operations Guide',
+    'NIMS':      'National Incident Management System',
+    'NRCC':      'National Response Coordination Center',
+    'NTS':       'National Traffic System (ARRL)',
+    'NVMe':      'Non-Volatile Memory Express (fast storage interface)',
+    'NWS':       'National Weather Service',
+    'NWCG':      'National Wildfire Coordinating Group',
+    'OSC':       'Operations Section Chief',
+    'P25':       'Project 25 (APCO) - digital public safety radio standard',
+    'PA':        'Public Assistance (FEMA grant program)',
+    'PAR':       'Personnel Accountability Report',
+    'PDF':       'Portable Document Format',
+    'PIO':       'Public Information Officer',
+    'PO':        'Purchase Order',
+    'PoE':       'Power over Ethernet',
+    'PSC':       'Planning Section Chief',
+    'PW':        'Project Worksheet (FEMA PA documentation form)',
+    'QR':        'Quick Response (two-dimensional barcode format)',
+    'RACES':     'Radio Amateur Civil Emergency Service',
+    'RAID':      'Redundant Array of Independent Disks',
+    'RESL':      'Resources Unit Leader (Planning Section)',
+    'RRCC':      'Regional Response Coordination Center',
+    'SAR':       'Search and Rescue',
+    'SFI':       'Solar Flux Index',
+    'SITL':      'Situation Unit Leader (Planning Section)',
+    'SOFR':      'Safety Officer (ICS Command Staff)',
+    'SSD':       'Solid-State Drive',
+    'SSID':      'Service Set Identifier (Wi-Fi network name)',
+    'STLD':      'Strike Team Leader',
+    'SWPC':      'Space Weather Prediction Center (NOAA)',
+    'TFLD':      'Task Force Leader',
+    'TNC':       'Terminal Node Controller (packet radio hardware)',
+    'TTL':       'Time To Live (session expiration interval)',
+    'UC':        'Unified Command',
+    'UHF':       'Ultra High Frequency (300 MHz-3 GHz radio)',
+    'ULS':       'Universal Licensing System (FCC amateur database)',
+    'URL':       'Uniform Resource Locator (web address)',
+    'USB':       'Universal Serial Bus',
+    'USCG':      'United States Coast Guard',
+    'VARA':      'VARA (Winlink HF/FM digital mode modem software)',
+    'VHF':       'Very High Frequency (30-300 MHz radio)',
+    'VTAC':      'VHF Tactical Interoperability Channel',
+    'WAN':       'Wide Area Network (internet connection)',
+    'WireGuard': 'WireGuard (modern VPN tunneling protocol)',
+}
+
+def abbr(term):
+    defn = ABBREVIATIONS.get(term, '')
+    return f'{term} ({defn})' if defn else term
+
+def abbr_b(term):
+    defn = ABBREVIATIONS.get(term, '')
+    return (f'<b>{term}</b> ({defn})') if defn else f'<b>{term}</b>'
+
+
 def chapter(num, title, url=''):
     """Return a list of flowables opening a chapter."""
     items = []

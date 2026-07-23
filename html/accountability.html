@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Personnel Accountability — FieldCommand IMS</title>
+<link rel="stylesheet" href="theme.css">
+<style>
+body { background:var(--bg); }
+
+/* Header */
+.pa-header {
+  background:linear-gradient(135deg,#7c1a1a,#a32020);
+  border-bottom:3px solid #ef4444;
+  padding:12px 18px;
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+}
+.pa-title { font-family:var(--font-hd);font-size:15px;color:#fff;letter-spacing:2px; }
+.pa-sub   { font-size:11px;color:rgba(255,255,255,.65);margin-top:2px; }
+.par-badge {
+  margin-left:auto;padding:6px 14px;
+  background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.2);
+  border-radius:var(--r-md);font-size:11px;color:#fff;text-align:right;
+}
+
+/* Summary tiles */
+.summary-bar {
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));
+  gap:10px;padding:14px 18px;background:var(--panel);
+  border-bottom:1px solid var(--line);
+}
+.tile {
+  background:var(--panel2);border:1px solid var(--line);
+  border-radius:var(--r-md);padding:10px 14px;text-align:center;
+}
+.tile-num  { font-size:28px;font-weight:700;line-height:1; }
+.tile-lbl  { font-size:10px;color:var(--muted);text-transform:uppercase;
+             letter-spacing:.07em;margin-top:4px; }
+.tile.green  { border-color:var(--green); }
+.tile.red    { border-color:var(--red); }
+.tile.amber  { border-color:#f59e0b; }
+.tile.blue   { border-color:var(--blue); }
+.tile.green .tile-num { color:var(--green); }
+.tile.red   .tile-num { color:var(--red); }
+.tile.amber .tile-num { color:#d97706; }
+.tile.blue  .tile-num { color:var(--blue); }
+
+/* Controls bar */
+.ctrl-bar {
+  display:flex;align-items:center;gap:10px;flex-wrap:wrap;
+  padding:10px 18px;background:var(--panel);border-bottom:1px solid var(--line);
+}
+
+/* Tab bar */
+.tab-bar {
+  display:flex;border-bottom:1px solid var(--line);
+  background:var(--panel);padding:0 18px;
+}
+.tab-btn {
+  padding:9px 16px;font-size:11px;font-family:var(--font-hd);
+  letter-spacing:.06em;background:none;border:none;
+  border-bottom:2px solid transparent;color:var(--muted);cursor:pointer;
+}
+.tab-btn.active { color:var(--eoc);border-bottom-color:var(--eoc); }
+
+/* Main list area */
+.list-area { padding:14px 18px; }
+
+/* Person rows */
+.person-row {
+  display:flex;align-items:flex-start;gap:10px;
+  padding:9px 12px;border-bottom:1px solid var(--line-lt);
+  border-radius:var(--r-sm);margin-bottom:2px;
+  background:var(--panel);
+  transition:background .1s;
+}
+.person-row:hover { background:var(--panel2); }
+.person-row.par-ok  { border-left:3px solid var(--green); }
+.person-row.par-no  { border-left:3px solid var(--red); }
+.person-row.checked-out { opacity:.55;border-left:3px solid var(--dim); }
+
+.p-name  { font-size:13px;font-weight:600;color:var(--txt);line-height:1.2; }
+.p-meta  { font-size:10px;color:var(--muted);margin-top:2px;line-height:1.5; }
+.p-loc   { font-size:10px;color:var(--blue);margin-top:2px; }
+.p-time  { font-size:10px;color:var(--dim);margin-top:2px; }
+.p-badge {
+  font-size:9px;padding:2px 6px;border-radius:3px;
+  font-family:var(--font-hd);letter-spacing:.05em;
+  display:inline-block;margin-right:4px;
+}
+.badge-in     { background:var(--green-bg);color:var(--green);border:1px solid #86efac; }
+.badge-out    { background:var(--panel2);color:var(--muted);border:1px solid var(--line); }
+.badge-par    { background:#d1fae5;color:#065f46;border:1px solid #6ee7b7; }
+.badge-no-par { background:var(--red-bg);color:var(--red);border:1px solid #fca5a5; }
+.badge-tcard  { background:var(--blue-bg);color:var(--blue);border:1px solid #93c5fd; }
+
+/* Resource group headers */
+.res-group-hdr {
+  font-family:var(--font-hd);font-size:10px;letter-spacing:.1em;
+  color:var(--eoc);padding:10px 4px 4px;
+  border-bottom:1px solid var(--line);margin-bottom:4px;
+  display:flex;align-items:center;gap:8px;
+}
+
+/* Action buttons */
+.btn-par { font-size:10px;padding:4px 10px;background:var(--green-bg);
+           border:1px solid #86efac;color:var(--green);border-radius:3px;cursor:pointer; }
+.btn-out { font-size:10px;padding:4px 10px;background:var(--amber-bg);
+           border:1px solid #fbbf24;color:#b45309;border-radius:3px;cursor:pointer; }
+.btn-loc { font-size:10px;padding:4px 10px;background:var(--blue-bg);
+           border:1px solid #93c5fd;color:var(--blue);border-radius:3px;cursor:pointer; }
+.btn-actions { display:flex;gap:4px;flex-wrap:wrap;margin-top:4px; }
+
+/* PAR alert banner */
+.par-alert {
+  background:#7c1a1a;border:2px solid #ef4444;border-radius:var(--r-md);
+  padding:12px 16px;margin:12px 18px;color:#fff;
+  display:flex;align-items:center;gap:12px;
+}
+.par-alert-count { font-size:32px;font-weight:700; }
+
+/* Print styles */
+@media print {
+  .ctrl-bar,.tab-bar,button,.btn-par,.btn-out,.btn-loc { display:none!important; }
+  .pa-header { background:#7c1a1a!important;-webkit-print-color-adjust:exact; }
+  .person-row { break-inside:avoid; }
+}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="pa-header">
+  <div>
+    <div class="pa-title">🔴 PERSONNEL ACCOUNTABILITY</div>
+    <div class="pa-sub">Safety Officer tool · All personnel · All resources</div>
+  </div>
+  <div class="par-badge" id="parBadge">
+    Last PAR: —<br>
+    <span style="font-size:10px;opacity:.7">No PAR conducted yet</span>
+  </div>
+</div>
+
+<!-- PAR alert (shows when unaccounted personnel exist after a PAR) -->
+<div class="par-alert" id="parAlert" style="display:none">
+  <div class="par-alert-count" id="parAlertCount">0</div>
+  <div>
+    <div style="font-weight:700;font-size:14px">⚠ UNACCOUNTED PERSONNEL</div>
+    <div style="font-size:12px;opacity:.85">
+      Personnel below are checked in but have not been confirmed in this PAR.
+      Contact their supervisor immediately.
+    </div>
+  </div>
+</div>
+
+<!-- Summary tiles -->
+<div class="summary-bar">
+  <div class="tile blue">
+    <div class="tile-num" id="t-total">—</div>
+    <div class="tile-lbl">Total Personnel</div>
+  </div>
+  <div class="tile green">
+    <div class="tile-num" id="t-in">—</div>
+    <div class="tile-lbl">Checked In</div>
+  </div>
+  <div class="tile" style="border-color:var(--dim)">
+    <div class="tile-num" id="t-out" style="color:var(--muted)">—</div>
+    <div class="tile-lbl">Checked Out</div>
+  </div>
+  <div class="tile green">
+    <div class="tile-num" id="t-par">—</div>
+    <div class="tile-lbl">PAR Confirmed</div>
+  </div>
+  <div class="tile red">
+    <div class="tile-num" id="t-unaccounted">—</div>
+    <div class="tile-lbl">Unaccounted</div>
+  </div>
+  <div class="tile blue">
+    <div class="tile-num" id="t-tcard">—</div>
+    <div class="tile-lbl">On T-Cards</div>
+  </div>
+</div>
+
+<!-- Controls -->
+<div class="ctrl-bar">
+  <select id="incidentSel"
+    style="background:var(--input-bg);border:1px solid var(--input-border);
+           color:var(--txt);padding:5px 10px;font-size:12px;border-radius:var(--r-sm)"
+    onchange="onIncidentChange()">
+    <option value="">Select incident...</option>
+  </select>
+  <select id="periodSel"
+    style="background:var(--input-bg);border:1px solid var(--input-border);
+           color:var(--txt);padding:5px 10px;font-size:12px;border-radius:var(--r-sm)"
+    onchange="loadPAR()">
+    <option value="1">Period 1</option>
+  </select>
+  <button onclick="loadPAR()" style="font-size:11px;padding:5px 12px">↺ Refresh</button>
+  <button onclick="conductPAR()"
+    style="font-size:11px;padding:5px 14px;background:#7c1a1a;
+           border-color:#ef4444;color:#fff;font-weight:600">
+    🔴 Conduct PAR
+  </button>
+  <button onclick="resetPAR()"
+    style="font-size:11px;padding:5px 12px;background:var(--amber-bg);
+           border-color:#fbbf24;color:#b45309">
+    ↺ Reset PAR
+  </button>
+  <button onclick="window.print()"
+    style="font-size:11px;padding:5px 12px">🖨 Print</button>
+  <label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px">
+    <input type="checkbox" id="autoRefresh" onchange="toggleAutoRefresh()">
+    Auto 60s
+  </label>
+  <a href="index.html" style="margin-left:auto;font-size:11px;color:var(--muted)">← Dashboard</a>
+</div>
+
+<!-- Tab bar -->
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('ics211')">
+    ICS-211 CHECK-IN LIST
+  </button>
+  <button class="tab-btn" onclick="switchTab('tcards')">
+    T-CARD PERSONNEL
+  </button>
+  <button class="tab-btn" onclick="switchTab('unaccounted')">
+    ⚠ UNACCOUNTED
+  </button>
+  <button class="tab-btn" onclick="switchTab('crossref')">
+    CROSS-REFERENCE
+  </button>
+</div>
+
+<!-- ICS-211 Check-In List Tab -->
+<div id="tab-ics211" class="list-area">
+  <div style="font-size:11px;color:var(--muted);margin-bottom:10px">
+    All personnel who have completed ICS-211 check-in for this incident and period.
+    Check Out removes them from the active accountability count.
+    PAR confirms they are accounted for in this PAR cycle.
+  </div>
+  <div id="ics211List">
+    <div style="text-align:center;padding:20px;color:var(--muted)">Select an incident above.</div>
+  </div>
+</div>
+
+<!-- T-Card Personnel Tab -->
+<div id="tab-tcards" class="list-area" style="display:none">
+  <div style="font-size:11px;color:var(--muted);margin-bottom:10px">
+    All personnel listed on resource T-cards — grouped by resource.
+    This is the resource-level accountability list.
+    PAR confirms each person is at their assigned resource or known location.
+  </div>
+  <div id="tcardList">
+    <div style="text-align:center;padding:20px;color:var(--muted)">Select an incident above.</div>
+  </div>
+</div>
+
+<!-- Unaccounted Tab -->
+<div id="tab-unaccounted" class="list-area" style="display:none">
+  <div style="font-size:11px;color:var(--red);margin-bottom:10px;padding:8px 10px;
+              background:var(--red-bg);border:1px solid #fca5a5;border-radius:var(--r-sm)">
+    ⚠ These personnel are checked in but have NOT been confirmed in the current PAR cycle.
+    Contact their supervisor or assigned resource immediately.
+    If you cannot establish contact, escalate to the Incident Commander.
+  </div>
+  <div id="unaccountedList">
+    <div style="text-align:center;padding:20px;color:var(--muted)">
+      No PAR conducted yet — conduct a PAR first.
+    </div>
+  </div>
+</div>
+
+<!-- Cross-Reference Tab -->
+<div id="tab-crossref" class="list-area" style="display:none">
+  <div style="font-size:11px;color:var(--muted);margin-bottom:10px">
+    Compares the ICS-211 check-in list against T-card personnel rosters.
+    Flags personnel who are checked in but not on any T-card,
+    and T-card personnel who have not completed ICS-211 check-in.
+  </div>
+  <div id="crossrefList">
+    <div style="text-align:center;padding:20px;color:var(--muted)">Select an incident above.</div>
+  </div>
+</div>
+
+<!-- Location update modal -->
+<div id="locModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);
+     z-index:400;align-items:center;justify-content:center"
+     onclick="if(event.target===this)this.style.display='none'">
+<div style="background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);
+            padding:20px;width:380px;max-width:96vw">
+  <div style="font-family:var(--font-hd);font-size:11px;color:var(--eoc);
+              letter-spacing:1px;margin-bottom:10px">UPDATE LAST KNOWN LOCATION</div>
+  <div style="font-size:12px;color:var(--muted);margin-bottom:10px" id="locModalName"></div>
+  <input type="text" id="locInput" placeholder="Division Alpha · Sector 3 · Base Camp"
+    style="width:100%;box-sizing:border-box;padding:9px 12px;font-size:13px;
+           background:var(--input-bg);border:1px solid var(--input-border);
+           color:var(--txt);border-radius:var(--r-sm);margin-bottom:12px">
+  <div style="display:flex;gap:8px">
+    <button onclick="saveLocation()"
+      style="flex:1;padding:8px;background:var(--eoc);border:none;
+             color:#fff;border-radius:var(--r-sm);font-weight:600">Save</button>
+    <button onclick="document.getElementById('locModal').style.display='none'"
+      style="padding:8px 16px">Cancel</button>
+  </div>
+</div>
+</div>
+
+<script>
+const ICS_API = 'http://192.168.50.1:5051';
+const API     = 'http://192.168.50.1:5050';
+
+let parData      = null;
+let currentTab   = 'ics211';
+let autoTimer    = null;
+let locTarget    = null; // {type:'ci'|'tp', id, name}
+let lastPARTime  = null;
+
+// ── Init ───────────────────────────────────────────────────────────
+async function init() {
+  await loadIncidents();
+  const saved = localStorage.getItem('selectedIncident');
+  if (saved) {
+    document.getElementById('incidentSel').value = saved;
+    if (document.getElementById('incidentSel').value === saved) {
+      await onIncidentChange();
+    }
+  }
+}
+
+async function loadIncidents() {
+  try {
+    const r = await fetch(`${API}/api/incidents`);
+    const incs = r.ok ? await r.json() : [];
+    const sel = document.getElementById('incidentSel');
+    incs.forEach(i => {
+      const opt = document.createElement('option');
+      opt.value = i.id; opt.textContent = i.name;
+      sel.appendChild(opt);
+    });
+  } catch(e) {}
+}
+
+async function onIncidentChange() {
+  const incId = document.getElementById('incidentSel').value;
+  if (!incId) return;
+  localStorage.setItem('selectedIncident', incId);
+  // Load periods
+  try {
+    const r = await fetch(`${ICS_API}/api/ics/periods?incident_id=${incId}`);
+    const periods = r.ok ? await r.json() : [{period:1}];
+    const sel = document.getElementById('periodSel');
+    sel.innerHTML = '';
+    periods.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.period || p;
+      opt.textContent = `Period ${p.period || p}`;
+      sel.appendChild(opt);
+    });
+  } catch(e) {}
+  await loadPAR();
+}
+
+// ── Load PAR data ──────────────────────────────────────────────────
+async function loadPAR() {
+  const incId  = document.getElementById('incidentSel').value;
+  const period = document.getElementById('periodSel').value || '1';
+  if (!incId) return;
+  try {
+    const r = await fetch(`${ICS_API}/api/ics/par?incident_id=${incId}&period=${period}`);
+    if (!r.ok) { console.error('PAR load failed'); return; }
+    parData = await r.json();
+    updateTiles();
+    renderCurrentTab();
+  } catch(e) { console.error('PAR error:', e); }
+}
+
+function updateTiles() {
+  if (!parData) return;
+  const s = parData.summary;
+  document.getElementById('t-total').textContent        = s.total_personnel;
+  document.getElementById('t-in').textContent           = s.checked_in;
+  document.getElementById('t-out').textContent          = s.checked_out;
+  document.getElementById('t-par').textContent          = s.par_confirmed;
+  document.getElementById('t-unaccounted').textContent  = s.unaccounted;
+  document.getElementById('t-tcard').textContent        = s.total_on_tcards;
+
+  // Show/hide alert
+  const alertEl = document.getElementById('parAlert');
+  if (lastPARTime && s.unaccounted > 0) {
+    alertEl.style.display = 'flex';
+    document.getElementById('parAlertCount').textContent = s.unaccounted;
+  } else {
+    alertEl.style.display = 'none';
+  }
+
+  // Update PAR badge
+  if (lastPARTime) {
+    document.getElementById('parBadge').innerHTML =
+      `Last PAR: ${lastPARTime}<br>
+       <span style="font-size:10px;opacity:.7">${s.unaccounted === 0
+         ? '✓ All accounted for'
+         : `⚠ ${s.unaccounted} unaccounted`}</span>`;
+  }
+}
+
+// ── Tab switching ──────────────────────────────────────────────────
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  ['ics211','tcards','unaccounted','crossref'].forEach(t => {
+    document.getElementById(`tab-${t}`).style.display = (t === tab) ? '' : 'none';
+  });
+  renderCurrentTab();
+}
+
+function renderCurrentTab() {
+  if (currentTab === 'ics211')       renderICS211();
+  else if (currentTab === 'tcards')  renderTCards();
+  else if (currentTab === 'unaccounted') renderUnaccounted();
+  else if (currentTab === 'crossref')    renderCrossRef();
+}
+
+// ── ICS-211 list ───────────────────────────────────────────────────
+function renderICS211() {
+  if (!parData) return;
+  const entries = parData.checkin_entries;
+  if (!entries.length) {
+    document.getElementById('ics211List').innerHTML =
+      '<div style="text-align:center;padding:20px;color:var(--muted)">No check-ins for this period.</div>';
+    return;
+  }
+
+  // Sort: unaccounted checked-in first, then par-confirmed, then checked-out
+  const sorted = [...entries].sort((a,b) => {
+    const scoreA = a.status === 'Checked Out' ? 2 : (a.par_confirmed ? 1 : 0);
+    const scoreB = b.status === 'Checked Out' ? 2 : (b.par_confirmed ? 1 : 0);
+    return scoreA - scoreB || a.name.localeCompare(b.name);
+  });
+
+  document.getElementById('ics211List').innerHTML = sorted.map(e => {
+    const isOut  = e.status === 'Checked Out';
+    const parOk  = e.par_confirmed && !isOut;
+    const parNo  = !e.par_confirmed && !isOut && lastPARTime;
+    const rowCls = isOut ? 'checked-out' : (parOk ? 'par-ok' : (parNo ? 'par-no' : ''));
+    const inTime = (e.check_in_time||'').slice(11,16) || '—';
+    const outTime= (e.check_out_time||'').slice(11,16);
+    return `
+    <div class="person-row ${rowCls}">
+      <div style="flex:1">
+        <div class="p-name">${esc(e.name)}</div>
+        <div class="p-meta">
+          ${e.callsign_id ? `<span class="p-badge badge-tcard">${esc(e.callsign_id)}</span>` : ''}
+          ${esc([e.agency, e.ics_position, e.resource_type].filter(Boolean).join(' · '))}
+        </div>
+        <div class="p-time">
+          In: ${inTime}${outTime ? ' · Out: '+outTime : ''}
+          ${e.par_time ? ` · PAR: ${e.par_time.slice(11,16)}` : ''}
+        </div>
+        ${e.last_known_location
+          ? `<div class="p-loc">📍 ${esc(e.last_known_location)}</div>` : ''}
+        <div class="btn-actions">
+          ${!isOut && !parOk ? `
+            <button class="btn-par" onclick="confirmPAR('${e.id}')">✓ PAR</button>` : ''}
+          ${parOk ? `<span class="p-badge badge-par">✓ PAR</span>` : ''}
+          ${isOut ? `<span class="p-badge badge-out">Checked Out</span>` : ''}
+          ${!isOut ? `
+            <button class="btn-loc" onclick="openLocModal('ci','${e.id}','${esc(e.name)}')">📍 Location</button>
+            <button class="btn-out" onclick="checkOut('${e.id}','${esc(e.name)}')">Check Out</button>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── T-Card Personnel list ──────────────────────────────────────────
+function renderTCards() {
+  if (!parData) return;
+  const personnel = parData.tcard_personnel;
+  if (!personnel.length) {
+    document.getElementById('tcardList').innerHTML =
+      '<div style="text-align:center;padding:20px;color:var(--muted)">No T-card personnel for this incident.</div>';
+    return;
+  }
+
+  // Group by resource
+  const groups = {};
+  personnel.forEach(p => {
+    const key = p.resource_name || 'Unassigned';
+    if (!groups[key]) groups[key] = {assignment: p.assignment||'', status: p.tcard_status||'', people:[]};
+    groups[key].people.push(p);
+  });
+
+  let html = '';
+  for (const [resName, grp] of Object.entries(groups)) {
+    const total   = grp.people.length;
+    const parDone = grp.people.filter(p => p.par_confirmed).length;
+    html += `
+      <div class="res-group-hdr">
+        🚒 ${esc(resName)}
+        ${grp.assignment ? ` · <span style="color:var(--muted)">${esc(grp.assignment)}</span>` : ''}
+        <span style="margin-left:auto;font-size:10px;color:${parDone===total?'var(--green)':'var(--red)'}">
+          ${parDone}/${total} PAR
+        </span>
+      </div>`;
+    html += grp.people.map(p => {
+      const parOk = p.par_confirmed;
+      const parNo = !parOk && lastPARTime;
+      return `
+      <div class="person-row ${parOk?'par-ok':(parNo?'par-no':'')}">
+        <div style="flex:1">
+          <div class="p-name">${esc(p.name)}
+            ${p.callsign ? `<span style="font-size:10px;color:var(--muted);
+              font-family:var(--font-mono)"> ${esc(p.callsign)}</span>` : ''}
+          </div>
+          <div class="p-meta">
+            ${[p.ics_position, p.agency, p.contact].filter(Boolean).join(' · ')}
+          </div>
+          ${p.last_known_location
+            ? `<div class="p-loc">📍 ${esc(p.last_known_location)}</div>` : ''}
+          <div class="btn-actions">
+            ${!parOk ? `<button class="btn-par" onclick="confirmPARtcard('${p.id}')">✓ PAR</button>` : ''}
+            ${parOk  ? `<span class="p-badge badge-par">✓ PAR ${p.par_time?(p.par_time.slice(11,16)):''}</span>` : ''}
+            <button class="btn-loc" onclick="openLocModal('tp','${p.id}','${esc(p.name)}')">📍 Location</button>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  document.getElementById('tcardList').innerHTML = html;
+}
+
+// ── Unaccounted tab ────────────────────────────────────────────────
+function renderUnaccounted() {
+  if (!parData || !lastPARTime) {
+    document.getElementById('unaccountedList').innerHTML =
+      '<div style="text-align:center;padding:20px;color:var(--muted)">Conduct a PAR first.</div>';
+    return;
+  }
+  const unaccounted = parData.checkin_entries.filter(
+    e => e.status !== 'Checked Out' && !e.par_confirmed
+  );
+  if (!unaccounted.length) {
+    document.getElementById('unaccountedList').innerHTML =
+      `<div style="text-align:center;padding:20px;color:var(--green);font-size:14px;font-weight:600">
+        ✓ All personnel accounted for
+      </div>`;
+    return;
+  }
+  document.getElementById('unaccountedList').innerHTML = unaccounted.map(e => `
+    <div class="person-row par-no" style="background:var(--red-bg)">
+      <div style="flex:1">
+        <div class="p-name" style="color:var(--red)">⚠ ${esc(e.name)}</div>
+        <div class="p-meta">
+          ${esc([e.callsign_id, e.agency, e.ics_position, e.resource_type].filter(Boolean).join(' · '))}
+        </div>
+        <div class="p-time">Checked in: ${(e.check_in_time||'').slice(11,16)||'—'}</div>
+        <div style="font-size:11px;color:var(--red);margin-top:4px">
+          NOT CONFIRMED IN PAR — Contact supervisor immediately
+        </div>
+        <div class="btn-actions">
+          <button class="btn-par" onclick="confirmPAR('${e.id}')">✓ PAR — Confirmed</button>
+          <button class="btn-out" onclick="checkOut('${e.id}','${esc(e.name)}')">Check Out</button>
+          <button class="btn-loc" onclick="openLocModal('ci','${e.id}','${esc(e.name)}')">📍 Location</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+// ── Cross-reference tab ────────────────────────────────────────────
+function renderCrossRef() {
+  if (!parData) return;
+  const ci    = parData.checkin_entries;
+  const tp    = parData.tcard_personnel;
+
+  // Names on tcard (normalized)
+  const tcardNames = new Set(tp.map(p => p.name.trim().toLowerCase()));
+  const ciNames    = new Set(ci.filter(e=>e.status!=='Checked Out')
+                                .map(e => e.name.trim().toLowerCase()));
+
+  // Checked in but not on any T-card
+  const ciNotOnTcard = ci.filter(e =>
+    e.status !== 'Checked Out' && !tcardNames.has(e.name.trim().toLowerCase())
+  );
+
+  // On T-card but not checked in via ICS-211
+  const tcardNotCI = tp.filter(p =>
+    !ciNames.has(p.name.trim().toLowerCase())
+  );
+
+  let html = '';
+
+  if (ciNotOnTcard.length) {
+    html += `<div class="res-group-hdr" style="color:#d97706">
+      ⚠ Checked In — Not assigned to any T-card resource (${ciNotOnTcard.length})
+    </div>`;
+    html += `<div style="font-size:11px;color:var(--muted);margin-bottom:8px">
+      These personnel completed ICS-211 check-in but do not appear on any T-card.
+      They may be floating staff, late arrivals, or may need a T-card assignment.
+    </div>`;
+    html += ciNotOnTcard.map(e => `
+      <div class="person-row" style="border-left:3px solid #f59e0b">
+        <div style="flex:1">
+          <div class="p-name">${esc(e.name)}</div>
+          <div class="p-meta">${esc([e.callsign_id,e.agency,e.ics_position].filter(Boolean).join(' · '))}</div>
+        </div>
+      </div>`).join('');
+  }
+
+  if (tcardNotCI.length) {
+    html += `<div class="res-group-hdr" style="color:var(--red);margin-top:16px">
+      ⚠ On T-Card — No ICS-211 Check-In (${tcardNotCI.length})
+    </div>`;
+    html += `<div style="font-size:11px;color:var(--muted);margin-bottom:8px">
+      These personnel are listed on a T-card resource but have not completed
+      ICS-211 check-in. This is a <strong>safety gap</strong> —
+      they are on the incident but not in the formal accountability system.
+      Direct them to check in immediately.
+    </div>`;
+    html += tcardNotCI.map(p => `
+      <div class="person-row par-no">
+        <div style="flex:1">
+          <div class="p-name" style="color:var(--red)">⚠ ${esc(p.name)}
+            ${p.callsign?`<span style="font-size:10px;font-family:var(--font-mono)"> ${esc(p.callsign)}</span>`:''}
+          </div>
+          <div class="p-meta">
+            Resource: <strong>${esc(p.resource_name||'—')}</strong>
+            ${p.assignment?' · '+esc(p.assignment):''}
+            · ${esc([p.ics_position,p.agency].filter(Boolean).join(' · '))}
+          </div>
+          <div style="font-size:11px;color:var(--red);margin-top:3px">
+            DIRECT TO ICS-211 CHECK-IN IMMEDIATELY
+          </div>
+        </div>
+      </div>`).join('');
+  }
+
+  if (!ciNotOnTcard.length && !tcardNotCI.length) {
+    html = `<div style="text-align:center;padding:24px;color:var(--green);
+                         font-size:13px;font-weight:600">
+      ✓ All personnel cross-reference OK<br>
+      <span style="font-size:11px;color:var(--muted);font-weight:normal">
+        Everyone on a T-card has checked in and everyone checked in is on a T-card.
+      </span>
+    </div>`;
+  }
+
+  document.getElementById('crossrefList').innerHTML = html;
+}
+
+// ── PAR actions ────────────────────────────────────────────────────
+async function confirmPAR(ciId) {
+  try {
+    await fetch(`${ICS_API}/api/ics/checkin/par`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({id: ciId})
+    });
+    await loadPAR();
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+async function confirmPARtcard(tpId) {
+  try {
+    await fetch(`${ICS_API}/api/ics/tcard_personnel/par`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({id: tpId})
+    });
+    await loadPAR();
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+function conductPAR() {
+  const now = new Date().toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+  lastPARTime = now;
+  document.getElementById('parBadge').innerHTML =
+    `Last PAR: ${now}<br><span style="font-size:10px;opacity:.7">PAR in progress...</span>`;
+  loadPAR();
+  // Switch to ICS-211 to show who needs confirmation
+  currentTab = 'ics211';
+  document.querySelectorAll('.tab-btn').forEach((b,i) => b.classList.toggle('active', i===0));
+  ['ics211','tcards','unaccounted','crossref'].forEach(t =>
+    document.getElementById(`tab-${t}`).style.display = t==='ics211'?'':'none'
+  );
+  renderICS211();
+}
+
+async function resetPAR() {
+  const incId = document.getElementById('incidentSel').value;
+  if (!incId || !confirm('Reset all PAR confirmations for this incident? This starts a new PAR cycle.')) return;
+  lastPARTime = null;
+  try {
+    await fetch(`${ICS_API}/api/ics/par/reset`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({incident_id: incId})
+    });
+    await loadPAR();
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+// ── Check-out ──────────────────────────────────────────────────────
+async function checkOut(ciId, name) {
+  if (!confirm(`Check out ${name}?`)) return;
+  try {
+    await fetch(`${ICS_API}/api/ics/checkin/checkout`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({id: ciId, checked_out_by: 'PAR Board'})
+    });
+    await loadPAR();
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+// ── Location modal ─────────────────────────────────────────────────
+function openLocModal(type, id, name) {
+  locTarget = {type, id, name};
+  document.getElementById('locModalName').textContent = name;
+  document.getElementById('locInput').value = '';
+  document.getElementById('locModal').style.display = 'flex';
+  document.getElementById('locInput').focus();
+}
+
+async function saveLocation() {
+  const loc = document.getElementById('locInput').value.trim();
+  if (!loc || !locTarget) return;
+  const url = locTarget.type === 'ci'
+    ? `${ICS_API}/api/ics/checkin/par`
+    : `${ICS_API}/api/ics/tcard_personnel/location`;
+  try {
+    await fetch(url, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({id: locTarget.id, location: loc})
+    });
+    document.getElementById('locModal').style.display = 'none';
+    await loadPAR();
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+// ── Utilities ──────────────────────────────────────────────────────
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function toggleAutoRefresh() {
+  if (autoTimer) { clearInterval(autoTimer); autoTimer = null; }
+  if (document.getElementById('autoRefresh').checked) {
+    autoTimer = setInterval(loadPAR, 60000);
+  }
+}
+
+// ── Boot ───────────────────────────────────────────────────────────
+init();
+</script>
+</body>
+</html>

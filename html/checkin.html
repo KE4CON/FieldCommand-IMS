@@ -132,7 +132,7 @@ body { background:var(--bg);font-size:15px; }
     <div class="ci-field">
       <label>Agency / Home Unit</label>
       <input type="text" id="ci_agency" autocomplete="organization"
-        placeholder="McHenry County ARES or MCFD Station 1">
+        placeholder="Your agency or home unit">
     </div>
 
     <div class="ci-field">
@@ -343,5 +343,97 @@ function clearError() {
 
 loadIncident();
 </script>
+
+<div id="ciList" style="padding:14px 18px;border-top:2px solid var(--line);margin-top:10px">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+    <div style="font-family:var(--font-hd);font-size:11px;letter-spacing:1px;color:var(--eoc)">
+      CURRENTLY CHECKED IN — <span id="ciCount" style="color:var(--green)">0</span> personnel
+    </div>
+    <button onclick="loadCiList()" style="font-size:10px;padding:3px 8px">↺ Refresh</button>
+  </div>
+  <div id="ciListBody" style="max-height:400px;overflow-y:auto">
+    <div style="text-align:center;padding:16px;color:var(--muted);font-size:12px">
+      Loading...
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Check-in list with checkout ────────────────────────────────────
+async function loadCiList() {
+  if (!INC_ID) return;
+  try {
+    const r = await fetch(`${ICS_API}/api/ics/checkin?incident_id=${INC_ID}&period=${PERIOD}`);
+    const entries = r.ok ? await r.json() : [];
+    renderCiList(entries);
+  } catch(e) {
+    document.getElementById('ciListBody').innerHTML =
+      `<div style="color:var(--red);font-size:11px;padding:8px">Error: ${e.message}</div>`;
+  }
+}
+
+function renderCiList(entries) {
+  const checkedIn  = entries.filter(e => e.status !== 'Checked Out');
+  const checkedOut = entries.filter(e => e.status === 'Checked Out');
+  document.getElementById('ciCount').textContent = checkedIn.length;
+
+  const row = (e, isOut) => {
+    const time = e.check_in_time ? e.check_in_time.slice(11,16) : '—';
+    const outTime = e.check_out_time ? e.check_out_time.slice(11,16) : '';
+    return `<div style="display:flex;align-items:center;gap:8px;padding:7px 0;
+                         border-bottom:1px solid var(--line-lt);flex-wrap:wrap">
+      <div style="flex:1;min-width:120px">
+        <div style="font-size:12px;font-weight:600;color:${isOut?'var(--muted)':'var(--txt)'}">
+          ${e.name}${isOut?' <span style="font-size:10px">(Out)</span>':''}
+        </div>
+        <div style="font-size:10px;color:var(--muted)">
+          ${[e.callsign_id,e.agency,e.ics_position].filter(Boolean).join(' · ')}
+        </div>
+        <div style="font-size:10px;color:var(--dim)">
+          In: ${time}${outTime?' · Out: '+outTime:''}
+          ${e.last_known_location?' · 📍 '+e.last_known_location:''}
+        </div>
+      </div>
+      ${!isOut ? `
+        <button onclick="checkOut('${e.id}','${e.name.replace(/'/g,"\'")}')"
+          style="font-size:10px;padding:4px 10px;background:var(--amber-bg);
+                 border:1px solid #fbbf24;color:#b45309;border-radius:3px;flex-shrink:0">
+          Check Out
+        </button>` : ''}
+    </div>`;
+  };
+
+  let html = checkedIn.map(e => row(e, false)).join('');
+  if (checkedOut.length) {
+    html += `<div style="font-size:10px;color:var(--muted);margin:8px 0 4px;
+                          text-transform:uppercase;letter-spacing:.06em">
+               Checked Out (${checkedOut.length})
+             </div>`;
+    html += checkedOut.map(e => row(e, true)).join('');
+  }
+  document.getElementById('ciListBody').innerHTML =
+    html || '<div style="text-align:center;padding:12px;color:var(--muted);font-size:12px">No check-ins yet.</div>';
+}
+
+async function checkOut(id, name) {
+  if (!confirm(`Check out ${name}?`)) return;
+  try {
+    const r = await fetch(`${ICS_API}/api/ics/checkin/checkout`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ id, checked_out_by: 'Self-checkout via ICS-211' })
+    });
+    if (r.ok) loadCiList();
+    else alert('Checkout failed');
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+// Load list on page ready
+window.addEventListener('DOMContentLoaded', () => {
+  setTimeout(loadCiList, 800);
+  setInterval(loadCiList, 60000);
+});
+</script>
+
 </body>
 </html>

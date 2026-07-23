@@ -2153,6 +2153,40 @@ def _alter_existing_tables():
             except Exception as e:
                 log.warning(f"incidents.{col}: {e}")
 
+    # checkin_entries — personnel accountability fields
+    ci_existing = {r[1] for r in conn.execute("PRAGMA table_info(checkin_entries)").fetchall()}
+    ci_additions = [
+        ("check_out_time",    "TEXT DEFAULT ''"),
+        ("checked_out_by",    "TEXT DEFAULT ''"),
+        ("last_known_location","TEXT DEFAULT ''"),
+        ("tcard_id",          "TEXT DEFAULT ''"),
+        ("par_confirmed",     "INTEGER DEFAULT 0"),
+        ("par_time",          "TEXT DEFAULT ''"),
+    ]
+    for col, defn in ci_additions:
+        if col not in ci_existing:
+            try:
+                conn.execute(f"ALTER TABLE checkin_entries ADD COLUMN {col} {defn}")
+                conn.commit()
+            except Exception as e:
+                log.warning(f"checkin_entries.{col}: {e}")
+
+    # tcard_personnel — accountability link fields
+    tp_existing = {r[1] for r in conn.execute("PRAGMA table_info(tcard_personnel)").fetchall()}
+    tp_additions = [
+        ("check_in_id",       "TEXT DEFAULT ''"),
+        ("last_known_location","TEXT DEFAULT ''"),
+        ("par_confirmed",     "INTEGER DEFAULT 0"),
+        ("par_time",          "TEXT DEFAULT ''"),
+    ]
+    for col, defn in tp_additions:
+        if col not in tp_existing:
+            try:
+                conn.execute(f"ALTER TABLE tcard_personnel ADD COLUMN {col} {defn}")
+                conn.commit()
+            except Exception as e:
+                log.warning(f"tcard_personnel.{col}: {e}")
+
     # roster — barcode/QR check-in support
     ros_existing = {r[1] for r in conn.execute("PRAGMA table_info(roster)").fetchall()}
     if 'barcode_id' not in ros_existing:

@@ -6,7 +6,7 @@ from manual_framework import *
 print("Chapters 19-36 + Appendix module loaded OK")
 
 def ch19():
-    s = chapter(19, 'FEMA Equipment Rate Schedule',
+    s = chapter(19, 'Federal Emergency Management Agency (FEMA) Equipment Rate Schedule',
                 'http://192.168.50.1/fema_rates.html')
     s.append(P(
         'The FEMA Equipment Rates page maintains the Schedule of Equipment Rates '
@@ -43,7 +43,7 @@ def ch20():
                 'http://192.168.50.1/cost_dashboard.html')
     s.append(P(
         'The Cost Dashboard provides a real-time financial overview of the active '
-        'incident. It aggregates all FEMA cost entries and T-card daily rates into '
+        'incident. It aggregates all Federal Emergency Management Agency (FEMA) cost entries and T-card daily rates into '
         'a summary view updated automatically every two minutes.'))
     s.append(SP(6))
     s.append(P('20.1  Dashboard Panels', H2))
@@ -65,7 +65,7 @@ def ch20():
          'Enter the budget figure to see remaining balance and percentage used.'],
         ['Per-period breakdown',
          'Cost summary broken out by operational period — useful for '
-         'after-action documentation and FEMA PW preparation.'],
+         'after-action documentation and FEMA Project Worksheet (PW) preparation.'],
     ], widths=[1.5*inch, CW-1.5*inch]))
     s.append(SP(4))
     s.append(note(
@@ -77,11 +77,237 @@ def ch20():
     return s
 
 
+
 def ch21():
-    s = chapter(21, 'ICS-213 General Message',
+    s = chapter(21, 'Personnel Accountability',
+                'http://192.168.50.1/accountability.html')
+    s.append(P(
+        'Personnel accountability is a fundamental National Incident Management System (NIMS)/ICS safety requirement. '
+        'At any moment during an incident, the Incident Commander and Safety Officer '
+        'must be able to answer two questions with certainty: '
+        '<b>Who is on this incident?</b> and <b>Where is each person right now?</b> '
+        'Failure to maintain accountability has resulted in responder fatalities '
+        'at wildland fires, structural collapses, and other incidents where conditions '
+        'changed rapidly and personnel could not be located.'))
+    s.append(SP(4))
+    s.append(P(
+        'FieldCommand IMS implements a two-level accountability system that mirrors '
+        'the Incident Command System (ICS) doctrine: incident-level accountability through the ICS-211 Check-In '
+        'List, and resource-level accountability through the T-card personnel roster. '
+        'The Personnel Accountability page integrates both into a single Safety Officer '
+        'tool with Personnel Accountability Report (PAR) (Personnel Accountability Report) tracking, check-out recording, '
+        'last-known-location logging, and automatic cross-referencing between the two lists.'))
+    s.append(SP(6))
+
+    s.append(P('21.1  The Two Levels of Personnel Accountability', H2))
+    s.append(tbl(['LEVEL', 'TOOL', 'ANSWERS THE QUESTION', 'MAINTAINED BY'], [
+        ['Incident level',
+         'ICS-211 Check-In List\n(checkin.html / scan_checkin.html)',
+         'Who has formally checked into this incident? '
+         'When did they arrive? Have they checked out?',
+         'Check-in recorder at each entry point; '
+         'Resources Unit Leader (Resources Unit Leader (RESL)) collects and maintains'],
+        ['Resource level',
+         'T-Card Personnel Roster (ics/operations.html → Personnel tab)',
+         'Who is assigned to each specific resource? '
+         'Where is each crew member right now?',
+         'Operations Section Chief; crew supervisors '
+         'update their own T-card personnel list'],
+    ], widths=[1.0*inch, 1.4*inch, CW-3.1*inch, 0.7*inch]))
+    s.append(SP(4))
+    s.append(note(
+        'Both levels are required — neither alone is sufficient. '
+        'The ICS-211 tells you everyone who is on the incident. '
+        'The T-card personnel roster tells you which resource each person '
+        'is assigned to and where they should be. '
+        'The cross-reference between the two catches gaps in both directions: '
+        'people who checked in but were never assigned to a resource, '
+        'and people on a T-card who never completed formal ICS-211 check-in.', 'warn'))
+    s.append(SP(6))
+
+    s.append(P('21.2  ICS-211 Check-In — Incident-Level Accountability', H2))
+    s.append(P(
+        'Every person arriving at the incident — regardless of agency, role, or resource '
+        'assignment — must complete ICS-211 check-in. This is the foundation of personnel '
+        'accountability. There are three ways to check in:'))
+    s.append(SP(4))
+    s.append(tbl(['METHOD', 'PAGE', 'BEST FOR'], [
+        ['Quick Response (QR) code/barcode camera scan',
+         'scan_checkin.html',
+         'High-throughput check-in stations; members with personal QR codes '
+         'from the roster page. Scan detects automatically — no typing required.'],
+        ['Manual form entry',
+         'checkin.html',
+         'Walk-in personnel, mutual aid, or any person without a QR code. '
+         'Full ICS-211 form with position dropdown and agency field.'],
+        ['Scan page manual fallback',
+         'scan_checkin.html',
+         'When camera unavailable — type the member ID, callsign, or radio ID '
+         'directly into the manual entry field.'],
+    ], widths=[1.4*inch, 1.2*inch, CW-2.6*inch]))
+    s.append(SP(6))
+
+    s.append(P('21.3  ICS-211 Check-Out', H2))
+    s.append(P(
+        'Check-out is as important as check-in. When a person leaves the incident — '
+        'for any reason — they must be checked out so the accountability system '
+        'reflects the actual population on the incident. Unchecked-out personnel '
+        'create false positives in PAR counts and can trigger unnecessary searches.'))
+    s.append(SP(4))
+    s += steps([
+        'Navigate to <b>Personnel Accountability</b> from the dashboard, '
+        'or to <b>Incident Check-In</b> (checkin.html).',
+        'Find the person in the ICS-211 check-in list.',
+        'Click <b>Check Out</b> on their row. The checkout timestamp is recorded '
+        'automatically. They are removed from the active accountability count.',
+        'Their record is retained for documentation — they do not disappear '
+        'from the list, they move to the "Checked Out" section.',
+        'For mass checkout at incident close, use <b>Conduct PAR → Check All Out</b> '
+        'from the Personnel Accountability page.',
+    ])
+    s.append(SP(6))
+
+    s.append(P('21.4  T-Card Personnel Roster — Resource-Level Accountability', H2))
+    s.append(P(
+        'Every resource T-card should have a complete list of the personnel assigned '
+        'to it. This is maintained by the Operations Section and crew supervisors, '
+        'and it gives the Safety Officer resource-level accountability: not just '
+        '"Jones is on this incident" but "Jones is assigned to Engine 12, '
+        'which is assigned to Division Alpha."'))
+    s.append(SP(4))
+    s += steps([
+        'Navigate to <b>ICS Operations</b> from the ICS section.',
+        'Click any T-card to open its detail panel.',
+        'Click the <b>👤 PERSONNEL</b> tab.',
+        'Add each person assigned to that resource — name, their position on '
+        'the resource (Crew Boss, EMT, Operator, etc.), agency, and contact/callsign.',
+        'If the person is in the roster, type their name and click the suggestion '
+        'chip — callsign and agency fill automatically.',
+        'Repeat for every person on every resource. '
+        'The T-card board shows the personnel count on each card.',
+        'Update the list if personnel rotate on or off a resource during the incident.',
+    ])
+    s.append(SP(4))
+    s.append(note(
+        'The T-card personnel list and the ICS-211 check-in list are separate records. '
+        'Adding someone to a T-card does NOT automatically check them into the ICS-211. '
+        'Both must be maintained. The Cross-Reference view on the Personnel Accountability '
+        'page flags anyone who is in one list but not the other.', 'warn'))
+    s.append(SP(6))
+
+    s.append(P('21.5  Personnel Accountability Report (PAR)', H2))
+    s.append(P(
+        'A Personnel Accountability Report (PAR) is a formal roll call — a deliberate, '
+        'time-stamped check that confirms every person on the incident is accounted for. '
+        'PARs should be conducted at regular intervals (typically every operational period '
+        'or whenever conditions change), at all incident transitions (shift changes, '
+        'operational period changes), whenever a hazard escalates, and immediately '
+        'whenever any person cannot be located.'))
+    s.append(SP(4))
+    s.append(P(
+        'The Personnel Accountability page (accountability.html) is the Safety Officer\'s '
+        'primary PAR tool. It shows both the ICS-211 list and the T-card personnel roster, '
+        'with PAR confirmation buttons for each person.'))
+    s.append(SP(4))
+    s += steps([
+        'Navigate to <b>Personnel Accountability</b> from the dashboard.',
+        'Select the incident and operational period.',
+        'Click <b>🔴 Conduct PAR</b>. The timestamp is recorded. '
+        'The display switches to the ICS-211 list with all personnel sorted '
+        'so unconfirmed personnel appear at the top.',
+        'Contact each supervisor or crew boss by radio and have them confirm '
+        'all personnel on their resource. As each person is confirmed, '
+        'click <b>✓ PAR</b> on their row. The count updates in real time.',
+        'For T-card-level PAR, switch to the <b>T-CARD PERSONNEL</b> tab '
+        'and confirm by resource — each resource group shows its own PAR count.',
+        'The <b>⚠ UNACCOUNTED</b> tab shows only the personnel who have not '
+        'been confirmed. If anyone cannot be accounted for after exhausting '
+        'radio contact, escalate immediately to the Incident Commander (IC).',
+        'When all personnel are confirmed, the summary tiles show 0 unaccounted '
+        'and the PAR badge updates to green.',
+        'To begin a new PAR cycle, click <b>↺ Reset PAR</b>. '
+        'All confirmation flags are cleared and the cycle begins again.',
+    ])
+    s.append(SP(6))
+
+    s.append(P('21.6  Last Known Location', H2))
+    s.append(P(
+        'The last known location field provides an additional layer of situational '
+        'awareness during a PAR. When a supervisor confirms their crew, they can '
+        'also report the crew\'s current location — division, sector, grid coordinate, '
+        'or landmark. This information displays on both the accountability page '
+        'and the resource map.'))
+    s.append(SP(4))
+    s.append(P(
+        'To update last known location: click the <b>📍 Location</b> button '
+        'on any person\'s row. A text field appears — enter the location '
+        '(e.g. "Division Alpha, east perimeter" or "Base Camp medical tent") '
+        'and click Save. The location is recorded with a timestamp.'))
+    s.append(SP(6))
+
+    s.append(P('21.7  Cross-Reference — Closing the Accountability Gap', H2))
+    s.append(P(
+        'The Cross-Reference tab compares the ICS-211 check-in list against '
+        'the T-card personnel rosters and flags two specific gaps:'))
+    s.append(SP(4))
+    s.append(tbl(['CONDITION', 'WHAT IT MEANS', 'ACTION REQUIRED'], [
+        ['Checked in — not on any T-card',
+         'The person completed ICS-211 check-in but does not appear on '
+         'any resource T-card. They are on the incident but not assigned '
+         'to any resource. They may be floating staff, a late assignment, '
+         'or the T-card may not have been updated.',
+         'Assign them to a resource and add them to the T-card, '
+         'or confirm they are intentionally unassigned (e.g. Safety Officer, PIO) '
+         'and note their location.'],
+        ['On T-card — not checked in via ICS-211',
+         'The person is listed on a resource T-card but has no ICS-211 entry. '
+         'This is a <b>safety gap</b>: they are on the incident, possibly deployed '
+         'to a hazardous area, but are not in the formal accountability system.',
+         'Direct them to complete ICS-211 check-in immediately. '
+         'If they cannot be located, escalate to the IC.'],
+    ], widths=[1.5*inch, CW-3.0*inch, 1.5*inch]))
+    s.append(SP(4))
+    s.append(note(
+        'Run the cross-reference at the start of each operational period and any time '
+        'new personnel arrive at the incident. A clean cross-reference — no flags in '
+        'either direction — means your ICS-211 and T-card rosters are in sync and '
+        'every person on the incident is in both the formal check-in system '
+        'and assigned to a resource.', 'note'))
+    s.append(SP(6))
+
+    s.append(P('21.8  Accountability During Rapid Deterioration', H2))
+    s.append(P(
+        'When incident conditions change rapidly — a structure becoming unstable, '
+        'a fire run, a weather change, a hazmat release — the Safety Officer '
+        'may need to conduct an emergency PAR immediately. '
+        'The following procedure is recommended:'))
+    s.append(SP(4))
+    s += steps([
+        'Click <b>🔴 Conduct PAR</b> immediately. The timestamp establishes '
+        'the start of the accountability check.',
+        'Transmit on the incident command channel: '
+        '"<i>All supervisors, this is Safety, emergency PAR — '
+        'report personnel count by division/group immediately.</i>"',
+        'As each supervisor reports, click <b>✓ PAR</b> for each person '
+        'on their resource in the T-CARD PERSONNEL tab.',
+        'Check the <b>⚠ UNACCOUNTED</b> tab after each supervisor reports. '
+        'If anyone remains unaccounted after all supervisors have reported, '
+        'transmit their name and last known assignment immediately.',
+        'If a person cannot be located within five minutes, '
+        'treat it as a missing responder emergency — notify the IC, '
+        'halt operations in the affected area, and initiate search.',
+        'The Dead Man\'s Switch (deadmans.html) should already be active '
+        'if this is a Search and Rescue (SAR) or high-risk operation — it provides an independent '
+        'alert if net check-ins stop (see Chapter 12).',
+    ])
+    s.append(PB())
+    return s
+
+def ch22():
+    s = chapter(22, 'ICS-213 General Message',
                 'http://192.168.50.1/ics213.html')
     s.append(P(
-        'The ICS-213 General Message is the standard ICS form for written '
+        'The ICS-213 General Message is the standard Incident Command System (ICS) form for written '
         'communications between sections, agencies, or individuals during an incident. '
         'FieldCommand IMS provides a fillable ICS-213 with digital signature capture, '
         'print output, and Winlink integration.'))
@@ -89,7 +315,7 @@ def ch21():
     s.append(P('21.1  Completing an ICS-213', H2))
     s += steps([
         'Navigate to <b>ICS-213 General Message</b> from the dashboard.',
-        'Fill in: To, From (callsign auto-fills name from FCC database), '
+        'Fill in: To, From (callsign auto-fills name from Federal Communications Commission (FCC) database), '
         'Subject, and Date/Time.',
         'Type the message in the message body field.',
         'If a reply is required, check <b>Reply Requested</b>.',
@@ -109,13 +335,13 @@ def ch21():
     return s
 
 
-def ch22():
-    s = chapter(22, 'ICS-214 Activity Log & ICS-309 Communications Log',
+def ch23():
+    s = chapter(23, 'ICS-214 Activity Log & ICS-309 Communications Log',
                 'http://192.168.50.1/ics214.html')
     s.append(P(
         'The ICS-214 Activity Log records the activities and significant events '
         'for each resource or section during an operational period. '
-        'Completed ICS-214 entries can be exported directly to FEMA PA labor '
+        'Completed ICS-214 entries can be exported directly to Federal Emergency Management Agency (FEMA) Public Assistance (PA) labor '
         'cost documentation, bridging the gap between activity logging and '
         'reimbursement paperwork.'))
     s.append(SP(6))
@@ -141,14 +367,14 @@ def ch22():
         'Navigate to <b>ICS-309</b> from the Communications section.',
         'Select the net or communications log to reference.',
         'Add manual entries for traffic not logged in the Net Logger.',
-        'Click <b>Export ICS-309</b> to download the formatted log for the IAP.',
+        'Click <b>Export ICS-309</b> to download the formatted log for the Incident Action Plan (IAP).',
     ])
     s.append(PB())
     return s
 
 
-def ch23():
-    s = chapter(23, 'WAN Settings & Dual-Source Internet Configuration',
+def ch24():
+    s = chapter(24, 'Wide Area Network (WAN) Settings & Dual-Source Internet Configuration',
                 'http://192.168.50.1/wan_settings.html')
     s.append(P(
         'FieldCommand IMS supports two simultaneous internet sources — primary '
@@ -181,13 +407,13 @@ def ch23():
         ['internet_only',
          'Attempts an outbound internet connection. Succeeds if any internet '
          'path exists. Does not ping a gateway.',
-         'Phone hotspots, USB cellular dongles, any source without a fixed gateway IP'],
+         'Phone hotspots, Universal Serial Bus (USB) cellular dongles, any source without a fixed gateway IP'],
         ['ping',
          'Pings a specific IP address — typically the modem or router gateway. '
          'Enter the gateway IP in the field provided.',
          'Sources with a known gateway IP (e.g. a cellular router on 192.168.1.1)'],
         ['admin_reachable',
-         'Checks if the modem\'s admin web interface is reachable at a given URL. '
+         'Checks if the modem\'s admin web interface is reachable at a given Uniform Resource Locator (URL). '
          'Faster than a full internet check for modems with local admin pages.',
          'Cellular modems with a local admin interface'],
     ], widths=[1.3*inch, CW-2.7*inch, 1.4*inch]))
@@ -209,13 +435,13 @@ def ch23():
     return s
 
 
-def ch24():
-    s = chapter(24, 'NWS Animated Radar',
+def ch25():
+    s = chapter(25, 'National Weather Service (NWS) Animated Radar',
                 'http://192.168.50.1/radar.html')
     s.append(P(
-        'The NEXRAD Radar page displays animated radar loops from the National '
+        'The Next Generation Radar (NEXRAD) Radar page displays animated radar loops from the National '
         'Weather Service using NWS RIDGE II tiles. It requires an active internet '
-        'connection and shows an offline banner when WAN is unavailable. '
+        'connection and shows an offline banner when Wide Area Network (WAN) is unavailable. '
         'The radar page is accessible from all three dashboard modes.'))
     s.append(SP(6))
 
@@ -244,8 +470,8 @@ def ch24():
     return s
 
 
-def ch25():
-    s = chapter(25, 'HF Propagation Tool',
+def ch26():
+    s = chapter(26, 'High Frequency (HF) Propagation Tool',
                 'http://192.168.50.1/propagation.html')
     s.append(P(
         'The HF Propagation tool retrieves current band conditions from the '
@@ -253,12 +479,12 @@ def ch25():
         'propagation forecast. It requires internet access to fetch current data '
         'but displays the last retrieved forecast when offline.'))
     s.append(SP(6))
-    s.append(tbl(['BAND', 'TYPICAL USE IN EMCOMM'], [
+    s.append(tbl(['BAND', 'TYPICAL USE IN Emergency Communications (EMCOMM)'], [
         ['160m / 80m',  'Regional night-time nets, 0–500 mile coverage'],
         ['40m',         'Primary EMCOMM HF band — day/night, 500–2000 miles'],
         ['20m',         'Long-haul — 2000+ miles, daytime primary'],
         ['15m / 10m',   'Long-haul when solar conditions are favorable'],
-        ['6m / 2m',     'VHF — not covered by HF propagation tool'],
+        ['6m / 2m',     'Very High Frequency (VHF) — not covered by HF propagation tool'],
     ], widths=[1.0*inch, CW-1.0*inch]))
     s.append(SP(4))
     s.append(P(
@@ -270,19 +496,19 @@ def ch25():
     return s
 
 
-def ch26():
-    s = chapter(26, 'Winlink Radio Email',
+def ch27():
+    s = chapter(27, 'Winlink Radio Email',
                 'http://192.168.50.1/winlink-import.html')
     s.append(P(
         'FieldCommand IMS integrates with Winlink — the global radio email network '
-        'used for ICS messaging over RF when internet is unavailable. The integration '
+        'used for Incident Command System (ICS) messaging over RF when internet is unavailable. The integration '
         'covers: outbound ICS-213 messages via Winlink, inbound Winlink form import, '
         'and Pat (a cross-platform Winlink client) running alongside FieldCommand.'))
     s.append(SP(6))
 
     s.append(P('26.1  Winlink Configuration Options', H2))
     s.append(tbl(['CLIENT', 'PLATFORM', 'TRANSPORT'], [
-        ['Winlink Express',  'Windows laptop',         'VARA HF, VARA FM, Telnet, Pactor'],
+        ['Winlink Express',  'Windows laptop',         'VARA High Frequency (HF), VARA FM, Telnet, Pactor'],
         ['Pat',              'Raspberry Pi / Linux',   'VARA FM (via Wine), Telnet, AX.25'],
         ['RMS Express',      'Windows laptop',         'Pactor (requires SCS modem)'],
     ], widths=[1.3*inch, 1.2*inch, CW-2.5*inch]))
@@ -306,8 +532,8 @@ def ch26():
     return s
 
 
-def ch27():
-    s = chapter(27, 'AMPRNet (44Net) Gateway',
+def ch28():
+    s = chapter(28, 'Amateur Packet Radio Network (AMPRNet) (44Net) Gateway',
                 'http://192.168.50.1/amprgate.html')
     s.append(P(
         'The AMPRNet gateway provides a WireGuard-based tunnel into the 44.0.0.0/8 '
@@ -319,7 +545,7 @@ def ch27():
     s.append(P('27.1  Access Control', H2))
     s.append(P(
         'The AMPRNet gateway enforces Part 97 access control: only licensed amateur '
-        'operators with a valid FCC callsign may authenticate. Authentication is '
+        'operators with a valid Federal Communications Commission (FCC) callsign may authenticate. Authentication is '
         'validated against the offline FCC database. All access attempts are logged '
         'to /var/log/amprgate-access.log with callsign, IP, timestamp, and result. '
         'Session tokens have an 8-hour TTL.'))
@@ -341,17 +567,17 @@ def ch27():
     return s
 
 
-def ch28():
-    s = chapter(28, 'JS8Call — HF Digital Messaging',
+def ch29():
+    s = chapter(29, 'JS8Call — High Frequency (HF) Digital Messaging',
                 'http://192.168.50.1/')
     s.append(P(
         'JS8Call is a weak-signal HF digital mode designed for keyboard-to-keyboard '
         'messaging and store-and-forward relay. It operates on a Windows laptop '
         'connected to the incident\'s HF transceiver (e.g. an IC-7300 with a '
-        'Digirig or similar USB audio interface) alongside the FieldCommand system '
+        'Digirig or similar Universal Serial Bus (USB) audio interface) alongside the FieldCommand system '
         'on the same EMCOMM-NET network.'))
     s.append(SP(6))
-    s.append(P('28.1  JS8Call for EMCOMM', H2))
+    s.append(P('28.1  JS8Call for Emergency Communications (EMCOMM)', H2))
     s.append(tbl(['CAPABILITY', 'DESCRIPTION'], [
         ['Keyboard messaging',   'Real-time chat-style messaging between stations — no callsign required to copy'],
         ['Store and forward',    'Messages are stored at relay stations and forwarded when the destination is heard'],
@@ -363,15 +589,15 @@ def ch28():
     s.append(P('28.2  Integration with FieldCommand', H2))
     s.append(P(
         'JS8Call traffic is monitored on the EMCOMM-NET network. Incoming messages '
-        'that match ICS message formats can be manually entered into the ICS-213 '
+        'that match Incident Command System (ICS) message formats can be manually entered into the ICS-213 '
         'or the Net Control Logger. A future integration (planned for a subsequent '
         'release) will allow direct JS8Call message ingestion into the incident log.'))
     s.append(PB())
     return s
 
 
-def ch29():
-    s = chapter(29, 'NTS Radiogram Generator',
+def ch30():
+    s = chapter(30, 'National Traffic System (NTS) Radiogram Generator',
                 'http://192.168.50.1/nts.html')
     s.append(P(
         'The NTS Radiogram Generator produces properly formatted ARRL National '
@@ -400,11 +626,11 @@ def ch29():
     return s
 
 
-def ch30():
-    s = chapter(30, 'Repeater Database',
+def ch31():
+    s = chapter(31, 'Repeater Database',
                 'http://192.168.50.1/repeaters.html')
     s.append(P(
-        'The Repeater Database stores VHF/UHF repeater information for your '
+        'The Repeater Database stores Very High Frequency (VHF)/UHF repeater information for your '
         'deployment area. It is used by the ICS-205 communications plan, '
         'the channel library, and the cheat sheets. '
         'Data is stored locally — no internet required.'))
@@ -431,8 +657,8 @@ def ch30():
     return s
 
 
-def ch31():
-    s = chapter(31, 'Channel Library',
+def ch32():
+    s = chapter(32, 'Channel Library',
                 'http://192.168.50.1/channel_library.html')
     s.append(P(
         'The Channel Library stores pre-configured communications channels for '
@@ -456,8 +682,8 @@ def ch31():
     return s
 
 
-def ch32():
-    s = chapter(32, 'Hospital Proximity & Facilities Directory',
+def ch33():
+    s = chapter(33, 'Hospital Proximity & Facilities Directory',
                 'http://192.168.50.1/hospitals.html')
     s.append(P(
         'The Hospital Proximity page and Facilities Directory store the locations '
@@ -485,8 +711,8 @@ def ch32():
     return s
 
 
-def ch33():
-    s = chapter(33, 'Reference Tools — Grid, Cheat Sheets, Resources, Print Center',
+def ch34():
+    s = chapter(34, 'Reference Tools — Grid, Cheat Sheets, Resources, Print Center',
                 '')
     s.append(P(
         'FieldCommand IMS includes a set of reference and utility tools used '
@@ -510,9 +736,9 @@ def ch33():
     s.append(P('33.2  Radio Cheat Sheets', H2))
     s.append(P(
         'The Cheat Sheets page (cheatsheets.html) provides quick-reference cards '
-        'for common amateur radio and ICS procedures: '
+        'for common amateur radio and Incident Command System (ICS) procedures: '
         'phonetic alphabet, Q-codes, RST signal report scale, '
-        'ICS command structure, NIMS resource typing, and common HF calling frequencies. '
+        'ICS command structure, National Incident Management System (NIMS) resource typing, and common High Frequency (HF) calling frequencies. '
         'All cards are printable and designed to fit on a single laminated sheet.'))
     s.append(SP(6))
 
@@ -528,7 +754,7 @@ def ch33():
     s.append(P(
         'The Position Checklists page (position_checklists.html) provides '
         'NIMS-standard activation checklists for each ICS position: '
-        'IC, Safety Officer, Operations, Planning, Logistics, Finance, '
+        'Incident Commander (IC), Safety Officer, Operations, Planning, Logistics, Finance, '
         'and key unit leaders. Each checklist can be checked off during '
         'position activation and printed for the position binder.'))
     s.append(SP(6))
@@ -544,12 +770,12 @@ def ch33():
     return s
 
 
-def ch34():
-    s = chapter(34, 'Network Hardware — Routers, Switch, and Coverage Extension',
+def ch35():
+    s = chapter(35, 'Network Hardware — Routers, Switch, and Coverage Extension',
                 '')
     s.append(P(
         'FieldCommand IMS is designed to work with standard Wi-Fi routers, '
-        'managed PoE switches, and mesh networking to provide reliable wireless '
+        'managed Power over Ethernet (PoE) switches, and mesh networking to provide reliable wireless '
         'coverage across a deployment site. This chapter covers the recommended '
         'hardware configuration and how to extend coverage using AiMesh nodes.'))
     s.append(SP(6))
@@ -559,7 +785,7 @@ def ch34():
         'The ASUS RT-BE58 Go is the recommended primary router for FieldCommand IMS. '
         'It is a compact, portable Wi-Fi 7 router designed for mobile deployments — '
         'it runs on USB-C power, supports AiMesh for seamless coverage extension, '
-        'and provides dual WAN ports for simultaneous cellular and satellite sources. '
+        'and provides dual Wide Area Network (WAN) ports for simultaneous cellular and satellite sources. '
         'It is available from most electronics retailers for approximately $100–130.'))
     s.append(SP(4))
     s.append(tbl(['SPEC', 'RT-BE58 Go'], [
@@ -577,7 +803,7 @@ def ch34():
         'AiMesh is ASUS\'s mesh networking system. Additional ASUS RT-BE58 Go '
         'units can be added as AiMesh nodes to extend the EMCOMM-NET signal '
         'to additional rooms, floors, or outdoor areas. All nodes use the same '
-        'SSID and password — devices roam between nodes automatically without '
+        'Service Set Identifier (SSID) and password — devices roam between nodes automatically without '
         'reconnecting. Nodes are connected to the primary router via wired Ethernet '
         'through the UniFi switch for best performance.'))
     s.append(SP(4))
@@ -623,9 +849,9 @@ def ch34():
 
 
 def ch_appendix():
-    s = chapter(35, 'Appendix — Quick Reference & Administration',
+    s = chapter(36, 'Appendix — Quick Reference & Administration',
                 '')
-    s.append(P('A.1  All Pages — URL Reference', H2))
+    s.append(P('A.1  All Pages — Uniform Resource Locator (URL) Reference', H2))
     pages = [
         ('index.html',             'Main Dashboard'),
         ('incident.html',          'Incident Management / Command Section'),
@@ -633,32 +859,32 @@ def ch_appendix():
         ('event_templates.html',   'Pre-Planned Event Templates'),
         ('resources.html',         'T-Card Resource Board'),
         ('resource_map.html',      'GPS-Tracked Resource Map'),
-        ('resource_types.html',    'NIMS Resource Typing Library'),
+        ('resource_types.html',    'National Incident Management System (NIMS) Resource Typing Library'),
         ('checkin.html',           'Manual Check-In (ICS-211)'),
-        ('scan_checkin.html',      'QR / Barcode Scan Check-In'),
+        ('scan_checkin.html',      'Quick Response (QR) code / Barcode Scan Check-In'),
         ('roster.html',            'Member Roster and QR Code Generator'),
         ('netcontrol.html',        'Amateur Radio Net Control Logger'),
         ('starcom.html',           'Public Safety Net Logger'),
         ('observer.html',          'Observer Mode — Read-Only Net View'),
         ('deadmans.html',          'Dead Man\'s Switch'),
-        ('iap.html',               'IAP Assembly — Planning Section'),
-        ('iap_compile.html',       'IAP One-Click PDF Compilation'),
-        ('ics-form.html',          'ICS Form Suite — all forms'),
+        ('iap.html',               'Incident Action Plan (IAP) Assembly — Planning Section'),
+        ('iap_compile.html',       'IAP One-Click Portable Document Format (PDF) Compilation'),
+        ('ics-form.html',          'Incident Command System (ICS) Form Suite — all forms'),
         ('ics213.html',            'ICS-213 General Message'),
         ('ics214.html',            'ICS-214 Activity Log'),
         ('ics309.html',            'ICS-309 Communications Log'),
-        ('fema_costs.html',        'FEMA PA Cost Documentation'),
+        ('fema_costs.html',        'Federal Emergency Management Agency (FEMA) Public Assistance (PA) Cost Documentation'),
         ('fema_rates.html',        'FEMA Equipment Rate Schedule'),
         ('cost_dashboard.html',    'Real-Time Cost Dashboard'),
-        ('wan_settings.html',      'WAN Source Configuration'),
+        ('wan_settings.html',      'Wide Area Network (WAN) Source Configuration'),
         ('wan-status.html',        'WAN Status Detail Page'),
-        ('radar.html',             'Animated NEXRAD Radar'),
-        ('propagation.html',       'HF Propagation Data'),
-        ('tactical.html',          'Tactical APRS Map'),
+        ('radar.html',             'Animated Next Generation Radar (NEXRAD) Radar'),
+        ('propagation.html',       'High Frequency (HF) Propagation Data'),
+        ('tactical.html',          'Tactical Automatic Packet Reporting System (APRS) Map'),
         ('resmap.html',            'Public Safety Resource Map (Starcom)'),
-        ('callsign.html',          'FCC Callsign Lookup'),
-        ('amprgate.html',          'AMPRNet (44Net) Gateway Status'),
-        ('nts.html',               'NTS Radiogram Generator'),
+        ('callsign.html',          'Federal Communications Commission (FCC) Callsign Lookup'),
+        ('amprgate.html',          'Amateur Packet Radio Network (AMPRNet) (44Net) Gateway Status'),
+        ('nts.html',               'National Traffic System (NTS) Radiogram Generator'),
         ('winlink-import.html',    'Winlink Form Import'),
         ('briefing_204a.html',     'ICS-204A Briefing Sheet'),
         ('hospitals.html',         'Hospital Proximity Directory'),
@@ -684,7 +910,7 @@ def ch_appendix():
     s.append(P('A.2  API Ports', H2))
     s.append(tbl(['PORT', 'SERVICE', 'FUNCTION'], [
         ['5050',  'fcc_lookup_server.py',    'FCC lookups · incidents · roster · WAN config'],
-        ['5051',  'ics_platform_server.py',  'ICS forms · T-cards · check-ins · FEMA costs · GPS'],
+        ['5051',  'ics_platform_server.py',  'ICS forms · T-cards · check-ins · FEMA costs · Global Positioning System (GPS)'],
         ['9000',  'amprgate_status.py',      '44Net status — public read-only on EMCOMM-NET'],
         ['9001',  'amprgate_status.py',      'Tunnel control — localhost only'],
         ['80',    'nginx',                   'Serves all HTML pages and static assets'],
@@ -696,15 +922,56 @@ def ch_appendix():
         ['fieldcommand-main.service',        'ICS platform server (port 5051)'],
         ['fieldcommand-fcc.service',         'FCC lookup and config server (port 5050)'],
         ['wan-monitor.service',              'WAN source monitoring and failover'],
-        ['aprs-rf.service',                  'RF APRS receive via direwolf or TNC'],
+        ['aprs-rf.service',                  'RF APRS receive via direwolf or Terminal Node Controller (TNC)'],
         ['amprgate-status.service',          '44Net status API (ports 9000/9001)'],
         ['amprgate-poll.service',            '44Net tunnel keepalive and reconnect'],
         ['kiwix-serve.service',              'Kiwix offline reference library server'],
-        ['backup.service / backup.timer',    'Nightly SQLite backup to USB drive'],
+        ['backup.service / backup.timer',    'Nightly SQLite backup to Universal Serial Bus (USB) drive'],
     ], widths=[2.1*inch, CW-2.1*inch]))
     s.append(SP(6))
 
     s.append(P('A.4  Copyright & License', H2))
+    s.append(P('A.5  Abbreviations & Acronyms', H2))
+    s.append(P(
+        'The following abbreviations and acronyms are used throughout this manual. '
+        'Each is defined on first use in every chapter. This table serves as a '
+        'quick reference for readers who open to a chapter mid-document.'))
+    s.append(SP(4))
+    from manual_framework import ABBREVIATIONS
+    AB = ParagraphStyle('AB', fontName='Helvetica-Bold', fontSize=8, leading=11)
+    AD = ParagraphStyle('AD', fontName='Helvetica', fontSize=7.5, leading=10, textColor=MGRAY)
+    abbrev_rows = sorted(ABBREVIATIONS.items())
+    mid = len(abbrev_rows) // 2 + len(abbrev_rows) % 2
+    col1 = abbrev_rows[:mid]
+    col2 = abbrev_rows[mid:]
+    while len(col2) < len(col1):
+        col2.append(('', ''))
+    combined = []
+    for (a1,d1),(a2,d2) in zip(col1, col2):
+        combined.append([
+            Paragraph(f'<b>{a1}</b>', AB),
+            Paragraph(d1, AD),
+            Paragraph(f'<b>{a2}</b>', AB) if a2 else Paragraph('', AD),
+            Paragraph(d2, AD) if d2 else Paragraph('', AD),
+        ])
+    col_w = CW / 2 - 0.1*inch
+    abbr_tbl = Table(combined,
+        colWidths=[0.65*inch, col_w-0.65*inch, 0.65*inch, col_w-0.65*inch],
+        repeatRows=0, splitByRow=1)
+    abbr_tbl.setStyle(TableStyle([
+        ('FONTSIZE',      (0,0),(-1,-1), 8),
+        ('LEADING',       (0,0),(-1,-1), 10),
+        ('TOPPADDING',    (0,0),(-1,-1), 3),
+        ('BOTTOMPADDING', (0,0),(-1,-1), 3),
+        ('LEFTPADDING',   (0,0),(-1,-1), 4),
+        ('RIGHTPADDING',  (0,0),(-1,-1), 4),
+        ('LINEBELOW',     (0,0),(-1,-2), 0.25, LINE),
+        ('LINEAFTER',     (1,0),(1,-1),  0.5,  LINE),
+        ('VALIGN',        (0,0),(-1,-1), 'TOP'),
+    ]))
+    s.append(abbr_tbl)
+    s.append(SP(6))
+
     s.append(P(
         'FieldCommand IMS v1.0 — Copyright © 2026 James Rospopo KE4CON. '
         'Developed for emergency management and amateur radio organizations. '

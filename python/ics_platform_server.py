@@ -490,6 +490,55 @@ class ICSHandler(BaseHTTPRequestHandler):
 
 
 
+
+        # ── Personnel Accountability Report (PAR) summary ─────────────────────
+        # GET /api/ics/par?incident_id=X&period=Y
+        elif path == "/api/ics/par":
+            inc_id = qs.get("incident_id",[""])[0]
+            period = qs.get("period",["1"])[0]
+            if not inc_id:
+                return self.send_json({"error":"incident_id required"},400)
+
+            # All check-in entries
+            ci_rows = rows_to_list(c.execute("""
+                SELECT id, name, callsign_id, agency, ics_position, resource_type,
+                       check_in_time, check_out_time, status, last_known_location,
+                       tcard_id, par_confirmed, par_time, notes
+                FROM checkin_entries
+                WHERE incident_id=? AND period=?
+                ORDER BY status DESC, name""", (inc_id, period)).fetchall())
+
+            # All tcard personnel
+            tp_rows = rows_to_list(c.execute("""
+                SELECT p.id, p.name, p.callsign, p.agency, p.ics_position,
+                       p.contact, p.tcard_id, p.last_known_location,
+                       p.par_confirmed, p.par_time, p.check_in_id,
+                       t.resource_name, t.assignment, t.status as tcard_status
+                FROM tcard_personnel p
+                LEFT JOIN ics_tcards t ON p.tcard_id = t.id
+                WHERE p.incident_id=?
+                ORDER BY t.resource_name, p.name""", (inc_id,)).fetchall())
+
+            # Summary counts
+            total_ci = len(ci_rows)
+            checked_in = sum(1 for r in ci_rows if r.get('status') == 'Checked In')
+            checked_out = sum(1 for r in ci_rows if r.get('status') == 'Checked Out')
+            par_confirmed = sum(1 for r in ci_rows if r.get('par_confirmed'))
+            unaccounted = checked_in - par_confirmed
+
+            return self.send_json({
+                "checkin_entries":  ci_rows,
+                "tcard_personnel":  tp_rows,
+                "summary": {
+                    "total_personnel":  total_ci,
+                    "checked_in":       checked_in,
+                    "checked_out":      checked_out,
+                    "par_confirmed":    par_confirmed,
+                    "unaccounted":      unaccounted,
+                    "total_on_tcards":  len(tp_rows),
+                }
+            })
+
         # ── T-Card Personnel ────────────────────────────────────────────────
         # GET /api/ics/tcard_personnel?tcard_id=X
         elif path == "/api/ics/tcard_personnel":
@@ -1193,6 +1242,80 @@ class ICSHandler(BaseHTTPRequestHandler):
             if not pid:
                 return self.send_json({"error":"id required"},400)
             c.execute("DELETE FROM tcard_personnel WHERE id=?", (pid,))
+            c.commit()
+            return self.send_json({"ok":True})
+
+
+        # ── Personnel Check-Out ──────────────────────────────────────────────
+        # POST /api/ics/checkin/checkout
+        elif path == "/api/ics/checkin/checkout":
+            ci_id   = body.get("id","")
+            by_whom = body.get("checked_out_by","").strip()
+            loc     = body.get("last_known_location","").strip()
+            if not ci_id:
+                return self.send_json({"error":"id required"},400)
+            c.execute("""UPDATE checkin_entries
+                         SET status='Checked Out',
+                             check_out_time=?,
+                             checked_out_by=?,
+                             last_known_location=?
+                         WHERE id=?""",
+                      (now, by_whom, loc, ci_id))
+            c.commit()
+            return self.send_json({"ok":True})
+
+        # ── PAR — confirm a person is accounted for ──────────────────────────
+        # POST /api/ics/checkin/par
+        elif path == "/api/ics/checkin/par":
+            ci_id = body.get("id","")
+            loc   = body.get("location","").strip()
+            if not ci_id:
+                return self.send_json({"error":"id required"},400)
+            c.execute("""UPDATE checkin_entries
+                         SET par_confirmed=1, par_time=?,
+                             last_known_location=CASE WHEN ?!='' THEN ? ELSE last_known_location END
+                         WHERE id=?""",
+                      (now, loc, loc, ci_id))
+            c.commit()
+            return self.send_json({"ok":True})
+
+        # ── PAR — tcard personnel confirm ────────────────────────────────────
+        # POST /api/ics/tcard_personnel/par
+        elif path == "/api/ics/tcard_personnel/par":
+            pid = body.get("id","")
+            loc = body.get("location","").strip()
+            if not pid:
+                return self.send_json({"error":"id required"},400)
+            c.execute("""UPDATE tcard_personnel
+                         SET par_confirmed=1, par_time=?,
+                             last_known_location=CASE WHEN ?!='' THEN ? ELSE last_known_location END
+                         WHERE id=?""",
+                      (now, loc, loc, pid))
+            c.commit()
+            return self.send_json({"ok":True})
+
+        # ── PAR reset — clear all PAR confirmations for new PAR cycle ────────
+        # POST /api/ics/par/reset
+        elif path == "/api/ics/par/reset":
+            inc_id = body.get("incident_id","")
+            if not inc_id:
+                return self.send_json({"error":"incident_id required"},400)
+            c.execute("UPDATE checkin_entries SET par_confirmed=0, par_time='' WHERE incident_id=?",
+                      (inc_id,))
+            c.execute("""UPDATE tcard_personnel SET par_confirmed=0, par_time=''
+                         WHERE incident_id=?""", (inc_id,))
+            c.commit()
+            return self.send_json({"ok":True})
+
+        # ── PAR update last known location for tcard person ──────────────────
+        # POST /api/ics/tcard_personnel/location
+        elif path == "/api/ics/tcard_personnel/location":
+            pid = body.get("id","")
+            loc = body.get("location","").strip()
+            if not pid:
+                return self.send_json({"error":"id required"},400)
+            c.execute("UPDATE tcard_personnel SET last_known_location=? WHERE id=?",
+                      (loc, pid))
             c.commit()
             return self.send_json({"ok":True})
 

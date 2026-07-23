@@ -10,7 +10,7 @@ def ch1():
         'When a disaster takes down commercial infrastructure — cellular networks, internet, '
         'power — the tools modern emergency management depends on disappear precisely when '
         'they are needed most. Incident logs revert to paper. Resource tracking becomes a '
-        'whiteboard. ICS forms are filled out by hand, photocopied, and hand-carried between '
+        'whiteboard. Incident Command System (ICS) forms are filled out by hand, photocopied, and hand-carried between '
         'rooms. Situational awareness degrades to whatever one person can hold in their head. '
         'Every organization that has worked a major activation knows this failure mode, and '
         'most have simply accepted it as the cost of doing business.', Lead))
@@ -27,7 +27,7 @@ def ch1():
     s.append(P('1.1  What FieldCommand IMS Is', H2))
     s.append(P(
         'FieldCommand IMS is a <b>complete ICS/NIMS all-hazards incident management system</b> — '
-        'not simply an amateur radio or EMCOMM tool. It manages the full lifecycle of any '
+        'not simply an amateur radio or Emergency Communications (EMCOMM) tool. It manages the full lifecycle of any '
         'incident from initial response through demobilization using standard ICS forms and '
         'workflows. It runs on a Raspberry Pi 5 server and broadcasts its own private Wi-Fi '
         'access point. Any smartphone, tablet, or laptop that joins that network immediately '
@@ -36,14 +36,14 @@ def ch1():
     s.append(SP(4))
     s.append(P(
         'When internet connectivity is available, live features activate automatically: '
-        'NWS weather alerts, APRS-IS, animated NEXRAD radar, and HF propagation data. '
+        'National Weather Service (NWS) weather alerts, APRS-IS, animated Next Generation Radar (NEXRAD) radar, and High Frequency (HF) propagation data. '
         'If connectivity is lost at any point, all core tools continue without interruption. '
         'The system degrades gracefully and recovers automatically.'))
     s.append(SP(6))
 
     s.append(P('1.2  How FieldCommand IMS Differs From Other ICS Platforms', H2))
     s.append(P(
-        'Platforms such as WebEOC, E-Team, NIMSIAP, NIMS Logic, and E-iSuite deliver '
+        'Platforms such as WebEOC, E-Team, NIMSIAP, National Incident Management System (NIMS) Logic, and E-iSuite deliver '
         'powerful incident management capability — but every one of them requires a working '
         'internet connection and functioning server infrastructure. They are cloud-dependent '
         'by design. When a major disaster disables that infrastructure, they fail with it — '
@@ -60,11 +60,11 @@ def ch1():
         'The feature that sets FieldCommand IMS apart from every platform in this category '
         'is its native integration of amateur radio and public safety communications directly '
         'into the incident management workflow. No other ICS platform includes built-in net '
-        'control logging, FCC callsign validation against the full national licensee database, '
-        'APRS tactical mapping, Winlink radio email, JS8Call HF messaging, or AMPRNet gateway '
+        'control logging, Federal Communications Commission (FCC) callsign validation against the full national licensee database, '
+        'Automatic Packet Reporting System (APRS) tactical mapping, Winlink radio email, JS8Call HF messaging, or Amateur Packet Radio Network (AMPRNet) gateway '
         'capability. These are not add-ons — they are core features fully integrated with the '
         'ICS platform so that radio traffic, net logs, and check-in data flow directly into '
-        'ICS-309 communications logs, ICS-214 activity logs, and the IAP.'))
+        'ICS-309 communications logs, ICS-214 activity logs, and the Incident Action Plan (IAP).'))
     s.append(SP(6))
     s.append(tbl(['PLATFORM', 'OFFLINE?', 'SELF-CONTAINED?', 'NATIVE EMCOMM?', 'COST'], [
         ['FieldCommand IMS',   '✓ Fully offline',    '✓ Own network + server', '✓ Full EMCOMM suite',   'Free / open source'],
@@ -86,14 +86,14 @@ def ch1():
          'Part 97 access log · isolated from primary server',
          '192.168.50.2'],
         ['Wi-Fi router  (primary)',
-         'DHCP · AiMesh controller · dual WAN management · '
-         'EMCOMM-NET SSID broadcast. Recommended: ASUS RT-BE58 Go.',
+         'DHCP · AiMesh controller · dual Wide Area Network (WAN) management · '
+         'EMCOMM-NET Service Set Identifier (SSID) broadcast. Recommended: ASUS RT-BE58 Go.',
          '192.168.50.254'],
         ['AiMesh nodes  (optional)',
          'EMCOMM-NET coverage extension · seamless roaming. '
          'Recommended: additional ASUS RT-BE58 Go units.',
          'DHCP assigned'],
-        ['UniFi Switch Lite 16 PoE  (recommended)',
+        ['UniFi Switch Lite 16 Power over Ethernet (PoE)  (recommended)',
          'Wired backbone · powers PoE devices · connects all Pi units, '
          'router, cellular antenna, and workstations',
          'DHCP assigned'],
@@ -117,16 +117,16 @@ def ch1():
          'Incident archive, restore, and scenario/exercise mode.'],
         ['ICS Forms & IAP',
          'Full ICS form set with digital signature capture on all prepared-by and '
-         'approved-by fields. One-click IAP PDF compilation with title page and '
+         'approved-by fields. One-click IAP Portable Document Format (PDF) compilation with title page and '
          'section dividers. Print center for on-site IAP packages.'],
-        ['FEMA Documentation',
-         'FEMA PA cost tracking: Force Account Labor with fringe, Equipment with '
+        ['Federal Emergency Management Agency (FEMA) Documentation',
+         'FEMA Public Assistance (PA) cost tracking: Force Account Labor with fringe, Equipment with '
          '2025 FEMA rate schedule (44 built-in rates), Materials, and Contracts. '
          'Real-time cost dashboard. ICS-214 import. Project Worksheet text export.'],
         ['Amateur Radio EMCOMM',
          'Net control logger with FCC callsign auto-fill from offline 800,000+ '
          'licensee database. APRS tactical map. Winlink and Pat radio email. '
-         'JS8Call HF digital. AMPRNet 44Net gateway. NTS radiogram generator.'],
+         'JS8Call HF digital. AMPRNet 44Net gateway. National Traffic System (NTS) radiogram generator.'],
         ['Public Safety Comms',
          'Trunked/P25 net logger with radio ID check-in. EMA member ID lookup. '
          'ICS-309 export. Observer mode for read-only net monitoring on any device.'],
@@ -135,7 +135,7 @@ def ch1():
          'GPS-tracked resource map with status-coded SVG markers. '
          'Offline APRS tactical map. SARTopo GeoJSON import. HF propagation tool.'],
         ['Personnel & Check-In',
-         'Member roster with certifications, radio IDs, and QR check-in codes. '
+         'Member roster with certifications, radio IDs, and Quick Response (QR) code check-in codes. '
          'QR/barcode camera scan check-in using native BarcodeDetector API. '
          'ICS-211 check-in log. Digital ID card generator.'],
         ['WAN & Connectivity',
@@ -170,7 +170,7 @@ def ch2():
         'Installation Guide. No other credentials are required.',
         'Open a browser and navigate to <b>http://192.168.50.1</b>. '
         'The FieldCommand dashboard loads immediately.',
-        'Bookmark the dashboard URL. On a smartphone, tap <b>Share → Add to Home Screen</b> '
+        'Bookmark the dashboard Uniform Resource Locator (URL). On a smartphone, tap <b>Share → Add to Home Screen</b> '
         'to create an icon — it opens like a native app.',
         'If the dashboard does not load, confirm you are connected to EMCOMM-NET and '
         'not to another Wi-Fi network. The Pi does not relay traffic to the internet — '
@@ -185,16 +185,16 @@ def ch2():
         'Switching modes does not affect any data — all tools remain accessible in every mode.'))
     s.append(SP(4))
     s.append(tbl(['MODE', 'TOOLS SHOWN PROMINENTLY', 'BEST FOR'], [
-        ['All-Hazards ICS',
-         'Full ICS platform, IAP forms, T-card resource board, personnel '
-         'check-in, FEMA cost documentation, event templates, cost dashboard',
+        ['All-Hazards Incident Command System (ICS)',
+         'Full ICS platform, Incident Action Plan (IAP) forms, T-card resource board, personnel '
+         'check-in, Federal Emergency Management Agency (FEMA) cost documentation, event templates, cost dashboard',
          'Any active incident requiring ICS structure'],
-        ['Amateur Radio EMCOMM',
-         'Net control logger, FCC callsign lookup, APRS map, Winlink, '
-         'JS8Call, AMPRNet gateway, HF propagation, NTS radiogram',
+        ['Amateur Radio Emergency Communications (EMCOMM)',
+         'Net control logger, Federal Communications Commission (FCC) callsign lookup, Automatic Packet Reporting System (APRS) map, Winlink, '
+         'JS8Call, Amateur Packet Radio Network (AMPRNet) gateway, High Frequency (HF) propagation, National Traffic System (NTS) radiogram',
          'Amateur radio net operations, ARES/RACES activations'],
         ['Public Safety',
-         'Starcom net logger, radio ID roster, resource map, WAN status, '
+         'Starcom net logger, radio ID roster, resource map, Wide Area Network (WAN) status, '
          'weather radar, hospital directory, facilities',
          'Public safety radio nets, Starcom check-in operations'],
     ], widths=[1.3*inch, CW-2.7*inch, 1.4*inch]))
@@ -214,7 +214,7 @@ def ch2():
     ], widths=[1.6*inch, CW-3.0*inch, 1.4*inch]))
     s.append(SP(4))
     s.append(note(
-        'A red WAN indicator means internet-dependent features are paused — NWS radar, '
+        'A red WAN indicator means internet-dependent features are paused — National Weather Service (NWS) radar, '
         'APRS-IS, HF propagation. It does NOT mean FieldCommand IMS is unavailable. '
         'All ICS tools, forms, net loggers, roster, and local maps run normally offline.', 'note'))
     s.append(PB())
@@ -226,8 +226,8 @@ def ch3():
                 'http://192.168.50.1/setup.html')
     s.append(P(
         'Before using FieldCommand IMS for the first time, complete the Organization '
-        'Setup to configure your station identity, SSID, and default settings. '
-        'These values appear in ICS form headers, net logs, and printed documents.'))
+        'Setup to configure your station identity, Service Set Identifier (SSID), and default settings. '
+        'These values appear in Incident Command System (ICS) form headers, net logs, and printed documents.'))
     s.append(SP(6))
 
     s.append(P('3.1  Setup Fields', H2))
@@ -237,10 +237,10 @@ def ch3():
         ['Short name / abbreviation',
          'Used in compact displays, footer lines, and net log headers'],
         ['Primary callsign',
-         'Club or personal FCC callsign — used for AMPRNet authentication and net logs'],
+         'Club or personal Federal Communications Commission (FCC) callsign — used for Amateur Packet Radio Network (AMPRNet) authentication and net logs'],
         ['Station grid square',
-         'Maidenhead grid locator (4 or 6 character) — used for HF propagation calculations '
-         'and APRS position reports'],
+         'Maidenhead grid locator (4 or 6 character) — used for High Frequency (HF) propagation calculations '
+         'and Automatic Packet Reporting System (APRS) position reports'],
         ['Default incident name',
          'Pre-fills the incident name field when creating new incidents'],
         ['Wi-Fi network name (SSID)',
@@ -256,21 +256,21 @@ def ch3():
     s.append(P('3.2  Offline vs. Online Feature Table', H2))
     s.append(tbl(['FEATURE', 'OFFLINE?', 'NOTES WHEN OFFLINE'], [
         ['ICS platform — all five sections',    '✓ Full',  'No change'],
-        ['All ICS forms and IAP',               '✓ Full',  'No change'],
+        ['All ICS forms and Incident Action Plan (IAP)',               '✓ Full',  'No change'],
         ['T-card resource board',               '✓ Full',  'No change'],
-        ['FEMA cost tracking',                  '✓ Full',  'No change'],
+        ['Federal Emergency Management Agency (FEMA) cost tracking',                  '✓ Full',  'No change'],
         ['Event templates',                     '✓ Full',  'No change'],
-        ['IAP PDF compilation',                 '✓ Full',  'No change'],
+        ['IAP Portable Document Format (PDF) compilation',                 '✓ Full',  'No change'],
         ['Digital signatures on forms',         '✓ Full',  'No change'],
         ['Net control loggers (both)',           '✓ Full',  'No change'],
         ['FCC callsign lookup',                 '✓ Full',  'Uses local SQLite database — no internet needed'],
-        ['Member roster and QR check-in',       '✓ Full',  'No change'],
-        ['GPS resource map',                    '✓ Full',  'No change'],
+        ['Member roster and Quick Response (QR) code check-in',       '✓ Full',  'No change'],
+        ['Global Positioning System (GPS) resource map',                    '✓ Full',  'No change'],
         ['Barcode / QR scan check-in',          '✓ Full',  'No change'],
         ['Offline tactical APRS map',           '✓ Full',  'Map tiles local — RF APRS still works'],
         ['Kiwix reference library',             '✓ Full',  'No change'],
-        ['NWS weather alerts',                  '△ WAN',   'Paused — last alert cached and displayed'],
-        ['NEXRAD animated radar',               '△ WAN',   'Tiles unavailable — offline banner shown'],
+        ['National Weather Service (NWS) weather alerts',                  '△ Wide Area Network (WAN)',   'Paused — last alert cached and displayed'],
+        ['Next Generation Radar (NEXRAD) animated radar',               '△ WAN',   'Tiles unavailable — offline banner shown'],
         ['APRS-IS internet feed',               '△ WAN',   'RF APRS continues — internet feed pauses'],
         ['HF propagation data',                 '△ WAN',   'Last retrieved data shown until WAN returns'],
         ['AMPRNet / 44Net tunnel',              '△ WAN',   'Tunnel drops — local network unaffected'],
@@ -281,7 +281,7 @@ def ch3():
 
 
 def ch4():
-    s = chapter(4, 'Member Roster & QR Check-In Codes',
+    s = chapter(4, 'Member Roster & Quick Response (QR) code Check-In Codes',
                 'http://192.168.50.1/roster.html')
     s.append(P(
         'The Member Roster is the central personnel database. It stores every member, '
@@ -295,13 +295,13 @@ def ch4():
         ['Member ID',        'Your organization\'s internal identifier (e.g. ESV-042). Primary key.'],
         ['Barcode ID',       'QR/barcode check-in code — defaults to Member ID on first import. '
                              'Can be overridden with a facility badge number or any custom code.'],
-        ['Callsign',         'FCC amateur radio callsign. Leave blank for non-licensed members.'],
+        ['Callsign',         'Federal Communications Commission (FCC) amateur radio callsign. Leave blank for non-licensed members.'],
         ['Radio ID',         'Trunked/P25 radio unit number if applicable.'],
         ['Name',             'First and last name.'],
         ['Role',             'Primary function: Operator, Net Control, Logistics, Medical, etc.'],
         ['Member type',      'Member · Visitor · Mutual Aid — affects check-in form behavior.'],
         ['Certifications',   'ICS-100/200/300/400/700/800, EmComm I/II, CPR, First Aid, CERT.'],
-        ['Equipment',        'HF, VHF, digital modes, APRS, Winlink, go-box, generator, vehicle.'],
+        ['Equipment',        'High Frequency (HF), Very High Frequency (VHF), digital modes, Automatic Packet Reporting System (APRS), Winlink, go-box, generator, vehicle.'],
         ['License class',    'Technician, General, Amateur Extra — displayed on net log entries.'],
         ['Phone / Email',    'Contact information — stored locally, never transmitted externally.'],
         ['Grid square',      'Maidenhead grid locator for RF planning.'],
@@ -345,7 +345,7 @@ def ch4():
         'QR image is generated. When offline, the member ID is displayed in large '
         'text as a manual entry fallback.',
         'Click <b>🖨 Print</b> to open a clean print-ready page with the QR, '
-        'the member\'s name, and the FieldCommand check-in URL.',
+        'the member\'s name, and the FieldCommand check-in Uniform Resource Locator (URL).',
         'Click <b>💾 Save PNG</b> to download the QR code image — members can '
         'save it to their phone\'s home screen or print it on their ID badge.',
     ])
@@ -363,7 +363,7 @@ def ch5():
     s = chapter(5, 'Incident Management — Creating and Managing Incidents',
                 'http://192.168.50.1/incident.html')
     s.append(P(
-        'All ICS work in FieldCommand IMS is organized around an <b>incident</b>. '
+        'All Incident Command System (ICS) work in FieldCommand IMS is organized around an <b>incident</b>. '
         'An incident holds the ICS forms, resource T-cards, personnel check-ins, '
         'cost tracking, and net log associations for one activation or exercise. '
         'You can have multiple incidents in the system simultaneously — only one '
@@ -377,7 +377,7 @@ def ch5():
         'Enter the incident name, incident number (if assigned by your agency), '
         'incident type, and initial operational period.',
         'Select the incident commander from your roster, or type a name if '
-        'the IC is not in the roster. For incidents operating under '
+        'the Incident Commander (IC) is not in the roster. For incidents operating under '
         '<b>Unified Command</b>, see Section 5.3 below.',
         'Click <b>Create Incident</b>. The incident opens immediately and becomes '
         'the active incident. The incident name appears in the dashboard header '
@@ -398,12 +398,12 @@ def ch5():
          'Enter the IC\'s name or callsign in the Incident Commander field '
          'when creating the incident. The ICS-203 org chart will show one IC '
          'at the top of the command structure.'],
-        ['Unified Command (UC)',
+        ['Unified Command (Unified Command (UC))',
          'Two or more agencies or jurisdictions share command authority — '
          'common in multi-agency responses, complex disasters, or incidents '
          'crossing jurisdictional boundaries. Each contributing agency provides '
          'an IC-equivalent to the UC group. All agencies still work from '
-         'a single IAP.',
+         'a single Incident Action Plan (IAP).',
          'Enter "Unified Command" or the UC group designation in the '
          'Incident Commander field. List each UC member in the ICS-203 '
          'Organization Assignment List under the Unified Command section. '
@@ -440,7 +440,7 @@ def ch5():
 
     s.append(P('5.5  Archive, Restore, and Delete', H2))
     s.append(P(
-        'After an incident closes, the full data package can be archived to a USB drive '
+        'After an incident closes, the full data package can be archived to a Universal Serial Bus (USB) drive '
         'for long-term storage and removed from the Pi\'s active storage.'))
     s.append(SP(4))
     s.append(tbl(['ACTION', 'WHAT IT DOES', 'REVERSIBLE?'], [
@@ -485,7 +485,7 @@ def ch6():
     s.append(P(
         'Event Templates allow you to pre-configure a complete incident setup — '
         'including objectives, default resource types, communications channels, '
-        'and ICS organization — and activate it in seconds at the start of an '
+        'and Incident Command System (ICS) organization — and activate it in seconds at the start of an '
         'activation. Templates eliminate the repetitive setup work for recurring '
         'incident types and ensure consistency across activations.'))
     s.append(SP(6))
@@ -500,11 +500,11 @@ def ch6():
          'Shelter management objectives, cot and supply resource types, '
          'registration and medical channels, Red Cross coordination section'],
         ['Search and Rescue',
-         'SAR objectives, field team and K9 resource types, '
+         'Search and Rescue (SAR) objectives, field team and K9 resource types, '
          'search sector channels, base camp and medical branches'],
         ['Severe Weather Response',
          'Damage assessment objectives, utility and debris resource types, '
-         'shelter and EOC coordination channels, public information branch'],
+         'shelter and Emergency Operations Center (EOC) coordination channels, public information branch'],
         ['Mass Gathering / Special Event',
          'Crowd management objectives, medical and security resource types, '
          'venue and dispatch channels, medical and operations branches'],
@@ -573,7 +573,7 @@ def ch7():
     s.append(P('7.2  Logging Check-Ins', H2))
     s.append(P(
         'When a station checks in, type their callsign in the callsign field. '
-        'FieldCommand IMS looks up the callsign instantly in the <b>offline FCC database</b> '
+        'FieldCommand IMS looks up the callsign instantly in the <b>offline Federal Communications Commission (FCC) database</b> '
         '— 800,000+ amateur licensees stored locally on the Pi — and fills the operator\'s '
         'name and license class automatically. If the station is on your roster, their '
         'member ID is filled as well. No internet required.'))
@@ -596,7 +596,7 @@ def ch7():
         'automatically checked out with the net close timestamp.',
         'Net open time, close time, and total duration appear in the header.',
         'Click <b>📋 Export ICS-309</b> to download the complete ICS-309 '
-        'Communications Log as a formatted document ready for the IAP.',
+        'Communications Log as a formatted document ready for the Incident Action Plan (IAP).',
         'The ICS-309 includes: net name, frequency, mode, open/close times, '
         'total duration, and a full check-in table with individual participation '
         'durations rounded up to the nearest quarter-hour.',
@@ -605,7 +605,7 @@ def ch7():
     s.append(note(
         'The Dead Man\'s Switch (deadmans.html) monitors net activity and '
         'sounds an alert if no check-in is logged within a configurable time window. '
-        'It is designed for safety monitoring during SAR and field operations where '
+        'It is designed for safety monitoring during Search and Rescue (SAR) and field operations where '
         'radio silence may indicate an emergency. See Chapter 12.', 'note'))
     s.append(PB())
     return s

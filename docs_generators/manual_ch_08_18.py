@@ -15,7 +15,7 @@ def ch8():
         'any net where participants may not hold amateur licenses.'))
     s.append(SP(4))
     s.append(tbl(['FEATURE', 'AMATEUR NET LOGGER', 'PUBLIC SAFETY NET LOGGER'], [
-        ['Primary ID',        'FCC callsign — auto-filled from local database',
+        ['Primary ID',        'Federal Communications Commission (FCC) callsign — auto-filled from local database',
                               'Radio ID (unit number)'],
         ['License check',     'FCC ULS lookup confirms active license',
                               'None required'],
@@ -48,14 +48,14 @@ def ch9():
                 'http://192.168.50.1/observer.html')
     s.append(P(
         'Observer Mode provides a read-only, auto-refreshing view of any active net. '
-        'It is designed for section chiefs, served agency liaisons, EOC duty officers, '
+        'It is designed for section chiefs, served agency liaisons, Emergency Operations Center (EOC) duty officers, '
         'or anyone who needs to monitor net activity without access to the Net Control '
         'workstation.'))
     s.append(SP(6))
     s.append(P('9.1  Accessing Observer Mode', H2))
     s += steps([
         'The Net Control operator clicks <b>🔗 Observer Link</b> on the active net page.',
-        'The URL is copied to the clipboard. Share it via Winlink, JS8Call, in person, '
+        'The Uniform Resource Locator (URL) is copied to the clipboard. Share it via Winlink, JS8Call, in person, '
         'or announce it over the net.',
         'Any device on EMCOMM-NET opens the link in a browser. No login required.',
         'The observer page shows: net name, frequency, mode, elapsed time, '
@@ -76,7 +76,7 @@ def ch9():
 
 
 def ch10():
-    s = chapter(10, 'Barcode & QR Scan Check-In',
+    s = chapter(10, 'Barcode & Quick Response (QR) code Scan Check-In',
                 'http://192.168.50.1/scan_checkin.html')
     s.append(P(
         'The Scan Check-In page enables rapid personnel check-in at activations using '
@@ -107,7 +107,7 @@ def ch10():
         'select the rear-facing camera from the dropdown.',
         'Point the camera at the member\'s QR code. The system detects it automatically '
         'and looks up the member in the roster.',
-        'If the member is found: their name, agency, and suggested ICS position '
+        'If the member is found: their name, agency, and suggested Incident Command System (ICS) position '
         'auto-fill with green borders. Review the fields — edit if needed.',
         'If the member is not in the roster: a "not found" banner appears. '
         'Their scanned ID fills the ID field. Fill in name and agency manually.',
@@ -141,13 +141,13 @@ def ch10():
 
 
 def ch11():
-    s = chapter(11, 'FCC Callsign Lookup',
+    s = chapter(11, 'Federal Communications Commission (FCC) Callsign Lookup',
                 'http://192.168.50.1/callsign.html')
     s.append(P(
         'The FCC Callsign Lookup tool provides instant offline access to the full '
         'national FCC amateur radio licensee database — over 800,000 active licensees. '
         'The database is stored locally in SQLite on the Pi and is used automatically '
-        'by the Net Control Logger, Scan Check-In, and IAP forms. '
+        'by the Net Control Logger, Scan Check-In, and Incident Action Plan (IAP) forms. '
         'No internet connection is required.'))
     s.append(SP(6))
 
@@ -172,7 +172,7 @@ def ch11():
          'class fill automatically. A red border appears if the callsign is not '
          'found or the license is expired.'],
         ['Scan Check-In',
-         'After a QR scan or manual entry, if the code is a callsign, '
+         'After a Quick Response (QR) code scan or manual entry, if the code is a callsign, '
          'the FCC record is used to fill the name field.'],
         ['ICS-213 / ICS-214',
          'The "From" callsign field in the general message form validates '
@@ -211,7 +211,7 @@ def ch12():
     s.append(P('12.2  Operating the Dead Man\'s Switch', H2))
     s += steps([
         'Open the Dead Man\'s Switch page on a dedicated monitor or tablet '
-        'at the Net Control position or EOC duty station.',
+        'at the Net Control position or Emergency Operations Center (EOC) duty station.',
         'Select the active net from the dropdown.',
         'Set the check-in interval and click <b>Start Monitoring</b>.',
         'The countdown timer displays time remaining until alert.',
@@ -225,12 +225,12 @@ def ch12():
 
 
 def ch13():
-    s = chapter(13, 'Tactical APRS Map',
+    s = chapter(13, 'Tactical Automatic Packet Reporting System (APRS) Map',
                 'http://192.168.50.1/tactical.html')
     s.append(P(
         'The Tactical Map provides an offline-capable, Leaflet-based map showing APRS '
         'station positions from both RF APRS (always available) and APRS-IS internet '
-        'feed (when WAN is up). It is the primary situational awareness tool for '
+        'feed (when Wide Area Network (WAN) is up). It is the primary situational awareness tool for '
         'tracking field teams, vehicles, and mobile resources.'))
     s.append(SP(6))
 
@@ -238,9 +238,9 @@ def ch13():
     s.append(tbl(['LAYER', 'SOURCE', 'REQUIRES WAN?'], [
         ['Map tiles',              'OpenStreetMap / CartoDB Dark',              'Cached locally for offline use'],
         ['APRS-IS stations',       'Internet APRS-IS feed',                     '✓ WAN required'],
-        ['RF APRS stations',       'Local TNC or direwolf connected to Pi',     '✗ Offline — always available'],
+        ['RF APRS stations',       'Local Terminal Node Controller (TNC) or direwolf connected to Pi',     '✗ Offline — always available'],
         ['SARTopo overlays',       'GeoJSON import from sartopo_import.html',   '✗ Offline once imported'],
-        ['Weather alert polygons', 'NWS API',                                   '✓ WAN required'],
+        ['Weather alert polygons', 'National Weather Service (NWS) API',                                   '✓ WAN required'],
     ], widths=[1.6*inch, CW-2.8*inch, 1.2*inch]))
     s.append(SP(6))
 
@@ -274,7 +274,7 @@ def ch14():
     s = chapter(14, 'GPS-Tracked Resource Map',
                 'http://192.168.50.1/resource_map.html')
     s.append(P(
-        'The Resource Map displays the current GPS positions of all ICS resources '
+        'The Resource Map displays the current Global Positioning System (GPS) positions of all Incident Command System (ICS) resources '
         'for the active incident. Each resource is drawn as a color-coded SVG pin '
         'whose color reflects its current status. Resources without a GPS position '
         'appear as dashed circles in the sidebar so the Operations Section can see '
@@ -320,7 +320,7 @@ def ch14():
         ['Click map to place',
          'Click <b>🗺 Click Map to Place</b>. The modal closes and the cursor '
          'changes to a crosshair. Click anywhere on the map to set the position.',
-         'IC or Planning placing resources on a map by known location'],
+         'Incident Commander (IC) or Planning placing resources on a map by known location'],
         ['Manual coordinates',
          'Type decimal latitude and longitude directly into the fields.',
          'Position known from a paper map, GPS receiver, or radio report'],
@@ -336,11 +336,11 @@ def ch14():
 
 
 def ch15():
-    s = chapter(15, 'ICS Platform Overview — Five-Section Structure',
+    s = chapter(15, 'Incident Command System (ICS) Platform Overview — Five-Section Structure',
                 'http://192.168.50.1/incident.html')
     s.append(P(
         'FieldCommand IMS implements the full five-section ICS structure defined by '
-        'NIMS. Each section has its own page with the forms, tools, and resource '
+        'National Incident Management System (NIMS). Each section has its own page with the forms, tools, and resource '
         'displays appropriate to that function. All sections work from the same '
         'underlying incident database — a resource added in Operations appears '
         'immediately in Logistics and Finance.'))
@@ -352,32 +352,32 @@ def ch15():
          'Incident overview, general info, ICS-201 initial briefing, '
          'ICS-202 objectives, ICS-207 org chart, ICS-208 safety message, '
          'position checklists, meeting scheduler. '
-         'Note: the Safety Officer (SOFR) and Public Information Officer (PIO) '
-         'are Command Staff — they report directly to the IC, not to a section.'],
+         'Note: the Safety Officer (Safety Officer (SOFR)) and Public Information Officer (PIO) '
+         'are Command Staff — they report directly to the Incident Commander (IC), not to a section.'],
         ['Operations',
          'resources.html',
          'T-card resource board by type and status, assignment tracking, '
-         'GPS resource map, ICS-204 assignment lists. '
+         'Global Positioning System (GPS) resource map, ICS-204 assignment lists. '
          'Note: ICS-204 is developed by the Resources Unit (Planning) '
          'but distributed to and used by Operations supervisors.'],
         ['Planning',
          'iap.html',
-         'IAP assembly, ICS-202 objectives, ICS-203 org assignment list, '
+         'Incident Action Plan (IAP) assembly, ICS-202 objectives, ICS-203 org assignment list, '
          'ICS-209 status summary, ICS-211 check-in list, ICS-221 demobilization, '
          'Planning P cycle. '
          'Note: Planning assembles and distributes the IAP but does not develop '
          'all forms in it — see the form table in Chapter 17 for development responsibility.'],
         ['Logistics',
          'ics-form.html',
-         'ICS-205 radio comms plan (COML), ICS-205A comms list (COML), '
-         'ICS-206 medical plan (MEDL), ICS-218 support vehicle inventory (GSUL), '
+         'ICS-205 radio comms plan (Communications Unit Leader (COML)), ICS-205A comms list (COML), '
+         'ICS-206 medical plan (Medical Unit Leader (MEDL)), ICS-218 support vehicle inventory (GSUL), '
          'ICS-309 communications log (COML), facilities directory, channel library. '
          'Note: the Communications Unit and Medical Unit are in the '
          'Logistics Service Branch. They develop ICS-205, 205A, 206, and 309 — '
          'these forms are then included in the IAP by the Planning Section.'],
         ['Finance / Admin',
          'fema_costs.html',
-         'FEMA PA cost tracking, Force Account Labor with fringe, Equipment '
+         'Federal Emergency Management Agency (FEMA) Public Assistance (PA) cost tracking, Force Account Labor with fringe, Equipment '
          'with FEMA rate schedule, Materials, Contracts, cost dashboard, '
          'ICS-214 activity log import. '
          'Note: ICS-214 is completed by all supervisors in every section — '
@@ -389,7 +389,7 @@ def ch15():
     s.append(P(
         'The ICS-203 Organization Assignment List is where the command structure is '
         'formally documented. For a Single IC incident, the IC\'s name appears at the '
-        'top of the org chart. For a Unified Command incident, the UC member agencies '
+        'top of the org chart. For a Unified Command incident, the Unified Command (UC) member agencies '
         'are listed collectively at the Command level. FieldCommand IMS handles both '
         'structures identically — the ICS-203, ICS-202, and all downstream forms '
         'work the same way regardless of command structure. '
@@ -415,18 +415,18 @@ def ch15():
 
 
 def ch16():
-    s = chapter(16, 'ICS Operations Section — T-Card Resource Board',
+    s = chapter(16, 'Incident Command System (ICS) Operations Section — T-Card Resource Board',
                 'http://192.168.50.1/resources.html')
     s.append(P(
         'The T-Card Resource Board is the Operations Section\'s primary resource '
         'tracking tool. It mirrors the physical ICS T-card system used in traditional '
-        'incident management but adds live status, assignment tracking, GPS integration, '
+        'incident management but adds live status, assignment tracking, Global Positioning System (GPS) integration, '
         'and direct export to ICS-204 assignment lists.'))
     s.append(SP(6))
 
     s.append(P('16.1  Resource Types', H2))
     s.append(P(
-        'Resources are organized by NIMS type. The Resource Types library '
+        'Resources are organized by National Incident Management System (NIMS) type. The Resource Types library '
         '(resource_types.html) defines the types available in your system. '
         'FieldCommand ships with standard NIMS types pre-loaded: '
         'Crew, Engine, Helicopter, Dozer, Water Tender, Medical Unit, '
@@ -443,7 +443,7 @@ def ch16():
         ['Leader',              'Supervisor name or callsign'],
         ['Personnel count',     'Number of personnel on this resource'],
         ['Category',            'Agency, mutual aid source, or contractor'],
-        ['Daily cost / Rate',   'Used by FEMA cost tracking and cost dashboard'],
+        ['Daily cost / Rate',   'Used by Federal Emergency Management Agency (FEMA) cost tracking and cost dashboard'],
         ['GPS position',        'Latitude, longitude, location label — set from Resource Map'],
         ['Operational period',  'Which OP period this T-card was created for'],
     ], widths=[1.5*inch, CW-1.5*inch]))
@@ -517,13 +517,13 @@ def ch16():
 
 
 def ch17():
-    s = chapter(17, 'ICS Planning Section & IAP Assembly',
+    s = chapter(17, 'Incident Command System (ICS) Planning Section & Incident Action Plan (IAP) Assembly',
                 'http://192.168.50.1/iap.html')
     s.append(P(
         'The Planning Section manages the Incident Action Plan — the written work plan '
         'for each operational period. FieldCommand IMS covers the full ICS form set '
         'needed to build a complete IAP, with digital signature capture and one-click '
-        'PDF compilation.'))
+        'Portable Document Format (PDF) compilation.'))
     s.append(SP(6))
 
     s.append(P('17.1  IAP Form Set', H2))
@@ -537,28 +537,28 @@ def ch17():
     s.append(SP(4))
     s.append(tbl(['FORM', 'TITLE', 'DEVELOPED BY', 'DISTRIBUTED THROUGH / IN IAP?'], [
         ['ICS-202',  'Incident Objectives',
-         'Planning Section Chief / IC',
+         'Planning Section Chief / Incident Commander (IC)',
          'Planning · ✓ IAP'],
         ['ICS-203',  'Organization Assignment List',
-         'Resources Unit Leader (RESL) — Planning',
+         'Resources Unit Leader (Resources Unit Leader (RESL)) — Planning',
          'Planning · ✓ IAP'],
         ['ICS-204',  'Assignment List',
          'Resources Unit Leader (RESL) — Planning',
          'Operations supervisors · ✓ IAP'],
         ['ICS-205',  'Radio Communications Plan',
-         'Comms Unit Leader (COML) — <b>Logistics</b>/Service Branch',
+         'Comms Unit Leader (Communications Unit Leader (COML)) — <b>Logistics</b>/Service Branch',
          'Planning assembles into IAP · ✓ IAP'],
         ['ICS-205A', 'Communications List',
          'Comms Unit Leader (COML) — <b>Logistics</b>/Service Branch',
          'Supplemental — often attached to IAP'],
         ['ICS-206',  'Medical Plan',
-         'Medical Unit Leader (MEDL) — <b>Logistics</b>/Service Branch',
+         'Medical Unit Leader (Medical Unit Leader (MEDL)) — <b>Logistics</b>/Service Branch',
          'Planning assembles into IAP · ✓ IAP'],
         ['ICS-207',  'Incident Organization Chart',
          'Resources Unit Leader (RESL) — Planning',
          'Command display · ✓ IAP'],
         ['ICS-208',  'Safety Message / Plan',
-         'Safety Officer (SOFR) — Command Staff',
+         'Safety Officer (Safety Officer (SOFR)) — Command Staff',
          'Planning assembles into IAP · ✓ IAP'],
         ['ICS-209',  'Incident Status Summary',
          'Situation Unit Leader (SITL) — Planning',
@@ -663,7 +663,7 @@ def ch17():
 
 
 def ch18():
-    s = chapter(18, 'FEMA PA Cost Documentation',
+    s = chapter(18, 'Federal Emergency Management Agency (FEMA) Public Assistance (PA) Cost Documentation',
                 'http://192.168.50.1/fema_costs.html')
     s.append(P(
         'The FEMA PA Cost Documentation module tracks all reimbursable costs for '
@@ -720,7 +720,7 @@ def ch18():
 
     s.append(P('18.4  Project Worksheet Export', H2))
     s.append(P(
-        'Click <b>📄 Export PW Text</b> to generate a formatted text summary of all '
+        'Click <b>📄 Export Project Worksheet (PW) Text</b> to generate a formatted text summary of all '
         'cost entries suitable for copying into the FEMA Grants Portal or attaching '
         'to a Project Worksheet. The export includes incident name, dates, '
         'itemized costs by category, and total claimed amount.'))

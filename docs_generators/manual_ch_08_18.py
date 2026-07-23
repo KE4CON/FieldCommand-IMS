@@ -370,7 +370,18 @@ def ch15():
     ], widths=[1.2*inch, 1.4*inch, CW-2.6*inch]))
     s.append(SP(6))
 
-    s.append(P('15.1  General Info — ICS-201 Initial Briefing', H2))
+    s.append(P('15.1  Command Structure — Single IC or Unified Command', H2))
+    s.append(P(
+        'The ICS-203 Organization Assignment List is where the command structure is '
+        'formally documented. For a Single IC incident, the IC\'s name appears at the '
+        'top of the org chart. For a Unified Command incident, the UC member agencies '
+        'are listed collectively at the Command level. FieldCommand IMS handles both '
+        'structures identically — the ICS-203, ICS-202, and all downstream forms '
+        'work the same way regardless of command structure. '
+        'See Chapter 5.2 for guidance on configuring each structure.'))
+    s.append(SP(6))
+
+    s.append(P('15.2  General Info — ICS-201 Initial Briefing', H2))
     s.append(P(
         'The General Info page (general_info.html) holds the ICS-201 Initial Incident '
         'Briefing data: situation summary, initial response actions, current organization, '
@@ -378,7 +389,7 @@ def ch15():
         'updated through the first operational period.'))
     s.append(SP(6))
 
-    s.append(P('15.2  Preflight Deployment Checklist', H2))
+    s.append(P('15.3  Preflight Deployment Checklist', H2))
     s.append(P(
         'The Preflight page (preflight.html) provides a go/no-go checklist covering '
         'hardware, software, power, communications, and personnel readiness before '

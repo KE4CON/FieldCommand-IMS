@@ -377,14 +377,48 @@ def ch5():
         'Enter the incident name, incident number (if assigned by your agency), '
         'incident type, and initial operational period.',
         'Select the incident commander from your roster, or type a name if '
-        'the IC is not in the roster.',
+        'the IC is not in the roster. For incidents operating under '
+        '<b>Unified Command</b>, see Section 5.3 below.',
         'Click <b>Create Incident</b>. The incident opens immediately and becomes '
         'the active incident. The incident name appears in the dashboard header '
         'and in all form headers.',
     ])
     s.append(SP(6))
 
-    s.append(P('5.2  Incident Types', H2))
+    s.append(P('5.2  Single Incident Commander vs. Unified Command', H2))
+    s.append(P(
+        'ICS supports two command structures, and FieldCommand IMS accommodates both '
+        'without any configuration change. The difference is a workflow convention, '
+        'not a software setting.'))
+    s.append(SP(4))
+    s.append(tbl(['STRUCTURE', 'WHEN USED', 'HOW TO CONFIGURE IN FIELDCOMMAND'], [
+        ['Single Incident Commander (IC)',
+         'One agency or jurisdiction has clear authority. '
+         'Most activations involving a single responding organization.',
+         'Enter the IC\'s name or callsign in the Incident Commander field '
+         'when creating the incident. The ICS-203 org chart will show one IC '
+         'at the top of the command structure.'],
+        ['Unified Command (UC)',
+         'Two or more agencies or jurisdictions share command authority — '
+         'common in multi-agency responses, complex disasters, or incidents '
+         'crossing jurisdictional boundaries. Each contributing agency provides '
+         'an IC-equivalent to the UC group. All agencies still work from '
+         'a single IAP.',
+         'Enter "Unified Command" or the UC group designation in the '
+         'Incident Commander field. List each UC member in the ICS-203 '
+         'Organization Assignment List under the Unified Command section. '
+         'All ICS forms, T-cards, and cost documentation continue to function '
+         'identically — the UC structure is a labeling and documentation '
+         'convention within the same incident record.'],
+    ], widths=[1.3*inch, CW*0.42, CW-1.3*inch-CW*0.42]))
+    s.append(SP(4))
+    s.append(note(
+        'Under Unified Command, each participating agency still develops its own '
+        'objectives, but those objectives are reconciled into a single IAP. '
+        'The Planning Section Chief role in the ICS-203 is typically filled by '
+        'one agency on a rotating basis or by consensus. FieldCommand IMS '
+        'supports multiple ICS-204 Assignment Lists — one per branch or division — '
+        'which accommodates multi-agency operational structures naturally.', 'note'))
     s.append(tbl(['TYPE', 'DESCRIPTION'], [
         ['All-Hazards',      'General ICS incident — suitable for any event not covered below'],
         ['Search and Rescue','SAR-specific resource typing and form defaults'],
@@ -395,7 +429,7 @@ def ch5():
     ], widths=[1.4*inch, CW-1.4*inch]))
     s.append(SP(6))
 
-    s.append(P('5.3  Operational Periods', H2))
+    s.append(P('5.4  Operational Periods', H2))
     s.append(P(
         'ICS organizes work into <b>operational periods</b> — typically 12 or 24-hour '
         'blocks. FieldCommand IMS tracks the current operational period and uses it as '
@@ -404,7 +438,7 @@ def ch5():
         'Prior period data is retained and viewable.'))
     s.append(SP(6))
 
-    s.append(P('5.4  Archive, Restore, and Delete', H2))
+    s.append(P('5.5  Archive, Restore, and Delete', H2))
     s.append(P(
         'After an incident closes, the full data package can be archived to a USB drive '
         'for long-term storage and removed from the Pi\'s active storage.'))
@@ -431,7 +465,7 @@ def ch5():
         'ruggedized 1TB USB-C drive is recommended for field use.', 'note'))
     s.append(SP(6))
 
-    s.append(P('5.5  Exercise / Scenario Mode', H2))
+    s.append(P('5.6  Exercise / Scenario Mode', H2))
     s.append(P(
         'Exercises and training scenarios can be tagged as <b>🧪 Scenario</b> when '
         'the incident is created. Scenario incidents display a yellow badge throughout '

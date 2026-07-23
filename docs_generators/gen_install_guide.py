@@ -429,7 +429,7 @@ story.append(tbl(['UNIT', 'HARDWARE', 'STORAGE', 'ROLE'], [
      'Dedicated AMPRNet / 44Net gateway.  Runs WireGuard tunnel to amprgw.ampr.org, '
      'ip routing between EMCOMM-NET and 44.0.0.0/8, and a status page at 192.168.50.2.  '
      'Completely independent from the FieldCommand server.'],
-], [1.0*inch, 1.8*inch, 1.2*inch, CW-4.0*inch]))
+    ], [1.4*inch, 1.8*inch, 1.5*inch, CW-4.7*inch]))
 story.append(SP(6))
 story.append(H2('Network Hardware'))
 story.append(P(
@@ -449,7 +449,7 @@ story.append(tbl(['DEVICE', 'ROLE', 'NOTES'], [
      '2=FieldCommand Pi, 3=44Net Gateway Pi, 4=Windows laptop, '
      '5=color MFP printer, 6-9=Pi 500 workstations, 10=Satellite dish (optional), 11-16=spare.  '
      '~$200.  PoE powers future UniFi APs without a separate injector.'],
-], [1.6*inch, 1.6*inch, CW-3.2*inch]))
+        ], [1.6*inch, 1.8*inch, CW-3.4*inch]))
 story.append(SP(8))
 story.append(H2('Accessories & Cables'))
 acc_data = [
@@ -754,7 +754,7 @@ story.append(tbl(['IMAGER OPTION', 'VALUE  /  REASON'], [
     ['Enable SSH',        'Yes  —  required for remote access from your laptop during setup'],
     ['Wi-Fi',             'Set your home or lab Wi-Fi during initial OS setup.  EMCOMM-NET comes later.'],
     ['Locale / Timezone', 'US/Central for local operations'],
-], [1.8*inch, CW-1.8*inch]))
+    ], [2.6*inch, CW-2.6*inch]))
 story.append(SP(8))
 
 story.append(H2('1B  Build the RAID 1 Array  (Pironman MAX 5 — Dual NVMe)'))
@@ -775,7 +775,7 @@ story.append(H3('Physical Installation'))
 story.append(tbl(['SLOT', 'DRIVE', 'LINUX DEVICE NAME'], [
     ['M.2 Slot 1  (primary)',    '1 TB NVMe SSD  (e.g. WD Blue SN580)',  '/dev/nvme0n1'],
     ['M.2 Slot 2  (mirror)',     '1 TB NVMe SSD  —  identical model recommended',  '/dev/nvme1n1'],
-], [1.4*inch, 2.4*inch, CW-3.8*inch]))
+    ], [1.5*inch, 2.8*inch, CW-4.3*inch]))
 story.append(SP(6))
 story.append(P('Boot from a microSD card with Raspberry Pi OS Lite to perform the initial RAID setup. '
                'After the array is built and the OS copied to it, the SD card is removed.'))
@@ -824,7 +824,7 @@ story.append(tbl(['RAID STATUS', 'MEANING', 'ACTION REQUIRED'], [
     ['Resync in progress',
      'Array is rebuilding — normal after first setup or drive replacement',
      'Leave running.  Takes 15 – 30 minutes.  Pi is usable during rebuild.'],
-], [1.2*inch, 2.3*inch, CW-3.5*inch]))
+    ], [1.6*inch, 2.0*inch, CW-3.6*inch]))
 story.append(SP(4))
 story.append(NoteBox(
     'RAID 1 protects against drive failure — it is NOT a backup. '
@@ -906,7 +906,7 @@ story.append(tbl(['BROWSER', 'HOW TO INSTALL', 'NOTES FOR FIELDCOMMAND'], [
      'sudo apt install epiphany-browser',
      'Very lightweight WebKit browser. Good for Pi 500 with many tabs open. '
      'Best for dedicated check-in stations where memory is tight.'],
-], [1.4*inch, 1.8*inch, CW-3.2*inch]))
+    ], [1.6*inch, 1.8*inch, CW-3.4*inch]))
 story.append(SP(6))
 story.append(NoteBox(
     'For dedicated FieldCommand operator stations running Pi 500:  '
@@ -973,7 +973,7 @@ story.append(tbl(['CONNECTION', 'DEVICE', 'IP / NOTES'], [
     ['Ports 13 – 16',
      'Spare',
      'Available for additional devices, IP radios, second TNC, or future expansion.'],
-], [1.1*inch, 1.9*inch, CW-3.0*inch]))
+    ], [2.6*inch, CW-2.6*inch]))
 story.append(SP(6))
 story.append(tbl(['DEVICE', 'POWER SOURCE'], [
     ['ASUS RT-BE58 Go router',  'USB-C 18W PD adapter  —  or USB-C power bank for field use'],
@@ -1039,7 +1039,7 @@ story.append(SP(6))
 
 story.append(H3('the cellular antenna unit Data Plan — Activation and Standby'))
 story.append(tbl(['STATE', 'COST', 'WHEN TO USE', 'HOW TO CHANGE'], [
-    ['Active  —  Multi-Network Unlimited',
+    ['Active — Multi-Network',
      '~$79-99/month',
      'During activations, exercises, and training events',
      'Log in to the cellular antenna unit portal — activate plan'],
@@ -1051,7 +1051,7 @@ story.append(tbl(['STATE', 'COST', 'WHEN TO USE', 'HOW TO CHANGE'], [
      '$0',
      'Extended periods of non-use  (re-activation required)',
      'Cancel in portal — re-activate and receive new SIM when needed'],
-], [1.4*inch, 0.8*inch, 1.8*inch, CW-4.0*inch]))
+    ], [2.0*inch, 0.9*inch, 1.8*inch, CW-4.7*inch]))
 story.append(SP(4))
 story.append(NoteBox(
     'For your organization operations, the recommended approach is to keep the plan in '
@@ -1113,7 +1113,7 @@ story.append(tbl(['PRIORITY', 'WAN SOURCE', 'ASUS CONNECTION', 'SETUP', 'ACTIVAT
      'ASUS Web UI → Operation Mode → WISP.  '
      'Select venue Wi-Fi and enter password.',
      'Manual — hospital, shelter, or venue with existing guest Wi-Fi'],
-], [0.7*inch, 1.4*inch, 1.1*inch, 2.0*inch, CW-5.2*inch]))
+], [2.0*inch, 1.0*inch, CW-3.0*inch]))
 story.append(SP(8))
 story.append(H2('1.3  Configure Dual WAN Failover  (the cellular antenna unit Primary  +  satellite dish Secondary)'))
 story.append(P(
@@ -1201,7 +1201,7 @@ story.append(ref_tbl_2col(['NODE', 'SWITCH PORT', 'RECOMMENDED PLACEMENT'], [
     ['Mesh Node 2  (second RT-BE58 Go)',
      'UniFi Switch Port 12',
      'Third coverage zone — outdoor staging, parking, or far building wing'],
-], [1.4*inch, 1.4*inch, CW-2.8*inch]))
+    ], [1.6*inch, 1.7*inch, CW-3.3*inch]))
 story.append(PB())
 
 # ── STEP 2 — DOWNLOAD & INSTALL ──────────────────────────────────────────────
@@ -1289,7 +1289,7 @@ story.append(SP(4))
 story.append(tbl(['PROMPT', 'DEFAULT', 'DESCRIPTION'], [
     ['Station callsign', 'W8ABC', 'Your amateur callsign. Patched into all HTML pages.'],
     ['Station latitude', '42.3153', 'Decimal degrees. Used for APRS station marker, NWS alerts, propagation, distance calc.'],
-    ['Station longitude', '-88.4473', 'Decimal degrees (negative = West). Default: Woodstock IL (your area).'],
+    ['Station longitude', '-88.4473', 'Decimal degrees (negative = West). Default 0.0/0.0 — set to your deployment coordinates.'],
     ['Wi-Fi AP SSID', 'EMCOMM-NET', 'The Wi-Fi network name that field devices connect to.'],
     ['Wi-Fi AP password', 'fieldcommand2026', 'WPA2 password for EMCOMM-NET. Change this for operational security.'],
     ['Server IP address', '192.168.50.1', 'The Pi\'s static IP on EMCOMM-NET. Devices browse to http://192.168.50.1/'],
@@ -1443,19 +1443,19 @@ story.append(P('Kiwix provides an offline web library served on port 8081. All d
                'it at http://192.168.50.1:8081. Content is packaged as ZIM files.'))
 story.append(SP(6))
 story.append(tbl(['TIER', 'NAME', 'SIZE', 'DESCRIPTION'], [
-    ['1 — Essential', 'WikiMed — Medical Encyclopedia', '~471 MB',
+    ['Essential', 'WikiMed — Medical Encyclopedia', '~471 MB',
      'Offline medical encyclopedia: symptoms, treatments, drugs, procedures. Critical for mass-casualty events.'],
-    ['1 — Essential', 'Wikipedia (Mini)', '~1.2 GB',
+    ['Essential', 'Wikipedia (Mini)', '~1.2 GB',
      'Compact English Wikipedia — essential facts, geography, science.'],
-    ['1 — Essential', 'Wikivoyage', '~820 MB',
+    ['Essential', 'Wikivoyage', '~820 MB',
      'Emergency shelters, evacuation routes, local resources and travel logistics.'],
-    ['2 — Extended', 'Wikibooks — How-To & Field Manuals', '~4.2 GB',
+    ['Extended', 'Wikibooks — How-To & Field Manuals', '~4.2 GB',
      'First aid, survival, ham radio, electronics, cooking, field skills.'],
-    ['2 — Extended', 'iFixit — Equipment Repair Manuals', '~3.1 GB',
+    ['Extended', 'iFixit — Equipment Repair Manuals', '~3.1 GB',
      'Step-by-step repair guides for electronics, tools, vehicles.'],
-    ['2 — Extended', 'Wikipedia (Full English)', '~22 GB',
+    ['Extended', 'Wikipedia (Full English)', '~22 GB',
      'Complete English Wikipedia. Large download — requires 30 GB+ free.'],
-], [0.7*inch, 1.6*inch, 0.9*inch, CW-3.2*inch]))
+    ], [0.9*inch, 2.2*inch, 0.8*inch, CW-3.9*inch]))
 story.append(SP(6))
 story.append(CodeBlock([
     '# Check what is installed and service status',
@@ -1501,7 +1501,7 @@ story.append(tbl(['CONTENT', 'APPROX SIZE', 'BEST FOR'], [
     ['Amateur Radio Wiki  (if available)',
      'Variable',
      'Band plans, antenna theory, Winlink and APRS procedures.'],
-], [1.8*inch, 1.0*inch, CW-2.8*inch]))
+    ], [2.3*inch, 0.9*inch, CW-3.2*inch]))
 story.append(SP(6))
 story.append(H3('How to Install Any ZIM File'))
 story.append(CodeBlock([
@@ -1646,7 +1646,7 @@ story.append(tbl(['INTERFACE TYPE', 'PORT TYPE IN YAAC', 'SETTINGS'], [
     ['KISS TNC over TCP (Direwolf)', 'KISS TNC (TCP)', 'Host: localhost, Port: 8001'],
     ['AGW packet engine (Direwolf)', 'AGW', 'Host: localhost, Port: 8000'],
     ['APRS-IS internet (if WAN connected)', 'APRS-IS', 'Server: noam.aprs2.net:14580, Filter: r/42.31/-88.44/50'],
-], [1.5*inch, 1.5*inch, CW-3.0*inch]))
+    ], [2.2*inch, 1.5*inch, CW-3.7*inch]))
 story.append(SP(6))
 story.append(H2('9.5  Verify APRS is Working'))
 story.append(CodeBlock([
@@ -1738,7 +1738,7 @@ story.append(tbl(['PRINTER', 'CONNECTION', 'WHY IT WORKS WELL'], [
      'USB  or  Wi-Fi',
      'Full Linux support via HP HPLIP driver (installed automatically with CUPS).  '
      'Fast, reliable, very low cost per page.  Under $150.'],
-], [1.8*inch, 0.9*inch, CW-2.7*inch]))
+], [1.8*inch, 1.3*inch, CW-3.1*inch]))
 story.append(SP(6))
 story.append(P('<b>Color Multifunction Laser  (ICS maps, colored forms, and chart printing)</b>',
                S('ph2', fontSize=9.5, fontName='Helvetica-Bold', textColor=EOC_LT, leading=13)))
@@ -1758,7 +1758,7 @@ story.append(tbl(['PRINTER', 'CONNECTION', 'WHY IT WORKS WELL'], [
      'USB,  Wi-Fi,  or  Ethernet',
      'Color laser multifunction with excellent Linux CUPS driver (CAPT driver).  '
      'Handles letter and legal paper.  Good choice for permanent EOC installations.  Under $450.'],
-], [1.8*inch, 1.2*inch, CW-3.0*inch]))
+], [1.8*inch, 1.5*inch, CW-3.3*inch]))
 story.append(SP(6))
 story.append(P('<b>Portable / Battery-Powered  (mobile and field deployments without shore power)</b>',
                S('ph2', fontSize=9.5, fontName='Helvetica-Bold', textColor=EOC_LT, leading=13)))
@@ -1772,7 +1772,7 @@ story.append(tbl(['PRINTER', 'CONNECTION', 'WHY IT WORKS WELL'], [
      'USB  or  Wi-Fi  (battery optional)',
      'Portable inkjet with larger paper tray than TR150.  Optional battery accessory.  '
      'Good for shelter check-in stations and mobile command posts.  Under $180.'],
-], [1.8*inch, 1.2*inch, CW-3.0*inch]))
+], [1.8*inch, 1.5*inch, CW-3.3*inch]))
 story.append(PB())
 
 story.append(H2('Option C — Network Printer on EMCOMM-NET (Simplest Shared Setup)'))
@@ -1802,7 +1802,7 @@ story.append(tbl(['CONNECTION METHOD', 'COMPATIBLE PRINTERS', 'HOW TO SET UP'], 
      'Run a CAT 6 cable from the printer Ethernet port to any spare UniFi Switch port (Ports 3 through 5). '
      'The printer receives an IP automatically. '
      'Set a static DHCP reservation in the ASUS router so the IP never changes between activations.'],
-], [1.1*inch, 1.8*inch, CW-2.9*inch]))
+    ], [1.7*inch, 1.8*inch, CW-3.5*inch]))
 story.append(SP(6))
 story.append(H3('Reserve a Static IP for the Printer (Recommended)'))
 story.append(CodeBlock([
@@ -1821,7 +1821,7 @@ story.append(tbl(['', 'Option A — Client Printer', 'Option B — USB via Pi / 
     ['iOS / AirPrint support', 'Requires AirPrint printer', 'Yes via CUPS + Avahi', 'Yes if AirPrint printer'],
     ['Battery printer support', 'Yes', 'Yes (USB connected)', 'Yes (Wi-Fi connected)'],
     ['Best for', 'Single operator or tablet with own printer', 'Any USB printer, shared to all devices', 'Wi-Fi/Ethernet printer already on site'],
-], [1.6*inch, 1.4*inch, 1.7*inch, CW-4.7*inch]))
+], [1.6*inch, 1.6*inch, 1.8*inch, CW-5.0*inch]))
 story.append(SP(4))
 story.append(NoteBox('For most your callsign field activations, Option B (USB printer via CUPS) is recommended. '
                      'A Brother HL-L2350DW or HP LaserJet plugged into the Pi USB hub covers all ICS forms, '
@@ -1976,7 +1976,7 @@ story.append(tbl(['MODEL', 'PACTOR LEVEL', 'INTERFACE', 'NOTES'], [
      'Top-of-line PACTOR 4 TNC.  Maximum throughput on HF.  '
      'Required for PACTOR 4 sessions.  ~$1,100.  '
      'Recommended for permanent EOC and EMCOMM stations.'],
-], [1.6*inch, 1.0*inch, 0.9*inch, CW-3.5*inch]))
+], [2.0*inch, 1.4*inch, 1.2*inch, CW-4.6*inch]))
 story.append(SP(6))
 
 story.append(H2('Physical Connection'))
@@ -2095,7 +2095,7 @@ story.append(tbl(['FILE', 'RUNS ON', 'PURPOSE'], [
      'FieldCommand Pi  (192.168.50.1)',
      'Dashboard page at http://192.168.50.1/amprgate.html.  '
      'Shows tunnel state, AMPRNet address, traffic stats, and tunnel controls.'],
-], [1.6*inch, 0.9*inch, CW-2.5*inch]))
+], [1.6*inch, 1.8*inch, CW-3.4*inch]))
 story.append(SP(8))
 story.append(P(
     'AMPRNet (Amateur Packet Radio Network) is the global amateur radio IP network '
@@ -2273,7 +2273,7 @@ story.append(tbl(['PORT', 'ACCESSIBLE FROM', 'AUTH REQUIRED', 'PROVIDES'], [
      'Gateway Pi keyboard only  (localhost — not reachable from network)',
      'Valid callsign session from port 9000 login.  Physical presence required.',
      'Tunnel control: up / down / restart.'],
-], [1.0*inch, 1.6*inch, 1.8*inch, CW-4.4*inch]))
+    ], [1.4*inch, 1.6*inch, 1.8*inch, CW-4.8*inch]))
 story.append(SP(4))
 story.append(NoteBox(
     'Tunnel controls (up/down/restart) are intentionally inaccessible from the network. '
@@ -2402,7 +2402,7 @@ story.append(tbl(['APPLICATION', 'HOW IT USES 44NET', 'ACCESS FROM EMCOMM-NET'],
      '(whether via RF packet or WireGuard tunnel) is directly reachable '
      'from any EMCOMM-NET device for data exchange, file transfer, or status checking.',
      'Direct TCP/IP connections to 44.x.x.x addresses'],
-], [1.5*inch, 2.2*inch, CW-3.7*inch]))
+    ], [2.1*inch, CW-2.1*inch]))
 story.append(SP(6))
 story.append(NoteBox(
     'AMPRNet does not carry voice traffic and is not a replacement for your radio links. '
@@ -2446,7 +2446,7 @@ story.append(tbl(['CHECK', 'COMMAND / METHOD', 'EXPECTED RESULT'], [
     ['AMPRNet reachable from Pi 500 workstation',
      'Open http://192.168.50.2:9000 in Chromium on Pi 500',
      'Status page loads and shows tunnel UP'],
-], [1.5*inch, 2.0*inch, CW-3.5*inch]))
+], [1.8*inch, 1.6*inch, 1.5*inch, CW-4.9*inch]))
 story.append(PB())
 
 story.append(StepBox(12, 'First Boot Verification  —  Full System'))
@@ -2535,50 +2535,282 @@ story.append(PB())
 story.append(H1('13. Web Dashboard Reference'))
 story.append(HR(EOC_LT, 0.5))
 story.append(SP(6))
-story.append(tbl(['PAGE', 'URL', 'DESCRIPTION'], [
-    ['Dashboard', '/', 'Main hub — UTC clock, NWS weather alerts, APRS table, tool cards, DMS status'],
-    ['Amateur Net Control', '/netcontrol.html', 'Multi-net logger, FCC autofill, precedence, ICS-309 export, server sync'],
-    ['Starcom Net Logger', '/starcom.html', 'Public safety net log with Radio IDs, sc- prefix nets, ICS-309 export'],
-    ['Net Observer', '/observer.html?net=NETNAME', 'Read-only net viewer — 15-second auto-refresh, no login'],
-    ['Member Roster', '/roster.html', 'Directory with 11 certs, 13 equipment fields, 4 roles, CSV import/export'],
-    ['Resource Board', '/resources.html', 'Equipment, vehicle, personnel tracking with status cycling'],
-    ['Tactical APRS Map', '/tactical.html', 'Leaflet map — Graywolf + YAAC merged, live WebSocket, APRS symbols'],
-    ['Starcom Resource Map', '/resmap.html', 'Unit positioning map with zone and polygon drawing tools'],
-    ['Callsign Lookup', '/callsign.html', 'FCC local database — ~800K licensees, instant offline search'],
-    ['ICS Platform', '/ics/', 'Command, Operations, Planning, Logistics, Finance sections'],
-    ['ICS-213', '/ics213.html', 'General Message form with print output and form log'],
-    ['ICS-214', '/ics214.html', 'Activity Log with personnel and timestamped activity rows'],
-    ['ICS-309', '/ics309.html', 'Communications Log with incident archiving'],
-    ['NTS Radiogram', '/nts.html', 'ARRL-format radiogram generator and traffic log'],
-    ['Winlink Form Import', '/winlink-import.html', 'Import Winlink Express XML forms to incident archive'],
-    ['Pre-Flight', '/preflight.html', 'GO/CAUTION/NO-GO deployment readiness assessment'],
-    ['Health Monitor', ':5051/health', 'Live CPU/memory/disk/temp, all service status, GPS, internet'],
-    ['Pat Winlink', ':8090', 'Browser-based backup Winlink client'],
-    ['Kiwix Library', ':8081/', 'Offline reference library — WikiMed, Wikipedia, iFixit'],
-    ['Print Center', '/printcenter.html', 'All printable documents in one place + incident cover sheet generator'],
-], [1.4*inch, 1.4*inch, CW-2.8*inch]))
-story.append(PB())
+story.append(P(
+    'FieldCommand IMS serves 49 web pages from the Pi. All are accessible at '
+    'http://192.168.50.1/[page]. Pages marked WAN require internet for live data '
+    'but load and display cached data when offline.',
+    S('B', fontSize=9, leading=13)))
+story.append(SP(6))
+story.append(tbl(['PAGE', 'URL', 'NOTES'], [
+    ['Dashboard (All-Hazards ICS)',  '/', 'Main hub — 3 modes, WAN status bar, tool cards. Default entry point.'],
+    ['Organization Setup',           '/setup.html', 'Configure org name, callsign, grid square, time zone, SSID'],
+    ['Preflight Check',              '/preflight.html', 'GO/CAUTION/NO-GO readiness. Run before every activation.'],
+    ['Incident Management',          '/incident.html', 'Create/manage incidents, operational periods, incident type'],
+    ['Incident Archive/Reset',       '/incident_mgmt.html', 'Archive to USB · Restore · Hard delete · Beta/Scenario Reset'],
+    ['Event Templates',              '/event_templates.html', '6 built-in templates (Shelter/SAR/HazMat/Weather/Gathering/Exercise)'],
+    ['General Info / ICS-201',       '/general_info.html', 'Initial incident briefing — situation summary, initial actions'],
+    ['ICS Platform — Overview',      '/ics/index.html', 'Five-section ICS structure navigator'],
+    ['ICS — Command Section',        '/ics/command.html', 'ICS-202 objectives, ICS-208 safety, staff roster, position checklists'],
+    ['ICS — Operations Section',     '/ics/operations.html', 'T-card board, resource status, assignment, T-card personnel roster'],
+    ['ICS — Planning Section',       '/ics/planning.html', 'IAP assembly, ICS-205/206/209/211/221 forms, Planning P cycle'],
+    ['ICS — Logistics Section',      '/ics/logistics.html', 'ICS-205 comms (COML), ICS-206 medical (MEDL), channel library'],
+    ['ICS — Finance/Admin',          '/ics/finance.html', 'FEMA PA cost tracking, ICS-214 log, expenditure summary'],
+    ['Planning P Cycle Guide',       '/ics/planningp.html', '15-phase IAP cycle with agenda, required forms, attendees per phase'],
+    ['T-Card Resource Board',        '/resources.html', 'Add/status/assign resources. T-card personnel roster per card.'],
+    ['NIMS Resource Types',          '/resource_types.html', 'Pre-loaded NIMS types + custom types. Available in T-card board.'],
+    ['GPS Resource Map',             '/resource_map.html', 'Live GPS pins per T-card — 3 placement methods, auto-refresh 30s'],
+    ['Starcom Resource Map',         '/resmap.html', 'Public safety unit positioning map with zone drawing tools'],
+    ['ICS-213 General Message',      '/ics213.html', 'Formal message with digital signature, print, Winlink export'],
+    ['ICS-214 Activity Log',         '/ics214.html', 'Unit activity log — export hours directly to FEMA labor costs'],
+    ['ICS-309 Comms Log',            '/ics309.html', 'Manual communications log with incident archiving'],
+    ['ICS-204A Briefing Sheet',      '/briefing_204a.html', 'Assignment briefing for branch/division supervisors'],
+    ['ICS Form Suite',               '/ics-form.html', 'Full ICS form set: ICS-202 through ICS-221 with digital signatures'],
+    ['IAP Assembly',                 '/iap.html', 'IAP tracker — all forms for active incident with completion status'],
+    ['IAP Compile (PDF)',            '/iap_compile.html', 'One-click IAP PDF: title page + section dividers + all forms'],
+    ['FEMA PA Cost Documentation',   '/fema_costs.html', 'Force Account Labor, Equipment, Materials, Contracts, PW export'],
+    ['FEMA Equipment Rates',         '/fema_rates.html', '44 FEMA equipment categories — edit rates, track rate year'],
+    ['Cost Dashboard',               '/cost_dashboard.html', 'Live cost totals by category, burn rate, budget tracker, by period'],
+    ['Personnel Accountability',     '/accountability.html', 'PAR board — ICS-211, T-card personnel, Unaccounted, Cross-Reference'],
+    ['ICS-211 Check-In',             '/checkin.html', 'Manual ICS-211 check-in form with active list and Check Out buttons'],
+    ['QR/Barcode Scan Check-In',     '/scan_checkin.html', 'Camera scan or manual ID fallback. BarcodeDetector API, no library.'],
+    ['Member Roster',                '/roster.html', 'Directory with certs, equipment, QR code generation, CSV import/export'],
+    ['Amateur Net Control Logger',   '/netcontrol.html', 'Multi-net, FCC autofill, check-in/out, traffic, ICS-309, observer link'],
+    ['Public Safety Net Logger',     '/starcom.html', 'Radio ID check-in, Starcom/P25 nets, ICS-309 export'],
+    ['Net Observer Mode',            '/observer.html', 'Read-only net view, auto-refresh 15s. Share URL with EOC.'],
+    ['Dead Man\x27s Switch',        '/deadmans.html', 'Audible alert if net goes silent beyond configured interval'],
+    ['Tactical APRS Map',            '/tactical.html', 'Leaflet — RF APRS always, APRS-IS when WAN up, SARTopo overlay'],
+    ['SARTopo GeoJSON Import',       '/sartopo_import.html', 'Import planning overlays from SARTopo — persists on tactical map'],
+    ['NEXRAD Radar',                 '/radar.html', 'WAN REQUIRED. Animated NEXRAD loop — play/pause/scrub/speed/palette'],
+    ['NWS/HF Propagation',          '/propagation.html', 'WAN: SFI, K-index, A-index from NOAA SWPC. Band-by-band conditions.'],
+    ['FCC Callsign Lookup',          '/callsign.html', 'Offline — 800K+ US licensees in local SQLite. Instant results.'],
+    ['NTS Radiogram Generator',      '/nts.html', 'ARRL-format traffic with auto word count. Print or log.'],
+    ['Winlink Form Import',          '/winlink-import.html', 'Import Winlink Express XML forms into incident archive'],
+    ['AMPRNet Gateway Status',       '/amprgate.html', '44Net WireGuard tunnel status, callsign auth, Part 97 access log'],
+    ['WAN Status Detail',            '/wan-status.html', 'Both WAN sources, detection method, last check, event log'],
+    ['WAN Settings',                 '/wan_settings.html', 'Configure WAN sources: role, type, detection method, enable/disable'],
+    ['Hospital Directory',           '/hospitals.html', 'Trauma level, helipad, phone. Feeds ICS-206 medical plan.'],
+    ['Facilities Directory',         '/facilities.html', 'ICP, staging, shelters, supply depots. Links to T-card assignments.'],
+    ['Repeater Database',            '/repeaters.html', 'Filter by band/mode/CTCSS. Feeds ICS-205 channel picker.'],
+    ['Channel Library',              '/channel_library.html', 'Pre-loaded interop channels (NIFOG/VTAC). Add custom agency channels.'],
+    ['Grid Square Calculator',       '/grid.html', 'Grid ↔ lat/lon · distance and bearing between two grids'],
+    ['Radio Cheat Sheets',           '/cheatsheets.html', 'Phonetic alphabet, Q-codes, RST scale, ICS structure, HF frequencies'],
+    ['ICS Position Checklists',      '/position_checklists.html', 'NIMS activation checklists for all ICS positions'],
+    ['Meeting Scheduler',            '/meetings.html', 'Schedule operational briefings — time, location, attendees'],
+    ['Print Center',                 '/printcenter.html', 'Print any ICS form or document to any CUPS printer on EMCOMM-NET'],
+    ['Reference Library',            '/refs.html', 'Kiwix offline — WikiMed, Wikipedia, iFixit. No internet needed.'],
+    ['Health Monitor',               ':5051/health', 'Live CPU/memory/disk/temp, all service status, GPS, internet'],
+    ['Pat Winlink Client',           ':8090', 'Browser-based Winlink client (Packet, VARA HF, Telnet)'],
+    ['Kiwix Library',                ':8080/', 'Offline Wikipedia, WikiMed, iFixit, Wikivoyage'],
+], [1.8*inch, 1.65*inch, CW-3.45*inch]))
 
 story.append(H1('14. Service & Port Reference'))
 story.append(HR(EOC_LT, 0.5))
 story.append(SP(6))
+story.append(P(
+    'All services run on the FieldCommand Pi (192.168.50.1) unless noted. '
+    'The AMPRNet gateway runs on a separate Pi (192.168.50.2).',
+    S('B', fontSize=9, leading=13)))
+story.append(SP(6))
 story.append(tbl(['PORT', 'SERVICE', 'SYSTEMD UNIT', 'DESCRIPTION'], [
-    ['80',   'nginx',           'nginx.service',          'Web frontend — serves all HTML pages'],
-    ['5050', 'FCC Lookup Server', 'fcc-lookup.service',   'Main API: callsign lookup, net logs, roster, resources, DMS, ICS forms'],
-    ['5051', 'Health Monitor',  'health-monitor.service', 'System health: CPU temp, memory, disk, GPS, all service status'],
-    ['5055', 'ICS Platform',    'ics-platform.service',   'ICS incident management: incidents, objectives, resources, T-cards'],
-    ['5056', 'References API',  'fieldcommand-refs.service','Reference library API'],
-    ['8080', 'Graywolf APRS',  '(graywolf.service)',     'APRS TNC client — REST API + WebSocket live stream'],
-    ['8081', 'Kiwix Library',   'kiwix.service',          'Offline web library — WikiMed, Wikipedia, iFixit, etc.'],
-    ['8082', 'YAAC APRS',      'yaac.service',            'YAAC Java APRS client — REST API + WebSocket'],
-    ['8083', 'Tile Server',     'fieldcommand-tiles.service','Offline map tile server (MBTiles)'],
-    ['8090', 'Pat Winlink',     'pat.service',             'Winlink email-over-radio — Packet, VARA HF, VARA FM'],
-    ['631',  'CUPS Printer',    'cups.service',            'Print server — USB printer shared to EMCOMM-NET'],
-    ['2442', 'JS8Call',         '(JS8Call app on laptop)', 'HF digital keyboard messaging — TCP API on Windows laptop'],
-], [0.6*inch, 1.4*inch, 1.6*inch, CW-3.6*inch]))
-story.append(PB())
+    ['80',   'nginx',             'nginx.service',              'Web frontend — all 49 HTML pages, static assets'],
+    ['5050', 'FCC Lookup Server', 'fieldcommand-fcc.service',   'FCC callsign lookup, org config, incidents, net logs'],
+    ['5051', 'ICS Platform',      'fieldcommand-main.service',  'ICS forms, T-cards, check-ins, FEMA costs, GPS, PAR'],
+    ['8080', 'Kiwix Library',     'kiwix.service',              'Offline reference — WikiMed, Wikipedia, iFixit'],
+    ['8090', 'Pat Winlink',       'pat.service',                'Winlink email-over-radio — Packet, VARA HF, VARA FM'],
+    ['631',  'CUPS Printer',      'cups.service',               'USB printer shared to all EMCOMM-NET devices'],
+    ['2442', 'JS8Call',           '(laptop app)',               'HF digital keyboard messaging — web API on Windows laptop'],
+    ['9000', 'AMPRNet Status',    'amprgate-status.service',    'AMPRNet gateway read-only status — public on EMCOMM-NET'],
+    ['9001', 'AMPRNet Control',   'amprgate-status.service',    'Tunnel control — localhost only on gateway Pi'],
+], [0.6*inch, 1.8*inch, 2.0*inch, CW-4.4*inch]))
+story.append(SP(6))
+story.append(H2('Background Services'))
+story.append(SP(4))
+story.append(tbl(['SYSTEMD UNIT', 'FUNCTION'], [
+    ['fieldcommand-main.service',    'ICS platform server (port 5051) — T-cards, FEMA, PAR, GPS, check-in'],
+    ['fieldcommand-fcc.service',     'FCC lookup + org config server (port 5050)'],
+    ['wan-monitor.service',          'WAN source monitoring and automatic failover every 30 seconds'],
+    ['wan-monitor.timer',            'Timer that keeps wan-monitor running on schedule'],
+    ['amprgate-status.service',      '44Net gateway status API (ports 9000/9001 on gateway Pi)'],
+    ['amprgate-poll.service',        '44Net WireGuard tunnel keepalive and reconnect on gateway Pi'],
+    ['backup.service / backup.timer','Nightly SQLite backup to labelled USB drive'],
+    ['kiwix.service',                'Kiwix offline reference library server (port 8080)'],
+    ['pat.service',                  'Pat Winlink radio email client (port 8090)'],
+    ['nginx.service',                'Web frontend — serves all HTML pages and static assets (port 80)'],
+    ['cups.service',                 'CUPS print server — shares USB printer to EMCOMM-NET'],
+], [2.4*inch, CW-2.4*inch]))
 
-story.append(H1('15. Maintenance & Updates'))
+
+story.append(H1('15. New Feature Configuration'))
+story.append(HR(EOC_LT, 0.5))
+story.append(SP(6))
+story.append(P(
+    'FieldCommand IMS v1.0 includes the following features beyond the base ICS platform. '
+    'Most require no additional setup — they are available immediately after installation. '
+    'Items that require initial configuration are noted below.',
+    S('B', fontSize=9, leading=13)))
+story.append(SP(8))
+
+story.append(H2('15.1  Personnel Accountability (PAR)'))
+story.append(P(
+    'The Personnel Accountability page (/accountability.html) is available immediately '
+    'after installation. No additional setup is required. '
+    'It reads from the same checkin_entries and tcard_personnel database tables '
+    'that are created during normal installation.', S('B', fontSize=9, leading=13)))
+story.append(SP(4))
+story.append(tbl(['FEATURE', 'SETUP REQUIRED'], [
+    ['ICS-211 check-in with Check Out button', 'None — available at /checkin.html immediately'],
+    ['QR/barcode scan check-in', 'None — available at /scan_checkin.html. Camera permission required on device.'],
+    ['PAR board with cross-reference', 'None — available at /accountability.html immediately'],
+    ['T-card personnel roster', 'None — Personnel tab appears on every T-card detail panel'],
+    ['Check-out recording', 'None — Check Out button on every check-in row in checkin.html and accountability.html'],
+], [2.8*inch, CW-2.8*inch]))
+story.append(SP(8))
+
+story.append(H2('15.2  FEMA PA Cost Documentation'))
+story.append(P(
+    'FEMA cost tracking is available immediately. The 2025 FEMA Schedule of Equipment Rates '
+    '(44 categories) is pre-loaded during installation. '
+    'Update rates annually at /fema_rates.html when FEMA publishes a new schedule.',
+    S('B', fontSize=9, leading=13)))
+story.append(SP(4))
+story.append(tbl(['FEATURE', 'NOTES'], [
+    ['Force Account Labor with fringe calculation', 'Available immediately. ICS-214 import available from the Labor tab.'],
+    ['Equipment with FEMA rate schedule lookup', '44 rates pre-loaded for 2025. Edit at /fema_rates.html annually.'],
+    ['Materials and Contracts tracking', 'Available immediately. Source documentation required for FEMA PW.'],
+    ['Project Worksheet text export', 'Click Export PW Text on any incident for a formatted PW summary.'],
+    ['Real-time cost dashboard', 'Available at /cost_dashboard.html. Auto-refreshes every 2 minutes.'],
+], [2.5*inch, CW-2.5*inch]))
+story.append(SP(8))
+
+story.append(H2('15.3  Pre-Planned Event Templates'))
+story.append(P(
+    'Six built-in templates are pre-loaded during installation: Emergency Shelter Operations, '
+    'Search and Rescue, Severe Weather Response, Mass Gathering, HazMat Response, and '
+    'Exercise/Training Scenario. Templates can be edited and new ones created at /event_templates.html.',
+    S('B', fontSize=9, leading=13)))
+story.append(SP(4))
+story.append(steps([
+    'Navigate to http://192.168.50.1/event_templates.html',
+    'Click the <b>Activate</b> tab — browse the template gallery',
+    'Click a template — enter incident name and any custom details',
+    'Click <b>Activate Template</b> — a new incident is created pre-loaded with objectives, '
+    'resource types, channels, and ICS organization structure',
+    'To edit a template: click <b>Manage Templates</b> → Edit → modify Objectives, '
+    'Resources, Channels, or Organization tabs → Save Template',
+    'Export as JSON to share with other FieldCommand systems: click <b>Export JSON</b>',
+]))
+story.append(SP(8))
+
+story.append(H2('15.4  GPS-Tracked Resource Map'))
+story.append(P(
+    'The GPS resource map (/resource_map.html) displays color-coded pins for all resources '
+    'that have a GPS position set. Three placement methods are available.',
+    S('B', fontSize=9, leading=13)))
+story.append(SP(4))
+story.append(tbl(['METHOD', 'HOW TO USE'], [
+    ['Device GPS (browser)', 'Click Set Position on any resource → click 📍 Use Device GPS. '
+                             'Browser requests location permission. Accuracy shown in meters.'],
+    ['Click map to place',   'Click 🗺 Click Map to Place → crosshair cursor appears → '
+                             'click anywhere on the map to drop the resource pin.'],
+    ['Manual coordinates',   'Type decimal lat/lon directly into the fields. '
+                             'Negative longitude for western hemisphere.'],
+], [1.8*inch, CW-1.8*inch]))
+story.append(SP(8))
+
+story.append(H2('15.5  IAP One-Click PDF Compilation'))
+story.append(P(
+    'The IAP compiler (/iap_compile.html) generates a print-ready PDF containing all '
+    'selected ICS forms for the active incident. Digital signatures are embedded. '
+    'Generated server-side using ReportLab and pypdf — no browser PDF library needed.',
+    S('B', fontSize=9, leading=13)))
+story.append(SP(4))
+story.append(steps([
+    'Ensure the active incident has completed ICS forms with signatures',
+    'Navigate to http://192.168.50.1/iap_compile.html',
+    'Check the forms to include (ICS-202, 203, 204, 205, 206, and 207 minimum)',
+    'Click <b>📄 Compile IAP PDF</b> — server generates the PDF (5–15 seconds)',
+    'PDF downloads automatically with title page, section dividers, and all forms',
+    'Print from any device using the Print Center (/printcenter.html)',
+]))
+story.append(SP(8))
+
+story.append(H2('15.6  NEXRAD Animated Radar'))
+story.append(P(
+    'The radar page (/radar.html) requires an active internet connection for radar tile loading. '
+    'When offline, it displays the last loaded frame with a timestamp. '
+    'No installation configuration is required — it pulls tiles from NWS RIDGE II directly.',
+    S('B', fontSize=9, leading=13)))
+story.append(SP(4))
+story.append(NoteBox(
+    'The radar page auto-detects WAN status and resumes loading new tiles automatically '
+    'when internet connectivity is restored. No manual action is required after a WAN outage.',
+    'note'))
+story.append(SP(8))
+
+story.append(H2('15.7  Dual-Source WAN Configuration'))
+story.append(P(
+    'FieldCommand IMS supports two simultaneous WAN sources with automatic failover. '
+    'Configure both sources at /wan_settings.html after installation.',
+    S('B', fontSize=9, leading=13)))
+story.append(SP(4))
+story.append(tbl(['FIELD', 'OPTIONS & DESCRIPTION'], [
+    ['Role',             'Preferred (used first) · Fallback (used when preferred fails)'],
+    ['Type',             'Cellular · Satellite · Hotspot · Fixed broadband · Other'],
+    ['Detection method', 'internet_only — any internet path works (best for hotspots and USB dongles) | '
+                         'ping — checks a specific gateway IP | '
+                         'admin_reachable — checks modem admin interface URL'],
+    ['Label',            'Human-readable name shown on dashboard: "Cellular", "Satellite", etc.'],
+    ['Enabled',          'Toggle a source on or off without deleting configuration'],
+], [1.5*inch, CW-1.5*inch]))
+story.append(SP(4))
+story.append(steps([
+    'Navigate to http://192.168.50.1/wan_settings.html',
+    'Click <b>+ Add WAN Source</b> to add a source, or click Edit on an existing one',
+    'Set Role to <b>Preferred</b> for your primary source (e.g. cellular antenna)',
+    'Set Role to <b>Fallback</b> for your secondary source (e.g. satellite dish)',
+    'Choose the Detection Method appropriate for each source type',
+    'Click Save. The WAN monitor applies the new configuration within 60 seconds.',
+    'Use <b>⇄ Swap Roles</b> to swap preferred and fallback without editing.',
+]))
+story.append(SP(8))
+
+story.append(H2('15.8  Digital Signature Capture'))
+story.append(P(
+    'All 16 Prepared By and Approved By signature fields across the ICS form set '
+    'support digital signature capture. Signatures are stored as PNG images in the database '
+    'and are embedded in printed forms and compiled IAP PDFs. No setup required.',
+    S('B', fontSize=9, leading=13)))
+story.append(SP(4))
+story.append(P(
+    'To sign: click any Prepared By or Approved By field → signature pad appears → '
+    'sign with mouse, touchscreen, or stylus → click Accept. '
+    'Signatures persist through page reloads and appear in the IAP PDF compilation.',
+    S('B', fontSize=9, leading=13)))
+story.append(SP(8))
+
+story.append(H2('15.9  Incident Archive and Beta Reset'))
+story.append(tbl(['FUNCTION', 'HOW TO USE', 'NOTES'], [
+    ['Archive to USB',
+     'incident_mgmt.html → select incident → Archive to USB',
+     'USB drive must be labelled FIELDCOMMAND. JSON written to /media/fieldcommand/backup/incidents/'],
+    ['Restore from USB',
+     'incident_mgmt.html → Restore from USB → select JSON file',
+     'Restores incident to fully active status with all forms, T-cards, costs, and check-ins'],
+    ['Hard delete from Pi',
+     'incident_mgmt.html → select archived incident → Hard Delete',
+     'Permanent — confirm archive exists on USB before deleting'],
+    ['Beta/Scenario Reset',
+     'incident_mgmt.html → Beta/Scenario Reset → Confirm',
+     'Wipes all incidents, forms, T-cards, costs, check-ins. Preserves roster, channels, repeaters.'],
+], [1.5*inch, 2.0*inch, CW-3.5*inch]))
+story.append(SP(4))
+story.append(NoteBox(
+    'The USB drive must have volume label FIELDCOMMAND (all capitals). '
+    'Format as FAT32 or exFAT. Label with: '
+    'sudo mlabel -i /dev/sdX1 ::FIELDCOMMAND  (replace sdX1 with actual USB device).',
+    'note'))
+
+story.append(H1('16. Maintenance & Updates'))
 story.append(HR(EOC_LT, 0.5))
 story.append(SP(6))
 story.append(CodeBlock([
@@ -2610,7 +2842,7 @@ story.append(CodeBlock([
 ]))
 story.append(PB())
 
-story.append(H1('16. Troubleshooting'))
+story.append(H1('17. Troubleshooting'))
 story.append(HR(EOC_LT, 0.5))
 story.append(SP(6))
 story.append(ref_tbl_2col(['SYMPTOM', 'LIKELY CAUSE / FIX'], [

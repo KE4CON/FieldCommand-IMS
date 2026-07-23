@@ -12,7 +12,7 @@ from manual_ch_01_07 import ch1, ch2, ch3, ch4, ch5, ch6, ch7
 from manual_ch_08_18 import ch8, ch9, ch10, ch11, ch12, ch13, ch14, ch15, ch16, ch17, ch18
 from manual_ch_19_36 import (ch19, ch20, ch21, ch22, ch23, ch24, ch25, ch26,
                               ch27, ch28, ch29, ch30, ch31, ch32, ch33, ch34,
-                              ch35, ch36, ch_appendix)
+                              ch_appendix)
 
 from reportlab.platypus import SimpleDocTemplate
 from reportlab.lib.styles import ParagraphStyle
@@ -124,7 +124,7 @@ CHAPTER_FUNCS = [
     ch1, ch2, ch3, ch4, ch5, ch6, ch7,
     ch8, ch9, ch10, ch11, ch12, ch13, ch14, ch15, ch16, ch17, ch18,
     ch19, ch20, ch21, ch22, ch23, ch24, ch25, ch26, ch27, ch28,
-    ch29, ch30, ch31, ch32, ch33, ch34, ch35, ch36, ch_appendix,
+    ch29, ch30, ch31, ch32, ch33, ch34, ch_appendix,  ch_appendix,
 ]
 
 # ── Build ─────────────────────────────────────────────────────────────────────

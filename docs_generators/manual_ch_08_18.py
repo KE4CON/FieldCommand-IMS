@@ -1,569 +1,589 @@
 #!/usr/bin/env python3
-"""manual_ch_08_18.py — Chapters 8–18 of the FieldCommand User Manual."""
+"""manual_ch_08_18.py — Chapters 8–18: Net Loggers through ICS Planning."""
 import sys, os
 sys.path.insert(0, os.path.dirname(__file__))
 from manual_framework import *
-
+print("Chapters 8-18 module loaded OK")
 
 def ch8():
-    s = chapter(8, 'Observer Mode — Read-Only Net View',
-                'http://192.168.50.1/observer.html')
+    s = chapter(8, 'Public Safety Net Logger',
+                'http://192.168.50.1/starcom.html')
     s.append(P(
-        'Observer Mode provides a read-only, auto-refreshing view of any active net. '
-        'It is designed for served-agency personnel, EOC staff, emergency managers, '
-        'and section leaders who need to monitor radio traffic without touching the '
-        'net control interface. No login, no identity prompt, no setup required.'))
+        'The Public Safety Net Logger handles trunked radio, P25, and other public '
+        'safety radio systems where check-in is by radio ID rather than callsign. '
+        'It is designed for interoperability exercises, served-agency support, and '
+        'any net where participants may not hold amateur licenses.'))
+    s.append(SP(4))
+    s.append(tbl(['FEATURE', 'AMATEUR NET LOGGER', 'PUBLIC SAFETY NET LOGGER'], [
+        ['Primary ID',        'FCC callsign — auto-filled from local database',
+                              'Radio ID (unit number)'],
+        ['License check',     'FCC ULS lookup confirms active license',
+                              'None required'],
+        ['Roster lookup',     'By callsign → name and member ID',
+                              'By radio ID → name and member ID'],
+        ['ICS-309 format',    'Callsign in station column',
+                              'Radio ID in station column'],
+        ['Typical use',       'ARES / RACES / AUXCOMM',
+                              'Public safety agency nets, interop exercises'],
+    ], widths=[1.3*inch, CW*0.38, CW-1.3*inch-CW*0.38]))
     s.append(SP(6))
-    s.append(P('What Observer Mode Shows', H2))
-    s.append(tbl(['ELEMENT', 'DESCRIPTION'], [
-        ['Net name & status', 'Active net name, type (Amateur/Starcom), and open/closed indicator'],
-        ['Live check-in log', 'All stations or units checked in, with timestamp, location, and remarks'],
-        ['Traffic log',       'Formal message traffic passed during the net'],
-        ['Station count',     'Live count of checked-in stations at the top of the page'],
-        ['Auto-refresh',      'Page refreshes automatically every 15 seconds — no manual reload needed'],
-    ], widths=[1.8*inch, CW-1.8*inch]))
-    s.append(SP(6))
-    s.append(P('How to Open Observer Mode', H2))
-    s += steps([
-        'On the Net Control Logger or Starcom Logger page, click <b>🔗 Observer Link</b> to copy the URL to your clipboard.',
-        'Send the link by email, Winlink, JS8Call, or read it over the air to any operator who needs to monitor.',
-        'The recipient opens the link in any browser on EMCOMM-NET — phones, tablets, and laptops all work.',
-        'Observer Mode shows the net immediately with no identity prompt and no login.',
-        'The net name is encoded in the URL so the link can be bookmarked for recurring nets.',
-    ])
-    s.append(SP(6))
+    s.append(P('Operation follows the same workflow as the Amateur Net Logger — '
+               'open the net, log check-ins by radio ID, and export ICS-309 at close. '
+               'Observer Mode is also available: click <b>🔗 Observer Link</b> to share '
+               'a read-only, auto-refreshing view of the active net with any device on '
+               'EMCOMM-NET.'))
+    s.append(SP(4))
     s.append(note(
-        'Observer Mode is completely passive — observers cannot add check-ins, log traffic, '
-        'or close the net. If an observer needs to interact, they must switch to the '
-        'Net Control Logger or Starcom Logger and identify themselves first.', 'note'))
+        'Participants who hold both an amateur license and a public safety radio ID '
+        'should check into the public safety net by radio ID only. If they need to '
+        'participate in a concurrent amateur net on the same incident, they check into '
+        'the Amateur Net Logger separately by callsign. This maintains the integrity '
+        'of both logs.', 'note'))
     s.append(PB())
     return s
 
 
 def ch9():
-    s = chapter(9, 'FCC Callsign Lookup', 'http://192.168.50.1/callsign.html')
+    s = chapter(9, 'Observer Mode — Read-Only Net View',
+                'http://192.168.50.1/observer.html')
     s.append(P(
-        'The Callsign Lookup page provides instant offline access to the full FCC '
-        'Amateur Radio ULS database — approximately 800,000 active licensees. '
-        'No internet connection is required. Lookups are answered in milliseconds '
-        'from the local SQLite database on the Pi.'))
+        'Observer Mode provides a read-only, auto-refreshing view of any active net. '
+        'It is designed for section chiefs, served agency liaisons, EOC duty officers, '
+        'or anyone who needs to monitor net activity without access to the Net Control '
+        'workstation.'))
     s.append(SP(6))
-    s.append(P('Quick Callsign Lookup', H2))
+    s.append(P('9.1  Accessing Observer Mode', H2))
     s += steps([
-        'Type a callsign (e.g. your callsign) in the search box at the top of the page.',
-        'Press <b>Enter</b> or click <b>🔍 Look Up</b>.',
-        'The result shows: full name, license class, expiration date, mailing address, grid square, and FRN.',
-        'Click <b>+ Add to Roster</b> to add the licensee directly to the Member Roster.',
-        'Recent lookups are saved automatically and shown below the search box for quick re-access.',
+        'The Net Control operator clicks <b>🔗 Observer Link</b> on the active net page.',
+        'The URL is copied to the clipboard. Share it via Winlink, JS8Call, in person, '
+        'or announce it over the net.',
+        'Any device on EMCOMM-NET opens the link in a browser. No login required.',
+        'The observer page shows: net name, frequency, mode, elapsed time, '
+        'current check-in list with callsigns/names/times, and the traffic log. '
+        'It refreshes automatically every 15 seconds.',
     ])
     s.append(SP(6))
-    s.append(P('Advanced Search', H2))
-    s += steps([
-        'Click the <b>Advanced Search</b> tab.',
-        'Enter any combination of: First Name, Last Name, City, State, License Class, or Grid Square.',
-        'Click <b>Search</b>. Results show up to 100 matching licensees.',
-        'Click any result row to see the full record.',
-        'Click <b>+ Roster</b> on any result to add them to the Member Roster.',
-    ])
-    s.append(SP(6))
-    s.append(note(
-        'The FCC database is refreshed automatically every Sunday at 03:00 via the '
-        '<b>fcc-refresh.timer</b> systemd timer (requires internet connection). '
-        'The database status — record count and last update date — is shown at the '
-        'bottom of the page.', 'note'))
+    s.append(P('9.2  What Observers Can and Cannot Do', H2))
+    s.append(tbl(['OBSERVERS CAN', 'OBSERVERS CANNOT'], [
+        ['View all check-ins in real time',           'Add or remove check-ins'],
+        ['View net open time and elapsed duration',   'Close the net'],
+        ['View the traffic log',                      'Add traffic entries'],
+        ['Refresh the page to get latest data',       'Change any net settings'],
+        ['Bookmark the observer URL for re-use',      'Access the Net Control view'],
+    ], widths=[CW/2, CW/2]))
     s.append(PB())
     return s
 
 
 def ch10():
-    s = chapter(10, 'Tactical APRS Map', 'http://192.168.50.1/tactical.html')
+    s = chapter(10, 'Barcode & QR Scan Check-In',
+                'http://192.168.50.1/scan_checkin.html')
     s.append(P(
-        'The Tactical APRS Map is a full-screen interactive map that combines live APRS '
-        'station tracking with manual tactical overlays and offline map tiles. '
-        'It pulls station data simultaneously from Graywolf (port 8080) and YAAC (port 8082), '
-        'merges the feeds, deduplicates by callsign, and keeps every connected browser '
-        'updated via WebSocket. The map works completely offline once tiles have been '
-        'downloaded — no internet connection is needed to see stations or draw overlays.'))
-    s.append(SP(4))
-    s.append(P(
-        'The default map layer is USGS Imagery+Topo Hybrid — public-domain satellite '
-        'imagery with roads, contours, and place names overlaid. Additional tile sets '
-        '(OpenStreetMap, Esri World Imagery) are available in the layer selector. '
-        'your county map tiles are included with the FieldCommand installation. '
-        'Additional county and state tile sets are downloaded using the '
-        'download_tiles.sh script.'))
-    s.append(SP(6))
-    s.append(P('Map Layout', H2))
-    s.append(tbl(['ELEMENT', 'DESCRIPTION'], [
-        ['Left sidebar',  'Station list — all APRS stations received, with callsign, comment, distance, and last heard time'],
-        ['Map area',      'Interactive Leaflet map with APRS symbols, custom overlays, and drawing tools'],
-        ['Top toolbar',   'Layer toggles, tile selector, auto-refresh interval, range ring, and drawing tools'],
-        ['Station labels','Callsign labels on the map — toggleable in settings'],
-        ['Status bar',    'Station count, GPS status, last refresh time'],
-    ], widths=[1.5*inch, CW-1.5*inch]))
-    s.append(SP(6))
-    s.append(P('APRS Sources — Graywolf and YAAC', H2))
-    s.append(tbl(['SOURCE', 'PORT', 'DESCRIPTION'], [
-        ['Graywolf', '8080', 'Primary APRS client — receives RF APRS via connected TNC or soundcard interface'],
-        ['YAAC',     '8082', 'Secondary APRS client — backup receive and alternate TNC support'],
-    ], widths=[1.2*inch, 0.7*inch, CW-1.9*inch]))
-    s.append(SP(6))
-    s.append(P('Station Tracking', H2))
-    s += steps([
-        'Click any station in the left sidebar to center the map on that station.',
-        'Click <b>🛤 Track</b> to lock the map view on a specific station as it moves.',
-        'Use the <b>Station age threshold</b> setting to hide stations older than N minutes.',
-        'The search box filters the station list by callsign or comment text.',
-    ])
-    s.append(SP(6))
-    s.append(P('Drawing Tactical Overlays', H2))
-    s += steps([
-        'Click a drawing tool in the toolbar: <b>Marker</b>, <b>Polygon</b>, <b>Circle</b>, or <b>Route</b>.',
-        'Click on the map to place the shape. For polygons and routes, click multiple points and double-click to finish.',
-        'Click a placed marker or shape to add a label or delete it.',
-        'Overlays are saved to the server automatically and persist across browser sessions.',
-        'Click <b>KML Export</b> to download the current overlay set as a KML file.',
-    ])
-    s.append(SP(6))
-    s.append(P('GPS Position', H2))
-    s.append(P(
-        'If a USB GPS receiver is connected to the Pi, your current position appears '
-        'on the map as a blue dot and is used to calculate distances in the station '
-        'list. The GPS status indicator in the status bar shows the fix quality.'))
-    s.append(SP(4))
-    s.append(P('Range Rings', H2))
-    s.append(P(
-        'Enter a radius in km in the <b>Range ring</b> field and click <b>Draw Ring</b> '
-        'to place a circle on the map centered on your GPS position or the station '
-        'default coordinates. Useful for visualizing coverage areas.'))
+        'The Scan Check-In page enables rapid personnel check-in at activations using '
+        'a smartphone or tablet camera. It uses the browser\'s native BarcodeDetector API '
+        '— no external library, no CDN dependency, works fully offline. '
+        'It supports QR codes, Code 128, Code 39, EAN-13, Data Matrix, PDF417, '
+        'and Aztec formats.'))
     s.append(SP(6))
 
-    s.append(P('9.4  Map Layers', H2))
-    s.append(tbl(['LAYER', 'DESCRIPTION', 'AVAILABILITY'], [
-        ['USGS Topo + Imagery  (default)',
-         'USGS satellite imagery with roads, contours, and place names overlaid. '
-         'Best for field operations and SAR.',
-         'Offline — tiles stored on Pi'],
-        ['OpenStreetMap',
-         'Detailed street map with building outlines, trails, and POIs. '
-         'Good for urban EOC operations.',
-         'Offline — tiles stored on Pi'],
-        ['Esri World Imagery',
-         'High-resolution satellite imagery without overlays. '
-         'Best for aerial reconnaissance and damage assessment.',
-         'Online only — requires WAN'],
-        ['NOAA NWS Radar  (overlay)',
-         'Live NOAA radar precipitation overlay on any base layer. '
-         'Updates every 5 minutes when WAN is available.',
-         'Online only — requires WAN'],
-    ], [1.4*inch, 2.4*inch, CW-3.8*inch]))
+    s.append(P('10.1  Two Check-In Methods', H2))
+    s.append(tbl(['METHOD', 'HOW IT WORKS', 'BEST FOR'], [
+        ['Camera scan',
+         'Point the device camera at the member\'s QR code or barcode. '
+         'Detection is automatic at 4 frames per second. '
+         'The same code is debounced for 3 seconds to prevent duplicate submissions.',
+         'High-throughput check-in stations; members with printed QR codes'],
+        ['Manual ID entry',
+         'Type a member ID, callsign, or radio ID in the manual entry field '
+         'and press Enter or click Look Up. Same roster lookup as camera scan.',
+         'When camera unavailable; walk-in personnel without a QR code'],
+    ], widths=[1.1*inch, CW-2.3*inch, 1.2*inch]))
+    s.append(SP(6))
+
+    s.append(P('10.2  Check-In Workflow', H2))
+    s += steps([
+        'Navigate to <b>Scan Check-In</b> from the dashboard.',
+        'Click <b>📷 Start Camera</b>. If multiple cameras are present (front/rear), '
+        'select the rear-facing camera from the dropdown.',
+        'Point the camera at the member\'s QR code. The system detects it automatically '
+        'and looks up the member in the roster.',
+        'If the member is found: their name, agency, and suggested ICS position '
+        'auto-fill with green borders. Review the fields — edit if needed.',
+        'If the member is not in the roster: a "not found" banner appears. '
+        'Their scanned ID fills the ID field. Fill in name and agency manually.',
+        'Click <b>✓ Check In</b>. A full-screen success confirmation appears '
+        'with the member\'s name and check-in time. The device vibrates briefly '
+        'on phones that support it.',
+        'Click <b>Scan Next Person</b> to clear the form and check in the next member. '
+        'The session history panel at the bottom shows the last 10 check-ins.',
+    ])
+    s.append(SP(6))
+
+    s.append(P('10.3  Roster Lookup Order', H2))
+    s.append(P(
+        'When a code is scanned or a manual ID is entered, the system searches '
+        'the roster in this order until a match is found:'))
+    s.append(SP(2))
+    s.append(tbl(['SEARCH ORDER', 'FIELD SEARCHED', 'EXAMPLE VALUE'], [
+        ['1st', 'barcode_id',  'ESV-042  (or badge number if overridden)'],
+        ['2nd', 'member_id',   'ESV-042'],
+        ['3rd', 'callsign',    'KE4CON'],
+        ['4th', 'radio_id',    '412'],
+    ], widths=[0.8*inch, 1.1*inch, CW-1.9*inch]))
     s.append(SP(4))
     s.append(note(
-        'Offline map tiles for your county and surrounding counties are '
-        'pre-loaded during installation. '
-        'To download tiles for additional counties or states, run: '
-        'sudo bash /opt/fieldcommand/scripts/download_tiles.sh --region [region-name]. '
-        'Each county tile set uses approximately 200-500 MB of storage.',
-        'tip'))
+        'BarcodeDetector is supported on Chrome (Android and desktop), Edge, '
+        'and Samsung Internet. It is not supported on iOS Safari or Firefox. '
+        'On unsupported browsers, the camera scan button is disabled and '
+        'the manual entry fallback works normally.', 'note'))
     s.append(PB())
     return s
 
 
 def ch11():
-    s = chapter(11, 'Starcom Resource Tracking Map',
-                'http://192.168.50.1/resmap.html')
+    s = chapter(11, 'FCC Callsign Lookup',
+                'http://192.168.50.1/callsign.html')
     s.append(P(
-        'The Resource Tracking Map is a purpose-built situational awareness tool for '
-        'Starcom public safety net operations. It shows unit positions on an offline '
-        'map with status color coding, supports manual placement and drag-and-drop '
-        'repositioning, and synchronizes with the Member Roster for unit information. '
-        'Access it from the Starcom / Public Safety dashboard mode.'))
+        'The FCC Callsign Lookup tool provides instant offline access to the full '
+        'national FCC amateur radio licensee database — over 800,000 active licensees. '
+        'The database is stored locally in SQLite on the Pi and is used automatically '
+        'by the Net Control Logger, Scan Check-In, and IAP forms. '
+        'No internet connection is required.'))
     s.append(SP(6))
-    s.append(P('Placing a Unit on the Map', H2))
+
+    s.append(P('11.1  Manual Lookup', H2))
     s += steps([
-        'Click <b>+ Add Unit</b> in the left panel.',
-        'Enter the <b>Radio ID</b>, <b>Unit Name</b>, and <b>Type</b> (Law Enforcement, Fire, EMS, Search & Rescue, Communications, EOC, Shelter, Other).',
-        'Enter a <b>Latitude</b> and <b>Longitude</b> directly, or click <b>📍 Pick on Map</b> to click the map and set the position.',
-        'Set the <b>Status</b> (Available, Deployed, Staging, Out of Service).',
-        'Click <b>Save</b>. The unit appears on the map with its status color.',
+        'Navigate to <b>Callsign Lookup</b> from the dashboard.',
+        'Type any callsign in the search field. Results appear as you type.',
+        'The result shows: callsign, name, license class, expiration date, '
+        'grid square, and mailing address city/state.',
+        'Click <b>Copy</b> to copy the callsign to the clipboard, or '
+        '<b>Add to Roster</b> to create a roster entry from the FCC record.',
     ])
     s.append(SP(6))
-    s.append(P('Status Colors', H2))
-    s.append(tbl(['STATUS', 'COLOR', 'MEANING'], [
-        ['Available',     'Green', 'Unit is on scene and available for assignment'],
-        ['Deployed',      'Blue',  'Unit is actively assigned and in the field'],
-        ['Staging',       'Amber', 'Unit is staging or en route'],
-        ['Out of Service','Red',   'Unit is unavailable'],
-    ], widths=[1.3*inch, 0.8*inch, CW-2.1*inch]))
-    s.append(SP(6))
-    s.append(P('Moving Units', H2))
-    s += steps([
-        'Click and drag a unit marker on the map to a new position.',
-        'The unit\'s coordinates update automatically when you release.',
-        'Alternatively, click the unit marker, click <b>Edit</b>, and update the coordinates manually.',
-    ])
-    s.append(SP(6))
-    s.append(P('Drawing Zones', H2))
-    s += steps([
-        'Click <b>Draw Zone</b> to enter zone-drawing mode.',
-        'Click multiple points on the map to define the zone boundary.',
-        'Double-click to finish. Enter a zone name and color when prompted.',
-        'Zones persist across browser sessions and appear on the map for all connected devices.',
-        'Click <b>Clear Zones</b> to remove all zones.',
-    ])
+
+    s.append(P('11.2  Automatic Lookup in Other Tools', H2))
+    s.append(P(
+        'The callsign database is queried automatically in three other places:'))
+    s.append(SP(2))
+    s.append(tbl(['WHERE', 'HOW IT WORKS'], [
+        ['Net Control Logger',
+         'As you type a callsign in the check-in field, the name and license '
+         'class fill automatically. A red border appears if the callsign is not '
+         'found or the license is expired.'],
+        ['Scan Check-In',
+         'After a QR scan or manual entry, if the code is a callsign, '
+         'the FCC record is used to fill the name field.'],
+        ['ICS-213 / ICS-214',
+         'The "From" callsign field in the general message form validates '
+         'against the FCC database and fills the operator name.'],
+    ], widths=[1.4*inch, CW-1.4*inch]))
+    s.append(SP(4))
+    s.append(note(
+        'The FCC database is updated quarterly. To update, download the FCC '
+        'ULS database export from wireless.fcc.gov/uls and run the database '
+        'import script as described in the Installation Guide.', 'note'))
     s.append(PB())
     return s
 
 
 def ch12():
-    s = chapter(12, 'Resource Board', 'http://192.168.50.1/resources.html')
+    s = chapter(12, 'Dead Man\'s Switch',
+                'http://192.168.50.1/deadmans.html')
     s.append(P(
-        'The Resource Board tracks all personnel, vehicles, equipment, and facilities '
-        'assigned to an activation. Each resource is displayed as a card showing its '
-        'current status. A stats strip at the top of the page shows live counts by '
-        'status across all resource types.'))
+        'The Dead Man\'s Switch monitors net activity and triggers an audible alert '
+        'if no check-in is logged within a configurable time window. It is designed '
+        'for field operations — particularly search and rescue — where radio silence '
+        'beyond a set interval may indicate a field team emergency.'))
     s.append(SP(6))
-    s.append(P('The Five Status States', H2))
-    s.append(tbl(['STATUS', 'COLOR', 'MEANING'], [
-        ['Available',     'Green', 'On scene and available for assignment'],
-        ['Assigned',      'Amber', 'Actively tasked with a specific assignment'],
-        ['Staging',       'Blue',  'En route or at the staging area, not yet deployed'],
-        ['Out of Service','Red',   'Unavailable — mechanical, medical, or administrative hold'],
-        ['Demobilized',   'Gray',  'Released from the incident and departed'],
-    ], widths=[1.3*inch, 0.8*inch, CW-2.1*inch]))
+    s.append(P('12.1  Configuration', H2))
+    s.append(tbl(['SETTING', 'DESCRIPTION'], [
+        ['Check-in interval',
+         'Maximum time allowed between net check-ins before the alert fires. '
+         'Common values: 10, 15, 30 minutes. Configurable per operation.'],
+        ['Alert type',
+         'Audible tone through the browser (requires speaker). '
+         'Visual flashing banner on the Dead Man\'s page.'],
+        ['Reset',
+         'Any new check-in in the Net Control Logger resets the timer automatically.'],
+    ], widths=[1.4*inch, CW-1.4*inch]))
     s.append(SP(6))
-    s.append(P('Adding a Resource', H2))
+    s.append(P('12.2  Operating the Dead Man\'s Switch', H2))
     s += steps([
-        'Click <b>+ Add Resource</b>.',
-        'Enter the <b>Name/Description</b> (e.g. "IC-7300 HF Radio", "Unit 12 — Medic", "Generator — 5kW Honda").',
-        'Select the <b>Type</b>: Personnel, Vehicle, Radio, Generator, Antenna, Computer/Tablet, Medical, Shelter/Tent, Repeater, or Other.',
-        'Set the <b>Status</b> and optionally fill in Owner/Callsign, Quantity, Location, Assigned To, Contact, and Notes.',
-        'Click <b>Save Resource</b>. The card appears immediately.',
-    ])
-    s.append(SP(6))
-    s.append(P('Changing a Resource Status', H2))
-    s += steps([
-        'Click the colored <b>status badge</b> on any resource card.',
-        'Each click cycles through the five states in order: Available → Assigned → Staging → Out of Service → Demobilized → Available.',
-        'The stats strip at the top updates instantly.',
-    ])
-    s.append(SP(6))
-    s.append(P('Filtering the Board', H2))
-    s += steps([
-        'Use the <b>Type</b> filter dropdown to show only Personnel, Vehicles, Equipment, etc.',
-        'Use the <b>Status</b> filter to show only Available or only Assigned resources.',
-        'Filters can be combined — e.g. show all Assigned Personnel only.',
-        'The stats strip always reflects all resources regardless of the active filter.',
+        'Open the Dead Man\'s Switch page on a dedicated monitor or tablet '
+        'at the Net Control position or EOC duty station.',
+        'Select the active net from the dropdown.',
+        'Set the check-in interval and click <b>Start Monitoring</b>.',
+        'The countdown timer displays time remaining until alert.',
+        'If the timer reaches zero, the audible alert fires and the page '
+        'flashes red. Acknowledge with <b>Acknowledge</b> and investigate.',
+        'Any check-in logged in the Net Control Logger resets the timer automatically.',
+        'Click <b>Stop Monitoring</b> when the net closes.',
     ])
     s.append(PB())
     return s
 
 
 def ch13():
-    s = chapter(13, "Dead Man's Switch — Net Inactivity Monitor",
-                'http://192.168.50.1/deadmans.html')
+    s = chapter(13, 'Tactical APRS Map',
+                'http://192.168.50.1/tactical.html')
     s.append(P(
-        "The Dead Man's Switch (DMS) is a net inactivity monitor. "
-        "When armed for a specific net, it watches the last-activity timestamp on that net. "
-        "If no check-in, no traffic entry, and no manual reset occurs within the configured "
-        "threshold period, the DMS fires: an audible alarm sounds on every browser "
-        "that has the DMS page open, the page background turns red, and a countdown "
-        "flashes until the situation is resolved. "
-        "This gives net control operators an automatic safety net against a silent radio, "
-        "a dropped connection, or an unattended console during a long activation."))
-    s.append(SP(4))
-    s.append(P(
-        "The DMS can be armed independently for each active net running in FieldCommand. "
-        "A major activation running a Starcom General Net, a Weather Net, and a SAR Net "
-        "simultaneously can have each net on its own DMS with its own threshold. "
-        "The DMS page runs in the browser tab where it was opened — "
-        "keep it visible on a dedicated monitor or the net control operator display."))
+        'The Tactical Map provides an offline-capable, Leaflet-based map showing APRS '
+        'station positions from both RF APRS (always available) and APRS-IS internet '
+        'feed (when WAN is up). It is the primary situational awareness tool for '
+        'tracking field teams, vehicles, and mobile resources.'))
     s.append(SP(6))
 
-    s.append(P('12.1  How to Arm the DMS', H2))
-    s.extend(steps([
-        'Open http://192.168.50.1/deadmans.html in a browser on any EMCOMM-NET device.',
-        'Select the net you want to monitor from the dropdown. '
-        'All active nets in FieldCommand appear here automatically.',
-        'Set the threshold — how many minutes of inactivity before the alarm fires. '
-        'Typical settings: 10 minutes for a busy net, 15 minutes for a weather or traffic net, '
-        '5 minutes for a SAR net where frequent check-ins are expected.',
-        'Click ARM. The countdown timer starts from the last recorded activity on that net.',
-        'Leave the DMS tab open and visible. The alarm fires in this tab and browser only. '
-        'For maximum coverage, open the DMS on a dedicated monitor at the net control position.',
-    ]))
+    s.append(P('13.1  Map Layers', H2))
+    s.append(tbl(['LAYER', 'SOURCE', 'REQUIRES WAN?'], [
+        ['Map tiles',              'OpenStreetMap / CartoDB Dark',              'Cached locally for offline use'],
+        ['APRS-IS stations',       'Internet APRS-IS feed',                     '✓ WAN required'],
+        ['RF APRS stations',       'Local TNC or direwolf connected to Pi',     '✗ Offline — always available'],
+        ['SARTopo overlays',       'GeoJSON import from sartopo_import.html',   '✗ Offline once imported'],
+        ['Weather alert polygons', 'NWS API',                                   '✓ WAN required'],
+    ], widths=[1.6*inch, CW-2.8*inch, 1.2*inch]))
     s.append(SP(6))
 
-    s.append(P('12.2  When the DMS Fires', H2))
+    s.append(P('13.2  Station Markers', H2))
     s.append(P(
-        "When the inactivity threshold is exceeded the DMS fires immediately. "
-        "The browser tab turns red, a loud alarm tone plays, and the countdown "
-        "shows how long ago the last activity was recorded. "
-        "Any of the following actions resets the DMS and stops the alarm:"))
-    s.append(SP(4))
-    s.append(tbl(['RESET ACTION', 'HOW', 'NOTES'], [
-        ['Station check-in',
-         'Any operator checks in via the Net Control Logger',
-         'Most common reset — running the net normally keeps the DMS satisfied'],
-        ['Traffic entry',
-         'Any operator adds a traffic item to the log',
-         'Logging a message or status update counts as activity'],
-        ['Manual reset',
-         'Click RESET on the DMS page',
-         'Use during quiet periods — briefings, breaks, or scheduled silence'],
-        ['Disarm',
-         'Click DISARM on the DMS page',
-         'Use when the net is formally closed'],
-    ], [1.2*inch, 1.8*inch, CW-3.0*inch]))
+        'Each APRS station is displayed with its standard APRS symbol. Clicking '
+        'a marker opens a popup showing: callsign, timestamp of last beacon, '
+        'speed and course (if moving), altitude, and the raw APRS comment field. '
+        'Stations are color-coded by age — bright for recent beacons, faded for '
+        'stations not heard in more than 30 minutes.'))
     s.append(SP(6))
 
-    s.append(P('12.3  Multiple Nets', H2))
+    s.append(P('13.3  SARTopo GeoJSON Import', H2))
     s.append(P(
-        "Each net in FieldCommand can have its own independent DMS instance. "
-        "Open http://192.168.50.1/deadmans.html in separate browser tabs, "
-        "one per net, and set different thresholds for each. "
-        "For example: the Starcom General Net at 10 minutes, "
-        "the RACES HF net at 20 minutes during an extended overnight activation, "
-        "and the SAR Coordination Net at 5 minutes. "
-        "Each tab monitors and alarms independently."))
-    s.append(SP(4))
-    s.append(note(
-        "The DMS runs in the browser tab — it does not send alerts to other devices. "
-        "If the operator closes the tab or the device goes to sleep, the DMS stops. "
-        "For overnight or extended activations, use a dedicated device on AC power "
-        "with screen-saver and sleep disabled for the DMS monitor.",
-        'warn'))
+        'Planning data from SARTopo (search sectors, assignments, exclusion zones) '
+        'can be exported as GeoJSON and imported into the tactical map using the '
+        'SARTopo Import page (sartopo_import.html). Once imported, the overlay '
+        'persists on the map through browser refreshes.'))
+    s += steps([
+        'In SARTopo, export your map or layer as GeoJSON.',
+        'Navigate to <b>SARTopo Import</b> from the reference section of the dashboard.',
+        'Click <b>Choose File</b> and select the GeoJSON file.',
+        'Click <b>Import</b>. The overlay appears on the tactical map immediately.',
+        'To remove the overlay, return to SARTopo Import and click <b>Clear Overlay</b>.',
+    ])
     s.append(PB())
     return s
 
+
 def ch14():
-    s = chapter(14, 'Pre-Flight Deployment Checklist',
-                'http://192.168.50.1/preflight.html')
+    s = chapter(14, 'GPS-Tracked Resource Map',
+                'http://192.168.50.1/resource_map.html')
     s.append(P(
-        'The Pre-Flight Checklist is a structured GO / CAUTION / NO-GO deployment '
-        'readiness assessment. Before any activation, run through the checklist to '
-        'verify that all critical systems are operational.'))
+        'The Resource Map displays the current GPS positions of all ICS resources '
+        'for the active incident. Each resource is drawn as a color-coded SVG pin '
+        'whose color reflects its current status. Resources without a GPS position '
+        'appear as dashed circles in the sidebar so the Operations Section can see '
+        'what still needs to be positioned.'))
     s.append(SP(6))
-    s.append(P('Checklist Sections', H2))
-    s.append(tbl(['SECTION', 'ITEMS COVERED'], [
-        ['Power Systems',           'Shore/generator power, battery backup/UPS, solar panels, fuel supply, power distribution'],
-        ['Communications Equipment','HF radio, VHF/UHF radio, go-kit radios, HF antenna, VHF antenna, repeater access, Winlink, JS8Call'],
-        ['Computing & Software',    'Pi server boot, FCC database, nginx, API server, health monitor, paper backup forms'],
-        ['Networking',              'ASUS router, EMCOMM-NET Wi-Fi, DHCP, field device connectivity, UniFi switch'],
-        ['Field Supplies',          'Operator cards, printed forms, batteries, cables, tools, maps, personal PPE'],
-        ['Coordination',            'Net frequency confirmed, EOC contact established, served agency notified, ICS structure assigned'],
-    ], widths=[1.8*inch, CW-1.8*inch]))
+
+    s.append(P('14.1  Map Controls', H2))
+    s.append(tbl(['CONTROL', 'FUNCTION'], [
+        ['Incident selector',
+         'Choose which incident\'s resources to display. '
+         'The last selected incident is remembered between sessions.'],
+        ['↺ Refresh',
+         'Reload all resource positions from the server.'],
+        ['📍 My Location',
+         'Place a marker at your current device GPS position and zoom to it. '
+         'Useful for confirming map accuracy against your known position.'],
+        ['Auto-refresh 30s',
+         'Enable automatic position refresh every 30 seconds. '
+         'Use when resources are actively moving and updating their positions.'],
+    ], widths=[1.4*inch, CW-1.4*inch]))
     s.append(SP(6))
-    s.append(P('Deployment Verdicts', H2))
-    s.append(tbl(['VERDICT', 'MEANING'], [
-        ['✅ GO',      'All required items passed — system is ready for deployment'],
-        ['⚠ CAUTION', 'Some optional items failed — review before deploying'],
-        ['🚫 NO-GO',  'One or more required items failed — do not deploy until resolved'],
+
+    s.append(P('14.2  Marker Colors by Status', H2))
+    s.append(tbl(['COLOR', 'STATUS'], [
+        ['🟢 Green',    'Available'],
+        ['🔵 Blue',     'Assigned'],
+        ['🔵 Light blue', 'Staging'],
+        ['🔴 Red',      'Out of Service or En Route'],
+        ['Dashed circle', 'No GPS position set yet'],
     ], widths=[1.2*inch, CW-1.2*inch]))
     s.append(SP(6))
-    s.append(P('Exporting the Report', H2))
-    s += steps([
-        'Click <b>Export Report</b> to generate a printable PDF summary of the checklist.',
-        'The report includes the verdict, timestamp, and notes for all items.',
-        'File the report with the incident documentation.',
-    ])
+
+    s.append(P('14.3  Setting a Resource Position', H2))
+    s.append(P(
+        'Click any resource in the sidebar — or click an existing pin on the map — '
+        'to open the Set Position modal. Three methods are available:'))
     s.append(SP(4))
-    s.append(note(
-        'Run the Pre-Flight Checklist before every activation — even for exercises. '
-        'It takes less than five minutes and catches configuration issues before they '
-        'become problems during a real emergency.', 'tip'))
+    s.append(tbl(['METHOD', 'HOW TO USE', 'BEST FOR'], [
+        ['Device GPS',
+         'Click <b>📍 Use Device GPS</b>. The browser requests your device\'s '
+         'GPS position. Accuracy (±meters) is shown.',
+         'Field operator at the resource\'s location using a phone'],
+        ['Click map to place',
+         'Click <b>🗺 Click Map to Place</b>. The modal closes and the cursor '
+         'changes to a crosshair. Click anywhere on the map to set the position.',
+         'IC or Planning placing resources on a map by known location'],
+        ['Manual coordinates',
+         'Type decimal latitude and longitude directly into the fields.',
+         'Position known from a paper map, GPS receiver, or radio report'],
+    ], widths=[1.1*inch, CW-2.4*inch, 1.3*inch]))
+    s.append(SP(4))
+    s.append(P(
+        'Optionally enter a <b>Location Label</b> (e.g. "Division Alpha staging area") '
+        'to display a human-readable description below the coordinates. '
+        'Click <b>Save Position</b>. The pin appears on the map immediately. '
+        'Click <b>Clear GPS</b> to remove the position.'))
     s.append(PB())
     return s
 
 
 def ch15():
-    s = chapter(15, 'ICS Platform — Overview', 'http://192.168.50.1/ics/')
+    s = chapter(15, 'ICS Platform Overview — Five-Section Structure',
+                'http://192.168.50.1/incident.html')
     s.append(P(
-        'The ICS Platform is the full incident command and documentation system '
-        'built into FieldCommand. It covers all five standard ICS sections — '
-        'Command, Operations, Planning, Logistics, and Finance/Admin — '
-        'plus an interactive Planning P cycle guide. '
-        'All five sections share a single active incident record, '
-        'so changes made in Operations are immediately visible in Planning, '
-        'and the Logistics comms plan feeds directly into printed IAP packages.'))
-    s.append(SP(4))
-    s.append(P(
-        'The ICS Platform is accessible by selecting the ICS mode from the dashboard '
-        'mode bar, or directly at http://192.168.50.1/ics/. '
-        'All data is stored on the Pi and synchronized in real time across every device '
-        'on EMCOMM-NET. Section chiefs at different tables in the EOC all see the same '
-        'incident state simultaneously without refreshing their browsers.'))
-    s.append(SP(6))
-    s.append(P('Creating a New Incident', H2))
-    s += steps([
-        'From the main dashboard (ICS mode), click <b>🆕 New Incident</b>.',
-        'Enter the Incident Name (required), Type, Location, Jurisdiction, Incident Commander, Op Period Duration, and an optional Situation Summary.',
-        'Click <b>Create Incident</b>. The incident becomes the active incident for all ICS platform pages.',
-    ])
-    s.append(SP(6))
-    s.append(P('ICS Navigation Tabs', H2))
-    s.append(tbl(['TAB', 'SECTION', 'PRIMARY USE'], [
-        ['⭐ Command',   'Command Section',        'Incident objectives, safety, weather, situation'],
-        ['🔴 Operations','Operations Section',      'T-card board, resource assignments'],
-        ['📋 Planning',  'Planning Section',        'IAP documents, resource status table, period tracking'],
-        ['🟢 Logistics', 'Logistics Section',       'Comms plan, supply tracking, meals'],
-        ['💜 Finance',   'Finance / Admin Section', 'Cost accounting, time tracking, procurement'],
-        ['🅿 Planning P','Planning Cycle Guide',    'Step-by-step ICS planning cycle with forms and attendees'],
-    ], widths=[1.2*inch, 1.5*inch, CW-2.7*inch]))
-    s.append(SP(6))
-    s.append(P('Supported Incident Types', H2))
-    s.append(tbl(['TYPE', 'TYPICAL USE'], [
-        ['Natural Disaster',         'Severe weather, flooding, earthquake, tornado response'],
-        ['HazMat',                   'Chemical spill, gas leak, radiological incident'],
-        ['Search & Rescue',          'Lost person, overdue hiker, water rescue'],
-        ['Mass Casualty Incident',   'Multi-patient medical emergency, transportation accident'],
-        ['Weather Net',              'Starcom/SKYWARN weather spotter activation'],
-        ['Public Health',            'Disease outbreak, mass vaccination, shelter-in-place'],
-        ['Other',                    'Any incident not covered by the above types'],
-    ], widths=[1.8*inch, CW-1.8*inch]))
+        'FieldCommand IMS implements the full five-section ICS structure defined by '
+        'NIMS. Each section has its own page with the forms, tools, and resource '
+        'displays appropriate to that function. All sections work from the same '
+        'underlying incident database — a resource added in Operations appears '
+        'immediately in Logistics and Finance.'))
     s.append(SP(6))
 
-    s.append(P('14.3  Multi-User Real-Time Collaboration', H2))
+    s.append(tbl(['ICS SECTION', 'PAGE', 'KEY TOOLS'], [
+        ['Command',
+         'incident.html',
+         'Incident overview, general info, ICS-201 briefing, objectives, '
+         'organizational chart, position checklists, meeting scheduler'],
+        ['Operations',
+         'resources.html',
+         'T-card resource board by type and status, assignment tracking, '
+         'GPS resource map, ICS-204 assignment lists'],
+        ['Planning',
+         'iap.html',
+         'IAP assembly, ICS-202 objectives, ICS-203 org assignment, '
+         'ICS-205 comms plan, ICS-206 medical plan, Planning P cycle'],
+        ['Logistics',
+         'ics-form.html',
+         'ICS-215A safety analysis, ICS-218 support vehicle, '
+         'facilities directory, channel library, resource requests'],
+        ['Finance / Admin',
+         'fema_costs.html',
+         'FEMA PA cost tracking, Force Account Labor, Equipment with rate '
+         'schedule, Materials, cost dashboard, ICS-214 import'],
+    ], widths=[1.2*inch, 1.4*inch, CW-2.6*inch]))
+    s.append(SP(6))
+
+    s.append(P('15.1  General Info — ICS-201 Initial Briefing', H2))
     s.append(P(
-        'Every device on EMCOMM-NET connected to the ICS Platform sees the same '
-        'incident state simultaneously. '
-        'Changes made by the Operations Section Chief on one tablet appear immediately '
-        'on the Planning Section Chief tablet and the Logistics Section Chief laptop '
-        'without anyone pressing a refresh button. '
-        'This real-time synchronization uses WebSocket connections maintained by '
-        'the ics-platform background service on the Pi.'))
-    s.append(SP(4))
+        'The General Info page (general_info.html) holds the ICS-201 Initial Incident '
+        'Briefing data: situation summary, initial response actions, current organization, '
+        'and resource summary. It is typically completed by the first-arriving IC and '
+        'updated through the first operational period.'))
+    s.append(SP(6))
+
+    s.append(P('15.2  Preflight Deployment Checklist', H2))
     s.append(P(
-        'The recommended workflow for a fully-staffed EOC activation is:'))
-    s.append(SP(4))
-    s.append(tbl(['POSITION', 'DEVICE', 'ICS SECTION'], [
-        ['Incident Commander',     'Tablet on EMCOMM-NET', 'ics/command.html — objectives, safety, public info'],
-        ['Operations Section Chief','Laptop on EMCOMM-NET','ics/operations.html — T-card board, resource assignments'],
-        ['Planning Section Chief', 'Laptop on EMCOMM-NET', 'ics/planning.html — IAP tracker, situation status'],
-        ['Logistics Section Chief','Tablet on EMCOMM-NET', 'ics/logistics.html — comms plan, supply requests'],
-        ['Finance/Admin',          'Laptop on EMCOMM-NET', 'ics/finance.html — cost tracking, time log'],
-        ['Net Control Operator',   'Pi 500 workstation',   'netcontrol.html + starcom.html — radio net logging'],
-    ], [1.6*inch, 1.5*inch, CW-3.1*inch]))
+        'The Preflight page (preflight.html) provides a go/no-go checklist covering '
+        'hardware, software, power, communications, and personnel readiness before '
+        'deploying the FieldCommand system. Each item can be checked off and notes '
+        'added. The checklist can be printed for signature.'))
     s.append(PB())
     return s
 
 
 def ch16():
-    s = chapter(16, 'ICS Command Section',
-                'http://192.168.50.1/ics/command.html')
+    s = chapter(16, 'ICS Operations Section — T-Card Resource Board',
+                'http://192.168.50.1/resources.html')
     s.append(P(
-        'The Command Section captures the strategic-level information for the '
-        'incident: incident objectives, safety hazards, weather summary, current '
-        'situation, accomplishments, and planned actions. This content forms the '
-        'core of the Incident Action Plan (IAP).'))
+        'The T-Card Resource Board is the Operations Section\'s primary resource '
+        'tracking tool. It mirrors the physical ICS T-card system used in traditional '
+        'incident management but adds live status, assignment tracking, GPS integration, '
+        'and direct export to ICS-204 assignment lists.'))
     s.append(SP(6))
-    s.append(P('Incident Objectives (ICS-202)', H2))
+
+    s.append(P('16.1  Resource Types', H2))
+    s.append(P(
+        'Resources are organized by NIMS type. The Resource Types library '
+        '(resource_types.html) defines the types available in your system. '
+        'FieldCommand ships with standard NIMS types pre-loaded: '
+        'Crew, Engine, Helicopter, Dozer, Water Tender, Medical Unit, '
+        'Strike Team, Task Force, and Single Resource. '
+        'Custom types can be added for your specific operations.'))
+    s.append(SP(6))
+
+    s.append(P('16.2  T-Card Fields', H2))
+    s.append(tbl(['FIELD', 'DESCRIPTION'], [
+        ['Resource name',       'Unit designation (Engine 12, Team Alpha, Unit 412)'],
+        ['Resource type',       'NIMS type from the resource types library'],
+        ['Status',              'Available · Assigned · Staging · Out of Service · En Route'],
+        ['Assignment',          'Current task or division/group assignment'],
+        ['Leader',              'Supervisor name or callsign'],
+        ['Personnel count',     'Number of personnel on this resource'],
+        ['Category',            'Agency, mutual aid source, or contractor'],
+        ['Daily cost / Rate',   'Used by FEMA cost tracking and cost dashboard'],
+        ['GPS position',        'Latitude, longitude, location label — set from Resource Map'],
+        ['Operational period',  'Which OP period this T-card was created for'],
+    ], widths=[1.5*inch, CW-1.5*inch]))
+    s.append(SP(6))
+
+    s.append(P('16.3  Adding and Managing Resources', H2))
     s += steps([
-        'To add a pre-defined objective: click the <b>Select a common objective</b> dropdown. Choose from 100 common ICS objectives organized in 13 groups.',
-        'The selected objective populates the text field below. Edit it if needed — fill in any bracketed placeholders such as [frequency], [location], or [time].',
-        'If no edits are needed, click <b>+ Add</b> or press Enter.',
-        'To add a completely custom objective: type it directly in the text field and click <b>+ Add</b>.',
-        'Objectives are listed above the input field. Click the <b>✕</b> next to any objective to delete it.',
+        'On the T-Card board, click <b>+ Add Resource</b>.',
+        'Fill in the resource name, type, status, and assignment.',
+        'Click <b>Save</b>. The T-card appears on the board.',
+        'To change status, click the status badge on the T-card and select the new status.',
+        'To reassign, click the assignment field and type the new assignment.',
+        'To set or update GPS position, click <b>📍 Set Position</b> or go to '
+        'the Resource Map (Chapter 14).',
+        'To close out a resource, set status to <b>Out of Service</b> and '
+        'fill in the demobilization notes.',
     ])
-    s.append(SP(4))
-    s.append(note(
-        'The 100-item objectives dropdown is organized into 13 groups: Life Safety, '
-        'Communications, Resource Management, Incident Command, Search & Rescue, '
-        'Shelter & Mass Care, Weather & Natural Disaster, HazMat, Mass Casualty, '
-        'Public Information, Finance & Administration, Demobilization, and '
-        'Agency-Specific.', 'note'))
-    s.append(SP(8))
-    s.append(P('Situation Report Fields', H2))
-    s.append(tbl(['FIELD', 'WHAT TO ENTER'], [
-        ['Safety Message',    'Safety message for this operational period (ICS-208)'],
-        ['Current Situation', 'Brief description of current incident status and key facts'],
-        ['Accomplishments',   'What has been achieved so far this operational period'],
-        ['Planned Actions',   'What operations are planned for the next operational period'],
-        ['Weather Summary',   'Current and forecast weather affecting operations'],
-    ], widths=[1.8*inch, CW-1.8*inch]))
     s.append(PB())
     return s
 
 
 def ch17():
-    s = chapter(17, 'ICS Operations Section',
-                'http://192.168.50.1/ics/operations.html')
+    s = chapter(17, 'ICS Planning Section & IAP Assembly',
+                'http://192.168.50.1/iap.html')
     s.append(P(
-        'The Operations Section manages the tactical resources assigned to the '
-        'incident. It uses a T-card style status board where resource cards can be '
-        'dragged between status columns, mirroring a traditional ICS T-card board.'))
+        'The Planning Section manages the Incident Action Plan — the written work plan '
+        'for each operational period. FieldCommand IMS covers the full ICS form set '
+        'needed to build a complete IAP, with digital signature capture and one-click '
+        'PDF compilation.'))
     s.append(SP(6))
-    s.append(P('The T-Card Board', H2))
-    s.append(tbl(['COLUMN', 'MEANING'], [
-        ['Available',     'Resource is checked in and available for assignment'],
-        ['Assigned',      'Resource has been given a tactical assignment'],
-        ['Out of Service','Resource is unavailable — mechanical, medical, or other'],
-        ['Staging',       'Resource is at the staging area awaiting assignment'],
-        ['Released',      'Resource has been demobilized from the incident'],
-    ], widths=[1.5*inch, CW-1.5*inch]))
+
+    s.append(P('17.1  IAP Form Set', H2))
+    s.append(tbl(['FORM', 'TITLE', 'SECTION'], [
+        ['ICS-202',  'Incident Objectives',                       'Planning'],
+        ['ICS-203',  'Organization Assignment List',              'Planning'],
+        ['ICS-204',  'Assignment List (per branch/division)',     'Operations'],
+        ['ICS-205',  'Incident Radio Communications Plan',       'Planning/Comms'],
+        ['ICS-205A', 'Communications List',                      'Planning/Comms'],
+        ['ICS-206',  'Medical Plan',                             'Planning/Medical'],
+        ['ICS-207',  'Incident Organization Chart',              'Command'],
+        ['ICS-208',  'Safety Message / Plan',                    'Command/Safety'],
+        ['ICS-209',  'Incident Status Summary',                  'Planning'],
+        ['ICS-211',  'Incident Check-In List',                   'Planning'],
+        ['ICS-213',  'General Message',                          'Any section'],
+        ['ICS-214',  'Activity Log',                             'Any section'],
+        ['ICS-215A', 'Incident Action Plan Safety Analysis',     'Safety/Planning'],
+        ['ICS-218',  'Support Vehicle/Equipment Inventory',      'Logistics'],
+        ['ICS-221',  'Demobilization Check-Out',                 'Planning/Demob'],
+        ['ICS-309',  'Communications Log',                       'Comms Unit'],
+    ], widths=[0.7*inch, CW-1.4*inch, 0.7*inch]))
     s.append(SP(6))
-    s.append(P('Adding a Resource to the Board', H2))
+
+    s.append(P('17.2  Digital Signature Capture', H2))
+    s.append(P(
+        'All 16 Prepared By and Approved By fields across the ICS form set support '
+        'digital signature capture. A signature pad appears below each signature field '
+        'on every form. Signatures are stored as white-background PNG images and '
+        'are embedded in the printed form and the IAP PDF.'))
+    s.append(SP(4))
     s += steps([
-        'Click <b>+ Add Resource</b> or <b>+ Assignment</b>.',
-        'Enter the resource name, type, callsign/Radio ID, and initial assignment.',
-        'Click <b>Save</b>. The resource appears in the Available column.',
+        'Click on any <b>Prepared By</b> or <b>Approved By</b> signature field.',
+        'A signature pad opens below the field.',
+        'Sign using mouse, touchscreen, or stylus. '
+        'The signature supports pressure sensitivity on compatible styluses.',
+        'Click <b>Accept</b>. A preview of the signature appears below the field.',
+        'The signature is saved automatically and restored if the page is reloaded.',
+        'To clear a signature, click <b>Clear</b> on the signature pad.',
     ])
     s.append(SP(6))
-    s.append(P('Moving Resources Between Columns', H2))
+
+    s.append(P('17.3  IAP One-Click PDF Compilation', H2))
+    s.append(P(
+        'The IAP Compile page (iap_compile.html) assembles all completed ICS forms '
+        'for the active incident into a single print-ready PDF with a cover page '
+        'and section dividers. This is the IAP package distributed to section chiefs '
+        'at each operational period briefing.'))
+    s.append(SP(4))
     s += steps([
-        'Drag a resource card from one column to another to update its status.',
-        'Alternatively, click the resource card to open its detail view, then change the status in the dropdown.',
-        'All status changes are saved to the server immediately.',
+        'Navigate to <b>IAP Compile</b> from the dashboard or the Planning section.',
+        'The page shows a checklist of all ICS forms for the active incident. '
+        'Completed forms are shown with a checkmark. Incomplete forms are flagged.',
+        'Select which forms to include using the checkboxes. '
+        'Typically include: ICS-202, 203, 204, 205, 206, and 207 at minimum.',
+        'Click <b>📄 Compile IAP PDF</b>. The server generates the PDF server-side '
+        'using ReportLab and pypdf. This takes 5–15 seconds.',
+        'The PDF downloads automatically. It includes a title page with the incident '
+        'name, operational period, and compilation timestamp; section dividers; '
+        'and all selected forms with embedded signatures.',
+        'Print the PDF at the Print Center (Chapter 27) for distribution.',
     ])
-    s.append(SP(6))
-    s.append(P('Assignment Details', H2))
-    s += steps([
-        'Click any resource card to open the detail panel.',
-        'Enter or update the <b>Assignment</b> (Division/Group), <b>Supervisor</b>, <b>Work Location</b>, and notes.',
-        'This information feeds the ICS-204 Assignment List.',
-        'Click <b>💾 Save</b> to commit the changes.',
-    ])
+    s.append(SP(4))
+    s.append(note(
+        'The IAP PDF is generated on the Pi server — not in the browser. '
+        'It can be generated from any device on EMCOMM-NET without requiring '
+        'a printer to be attached to that device. Print from any device through '
+        'the Print Center.', 'note'))
     s.append(PB())
     return s
 
 
 def ch18():
-    s = chapter(18, 'ICS Planning Section',
-                'http://192.168.50.1/ics/planning.html')
+    s = chapter(18, 'FEMA PA Cost Documentation',
+                'http://192.168.50.1/fema_costs.html')
     s.append(P(
-        'The Planning Section manages the Incident Action Plan documents, resource '
-        'status summary table, and operational period tracking. It is where the PSC '
-        'assembles all the pieces of the IAP before each operational period briefing.'))
+        'The FEMA PA Cost Documentation module tracks all reimbursable costs for '
+        'FEMA Public Assistance (PA) grant documentation. It covers the four FEMA '
+        'cost categories: Force Account Labor, Equipment, Materials, and Contracts. '
+        'All entries are tied to the active incident and operational period.'))
     s.append(SP(6))
-    s.append(P('IAP Tracker Tab', H2))
+
+    s.append(P('18.1  Force Account Labor', H2))
+    s.append(P(
+        'Force Account Labor tracks regular-time and overtime hours for your '
+        'organization\'s employees and volunteers. For FEMA PA purposes, only overtime '
+        'hours are reimbursable for regular employees; all hours may be reimbursable '
+        'for volunteers depending on your state\'s policies.'))
+    s.append(SP(4))
+    s.append(tbl(['FIELD', 'FEMA REQUIREMENT'], [
+        ['Employee name',        'Full name as on payroll records'],
+        ['Job title / class',    'Official job classification'],
+        ['Regular hours',        'Regular-time hours worked on incident'],
+        ['Overtime hours',       'Overtime hours — primary FEMA reimbursable category'],
+        ['Hourly rate',          'Regular hourly rate from payroll'],
+        ['Fringe benefit rate',  'Fringe as percentage of wages (FEMA requires fringe documentation)'],
+        ['Total with fringe',    'Calculated automatically: (hours × rate) × (1 + fringe%)'],
+        ['ICS-214 import',       'Import hours directly from a completed ICS-214 Activity Log'],
+    ], widths=[1.5*inch, CW-1.5*inch]))
+    s.append(SP(6))
+
+    s.append(P('18.2  Equipment', H2))
+    s.append(P(
+        'Equipment entries use the FEMA Schedule of Equipment Rates. '
+        'FieldCommand IMS includes all 44 standard FEMA equipment categories '
+        'pre-loaded from the current year schedule. Select the equipment type '
+        'and the applicable rate fills automatically.'))
+    s.append(SP(4))
     s += steps([
-        'Click the <b>IAP Tracker</b> tab.',
-        'Each required form (ICS-202 through ICS-208) is listed with a completion checkbox.',
-        'Check off each form as it is completed and added to the IAP package.',
-        'The tracker shows the percentage of IAP completion at the top.',
+        'Click <b>+ Add Equipment Entry</b>.',
+        'Click <b>📋 Lookup</b> to open the rate picker. '
+        'Search by equipment type — the FEMA rate fills automatically.',
+        'Enter hours used and the equipment identifier (unit number or VIN).',
+        'Add the operator name if the operator is separate from the equipment.',
+        'The total calculates automatically: hours × FEMA rate.',
     ])
     s.append(SP(6))
-    s.append(P('Resource Status Summary', H2))
-    s += steps([
-        'Click the <b>Resource Status</b> tab.',
-        'The table shows all resources by type with current status counts.',
-        'Click <b>+ Add Row</b> to manually add a resource category.',
-        'Counts update from the Operations Section T-card board automatically.',
-    ])
+
+    s.append(P('18.3  Materials and Contracts', H2))
+    s.append(P(
+        'Materials entries document consumable supplies purchased specifically for '
+        'the incident. Contracts entries document work performed by contractors. '
+        'Both require: vendor name, description, purchase order or contract number, '
+        'unit cost, quantity, and total. '
+        'Attach receipts and PO documentation as noted — FEMA requires source documentation '
+        'for all cost claims.'))
     s.append(SP(6))
-    s.append(P('Incident Documents', H2))
-    s += steps([
-        'Click the <b>Documents</b> tab to manage IAP-associated documents.',
-        'Click <b>+ Add Document</b> to link an uploaded reference document to this incident.',
-        'Enter the document title, form number, and notes.',
-        'Documents are linked to the incident for archival purposes.',
-    ])
+
+    s.append(P('18.4  Project Worksheet Export', H2))
+    s.append(P(
+        'Click <b>📄 Export PW Text</b> to generate a formatted text summary of all '
+        'cost entries suitable for copying into the FEMA Grants Portal or attaching '
+        'to a Project Worksheet. The export includes incident name, dates, '
+        'itemized costs by category, and total claimed amount.'))
+    s.append(SP(4))
     s.append(note(
-        'The ICS-309 Communications Log (http://192.168.50.1/ics309.html) can be '
-        'linked to any active incident from its own page. See Chapter 22 for '
-        'details on the ICS-309 form.', 'note'))
+        'FEMA equipment rates are updated annually. The system displays a reminder '
+        'when the loaded rates are more than one year old. Update rates using the '
+        'FEMA Equipment Rates page (Chapter 19).', 'note'))
     s.append(PB())
     return s
-
-
-print("Chapters 8-18 module loaded OK")

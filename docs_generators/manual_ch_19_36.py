@@ -100,20 +100,21 @@ def ch21():
     s.append(SP(6))
 
     s.append(P('21.1  The Two Levels of Personnel Accountability', H2))
-    s.append(tbl(['LEVEL', 'TOOL', 'ANSWERS THE QUESTION', 'MAINTAINED BY'], [
-        ['Incident level',
-         'ICS-211 Check-In List\n(checkin.html / scan_checkin.html)',
+    s.append(tbl(['LEVEL — TOOL', 'WHAT IT TRACKS', 'MAINTAINED BY'], [
+        ['Incident level\n\nICS-211 Check-In List\n(checkin.html / scan_checkin.html)',
          'Who has formally checked into this incident? '
-         'When did they arrive? Have they checked out?',
-         'Check-in recorder at each entry point; '
-         'Resources Unit Leader (RESL) collects and maintains'],
-        ['Resource level',
-         'T-Card Personnel Roster (ics/operations.html → Personnel tab)',
+         'When did each person arrive? Have they checked out? '
+         'Every person on the incident must have an ICS-211 entry '
+         'regardless of agency, role, or resource assignment.',
+         'Check-in recorder at each entry point. '
+         'Resources Unit Leader (RESL) collects and maintains the master list.'],
+        ['Resource level\n\nT-Card Personnel tab\n(ics/operations.html)',
          'Who is assigned to each specific resource? '
-         'Where is each crew member right now?',
-         'Operations Section Chief; crew supervisors '
-         'update their own T-card personnel list'],
-    ], widths=[0.9*inch, 1.3*inch, CW-3.1*inch, 0.9*inch]))
+         'Which crew or unit is each person on? '
+         'Where should each crew member be right now?',
+         'Operations Section Chief (OSC) and individual crew supervisors '
+         'update their own T-card personnel list.'],
+    ], widths=[1.4*inch, CW-3.1*inch, 1.7*inch]))
     s.append(SP(4))
     s.append(note(
         'Both levels are required — neither alone is sufficient. '

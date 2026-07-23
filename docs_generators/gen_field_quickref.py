@@ -511,9 +511,10 @@ story.append(ref_tbl(
     ['TASK', 'HOW'],
     [
         ['Digital signature',   'Click any Prepared By / Approved By field — sign with mouse, touch, or stylus → Accept'],
-        ['Compile IAP PDF',     'Go to iap_compile.html → select forms → click Download IAP PDF (5–15 sec). Server-generated PDF — downloadable from any EMCOMM-NET device.'],
-        ['Print IAP on-site',   'Go to iap.html → select forms and period → click 🖨 Print IAP → browser print dialog opens.'],
-        ['Save IAP for off-site printing', 'Go to iap.html → select forms and period → click 💾 Save IAP File. Downloads a self-contained HTML file — open on any device with a browser and print with Ctrl+P / Cmd+P. Copy to USB or email.'],
+        ['Print IAP on-site',         'iap.html → select forms + period → 🖨 Print IAP → browser print dialog opens.'],
+        ['Save IAP as PDF  (recommended)', 'iap.html → select forms + period → 📄 Save as PDF. Pi generates proper 8.5×11 PDF → downloads as .pdf. Copy to USB or email — opens in any PDF viewer.'],
+        ['Save IAP as HTML  (fallback)',   'iap.html → select forms + period → 💾 Save as HTML. No server needed — browser generates HTML file directly. Open in any browser → File → Print. Page layout may vary by browser.'],
+        ['Full PDF compiler',         'iap_compile.html → select forms → Download IAP PDF (5–15 sec). Server-side PDF with cover page, section dividers, embedded signatures.'],
     ],
     [1.4*inch, CW-1.4*inch]))
 story.append(PB())

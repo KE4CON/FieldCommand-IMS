@@ -725,31 +725,44 @@ def ch17():
     s.append(SP(4))
     s.append(tbl(['OPTION', 'WHEN TO USE', 'HOW IT WORKS'], [
         ['🖨 Print IAP',
-         'A printer is available on EMCOMM-NET or connected to the device being used.',
+         'A printer is available on EMCOMM-NET or attached to the operator device.',
          'Opens a formatted print window in a new browser tab with a cover page, '
          'table of contents, and links to each selected ICS form. '
          'The browser print dialog opens automatically.'],
-        ['💾 Save IAP File',
-         'No printer is on-site, or the IAP needs to be taken off-site, '
-         'emailed, or printed at a different location.',
-         'Downloads a self-contained HTML file with the IAP cover page and form index. '
-         'The file can be opened in any browser on any device and printed from there. '
-         'Copy it to a USB drive or email it to a location with a printer.'],
-    ], widths=[1.2*inch, 2.2*inch, CW-3.4*inch]))
+        ['📄 Save as PDF  (recommended)',
+         'No printer on site, or the IAP needs to be taken off-site, '
+         'emailed to the EOC, or archived. '
+         'Use this as the primary save option.',
+         'Posts the selected form list to the FieldCommand server, which generates '
+         'a proper 8.5" × 11" PDF using ReportLab — the same engine used for all '
+         'FieldCommand documents. Downloads as IAP_[Incident]_Period[N]_[Date].pdf. '
+         'Opens in any PDF viewer on any device. Guaranteed correct page layout, '
+         'margins, and pagination. Requires the FieldCommand Pi to be running '
+         '(always true on EMCOMM-NET).'],
+        ['💾 Save as HTML  (fallback)',
+         'Server is unreachable, or the operator prefers a lightweight portable file.',
+         'Downloads a self-contained HTML file with the IAP cover page and form index '
+         'directly from the browser — no server call required. '
+         'Open in any browser and use File → Print (Ctrl+P / Cmd+P) to print. '
+         'Note: HTML printing can produce inconsistent page layout depending on the '
+         'browser and its print settings. Use PDF when layout matters.'],
+    ], widths=[1.2*inch, 2.0*inch, CW-3.2*inch]))
     s.append(SP(4))
     s += steps([
         'Navigate to <b>http://192.168.50.1/iap.html</b> or click IAP in the Planning section.',
         'Select the operational period and variant (full/command/logistics).',
         'Check the forms to include. Required forms are pre-checked. '
         'Typically include ICS-202, 203, 204, 205, 205A, 206, 207, and 208.',
-        '<b>If printing on-site:</b> click <b>🖨 Print IAP</b>. '
-        'The print dialog opens in a new tab. Select the site printer.',
-        '<b>If no printer on site:</b> click <b>💾 Save IAP File</b>. '
-        'A file named <font face="Courier">IAP_[Incident]_Period[N]_[Date].html</font> '
-        'downloads automatically.',
-        'Copy the downloaded HTML file to a USB drive or email it.',
-        'On any device with a printer, open the HTML file in a browser and '
-        'select File → Print (or Ctrl+P / Cmd+P).',
+        '<b>To print on-site:</b> click <b>🖨 Print IAP</b>. '
+        'A formatted print window opens in a new tab. Select the site printer.',
+        '<b>To save off-site (PDF — recommended):</b> click <b>📄 Save as PDF</b>. '
+        'The Pi generates a proper PDF and it downloads automatically as '
+        '<font face="Courier">IAP_[Incident]_Period[N]_[Date].pdf</font>. '
+        'Copy to USB or email — opens in any PDF viewer anywhere.',
+        '<b>To save off-site (HTML — fallback):</b> click <b>💾 Save as HTML</b>. '
+        'Downloads immediately without a server call. '
+        'Open in any browser and use File → Print. '
+        'Use this only if the PDF button fails.',
     ])
     s.append(SP(6))
 

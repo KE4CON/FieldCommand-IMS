@@ -45,13 +45,19 @@
   <div id="incBadge" style="font-size:12px;color:var(--muted)">No incident selected</div>
   <div style="margin-left:auto;display:flex;gap:8px">
     <button onclick="exportIAP()"
+      title="Open a print-ready version in a new browser tab"
       style="background:var(--eoc);border-color:var(--eoc);color:#fff;font-weight:bold;padding:8px 20px">
       🖨 Print IAP
     </button>
+    <button onclick="downloadPDF()" id="pdfBtn"
+      title="Download a proper PDF — guaranteed 8.5×11, universally openable, no printer needed on site"
+      style="background:none;border:1px solid var(--green);color:var(--green);font-weight:bold;padding:8px 16px">
+      📄 Save as PDF
+    </button>
     <button onclick="saveIAP()"
-      title="Save IAP as an HTML file you can open and print on any device — no printer needed on site"
-      style="background:none;border:1px solid var(--eoc-lt);color:var(--eoc-lt);font-weight:bold;padding:8px 16px">
-      💾 Save IAP File
+      title="Save as HTML fallback — use if the PDF button fails (requires server)"
+      style="background:none;border:1px solid var(--eoc-lt);color:var(--muted);font-weight:bold;padding:8px 14px;font-size:12px">
+      💾 Save as HTML
     </button>
     <a href="incident.html" style="color:var(--muted);font-size:12px;padding:8px">← Incident</a>
   </div>
@@ -393,7 +399,7 @@ function buildIAPHtml() {
       ).join('')}
     </ul>
     <p style="margin-top:20px;font-size:11px;color:#888">
-      <strong>To save for off-site printing:</strong> use the <strong>💾 Save IAP File</strong> button on the IAP page. It downloads a self-contained HTML file you can open in any browser on any device — copy it to a USB drive, email it, or transfer it to a laptop with a printer. Open the file and use the browser's Print function.
+      <strong>To save for off-site printing:</strong> use <strong>📄 Save as PDF</strong> for a guaranteed 8.5×11 PDF — universally openable, correct page layout, professional output. If the server is unreachable, use <strong>💾 Save as HTML</strong> as a fallback — open the HTML file in any browser and use File → Print (Ctrl+P / Cmd+P). For the full PDF compiler with form selection and cover page options, use <strong>iap_compile.html</strong>.
     </p>
   </div>
 
@@ -405,6 +411,47 @@ function exportIAP() {
   const printWin = window.open('', '_blank', 'width=900,height=700');
   printWin.document.write(html + '<script>window.print()<\/script></body></html>');
   printWin.document.close();
+}
+
+async function downloadPDF() {
+  const period   = document.getElementById('iapPeriod').value;
+  const included_forms = IAP_FORMS.filter(f => included.has(f.num)).map(f => f.num.toString());
+  const btn = document.getElementById('pdfBtn');
+  const orig = btn.textContent;
+  btn.textContent = '⏳ Generating…';
+  btn.disabled = true;
+  try {
+    const r = await fetch(`${ICS_API}/api/ics/iap_compile`, {
+      method:  'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        incident_id:   INC_ID,
+        period:        parseInt(period) || 1,
+        form_types:    included_forms,
+        include_title: true,
+        prepared_by:   '',
+        date_str:      new Date().toISOString().slice(0,10),
+      })
+    });
+    if (!r.ok) {
+      const err = await r.json().catch(()=>({error:'Server error '+r.status}));
+      throw new Error(err.error || ('HTTP ' + r.status));
+    }
+    const blob = await r.blob();
+    const incName = (incData.name || 'IAP').replace(/[^a-zA-Z0-9_-]/g,'_');
+    const filename = `IAP_${incName}_Period${period}_${new Date().toISOString().slice(0,10)}.pdf`;
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(a.href);
+    btn.textContent = '✓ PDF Downloaded';
+    setTimeout(()=>{ btn.textContent = orig; btn.disabled = false; }, 3000);
+  } catch(e) {
+    btn.textContent = orig;
+    btn.disabled = false;
+    alert('PDF generation failed: ' + e.message + '\n\nUse "Save as HTML" as a fallback, or use iap_compile.html for the full PDF compiler.');
+  }
 }
 
 function saveIAP() {

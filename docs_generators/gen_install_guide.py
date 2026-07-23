@@ -891,40 +891,40 @@ story.append(P(
 story.append(SP(4))
 story.append(tbl(['CONNECTION', 'DEVICE', 'IP / NOTES'], [
     ['ASUS WAN port  (PoE Ethernet)',
-     'the cellular antenna unit Drum  (primary cellular WAN)',
+     'Cellular antenna  (primary WAN)',
      'Primary internet — cellular via your cellular carrier.  '
      'PoE cable from outdoor antenna unit to ASUS WAN port directly.  '
      'the cellular antenna unit serves DHCP on its own subnet — ASUS bridges to EMCOMM-NET.'],
     ['ASUS USB WAN port  (USB-to-Ethernet)',
-     'satellite dish  (secondary WAN — automatic failover)',
+     'Satellite dish  (secondary WAN)',
      'Secondary internet — satellite.  '
      'satellite Ethernet adapter → USB-to-Ethernet adapter → ASUS USB port.  '
      'ASUS switches automatically when cellular WAN drops.'],
     ['Switch Port 1  (uplink)',
-     'ASUS RT-BE58 Go  —  LAN 2.5G port',
+     'ASUS RT-BE58 Go LAN port',
      'Uplink from router to switch.  Router is DHCP server for 192.168.50.0/24.'],
     ['Port 2',
-     'FieldCommand Pi 5  (Pironman MAX 5)', '192.168.50.1  —  FieldCommand application server.  All browser tools live here.'],
+     'FieldCommand Pi 5  (Pironman MAX 5)', '192.168.50.1  —  All browser tools live here.'],
     ['Port 3',
-     '44Net Gateway Pi 5  (Argon NEO 5)', '192.168.50.2  —  AMPRNet WireGuard gateway.  Routes 44.0.0.0/8 for all EMCOMM-NET devices.'],
+     '44Net Gateway Pi 5  (Argon NEO 5)', '192.168.50.2  —  AMPRNet WireGuard gateway.'],
     ['Port 4',
-     'Windows Laptop  (Winlink Express + JS8Call)', '192.168.50.3  (recommended static reservation)  —  or connect via EMCOMM-NET Wi-Fi.'],
+     'Windows Laptop  (Winlink + JS8Call)', '192.168.50.3  (static reservation)  —  or via EMCOMM-NET Wi-Fi.'],
     ['Port 5',
      'Color MFP Network Printer', '192.168.50.10  (recommended static reservation)  —  auto-discovered by all devices via Bonjour.'],
     ['Ports 6 – 9',
      'Pi 500 Operator Workstations  (up to 4)', '192.168.50.20 – 192.168.50.23  (static DHCP reservations)'],
     ['Port 10',
-     'satellite dish Router  (if deployed)', 'Optional second WAN path  —  connect satellite dish Ethernet output to switch, use as WAN source on ASUS router.'],
+     'Satellite dish router  (optional)', 'Optional — connect satellite Ethernet to switch as WAN source on ASUS router.'],
     ['Port 11',
-     'ASUS RT-BE58 Go  —  Mesh Node 1',
-     'Wired backhaul to first mesh node.  Node extends EMCOMM-NET to secondary coverage zone.'],
+     'ASUS RT-BE58 Go — Mesh Node 1',
+     'Wired backhaul to first mesh node.  Extends EMCOMM-NET to secondary coverage zone.'],
     ['Port 12',
-     'ASUS RT-BE58 Go  —  Mesh Node 2',
-     'Wired backhaul to second mesh node.  Node extends EMCOMM-NET to third coverage zone.'],
+     'ASUS RT-BE58 Go — Mesh Node 2',
+     'Wired backhaul to second mesh node.  Extends EMCOMM-NET to third coverage zone.'],
     ['Ports 13 – 16',
      'Spare',
      'Available for additional devices, IP radios, second TNC, or future expansion.'],
-    ], [2.6*inch, CW-2.6*inch]))
+    ], [2.0*inch, 2.2*inch, CW-4.2*inch]))
 story.append(SP(6))
 story.append(tbl(['DEVICE', 'POWER SOURCE'], [
     ['ASUS RT-BE58 Go router',  'USB-C 18W PD adapter  —  or USB-C power bank for field use'],
@@ -932,15 +932,6 @@ story.append(tbl(['DEVICE', 'POWER SOURCE'], [
     ['FieldCommand Pi 5  (Pironman MAX 5)', 'Official Raspberry Pi 27W USB-C PD supply via Pironman MAX 5 power inlet'],
     ['44Net Gateway Pi 5  (Argon NEO 5)', 'Official Raspberry Pi 27W USB-C PD supply directly to Pi USB-C port'],
 ], [2.4*inch, CW-2.4*inch]))
-story.append(SP(6))
-story.append(tbl(['DEVICE', 'POWER SOURCE'], [
-    ['ASUS RT-BE58 Go router',
-     'USB-C 18W PD adapter  —  or USB-C power bank for field use'],
-    ['UniFi Switch Flex 2.5G-5',
-     'Included USB-C 5V / 1A adapter  —  or PoE from ASUS router uplink port'],
-    ['Raspberry Pi 5  (in Pironman MAX 5)',
-     'Official 27W USB-C PD supply connected to Pironman MAX 5 power inlet'],
-], [2.2*inch, CW-2.2*inch]))
 story.append(SP(6))
 story.append(H2('1.2  the cellular antenna unit — Physical Setup and Antenna Mounting'))
 story.append(P(
@@ -1064,7 +1055,7 @@ story.append(tbl(['PRIORITY', 'WAN SOURCE', 'ASUS CONNECTION', 'SETUP', 'ACTIVAT
      'ASUS Web UI → Operation Mode → WISP.  '
      'Select venue Wi-Fi and enter password.',
      'Manual — hospital, shelter, or venue with existing guest Wi-Fi'],
-], [2.0*inch, 1.0*inch, CW-3.0*inch]))
+], [0.9*inch, 1.5*inch, 1.4*inch, 1.8*inch, CW-5.6*inch]))
 story.append(SP(8))
 story.append(H2('1.3  Configure Dual WAN Failover  (the cellular antenna unit Primary  +  satellite dish Secondary)'))
 story.append(P(
@@ -1091,16 +1082,16 @@ story.append(steps([
 ]))
 story.append(SP(4))
 story.append(tbl(['WAN STATE', 'WHAT EMCOMM-NET DEVICES SEE', 'FIELDCOMMAND IMPACT'], [
-    ['the cellular antenna unit  UP  (primary)',
-     'Full internet — cellular 5G/LTE via your cellular carrier',
+    ['Cellular WAN  UP  (primary)',
+     'Full internet — 5G/LTE via cellular antenna',
      'NWS weather alerts live, APRS-IS active, FCC DB refresh available, Pat Winlink via internet'],
-    ['the cellular antenna unit  DOWN  →  satellite dish  UP  (failover)',
-     'Full internet via satellite  —  slightly higher latency (~20-40ms typical)',
+    ['Cellular DOWN → Satellite UP  (failover)',
+     'Full internet via satellite — slightly higher latency (~20-40ms)',
      'All internet features remain active.  CGNAT on satellite dish means no inbound connections possible.'],
-    ['Both WAN sources  DOWN',
-     'No internet  —  EMCOMM-NET still fully operational',
+    ['Both WAN sources DOWN',
+     'No internet — EMCOMM-NET still fully operational.',
      'All local FieldCommand features work normally.  NWS alerts, APRS-IS, FCC refresh paused until WAN returns.'],
-], [1.4*inch, 2.2*inch, CW-3.6*inch]))
+], [2.0*inch, 2.0*inch, CW-4.0*inch]))
 story.append(SP(8))
 
 story.append(H2('1.4  AiMesh Mesh Node Setup — Extending EMCOMM-NET Coverage'))
@@ -1143,16 +1134,16 @@ story.append(steps([
 ]))
 story.append(SP(6))
 story.append(ref_tbl_2col(['NODE', 'SWITCH PORT', 'RECOMMENDED PLACEMENT'], [
-    ['Primary RT-BE58 Go  (router)',
+    ['Primary RT-BE58 Go  (AiMesh controller)',
      'Uplink to ASUS 2.5G LAN port',
      'Central to the deployment — EOC command post or entrance area'],
-    ['Mesh Node 1  (first RT-BE58 Go)',
+    ['RT-BE58 Go — Mesh Node 1',
      'UniFi Switch Port 11',
      'Secondary room, opposite wing, or upper floor'],
-    ['Mesh Node 2  (second RT-BE58 Go)',
+    ['RT-BE58 Go — Mesh Node 2',
      'UniFi Switch Port 12',
      'Third coverage zone — outdoor staging, parking, or far building wing'],
-    ], [1.6*inch, 1.7*inch, CW-3.3*inch]))
+    ], [2.0*inch, 1.4*inch, CW-3.4*inch]))
 story.append(PB())
 
 # ── STEP 2 — DOWNLOAD & INSTALL ──────────────────────────────────────────────

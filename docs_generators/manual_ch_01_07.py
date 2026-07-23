@@ -419,13 +419,30 @@ def ch5():
         'one agency on a rotating basis or by consensus. FieldCommand IMS '
         'supports multiple ICS-204 Assignment Lists — one per branch or division — '
         'which accommodates multi-agency operational structures naturally.', 'note'))
+    s.append(SP(8))
+
+    s.append(P('5.3  Incident Types', H2))
+    s.append(P(
+        'When creating an incident, select the type that best matches the activation. '
+        'The type pre-selects recommended ICS forms, sets appropriate resource categories '
+        'on the T-card board, and labels the incident badge throughout the interface. '
+        'All types use the same underlying ICS form set — the type is an organizational '
+        'label, not a functional restriction.'))
+    s.append(SP(4))
     s.append(tbl(['TYPE', 'DESCRIPTION'], [
-        ['All-Hazards',      'General ICS incident — suitable for any event not covered below'],
-        ['Search and Rescue','SAR-specific resource typing and form defaults'],
-        ['Severe Weather',   'Shelter operations, damage assessment, utility coordination'],
-        ['Mass Gathering',   'Large planned event with medical and crowd management focus'],
-        ['HazMat',           'Hazardous materials response with decon and zoning emphasis'],
-        ['Exercise',         'Training scenario — marked with 🧪 badge; beta reset available'],
+        ['All-Hazards',      'General ICS incident — suitable for any event not specifically covered below. '
+                             'Default for most EMCOMM activations.'],
+        ['Search and Rescue','SAR-specific resource typing and form defaults. '
+                             'Enables tracking of search teams, medical, and air assets.'],
+        ['Severe Weather',   'Shelter operations, damage assessment, and utility coordination. '
+                             'Activates shelter capacity tracking and damage survey forms.'],
+        ['Mass Gathering',   'Large planned event with medical and crowd management focus. '
+                             'Pre-populates medical strike team and perimeter resource categories.'],
+        ['HazMat',           'Hazardous materials response with decon and zoning emphasis. '
+                             'Enables hot/warm/cold zone resource tracking.'],
+        ['Exercise',         'Training scenario — marked with 🧪 badge throughout the interface. '
+                             'Beta Reset (available under incident settings) wipes all exercise data '
+                             'while preserving roster, channel library, and repeater database.'],
     ], widths=[1.4*inch, CW-1.4*inch]))
     s.append(SP(6))
 

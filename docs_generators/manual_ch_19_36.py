@@ -938,7 +938,7 @@ def ch_appendix():
     s.append(SP(4))
     from manual_framework import ABBREVIATIONS
     AB = ParagraphStyle('AB', fontName='Helvetica-Bold', fontSize=8, leading=11)
-    AD = ParagraphStyle('AD', fontName='Helvetica', fontSize=7.5, leading=10, textColor=MGRAY)
+    AD = ParagraphStyle('AD', fontName='Helvetica', fontSize=7.5, leading=10, textColor=HexColor('#333333'))
     abbrev_rows = sorted(ABBREVIATIONS.items())
     mid = len(abbrev_rows) // 2 + len(abbrev_rows) % 2
     col1 = abbrev_rows[:mid]

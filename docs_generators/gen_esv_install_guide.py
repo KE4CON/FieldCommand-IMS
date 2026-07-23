@@ -550,6 +550,55 @@ bom_rows = [
     ['ASUS RT-BE58 Go travel router', 'ASUS RT-BE58 Go  (Wi-Fi 7, 2.5G LAN uplink, USB-C 18W power)', 'Amazon · Best Buy · B&H'],
     ['UniFi Switch Lite 16 PoE', 'Ubiquiti USW-Lite-16-PoE  (16-port GbE, 8× PoE, 2× SFP uplink, 45W)  —  replaces Flex 2.5G-5', 'ui.com · Amazon · B&H  (~$200)'],
     ['CAT 6 Ethernet cables × 10', '1 ft – 6 ft CAT 6 patch cables  —  router to switch, both Pis, laptop, printer, 4× workstations', 'Amazon · Monoprice'],
+    cat_row('Radio & Comms  (McHenry County ESV — K9ESV)'),
+    ['Icom IC-7300MK2 HF transceiver', 'Icom IC-7300MK2 (HF/50 MHz)  —  next-generation IC-7300: HDMI output for external monitor, USB-C with dual COM ports + audio, LAN port for RS-BA1 remote, built-in CW decoder, improved RMDR (~105 dB), RX antenna IN/OUT  —  check current Icom coupons before purchase', 'Ham Radio Outlet · DX Engineering · R&L · GigaParts  (~$1,500)'],
+    ['13.8 V DC power supply', 'Astron RS-35M  —  13.8 VDC linear regulated, 25 A continuous / 35 A peak, dual meters  —  powers IC-7300 with headroom  —  RS-35M-AP variant adds Anderson Powerpole outputs', 'Ham Radio Outlet · DX Engineering · GigaParts  (~$320-345)'],
+    ['LDG IT-100 automatic antenna tuner', 'LDG IT-100  —  125 W desktop autotuner made for Icom  —  matches up to 10:1 SWR  —  powered and controlled directly from the transceiver TUNER button via included interface cable  —  2,000 tuning memories  —  station-side tuner for coax-fed antennas', 'DX Engineering · GigaParts · Ham Radio Outlet  (~$170-190)'],
+    ['Chameleon CHA MPAS 2.0 antenna system', 'Modular Portable Antenna System 2.0  —  1.8-54 MHz (160m-6m)  —  deploys as vertical, sloper, inverted-V, inverted-L, NVIS, or man-pack in under 2 minutes  —  includes HYBRID matching unit, MIL 2.0 + MIL EXT 2.0 whips, spike mount, 73 ft + 25 ft Kevlar PTFE wire, 50 ft coax with RFI choke, sling bag  —  the primary field HF antenna for all deployments', 'chameleonantenna.com · DX Engineering · GigaParts  (~$600)'],
+    ['Chameleon CHA URT1 remote tuner', 'Universal Remote Tuner 1  —  1.8-54 MHz  —  weatherproof tuner unit mounts at the antenna feedpoint (eliminates feedline SWR loss)  —  matches 5-1,500 ohm loads  —  125 W SSB/CW  —  16,000 memories  —  power and control sent over the coax via bias-T coupler, works with any transceiver, no radio-specific cable', 'chameleonantenna.com · DX Engineering · R&L  (~$390)'],
+    ['Chameleon antenna wire  —  300 ft', '300 ft Chameleon tinned-copper Kevlar PTFE antenna wire (12× 25 ft spools or equivalent bulk)  —  field-expedient long wires, NVIS, dipoles, counterpoises, and radial systems for the MPAS 2.0 and URT1', 'chameleonantenna.com  (~$300)'],
+    ['Wire winders', '4× heavy-duty wire winders sized for 75-100 ft each  —  tangle-free storage and rapid deployment/recovery of antenna wire in the field', 'chameleonantenna.com · DX Engineering  (~$60)'],
+    ['USB-A to USB-B cable (IC-7300 to laptop)', 'USB-A to USB-B, shielded, 6 ft', 'Amazon · Monoprice'],
+    ['Windows laptop (Winlink Express + JS8Call)', 'Any Windows 10/11 laptop with USB-A port and Wi-Fi', 'Best Buy · Amazon'],
+    ['USB TNC — Digirig Mobile', 'Digirig Mobile v1.x — USB soundcard + serial CAT in one compact unit', 'digirig.net · Amazon'],
+    ['USB TNC — SignaLink USB  (alternative)', 'Tigertronics SignaLink USB — requires rig-specific interface cable', 'tigertronics.com · Ham Radio Outlet · Amazon'],
+    cat_row('WAN Connectivity — InstyConnect Cellular Antenna  (Primary WAN)'),
+    ['InstyConnect Drum antenna  (primary)',
+     'InstyConnect Drum  —  omnidirectional 5G/LTE antenna  —  PoE powered  —  '
+     'mounts on any standard 1.5\" to 2\" pole  —  includes PoE injector and 25 ft PoE Ethernet cable  —  '
+     'connects directly to ASUS RT-BE58 Go WAN port  —  T-Mobile + Verizon multi-carrier',
+     'instyconnect.com  (~$350-400)'],
+    ['InstyConnect Switchblade  (directional backup)',
+     'Compact folding directional LTE/5G antenna — PoE powered — deploys and folds flat for transport  —  '
+     'use when Drum signal is insufficient at the deployment site  —  '
+     'same PoE cable connection as Drum — swap in minutes',
+     'instyconnect.com  (~$400-450)'],
+    ['InstyConnect PoE Ethernet cable  (spare)',
+     '25 ft outdoor-rated PoE Ethernet cable  —  connects outdoor antenna unit to ASUS WAN port  —  '
+     'one included with each antenna  —  carry one spare',
+     'instyconnect.com  or  Amazon  (~$20)'],
+    ['InstyConnect Multi-Network Unlimited data plan',
+     'InstyConnect Multi-Network Unlimited plan  —  T-Mobile + Verizon dual-carrier  —  '
+     'automatic carrier failover  —  1.2 TB fair use per carrier (2.4 TB total)  —  '
+     'pause after first month for $5/month standby  —  '
+     'activate only during emergency activations  —  no long-term contract required',
+     'instyconnect.com  (~$79-99/month active  /  $5/month standby)'],
+    cat_row('WAN Connectivity — Starlink  (Secondary WAN / Automatic Failover)'),
+    ['Starlink Standard or Flat High Performance dish',
+     'Starlink Standard or Flat High Performance dish  —  includes dish, router, cables, and mount  —  '
+     'connects to ASUS RT-BE58 Go via Starlink Ethernet adapter  —  automatic failover when InstyConnect drops  —  '
+     'note: Starlink uses CGNAT  —  inbound connections from internet not possible',
+     'starlink.com  (~$350-600 hardware  +  $120/month service)'],
+    ['Starlink Ethernet adapter',
+     'Official Starlink Ethernet adapter  —  converts Starlink dish output to standard RJ45  —  '
+     'required to connect Starlink to ASUS router without using Starlink router  —  '
+     'plug Ethernet output into USB-to-Ethernet adapter for ASUS USB WAN port',
+     'starlink.com  (~$25)'],
+    ['USB-to-Ethernet adapter  (Starlink to ASUS USB WAN)',
+     'USB-A to Gigabit Ethernet adapter  —  plugs into ASUS RT-BE58 Go USB port  —  '
+     'connects Starlink Ethernet adapter to ASUS USB WAN for secondary WAN failover  —  '
+     'ASIX AX88179 chipset recommended for best ASUS router compatibility',
+     'Amazon  (~$15-20)'],
     cat_row('Accessories — Backup & Connectivity'),
     ['USB-A drive (32 GB+, labeled FIELDCOMMAND)', '32 GB+ USB 3.0 drive — auto-backup trigger when inserted', 'Amazon'],
     ['External USB hard drive 1 TB+  (e.g. LaCie Rugged)', '1 TB+ USB 3.0/USB-C portable drive — label FIELDCOMMAND for auto-backup', 'B&H · Amazon · Best Buy'],
@@ -784,6 +833,16 @@ story.append(NoteBox(
     'warn'))
 story.append(PB())
 
+story.append(NoteBox(
+    'This is the McHenry County Emergency Services Volunteers (MCESV / K9ESV) '
+    'edition of the FieldCommand IMS Installation Guide. It includes hardware '
+    'specifications and vendor details specific to the ESV deployment: '
+    'InstyConnect cellular antenna (T-Mobile + Verizon), Starlink satellite, '
+    'Icom IC-7300MK2 HF station, and Chameleon antenna system. '
+    'For a vendor-neutral version suitable for other organizations, '
+    'use the standard FieldCommand Installation Guide.',
+    'note'))
+story.append(SP(8))
 story.append(H1('3. Before You Begin — Prerequisites'))
 story.append(HR(EOC_LT, 0.5))
 story.append(SP(6))
@@ -2843,7 +2902,7 @@ story.append(tbl(['ITEM', 'VALUE'], [
 ], [2.0*inch, CW-2.0*inch]))
 
 # ── Build ─────────────────────────────────────────────────────────────────────
-out = '/mnt/user-data/outputs/FieldCommand_Installation_Guide.pdf'
+out = '/mnt/user-data/outputs/FieldCommand_ESV_Installation_Guide.pdf'
 doc = SimpleDocTemplate(
     out, pagesize=letter,
     leftMargin=M, rightMargin=M,

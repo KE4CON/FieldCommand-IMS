@@ -76,7 +76,7 @@ def fetch_repeaters(state, band_code, token):
     url = REPEATERBOOK_URL + "?" + urllib.parse.urlencode(params)
     headers = {
         # A descriptive, contactable user-agent is required by RepeaterBook.
-        "User-Agent": "FieldCommand-EmComm/1.0 (+https://www.anthropic.com; MCESV/MCEMA K9ESV)",
+        "User-Agent": "FieldCommand-IMS/1.0 EmComm (https://github.com/KE4CON/FieldCommand-IMS)",
         "Accept": "application/json",
     }
     # New (2026+) token authentication. Without this, expect HTTP 403.

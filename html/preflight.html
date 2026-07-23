@@ -129,6 +129,18 @@ setInterval(()=>{ document.getElementById('utc-clock').textContent = new Date().
 // Checklist definition
 const CHECKLIST = [
   {
+    id:'data', icon:'🗄', title:'Data Readiness  (Auto-Checked)',
+    autoCheck: true,
+    items:[
+      {id:'org-setup',     name:'Organization Setup',      desc:'Org name and callsign configured in setup.html',                  required:true,  autoKey:'org_setup'},
+      {id:'fcc-database',  name:'FCC Callsign Database',   desc:'FCC amateur database loaded (800K+ records, age <14 days) — if missing, run: sudo systemctl start fcc-refresh.service',        required:true,  autoKey:'fcc_db'},
+      {id:'roster-loaded', name:'Member Roster',           desc:'At least one member in the roster — add members at /roster.html',                               required:false, autoKey:'roster'},
+      {id:'repeaters-loaded', name:'Repeater Database',    desc:'Repeater data loaded with coordinates for map overlay — import CSV from repeaterbook.com at /repeaters.html',           required:false, autoKey:'repeater_db'},
+      {id:'channels-loaded',  name:'Channel Library',      desc:'Channel library populated with local frequencies — add channels at /channel_library.html',                required:false, autoKey:'channel_lib'},
+      {id:'active-incident',  name:'Active Incident',      desc:'An incident has been created and is active — create one at /incident.html',                      required:false, autoKey:'active_incident'},
+    ]
+  },
+  {
     id:'power', icon:'⚡', title:'Power Systems',
     items:[
       {id:'mains-power', name:'Shore / Generator Power', desc:'Primary power source verified operational', required:true},
@@ -210,6 +222,39 @@ const CHECKLIST = [
 let state = {}; // item_id -> 'go' | 'caution' | 'nogo' | null
 let notes = {}; // item_id -> string
 let sectionOpen = {};
+let autoResults = {}; // autoKey -> {ok, detail} from server health check
+let autoChecking = false;
+
+async function runAutoChecks() {
+  if (autoChecking) return;
+  autoChecking = true;
+  const btn = document.getElementById('auto-check-btn');
+  if (btn) { btn.textContent = '⟳ Checking…'; btn.disabled = true; }
+  try {
+    const res = await fetch(API + '/api/preflight', {signal: AbortSignal.timeout(8000)});
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    const checks = data.checks || {};
+    autoResults = checks;
+    // Auto-set state for data items based on server results
+    CHECKLIST[0].items.forEach(item => {
+      if (!item.autoKey) return;
+      const r = checks[item.autoKey];
+      if (!r) return;
+      // Only set if not already manually overridden
+      const existing = state[item.id];
+      if (!existing) {
+        state[item.id] = r.ok ? 'go' : 'nogo';
+      }
+    });
+    render();
+    if (btn) { btn.textContent = '↺ Re-Check'; btn.disabled = false; }
+  } catch(e) {
+    if (btn) { btn.textContent = '⚠ Server unreachable'; btn.disabled = false; }
+    console.warn('Auto-check failed:', e);
+  }
+  autoChecking = false;
+}
 
 function loadState() {
   const saved = localStorage.getItem('fc_preflight_state');
@@ -318,12 +363,18 @@ function render() {
     const sStatClass = {go:'s-go',caution:'s-caution',nogo:'s-nogo',pending:'s-pending'};
     const open = sectionOpen[section.id]!==false;
 
+    const autoBtn = section.autoCheck
+      ? `<button id="auto-check-btn" onclick="event.stopPropagation();runAutoChecks()"
+           style="font-size:10px;padding:2px 8px;background:none;border:1px solid var(--eoc-lt);
+                  color:var(--eoc-lt);border-radius:3px;cursor:pointer;white-space:nowrap">
+           ↺ Auto-Check</button>` : '';
     return `<div class="check-section">
       <div class="section-hdr" onclick="toggleSection('${section.id}')">
         <div class="section-hdr-left">
           <span class="section-icon">${section.icon}</span>
           <span class="section-title">${section.title}</span>
           <span class="section-progress" style="color:var(--dim);">(${checked}/${section.items.length})</span>
+          ${autoBtn}
         </div>
         <div style="display:flex;align-items:center;gap:12px;">
           <span class="section-status ${sStatClass[sStat]}">${sStatLabels[sStat]}</span>
@@ -345,6 +396,12 @@ function render() {
                 ${esc(item.name)}
               </div>
               <div class="check-desc">${esc(item.desc)}</div>
+              ${item.autoKey && autoResults[item.autoKey]
+                ? `<div style="font-size:10px;margin-top:2px;padding:2px 6px;border-radius:3px;display:inline-block;
+                               background:${autoResults[item.autoKey].ok?'rgba(57,255,20,.08)':'rgba(255,60,60,.08)'};
+                               color:${autoResults[item.autoKey].ok?'var(--green)':'var(--red)'}">
+                     ${autoResults[item.autoKey].ok?'✓':'✗'} ${esc(autoResults[item.autoKey].detail||'')}
+                   </div>` : ''}
               <div class="check-note">
                 <input type="text" placeholder="Note (optional)" value="${esc(notes[item.id]||'')}" oninput="setNote('${item.id}',this.value)">
               </div>
@@ -382,6 +439,7 @@ function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;'
 
 loadState();
 render();
+runAutoChecks(); // Auto-check data readiness on load
 </script>
 
 <script src="/lib/identity.js"></script>

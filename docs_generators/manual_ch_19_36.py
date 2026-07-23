@@ -725,29 +725,138 @@ def ch31():
     s = chapter(31, 'Repeater Database',
                 'http://192.168.50.1/repeaters.html')
     s.append(P(
-        'The Repeater Database stores Very High Frequency (VHF)/UHF repeater information for your '
-        'deployment area. It is used by the ICS-205 communications plan, '
+        'The Repeater Database stores VHF/UHF repeater information for your '
+        'deployment area. It feeds the ICS-205 communications plan channel picker, '
         'the channel library, and the cheat sheets. '
-        'Data is stored locally — no internet required.'))
+        'Data is stored locally — no internet required once loaded.'))
     s.append(SP(6))
-    s.append(P('30.1  Repeater Fields', H2))
+
+    s.append(P('31.1  Loading Repeater Data', H2))
+    s.append(P(
+        'The page has three source tabs: Offline File (recommended), Server API, and Demo Data. '
+        'The Offline File tab is the practical method for most deployments.'))
+    s.append(SP(4))
+    s.append(tbl(['METHOD', 'HOW TO USE', 'REQUIREMENTS'], [
+        ['Offline File  (recommended)',
+         'Log in at repeaterbook.com → search your area → Export → CSV. '
+         'Drag the downloaded CSV onto the drop zone, or click to browse.',
+         'Free repeaterbook.com account. '
+         'No API token needed — any logged-in user can export a CSV.'],
+        ['RepeaterBook app',
+         'Search your area in the RepeaterBook mobile app → Export → Share file. '
+         'Transfer the file to a device on EMCOMM-NET and load it.',
+         'Free RepeaterBook app (iOS or Android).'],
+        ['Server API  (optional)',
+         'Run fetch_repeaters.py on the FieldCommand Pi. '
+         'Place your token in /opt/fieldcommand/data/repeaterbook_token.txt '
+         'then run: python3 scripts/fetch_repeaters.py',
+         'Approved RepeaterBook API token — this is a separate application '
+         'process from a regular account login. Apply at '
+         'repeaterbook.com/api/token_request.php. Allow several weeks.'],
+        ['Manual entry',
+         'Click + Add Repeater and fill in fields. '
+         'Best for a small number of local repeaters.',
+         'None'],
+    ], widths=[1.4*inch, 2.5*inch, CW-3.9*inch]))
+    s.append(SP(4))
+    s.append(note(
+        'The RepeaterBook API token is not the same as a RepeaterBook account login. '
+        'It requires a separate application and approval by RepeaterBook staff. '
+        'The CSV export method works with any free account and is the recommended '
+        'approach for field deployments. The CSV can be refreshed before each '
+        'activation by any operator with a repeaterbook.com account.',
+        'note'))
+    s.append(SP(6))
+
+    s.append(P('31.2  Repeater Fields', H2))
     s.append(tbl(['FIELD', 'DESCRIPTION'], [
         ['Callsign',         'Repeater trustee callsign'],
         ['Output frequency', 'Receive frequency (what you listen on)'],
-        ['Offset',           '± MHz, or simplex'],
-        ['CTCSS / DCS',      'Tone or digital code required to access'],
+        ['Offset',           '± MHz offset from output, or simplex'],
+        ['CTCSS / DCS',      'Tone or digital code required to access the repeater'],
         ['Mode',             'FM · D-STAR · Fusion (C4FM) · P25 · DMR'],
-        ['Coverage',         'Coverage description — city/county/regional'],
+        ['Coverage',         'Coverage description — city, county, or regional'],
         ['Notes',            'Access restrictions, linking, EchoLink node, etc.'],
-        ['Emergency use',    'Flag as preferred for emergency use — highlighted in the ICS-205'],
+        ['Emergency use',    'Flag as preferred for emergency use — highlighted in ICS-205'],
     ], widths=[1.4*inch, CW-1.4*inch]))
     s.append(SP(4))
     s += steps([
         'Click <b>+ Add Repeater</b>.',
-        'Fill in all applicable fields.',
-        'Click <b>Save</b>. The repeater appears in the database and is '
-        'immediately available in the ICS-205 channel picker and the cheat sheets.',
+        'Fill in applicable fields. Callsign, output frequency, and offset are required.',
+        'Click <b>Save</b>. The repeater is immediately available in the '
+        'ICS-205 channel picker and the cheat sheets.',
     ])
+    s.append(SP(8))
+
+    s.append(P('31.3  Map View — Plotting Repeaters on a Map', H2))
+    s.append(P(
+        'Once repeater data is loaded, the <b>📍 Map View</b> button in the toolbar '
+        'opens a full-screen Leaflet map showing every repeater in the current filtered '
+        'view that has GPS coordinates. '
+        'RepeaterBook CSV exports include latitude and longitude for every repeater — '
+        'these are stored in the database and used for map plotting automatically.'))
+    s.append(SP(4))
+    s.append(tbl(['MAP FEATURE', 'DESCRIPTION'], [
+        ['Pin colors by mode',
+         'Green = FM · Blue = D-STAR · Orange = C4FM/Fusion · Purple = DMR · '
+         'Red = P25 · Amber = ARES/RACES-affiliated (overrides mode color)'],
+        ['Filter sync',
+         'The map plots only the repeaters currently visible in the table — '
+         'applying a band, mode, state, or ARES filter also filters the map pins. '
+         'Set filters first, then open the map to see exactly the repeaters you want.'],
+        ['Pin popup',
+         'Click any pin to see: frequency, callsign, offset, CTCSS/DCS tone, mode, '
+         'location, county, sponsor, notes, and ARES/RACES/SKYWARN badges.'],
+        ['Add to Channel Library',
+         'The popup includes a "+ Add to Channel Library" button — '
+         'click it to immediately import that repeater as a channel.'],
+        ['Count display',
+         'The Map View button shows the count of plottable repeaters in parentheses — '
+         'e.g. "📍 Map View (247)". Repeaters without coordinates are not plotted '
+         'but are still shown in the table.'],
+    ], widths=[1.6*inch, CW-1.6*inch]))
+    s.append(SP(6))
+    s += steps([
+        'Load repeater data using any method (CSV, app, or manual entry).',
+        'Optionally apply filters — band, mode, state, ARES/RACES — to narrow the view.',
+        'Click <b>📍 Map View (N)</b> in the toolbar. '
+        'The map opens centered and zoomed to fit all visible repeaters.',
+        'Click any pin to see the full repeater details and import it to the '
+        'channel library.',
+        'Press <b>Escape</b> or click <b>✕ Close</b> to return to the table.',
+    ])
+    s.append(SP(8))
+
+    s.append(P('31.4  Repeater Overlays on Tactical and Resource Maps', H2))
+    s.append(P(
+        'The Tactical Map (tactical.html) and Resource Map (resource_map.html) '
+        'both include a <b>📡 Repeaters</b> layer toggle. '
+        'This overlay fetches live repeater data from the server and plots pins '
+        'on top of the APRS traffic, resource positions, or field unit locations — '
+        'giving situational awareness of which repeaters are available near a '
+        'specific area or resource.'))
+    s.append(SP(4))
+    s.append(tbl(['MAP', 'HOW TO ENABLE', 'USE CASE'], [
+        ['Tactical Map  (tactical.html)',
+         'Click <b>📡 Repeaters</b> in the layer toggle bar. '
+         'First click fetches and plots all repeaters. '
+         'Subsequent clicks toggle the layer on/off without re-fetching.',
+         'See which repeaters cover the areas where APRS stations are active. '
+         'Identify the closest ARES/RACES-linked repeater to a field unit.'],
+        ['Resource Map  (resource_map.html)',
+         'Click <b>📡 Repeaters</b> in the toolbar. '
+         'Toggle on/off at any time.',
+         'Find coverage for deployed resources. '
+         'Verify repeater access from a staging area or shelter location.'],
+    ], widths=[1.4*inch, 2.6*inch, CW-4.0*inch]))
+    s.append(SP(4))
+    s.append(note(
+        'The repeater overlay loads from the FieldCommand server database — '
+        'it reflects exactly the repeater data imported on the Repeater Database page. '
+        'If the overlay shows no pins, import repeater data at repeaters.html first. '
+        'Only repeaters with GPS coordinates are plotted; repeaters entered without '
+        'coordinates appear in the Repeater Database table but not on the map.',
+        'note'))
     s.append(PB())
     return s
 

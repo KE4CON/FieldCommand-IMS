@@ -179,6 +179,7 @@ body.picking #map { cursor:crosshair !important; }
     <button class="map-btn active" id="btn-me" onclick="toggleLayer('me')" title="My station">⬡ My Station</button>
     <button class="map-btn" id="btn-range" onclick="toggleLayer('range')" title="Range ring">◎ Range Ring</button>
     <button class="map-btn" id="btn-track" onclick="toggleTrack()" title="Track selected station">🛤 Track</button>
+    <button class="map-btn" id="btn-rep" onclick="toggleRepeaters()" title="Repeater Database overlay (loads from FieldCommand server)">📡 Repeaters</button>
   </div>
 
   <!-- Sidebar -->
@@ -646,6 +647,7 @@ function initMap() {
   layers.ov    = L.layerGroup().addTo(map);  // Manual overlays
   layers.me    = L.layerGroup().addTo(map);  // My station
   layers.range = L.layerGroup();             // Range ring (off by default)
+  layers.rep   = L.layerGroup();             // Repeater overlay (off by default)
   layers.track = L.layerGroup().addTo(map);  // Track history
 
   // Set up tile layers via FC_TILES (offline + online sources)
@@ -1430,6 +1432,95 @@ function showYAACSetup(){ document.getElementById('yaac-modal').style.display='f
 initMap();
 </script>
 
-<script src="/lib/identity.js"></script>
+<script src="/lib/identity.js">
+// ── REPEATER OVERLAY ──────────────────────────────────────────────────────────
+let repOverlayLoaded = false;
+let repOverlayOn = false;
+
+const REP_MODE_COLORS = {
+  fm:'#4caf50', dstar:'#00b4ff', c4fm:'#ff8c00',
+  dmr:'#c850ff', p25:'#ff4040'
+};
+
+function repModeKey(mode) {
+  const m = (mode||'').toLowerCase();
+  if (m.includes('dstar') || m.includes('d-star')) return 'dstar';
+  if (m.includes('c4fm') || m.includes('fusion')) return 'c4fm';
+  if (m.includes('dmr'))  return 'dmr';
+  if (m.includes('p25'))  return 'p25';
+  return 'fm';
+}
+
+function makeRepOverlayIcon(r) {
+  const mk = repModeKey(r.mode);
+  const isEmcomm = r.ares || r.races || r.ARES === 'Yes' || r.RACES === 'Yes';
+  const c = isEmcomm ? '#f5a623' : (REP_MODE_COLORS[mk] || '#888');
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18">
+    <circle cx="9" cy="9" r="7" fill="${c}" stroke="rgba(0,0,0,.4)" stroke-width="1.5" opacity=".9"/>
+    <circle cx="9" cy="9" r="2.5" fill="rgba(0,0,0,.3)"/>
+  </svg>`;
+  return L.divIcon({ html:svg, iconSize:[18,18], iconAnchor:[9,9], className:'' });
+}
+
+async function toggleRepeaters() {
+  const btn = document.getElementById('btn-rep');
+  if (repOverlayOn) {
+    // Turn off
+    map.removeLayer(layers.rep);
+    repOverlayOn = false;
+    btn && btn.classList.remove('active');
+    return;
+  }
+  // Turn on — load if not yet loaded
+  if (!repOverlayLoaded) {
+    btn && (btn.textContent = '📡 Loading…');
+    try {
+      const res = await fetch('http://192.168.50.1:5050/api/repeaters');
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const reps = await res.json();
+      layers.rep.clearLayers();
+      let plotted = 0;
+      reps.forEach(r => {
+        const lat = parseFloat(r.lat), lon = parseFloat(r.lon);
+        if (!lat || !lon || Math.abs(lat) < 0.01) return;
+        const offset = r.input_freq && r.output_freq
+          ? (parseFloat(r.input_freq) - parseFloat(r.output_freq)).toFixed(3).replace(/\.?0+$/, '') + ' MHz'
+          : 'Simplex';
+        const tone = r.tone ? ` · ${r.tone} Hz` : '';
+        const loc  = [r.city, r.state].filter(Boolean).join(', ') || '';
+        const emcomm = [];
+        if (r.ares   || r.ARES   === 'Yes') emcomm.push('ARES');
+        if (r.races  || r.RACES  === 'Yes') emcomm.push('RACES');
+        if (r.skywarn|| r.SKYWARN=== 'Yes') emcomm.push('SKYWARN');
+        const popup = `
+          <div style="min-width:180px;font-size:12px">
+            <div style="font-family:monospace;font-size:20px;color:#4caf50">${r.output_freq} MHz</div>
+            <div style="font-family:monospace;color:#f5a623;margin-bottom:6px">${r.callsign||'—'}</div>
+            <div style="color:#aaa">Offset: <b style="color:#fff">${offset}${tone}</b></div>
+            <div style="color:#aaa">Mode: <b style="color:#fff">${r.mode||'FM'}</b></div>
+            ${loc ? `<div style="color:#aaa">Location: <b style="color:#fff">${loc}</b></div>` : ''}
+            ${emcomm.length ? `<div style="color:#f5a623;margin-top:4px">${emcomm.join(' · ')}</div>` : ''}
+            ${r.notes ? `<div style="color:#777;font-size:11px;margin-top:4px">${r.notes.slice(0,120)}</div>` : ''}
+          </div>`;
+        L.marker([lat, lon], { icon: makeRepOverlayIcon(r) })
+          .bindPopup(popup, { maxWidth:260 })
+          .addTo(layers.rep);
+        plotted++;
+      });
+      repOverlayLoaded = true;
+      btn && (btn.textContent = `📡 Repeaters (${plotted.toLocaleString()})`);
+    } catch(e) {
+      btn && (btn.textContent = '📡 Repeaters');
+      console.warn('Repeater overlay failed:', e);
+      alert('Could not load repeater data.\nMake sure the FieldCommand server is running and repeater data has been imported on the Repeater Database page.');
+      return;
+    }
+  }
+  layers.rep.addTo(map);
+  repOverlayOn = true;
+  btn && btn.classList.add('active');
+}
+
+</script>
 </body>
 </html>

@@ -155,6 +155,54 @@
 .import-prog-fill { background: var(--amber); height: 100%; border-radius: 4px; transition: width 0.1s; }
 .import-msg { font-size: 12px; color: var(--muted); }
 </style>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style id="map-modal-styles">
+/* ── Map modal ── */
+#mapModal {
+  display:none; position:fixed; inset:0; z-index:1000;
+  background:var(--bg); flex-direction:column;
+}
+#mapModal.open { display:flex; }
+#mapModal .modal-hdr {
+  background:var(--eoc); color:#fff; padding:10px 16px;
+  display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+  border-bottom:2px solid var(--amber); flex-shrink:0;
+}
+#mapModal .modal-hdr span { font-family:var(--font-hd); font-size:14px; letter-spacing:.08em; }
+#mapModal .modal-hdr .close-btn {
+  margin-left:auto; background:none; border:1px solid rgba(255,255,255,.4);
+  color:#fff; border-radius:4px; padding:4px 10px; cursor:pointer; font-size:12px;
+}
+#mapModal .modal-hdr .close-btn:hover { background:rgba(255,255,255,.12); }
+#mapModal .map-legend {
+  background:var(--panel); border-bottom:1px solid var(--line);
+  padding:6px 16px; display:flex; gap:14px; align-items:center;
+  font-size:11px; color:var(--muted); flex-wrap:wrap; flex-shrink:0;
+}
+#mapModal .map-legend .leg { display:flex; align-items:center; gap:4px; }
+#mapModal .map-legend .dot {
+  width:10px; height:10px; border-radius:50%; border:1.5px solid rgba(255,255,255,.3);
+}
+#mapLeaflet { flex:1; min-height:0; }
+#mapModal .map-status {
+  background:var(--eoc); color:rgba(255,255,255,.8); padding:5px 16px;
+  font-size:11px; display:flex; justify-content:space-between; flex-shrink:0;
+}
+/* Repeater popup */
+.rep-popup { min-width:220px; font-size:12px; }
+.rep-popup .rp-freq { font-family:var(--font-hd); font-size:22px; color:#4caf50; }
+.rep-popup .rp-call { font-family:var(--font-hd); font-size:14px; color:#f5a623; margin-bottom:6px; }
+.rep-popup .rp-row  { display:flex; justify-content:space-between; padding:3px 0;
+                       border-bottom:1px solid rgba(255,255,255,.08); gap:12px; }
+.rep-popup .rp-lbl  { color:#888; font-size:11px; }
+.rep-popup .rp-val  { font-family:var(--font-hd); font-size:11px; }
+.rep-popup .rp-badges { display:flex; flex-wrap:wrap; gap:3px; margin-top:6px; }
+.rep-popup .add-ch  { margin-top:8px; background:#1a3a6b; border:1px solid #f5a623;
+                       color:#f5a623; border-radius:4px; padding:4px 10px;
+                       font-size:11px; cursor:pointer; width:100%; }
+.rep-popup .add-ch:hover { background:#f5a623; color:#000; }
+</style>
 </head>
 <body>
 
@@ -172,7 +220,7 @@
   <button class="src-tab active" id="tab-offline" onclick="switchSource('offline')">
     📁 Offline File <span class="src-count zero" id="cnt-offline">0</span>
   </button>
-  <button class="src-tab" id="tab-server" onclick="switchSource('server')">
+  <button class="src-tab" id="tab-server" onclick="switchSource('server')" title="Requires an approved RepeaterBook API token — separate from a regular account login">
     🖥 Server API <span class="src-count zero" id="cnt-server">0</span>
   </button>
   <button class="src-tab" id="tab-demo" onclick="switchSource('demo')">
@@ -196,11 +244,13 @@
     <div class="drop-zone-title">Load RepeaterBook Offline Export</div>
     <div class="drop-zone-desc">
       Drag &amp; drop a RepeaterBook CSV or JSON export here, or click to browse.<br><br>
-      <strong style="color:var(--eoc)">How to get the offline file:</strong><br>
-      1. Visit <strong>repeaterbook.com</strong> → Search your area → <em>Export → CSV</em><br>
-      2. Or use the <strong>RepeaterBook app</strong> → Export → Share file<br>
-      3. Or run <code style="background: var(--bg);padding:1px 4px;border-radius:3px">fetch_repeaters.py</code> on this server<br><br>
-      <span style="color:var(--muted)">Supported: RepeaterBook CSV export · RepeaterBook JSON export · Incident Management repeaters.json</span>
+      <strong style="color:var(--eoc)">Recommended — how to get the export file:</strong><br>
+      1. Log in at <strong>repeaterbook.com</strong> (free account)<br>
+      2. Search your area or county → click <em>Export → CSV</em><br>
+      3. Or use the <strong>RepeaterBook app</strong> → Export → Share file<br>
+      4. Drag the downloaded CSV here, or click to browse<br><br>
+      <span style="color:var(--muted)">No API token needed for the CSV export — any logged-in RepeaterBook account can download it.</span><br>
+      <span style="color:var(--muted)">Supported formats: RepeaterBook CSV · RepeaterBook JSON · FieldCommand repeaters.json</span>
     </div>
   </div>
 </div>
@@ -209,6 +259,15 @@
   <div class="source-banner server">
     🖥 Loaded from local server API (fetch_repeaters.py)
     <button class="btn btn-sm" onclick="loadFromServer()" style="margin-left:auto;border-color:var(--blue);color:var(--blue)">⟳ Refresh</button>
+  </div>
+  <div style="padding:10px 14px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--border)">
+    ⚠ The Server API requires an <strong>approved RepeaterBook API token</strong> — this is a separate application process
+    from a regular repeaterbook.com account login. Most deployments should use the
+    <strong>Offline File</strong> tab instead: download a CSV export from repeaterbook.com (any logged-in account)
+    and drag it here. If you have an approved token, place it in
+    <code style="background:var(--bg);padding:1px 4px;border-radius:3px">/opt/fieldcommand/data/repeaterbook_token.txt</code>
+    and run <code style="background:var(--bg);padding:1px 4px;border-radius:3px">python3 scripts/fetch_repeaters.py</code>
+    on the Pi.
   </div>
 </div>
 
@@ -638,6 +697,7 @@ function switchSource(src) {
 
 function showData(reps, src, meta) {
   allRepeaters = reps;
+  updateMapBtn();
   document.getElementById('dropZone').style.display = 'none';
 
   // Source banner
@@ -702,7 +762,7 @@ async function loadFromServer() {
     if (currentSource === 'server') {
       document.getElementById('panel-server').innerHTML = `
         <div class="source-banner" style="color:var(--red);border-color:rgba(255,80,80,0.3)">
-          ⚠ Server API unreachable — run <code>fetch_repeaters.py</code> first, or use the Offline File tab.
+          ⚠ Server API unreachable — no repeater data loaded via this method. Use the <strong>Offline File</strong> tab instead: download a CSV from repeaterbook.com and drag it here. The Server API requires a separately-approved RepeaterBook API token.
           <button class="btn btn-sm" onclick="loadFromServer()" style="margin-left:auto">⟳ Retry</button>
         </div>`;
       hideTableUI();
@@ -1033,6 +1093,167 @@ async function addRepToChannelLibrary() {
     alert('Could not reach server: ' + e.message);
   }
 }
+
+// ── REPEATER MAP ──────────────────────────────────────────────────────────────
+let repMap = null;
+let repMarkersLayer = null;
+let repMapOpen = false;
+
+const MODE_COLORS = {
+  fm:    '#4caf50',
+  dstar: '#00b4ff',
+  c4fm:  '#ff8c00',
+  dmr:   '#c850ff',
+  p25:   '#ff4040',
+};
+function repColor(r) {
+  if (r.ares || r.races) return '#f5a623';
+  return MODE_COLORS[r._modeKey] || '#888';
+}
+
+function makeRepIcon(r) {
+  const c = repColor(r);
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20">
+    <circle cx="10" cy="10" r="8" fill="${c}" stroke="rgba(0,0,0,.4)" stroke-width="1.5"/>
+    <circle cx="10" cy="10" r="3" fill="rgba(0,0,0,.3)"/>
+  </svg>`;
+  return L.divIcon({
+    html: svg, iconSize:[20,20], iconAnchor:[10,10], className:'',
+  });
+}
+
+function makeRepPopup(r) {
+  const ares  = r.ares  ? '<span class="badge badge-ares">ARES</span>' : '';
+  const races = r.races ? '<span class="badge badge-ares">RACES</span>' : '';
+  const skyw  = r.skywarn ? '<span class="badge badge-skyw">SKYWARN</span>' : '';
+  const echo  = r.echolink ? '<span class="badge badge-echo">EchoLink</span>' : '';
+  const tone  = r.tone ? `<span class="badge badge-tone">${r.tone}</span>` : '';
+  const offset= r.input_freq && r.output_freq
+    ? (parseFloat(r.input_freq) - parseFloat(r.output_freq)).toFixed(3).replace(/\.?0+$/,'') + ' MHz'
+    : '';
+
+  return `<div class="rep-popup">
+    <div class="rp-freq">${r.output_freq} MHz</div>
+    <div class="rp-call">${r.callsign || '—'}</div>
+    <div class="rp-row"><span class="rp-lbl">Offset</span><span class="rp-val">${offset || 'Simplex'}</span></div>
+    <div class="rp-row"><span class="rp-lbl">Mode</span><span class="rp-val">${r.mode||'FM'}</span></div>
+    ${r.tone ? `<div class="rp-row"><span class="rp-lbl">CTCSS</span><span class="rp-val">${r.tone} Hz</span></div>` : ''}
+    <div class="rp-row"><span class="rp-lbl">Location</span><span class="rp-val">${[r.city,r.state].filter(Boolean).join(', ')||'—'}</span></div>
+    ${r.county ? `<div class="rp-row"><span class="rp-lbl">County</span><span class="rp-val">${r.county}</span></div>` : ''}
+    ${r.sponsor ? `<div class="rp-row"><span class="rp-lbl">Sponsor</span><span class="rp-val">${r.sponsor}</span></div>` : ''}
+    <div class="rp-badges">${ares}${races}${skyw}${echo}${tone}</div>
+    ${r.notes ? `<div style="font-size:11px;color:#888;margin-top:6px;line-height:1.5">${r.notes}</div>` : ''}
+    <button class="add-ch" onclick="addRepToChannelLib(${JSON.stringify({callsign:r.callsign,output_freq:r.output_freq,input_freq:r.input_freq,tone:r.tone,mode:r.mode}).replace(/"/g,'&quot;')})">
+      + Add to Channel Library
+    </button>
+  </div>`;
+}
+
+function openMapModal() {
+  const reps = (filtered || allRepeaters || []).filter(r =>
+    r.lat && r.lon && Math.abs(r.lat) > 0.01 && Math.abs(r.lon) > 0.01
+  );
+  if (!reps.length) {
+    alert('No repeaters with coordinates in the current view.\nLoad a RepeaterBook CSV — it includes lat/lon for every repeater.');
+    return;
+  }
+
+  document.getElementById('mapModal').classList.add('open');
+  repMapOpen = true;
+
+  // Initialise map once
+  if (!repMap) {
+    repMap = L.map('mapLeaflet', { zoomControl:true });
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution:'&copy; OpenStreetMap · CartoDB',
+      maxZoom:18
+    }).addTo(repMap);
+    repMarkersLayer = L.layerGroup().addTo(repMap);
+  }
+
+  // Re-render markers from current filtered set
+  repMarkersLayer.clearLayers();
+  const bounds = [];
+  reps.forEach(r => {
+    const m = L.marker([r.lat, r.lon], { icon: makeRepIcon(r) });
+    m.bindPopup(makeRepPopup(r), { maxWidth:280 });
+    m.addTo(repMarkersLayer);
+    bounds.push([r.lat, r.lon]);
+  });
+
+  // Fit to markers
+  if (bounds.length) {
+    repMap.fitBounds(bounds, { padding:[40,40], maxZoom:12 });
+  }
+
+  // Update status
+  const withCoords = reps.length;
+  const total = (filtered || allRepeaters || []).length;
+  const noCoords = total - withCoords;
+  document.getElementById('mapTitle').textContent =
+    `${withCoords.toLocaleString()} repeaters plotted`;
+  document.getElementById('mapStatusL').textContent =
+    `${withCoords.toLocaleString()} of ${total.toLocaleString()} repeaters have coordinates` +
+    (noCoords > 0 ? ` · ${noCoords} without coordinates not shown` : '');
+
+  // Update map btn count
+  document.getElementById('mapBtnCount').textContent = `(${withCoords})`;
+
+  // Trigger Leaflet resize after modal opens
+  setTimeout(() => repMap && repMap.invalidateSize(), 120);
+}
+
+function closeMapModal() {
+  document.getElementById('mapModal').classList.remove('open');
+  repMapOpen = false;
+}
+
+// Enable map button when data is loaded, update count
+function updateMapBtn() {
+  const total = (allRepeaters || []).length;
+  const withCoords = (allRepeaters || []).filter(r =>
+    r.lat && r.lon && Math.abs(r.lat) > 0.01
+  ).length;
+  const btn = document.getElementById('mapViewBtn');
+  if (btn) {
+    btn.disabled = withCoords === 0;
+    document.getElementById('mapBtnCount').textContent =
+      withCoords > 0 ? `(${withCoords.toLocaleString()})` : '';
+  }
+}
+
+// Keyboard close
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && repMapOpen) closeMapModal();
+});
+
 </script>
+
+<!-- ── Repeater Map Modal ──────────────────────────────────────────────── -->
+<div id="mapModal">
+  <div class="modal-hdr">
+    <span>📍 REPEATER MAP</span>
+    <span id="mapTitle" style="font-size:12px;color:rgba(255,255,255,.7)"></span>
+    <button class="close-btn" onclick="closeMapModal()">✕ Close</button>
+  </div>
+  <div class="map-legend">
+    <span>Mode:</span>
+    <span class="leg"><span class="dot" style="background:#4caf50"></span>FM</span>
+    <span class="leg"><span class="dot" style="background:#00b4ff"></span>D-STAR</span>
+    <span class="leg"><span class="dot" style="background:#ff8c00"></span>C4FM/Fusion</span>
+    <span class="leg"><span class="dot" style="background:#c850ff"></span>DMR</span>
+    <span class="leg"><span class="dot" style="background:#ff4040"></span>P25</span>
+    <span class="leg"><span class="dot" style="background:#f5a623;border-color:#f5a623"></span>ARES/RACES</span>
+    <span style="margin-left:auto;font-size:11px;color:var(--muted)">
+      Pins show currently filtered repeaters with coordinates · Click pin for details
+    </span>
+  </div>
+  <div id="mapLeaflet"></div>
+  <div class="map-status">
+    <span id="mapStatusL">Loading…</span>
+    <span id="mapStatusR">Click a repeater pin to view details · Click + Add to Channel Library to import</span>
+  </div>
+</div>
+
 </body>
 </html>

@@ -934,11 +934,28 @@ class Handler(BaseHTTPRequestHandler):
         except: pass
         results["wifi_ap"]={"ok":ap_ok,"label":"EMCOMM-NET WiFi AP"}
         n_reps=c.execute("SELECT COUNT(*) FROM repeaters").fetchone()[0]
-        results["repeater_db"]={"ok":n_reps>0,"label":"Repeater Database","detail":f"{n_reps} repeaters"}
+        n_reps_geo=c.execute("SELECT COUNT(*) FROM repeaters WHERE lat IS NOT NULL AND lat!=0").fetchone()[0]
+        results["repeater_db"]={"ok":n_reps>0,"label":"Repeater Database",
+                                 "detail":f"{n_reps} repeaters ({n_reps_geo} with coordinates)",
+                                 "count":n_reps,"geo_count":n_reps_geo}
+        n_roster=c.execute("SELECT COUNT(*) FROM roster").fetchone()[0]
+        results["roster"]={"ok":n_roster>0,"label":"Member Roster",
+                            "detail":f"{n_roster} members","count":n_roster}
+        n_channels=c.execute("SELECT COUNT(*) FROM channels").fetchone()[0]
+        results["channel_lib"]={"ok":n_channels>0,"label":"Channel Library",
+                                 "detail":f"{n_channels} channels","count":n_channels}
+        org=c.execute("SELECT org_name,callsign FROM station_config LIMIT 1").fetchone()
+        org_ok=bool(org and org['org_name'] and org['callsign'])
+        org_detail=f"{org['org_name']} ({org['callsign']})" if org_ok else "Not configured"
+        results["org_setup"]={"ok":org_ok,"label":"Organization Setup","detail":org_detail}
+        n_inc=c.execute("SELECT COUNT(*) FROM incidents WHERE status='active'").fetchone()[0]
+        results["active_incident"]={"ok":n_inc>0,"label":"Active Incident",
+                                     "detail":f"{n_inc} active incident{'s' if n_inc!=1 else ''}",
+                                     "count":n_inc}
         dms=c.execute("SELECT state FROM dms_state WHERE id=1").fetchone()
         dms_s=dms["state"] if dms else "disarmed"
         results["dms_state"]={"ok":dms_s!="triggered","label":"Dead Man's Switch","state":dms_s}
-        critical=["nginx","fcc_lookup","wifi_ap"]; important=["graywolf","pat","fcc_db","gps_fix"]
+        critical=["nginx","fcc_lookup","wifi_ap","org_setup"]; important=["graywolf","pat","fcc_db","gps_fix","roster","repeater_db"]
         crit_ok=all(results[k]["ok"] for k in critical)
         imp_ok=all(results[k]["ok"] for k in important if k in results)
         verdict="GO" if (crit_ok and imp_ok) else "CAUTION" if crit_ok else "NO-GO"

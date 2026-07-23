@@ -112,7 +112,7 @@ class NC(canvas.Canvas):
         self.setFillColor(HexColor('#8090c0'))
         self.setFont('Helvetica', 9.5)
         self.drawCentredString(PAGE_W/2, PAGE_H*0.30,
-            'ASUS RT-BE58 Go  ·  UniFi Switch Flex 2.5G  ·  Raspberry Pi 5  ·  Pironman MAX 5')
+            'ASUS RT-BE58 Go  ·  UniFi Switch Lite 16 PoE  ·  Raspberry Pi 5  ·  Pironman MAX 5')
 
         # ── Affiliation line ───────────────────────────────────────────────────
         self.setFillColor(HexColor('#6070a0'))
@@ -438,8 +438,7 @@ story.append(H2('Network Hardware'))
 story.append(P(
     'Wi-Fi is provided by the ASUS RT-BE58 Go travel router — neither Pi runs a Wi-Fi hotspot. '
     'The UniFi Switch Lite 16 PoE provides 16 wired gigabit ports for both Pi servers, '
-    'the Windows laptop, four operator workstations, a network printer, and room for expansion. '
-    'This replaces the original 5-port Flex 2.5G which is too small for the full deployment.'))
+    'the Windows laptop, four operator workstations, a network printer, and room for expansion.'))
 story.append(SP(4))
 story.append(tbl(['DEVICE', 'ROLE', 'NOTES'], [
     ['ASUS RT-BE58 Go',
@@ -448,10 +447,10 @@ story.append(tbl(['DEVICE', 'ROLE', 'NOTES'], [
      'Handles EMCOMM-NET Wi-Fi, DHCP for 192.168.50.100-200, and optional WAN routing.'],
     ['UniFi Switch Lite 16 PoE',
      '16-port gigabit managed switch  /  8x PoE + 8x non-PoE  /  2x 1G SFP uplink',
-     'Replaces the 5-port Flex 2.5G.  Port layout: 1=ASUS router uplink, '
-     '2=FieldCommand Pi, 3=44Net Gateway Pi, 4=Windows laptop, '
-     '5=color MFP printer, 6-9=Pi 500 workstations, 10=Satellite dish (optional), 11-16=spare.  '
-     '~$200.  PoE powers future UniFi APs without a separate injector.'],
+     'Port layout: 1=ASUS router uplink, 2=FieldCommand Pi, 3=44Net Gateway Pi, '
+     '4=Windows laptop, 5=color MFP printer, 6-9=Pi 500 workstations, '
+     '10=Satellite dish (optional), 11-12=AiMesh nodes, 13-16=spare.  '
+     '~$200.  PoE ports power cameras, future UniFi APs, or PoE devices without a separate injector.'],
         ], [1.6*inch, 1.8*inch, CW-3.4*inch]))
 story.append(SP(8))
 story.append(H2('Accessories & Cables'))
@@ -544,14 +543,14 @@ bom_rows = [
     ['NVMe SSD × 2  (RAID 1)', '1 TB M.2 2280 PCIe Gen 3/4 NVMe  (e.g. WD Blue SN580 or Samsung 980)  —  NAND shortage pricing ~$180 each as of mid-2026 (was ~$75)', 'Amazon · B&H · Newegg  (~$180 each)'],
     ['Pi 5 USB-C power supply', 'Official Raspberry Pi 27W USB-C PD power supply', 'raspberrypi.com · Adafruit · Amazon'],
     ['MicroSD card  (boot / initial RAID setup)', '32 GB Class 10 / A1 microSD  (removed after RAID is built)', 'Amazon'],
-    cat_row('44Net Gateway  (Pi 5 — 8 GB)'),
-    ['Raspberry Pi 5  —  16 GB RAM', 'Raspberry Pi 5 Model B  (16 GB)  —  dedicated AMPRNet gateway  (matches FieldCommand Pi for spare-parts commonality)  —  8 GB variant (~$130) acceptable for gateway-only role', 'raspberrypi.com · Adafruit · PiShop.us  (~$305)'],
+    cat_row('44Net Gateway  (Pi 5 — 16 GB)'),
+    ['Raspberry Pi 5  —  16 GB RAM', 'Raspberry Pi 5 Model B  (16 GB)  —  dedicated AMPRNet gateway  —  matches FieldCommand Pi for spare-parts commonality  —  8 GB variant (~$130) also works for gateway-only role if budget is tight', 'raspberrypi.com · Adafruit · PiShop.us  (~$305)'],
     ['Argon NEO 5 M.2 BRED case', 'Argon NEO 5 M.2 BRED  (compact, passive-cooled, M.2 SATA slot, aluminum)  —  fits Pi 5', 'argon40.com · Amazon  (~$35)'],
     ['M.2 SATA SSD  (gateway OS + config)', '256 GB M.2 2242 or 2280 SATA SSD  —  OS, WireGuard config, routing tables', 'Amazon · Newegg  (~$25)'],
     ['Pi 5 USB-C power supply', 'Official Raspberry Pi 27W USB-C PD power supply  —  one per Pi', 'raspberrypi.com · Adafruit · Amazon'],
-    cat_row('Networking  (upgraded from 5-port to 16-port)'),
-    ['ASUS RT-BE58 Go travel router', 'ASUS RT-BE58 Go  (Wi-Fi 7, 2.5G LAN uplink, USB-C 18W power)', 'Amazon · Best Buy · B&H'],
-    ['UniFi Switch Lite 16 PoE', 'Ubiquiti USW-Lite-16-PoE  (16-port GbE, 8× PoE, 2× SFP uplink, 45W)  —  replaces Flex 2.5G-5', 'ui.com · Amazon · B&H  (~$200)'],
+    cat_row('Networking'),
+    ['ASUS RT-BE58 Go travel router', 'ASUS RT-BE58 Go  (Wi-Fi 7, 2.5G LAN uplink, USB-C 18W power)  —  qty: 3 recommended (1 primary + 2 AiMesh nodes)', 'Amazon · Best Buy · B&H'],
+    ['UniFi Switch Lite 16 PoE', 'Ubiquiti USW-Lite-16-PoE  (16-port GbE, 8× PoE, 2× SFP uplink, 45W PoE budget)', 'ui.com · Amazon · B&H  (~$200)'],
     ['CAT 6 Ethernet cables × 10', '1 ft – 6 ft CAT 6 patch cables  —  router to switch, both Pis, laptop, printer, 4× workstations', 'Amazon · Monoprice'],
     cat_row('Radio & Comms  (McHenry County ESV — K9ESV)'),
     ['Icom IC-7300MK2 HF transceiver', 'Icom IC-7300MK2 (HF/50 MHz)  —  HDMI output, USB-C dual COM + audio, LAN port, built-in CW decoder, improved RMDR  —  check Icom coupons before purchase', 'Ham Radio Outlet · DX Engineering · R&L · GigaParts  (~$1,500)'],
@@ -1622,6 +1621,60 @@ story.append(CodeBlock([
     'ip addr show eth0',
     '# Should show: inet 192.168.50.1/24',
 ]))
+story.append(SP(8))
+
+# ── PRE-DEPLOYMENT DATA CHECKLIST ─────────────────────────────────────────────
+story.append(H2('Pre-Deployment Data Checklist'))
+story.append(P(
+    'Before every activation, load the following data into FieldCommand. '
+    'This can be done days ahead or immediately on-site — all data is stored '
+    'locally and persists through reboots. '
+    'The Preflight page (http://192.168.50.1/preflight.html) '
+    'automatically verifies each of these items when it loads.'))
+story.append(SP(6))
+story.append(tbl(['DATA', 'HOW TO LOAD', 'WHERE TO VERIFY', 'IMPACT IF MISSING'], [
+    ['Organization setup',
+     'http://192.168.50.1/setup.html → enter org name, callsign, '
+     'contact information, and deployment location.',
+     'Preflight → Data Readiness → Organization Setup shows ✓',
+     'ICS forms, cover pages, and header blocks will show blank fields'],
+    ['FCC Amateur Database',
+     'Installed automatically by install.sh. '
+     'Refresh: sudo systemctl start fcc-refresh.service '
+     '(runs in background, ~10 minutes, ~600 MB download).',
+     'Preflight → Data Readiness → FCC Callsign Database shows record count and age',
+     'Net logger callsign lookup and AMPRNet authentication will not work'],
+    ['Member Roster',
+     'http://192.168.50.1/roster.html → Import CSV or + Add Member. '
+     'CSV columns: first_name, last_name, callsign, radio_id, ema_id, city, state.',
+     'Preflight → Data Readiness → Member Roster shows member count',
+     'Check-in forms will not auto-populate names; EMA ID lookup will not work'],
+    ['Repeater Database',
+     'http://192.168.50.1/repeaters.html → Offline File tab → '
+     'log in at repeaterbook.com (free account) → search area → Export → CSV → '
+     'drag CSV onto the drop zone. RepeaterBook CSV includes GPS coordinates.',
+     'Preflight → Data Readiness → Repeater Database shows count and how many have coordinates',
+     'ICS-205 channel picker will be empty; repeater map overlay will show no pins'],
+    ['Channel Library',
+     'http://192.168.50.1/channel_library.html → + Add Channel, '
+     'or click "+ Add to Channel Library" from the Repeater Database map popup.',
+     'Preflight → Data Readiness → Channel Library shows channel count',
+     'ICS-205 communications plan will have no channels to select'],
+    ['Active Incident',
+     'http://192.168.50.1/incident.html → + New Incident → '
+     'enter incident name, type, location, and start time → Save. '
+     'Or activate an event template at event_templates.html.',
+     'Preflight → Data Readiness → Active Incident shows ✓',
+     'Net logger, resource board, ICS forms, and T-cards will have no incident to attach to'],
+], [1.3*inch, 2.1*inch, 1.5*inch, CW-4.9*inch]))
+story.append(SP(4))
+story.append(NoteBox(
+    'The Preflight Deployment Checklist at http://192.168.50.1/preflight.html '
+    'auto-checks all six items above on page load and shows live server detail — '
+    'record counts, database age, and error descriptions — without any operator input. '
+    'Run the Preflight page as the final go/no-go check before activating the system. '
+    'Each NO-GO item includes a direct link to the page where it can be resolved.',
+    'tip'))
 story.append(PB())
 
 # ── REFERENCE SECTIONS ────────────────────────────────────────────────────────
@@ -3738,6 +3791,35 @@ story.append(CodeBlock([
     '#  9) Show disk usage',
 ]))
 story.append(SP(6))
+story.append(H2('Loading Repeater Data'))
+story.append(P(
+    'The Repeater Database is populated by the Net Control operator or technical lead '
+    'before each activation. No API token is required for the recommended method.'))
+story.append(SP(4))
+story.append(steps([
+    'On any device connected to EMCOMM-NET, open a browser and go to '
+    '<b>http://192.168.50.1/repeaters.html</b>.',
+    'Click the <b>📁 Offline File</b> tab (active by default).',
+    'From a device with internet access, log in at '
+    '<b>repeaterbook.com</b> (free account) → search your county and '
+    'surrounding mutual-aid area → click <b>Export → CSV</b>.',
+    'Transfer the CSV to a device on EMCOMM-NET '
+    '(email it to yourself, copy to USB, or download on a device already on EMCOMM-NET).',
+    'Drag the CSV file onto the drop zone, or click to browse and select it.',
+    'Repeaters load instantly and are saved to the local database — '
+    'they persist through reboots and are immediately available in the '
+    'ICS-205 channel picker, channel library, and cheat sheets.',
+]))
+story.append(SP(4))
+story.append(NoteBox(
+    'The CSV export from repeaterbook.com requires only a free account login — '
+    'it is not the same as the RepeaterBook API token. '
+    'The API token is a separate application process (repeaterbook.com/api/token_request.php) '
+    'and is only needed if you want the Pi to fetch data automatically via fetch_repeaters.py. '
+    'For most deployments, refreshing the CSV before each activation is the practical approach.',
+    'tip'))
+story.append(SP(8))
+
 story.append(H2('USB Auto-Backup'))
 story.append(P('Insert a USB drive formatted with the label <b>FIELDCOMMAND</b> to trigger an automatic backup '
                'of all runtime data. The backup copies /opt/fieldcommand/data/ to a timestamped folder on the USB drive.'))
@@ -3758,6 +3840,7 @@ story.append(ref_tbl_2col(['SYMPTOM', 'LIKELY CAUSE / FIX'], [
     ['http://192.168.50.1 not reachable', 'Pi not running, or ASUS router not configured with 192.168.50.x subnet. Check Pi power LED. Verify router LAN IP is 192.168.50.1.'],
     ['Dashboard loads but cards give errors', 'Not connected to EMCOMM-NET — device is on a different network. Check Wi-Fi — must show EMCOMM-NET.'],
     ['FCC lookup returns no results', 'FCC database not yet built. Run: sudo systemctl start fcc-refresh.service (needs internet)'],
+    ['Repeater database is empty', 'No repeater data loaded yet. On any EMCOMM-NET device, open repeaters.html → Offline File tab → download a CSV from repeaterbook.com (free account, no API token needed) → drag the CSV onto the drop zone.'],
     ['APRS map shows no stations', 'Graywolf or YAAC not running, or no RF received yet. Check Health Monitor for service status. Confirm antenna connected.'],
     ['Winlink form import fails', 'Wrong file type — must be the XML attachment, not the message body. In Winlink Express, right-click .xml attachment → Save As → then import.'],
     ['Service dot is red on Health Monitor', 'Background service has stopped. SSH to Pi: sudo systemctl restart <service-name>'],

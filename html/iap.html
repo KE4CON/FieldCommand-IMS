@@ -46,7 +46,12 @@
   <div style="margin-left:auto;display:flex;gap:8px">
     <button onclick="exportIAP()"
       style="background:var(--eoc);border-color:var(--eoc);color:#fff;font-weight:bold;padding:8px 20px">
-      📄 Export IAP (Print All)
+      🖨 Print IAP
+    </button>
+    <button onclick="saveIAP()"
+      title="Save IAP as an HTML file you can open and print on any device — no printer needed on site"
+      style="background:none;border:1px solid var(--eoc-lt);color:var(--eoc-lt);font-weight:bold;padding:8px 16px">
+      💾 Save IAP File
     </button>
     <a href="incident.html" style="color:var(--muted);font-size:12px;padding:8px">← Incident</a>
   </div>
@@ -301,15 +306,11 @@ function renderQuickLinks() {
   ).join('');
 }
 
-function exportIAP() {
+function buildIAPHtml() {
   const period = document.getElementById('iapPeriod').value;
   const variant = document.getElementById('iapVariant').value;
   const includedForms = IAP_FORMS.filter(f => included.has(f.num));
-
-  // Open each form in print mode in sequence
-  // Build a combined print window
-  const printWin = window.open('', '_blank', 'width=900,height=700');
-  printWin.document.write(`<!DOCTYPE html><html><head>
+  return { period, variant, includedForms, html: `<!DOCTYPE html><html><head>
     <title>IAP — ${incData.name||'Incident'} — Period ${period}</title>
     <style>
       body { font-family:Arial,sans-serif; margin:0; }
@@ -392,14 +393,32 @@ function exportIAP() {
       ).join('')}
     </ul>
     <p style="margin-top:20px;font-size:11px;color:#888">
-      Full automated IAP PDF export (all forms compiled into one document) is planned for a future
-      update when the IAP assembly feature is complete.
+      <strong>To save for off-site printing:</strong> use the <strong>💾 Save IAP File</strong> button on the IAP page. It downloads a self-contained HTML file you can open in any browser on any device — copy it to a USB drive, email it, or transfer it to a laptop with a printer. Open the file and use the browser's Print function.
     </p>
   </div>
 
-  <script>window.print()<\/script>
-  </body></html>`);
+  </body></html>`};
+}
+
+function exportIAP() {
+  const { html, period, includedForms } = buildIAPHtml();
+  const printWin = window.open('', '_blank', 'width=900,height=700');
+  printWin.document.write(html + '<script>window.print()<\/script></body></html>');
   printWin.document.close();
+}
+
+function saveIAP() {
+  const { html, period, variant } = buildIAPHtml();
+  // Remove the auto-print script from the saved file
+  const saveHtml = html + '</body></html>';
+  const incName = (incData.name || 'Incident').replace(/[^a-zA-Z0-9_-]/g, '_');
+  const filename = `IAP_${incName}_Period${period}_${new Date().toISOString().slice(0,10)}.html`;
+  const blob = new Blob([saveHtml], { type: 'text/html;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(a.href);
 }
 
 init();

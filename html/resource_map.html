@@ -84,6 +84,8 @@ html,body { height:100%;margin:0;padding:0; }
     style="font-size:11px;padding:4px 10px">📍 My Location</button>
   <button onclick="loadResources()"
     style="font-size:11px;padding:4px 10px">↺ Refresh</button>
+  <button id="repBtn" onclick="toggleRepLayer()"
+    style="font-size:11px;padding:4px 10px" title="Toggle repeater overlay from Repeater Database">📡 Repeaters</button>
   <label style="font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px">
     <input type="checkbox" id="autoRefresh" onchange="toggleAutoRefresh()">
     Auto-refresh 30s
@@ -531,6 +533,74 @@ function toggleAutoRefresh() {
 // ── Init ───────────────────────────────────────────────────────────
 initMap();
 loadIncidents();
+
+// ── REPEATER OVERLAY ──────────────────────────────────────────────────────────
+const repLayer = L.layerGroup();
+let repLayerOn = false, repLayerLoaded = false;
+
+function repModeColor(mode) {
+  const m = (mode||'').toLowerCase();
+  if (m.includes('dstar') || m.includes('d-star')) return '#00b4ff';
+  if (m.includes('c4fm') || m.includes('fusion'))  return '#ff8c00';
+  if (m.includes('dmr'))  return '#c850ff';
+  if (m.includes('p25'))  return '#ff4040';
+  return '#4caf50';
+}
+
+async function toggleRepLayer() {
+  const btn = document.getElementById('repBtn');
+  if (repLayerOn) {
+    map.removeLayer(repLayer);
+    repLayerOn = false;
+    btn && (btn.style.borderColor = '');
+    return;
+  }
+  if (!repLayerLoaded) {
+    btn && (btn.textContent = '📡 Loading…');
+    try {
+      const res = await fetch('http://192.168.50.1:5050/api/repeaters');
+      if (!res.ok) throw new Error(res.status);
+      const reps = await res.json();
+      repLayer.clearLayers();
+      let n = 0;
+      reps.forEach(r => {
+        const lat = parseFloat(r.lat), lon = parseFloat(r.lon);
+        if (!lat || !lon || Math.abs(lat) < 0.01) return;
+        const c = (r.ares || r.races || r.ARES === 'Yes' || r.RACES === 'Yes')
+          ? '#f5a623' : repModeColor(r.mode);
+        const icon = L.divIcon({
+          html: `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16"><circle cx="8" cy="8" r="6" fill="${c}" stroke="rgba(0,0,0,.4)" stroke-width="1.5" opacity=".85"/></svg>`,
+          iconSize:[16,16], iconAnchor:[8,8], className:''
+        });
+        const offset = r.input_freq && r.output_freq
+          ? (parseFloat(r.input_freq)-parseFloat(r.output_freq)).toFixed(3).replace(/\.?0+$/,'') + ' MHz'
+          : 'Simplex';
+        const emcomm = [r.ares||r.ARES==='Yes'?'ARES':'', r.races||r.RACES==='Yes'?'RACES':'',
+                         r.skywarn||r.SKYWARN==='Yes'?'SKYWARN':''].filter(Boolean);
+        L.marker([lat,lon],{icon}).addTo(repLayer).bindPopup(
+          `<div style="font-size:12px;min-width:160px">
+            <div style="font-family:monospace;font-size:18px;color:#4caf50">${r.output_freq} MHz</div>
+            <div style="font-family:monospace;color:#f5a623">${r.callsign||'—'} · ${r.mode||'FM'}</div>
+            <div style="color:#aaa;font-size:11px">Offset: ${offset}${r.tone?' · '+r.tone+' Hz':''}</div>
+            ${[r.city,r.state].filter(Boolean).length?`<div style="color:#aaa;font-size:11px">${[r.city,r.state].filter(Boolean).join(', ')}</div>`:''}
+            ${emcomm.length?`<div style="color:#f5a623;font-size:11px;margin-top:3px">${emcomm.join(' · ')}</div>`:''}
+           </div>`, {maxWidth:220}
+        );
+        n++;
+      });
+      repLayerLoaded = true;
+      btn && (btn.textContent = `📡 Repeaters (${n})`);
+    } catch(e) {
+      btn && (btn.textContent = '📡 Repeaters');
+      alert('Could not load repeater data. Import a RepeaterBook CSV on the Repeater Database page first.');
+      return;
+    }
+  }
+  repLayer.addTo(map);
+  repLayerOn = true;
+  btn && (btn.style.borderColor = '#f5a623');
+}
+
 </script>
 </body>
 </html>

@@ -428,6 +428,16 @@ story.append(SP(4))
 story.append(tip('Resource pins are color-coded by status. '
                  'Resources without GPS show as dashed circles in the sidebar. '
                  'Enable Auto-refresh 30s for moving resources.'))
+story.append(SP(4))
+story.append(ref_tbl(
+    ['LAYER', 'HOW TO ENABLE'],
+    [
+        ['📡 Repeater overlay',
+         'Click 📡 Repeaters in the toolbar — loads all repeaters from the local database '
+         'and plots mode-colored pins on the resource map. '
+         'Amber pins = ARES/RACES-affiliated. Click any pin for frequency, offset, and tone.'],
+    ],
+    [1.3*inch, CW-1.3*inch]))
 story.append(PB())
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -500,8 +510,9 @@ story.append(ref_tbl(
     ['TASK', 'HOW'],
     [
         ['Digital signature',   'Click any Prepared By / Approved By field — sign with mouse, touch, or stylus → Accept'],
-        ['Compile IAP PDF',     'Go to iap_compile.html → check forms to include → click 📄 Compile IAP PDF (5–15 sec)'],
-        ['Print IAP',           'Go to printcenter.html → select IAP PDF → print to any CUPS printer on the network'],
+        ['Compile IAP PDF',     'Go to iap_compile.html → select forms → click Download IAP PDF (5–15 sec). Server-generated PDF — downloadable from any EMCOMM-NET device.'],
+        ['Print IAP on-site',   'Go to iap.html → select forms and period → click 🖨 Print IAP → browser print dialog opens.'],
+        ['Save IAP for off-site printing', 'Go to iap.html → select forms and period → click 💾 Save IAP File. Downloads a self-contained HTML file — open on any device with a browser and print with Ctrl+P / Cmd+P. Copy to USB or email.'],
     ],
     [1.4*inch, CW-1.4*inch]))
 story.append(PB())

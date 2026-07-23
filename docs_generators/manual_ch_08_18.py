@@ -406,10 +406,94 @@ def ch15():
 
     s.append(P('15.3  Preflight Deployment Checklist', H2))
     s.append(P(
-        'The Preflight page (preflight.html) provides a go/no-go checklist covering '
-        'hardware, software, power, communications, and personnel readiness before '
-        'deploying the FieldCommand system. Each item can be checked off and notes '
-        'added. The checklist can be printed for signature.'))
+        'The Preflight page (preflight.html) provides a comprehensive GO/CAUTION/NO-GO '
+        'checklist for verifying system and data readiness before every activation. '
+        'It combines automated server checks that run without any operator input '
+        'with a manual section-by-section checklist covering hardware, power, '
+        'communications, personnel, logistics, safety, and agency coordination. '
+        'A rolling verdict at the top of the page updates in real time as items are checked.'))
+    s.append(SP(6))
+
+    s.append(P('Data Readiness — Automated Checks', H3))
+    s.append(P(
+        'The first section of the preflight checklist — Data Readiness — runs automatically '
+        'when the page loads and whenever the operator clicks Re-Check. '
+        'It queries the FieldCommand server and verifies six critical data items:'))
+    s.append(SP(4))
+    s.append(tbl(['CHECK ITEM', 'WHAT IS VERIFIED', 'REQUIRED FOR GO?'], [
+        ['Organization Setup',
+         'Org name and callsign have been entered in the setup page.',
+         'Yes — required'],
+        ['FCC Callsign Database',
+         'FCC amateur license database is present and less than 14 days old. '
+         'Shows record count and age in days.',
+         'Yes — required'],
+        ['Member Roster',
+         'At least one member has been imported or entered in the roster.',
+         'Recommended'],
+        ['Repeater Database',
+         'Repeater data has been loaded from a RepeaterBook CSV or manual entry. '
+         'Shows total count and how many have map coordinates.',
+         'Recommended'],
+        ['Channel Library',
+         'At least one channel has been added to the channel library.',
+         'Recommended'],
+        ['Active Incident',
+         'An incident has been created and set to active status.',
+         'Recommended'],
+    ], widths=[1.4*inch, 3.0*inch, CW-4.4*inch]))
+    s.append(SP(4))
+    s.append(note(
+        'Each auto-check item shows live server detail inline — for example '
+        '"✓ 847,223 records, 3.2 days old" or "✗ 0 repeaters loaded." '
+        'Items that fail auto-check are automatically set to NO-GO. '
+        'Operators can override any item manually if circumstances warrant. '
+        'Each NO-GO item description includes the page URL to navigate to and fix it.',
+        'note'))
+    s.append(SP(6))
+
+    s.append(P('Manual Checklist Sections', H3))
+    s.append(tbl(['SECTION', 'COVERS'], [
+        ['⚡ Power Systems',
+         'Shore/generator power, battery backup/UPS, solar, fuel, power distribution'],
+        ['📻 Communications Equipment',
+         'HF radio, VHF/UHF radio, go-kit radios, antennas, repeater access, '
+         'Winlink, JS8Call'],
+        ['💻 Computing & Software',
+         'Server boot, FCC database, nginx, API server, health monitor, '
+         'Graywolf APRS, Kiwix, Wi-Fi AP'],
+        ['👤 Personnel & Staffing',
+         'Net Control operator, alternate NCS, agency liaison, operator briefing, '
+         'roster check-in'],
+        ['📦 Logistics & Supplies',
+         'Food and water, first aid, weather protection, spare parts, '
+         'lighting, paper backup forms'],
+        ['🛡 Safety & Security',
+         'Lightning protection, RF exposure, CO detector, emergency comms plan, '
+         'contact list'],
+        ['🤝 Agency Coordination',
+         'EOC check-in, frequencies confirmed, ICP location, resource request '
+         'process, demobilization plan'],
+    ], widths=[1.8*inch, CW-1.8*inch]))
+    s.append(SP(6))
+    s.append(P('How to Use the Preflight Checklist', H3))
+    s += steps([
+        'Open <b>http://192.168.50.1/preflight.html</b> on any EMCOMM-NET device. '
+        'The Data Readiness section runs automatically — review any NO-GO items first.',
+        'For each NO-GO data item, click the link in the item description to navigate '
+        'to the fix page (roster.html, repeaters.html, channel_library.html, or incident.html). '
+        'Return to preflight and click <b>↺ Auto-Check</b> to re-verify.',
+        'Work through each manual section. For each item, click '
+        '<b>✓ GO</b>, <b>⚠ CAUTION</b>, or <b>✕ NO-GO</b>. '
+        'Add a note in the text field if needed.',
+        'The verdict banner updates in real time. '
+        '<b>GO</b> (green) means all required items are confirmed. '
+        '<b>CAUTION</b> (amber) means optional items need attention. '
+        '<b>NO-GO</b> (red) means a required item has failed — do not activate.',
+        'Click <b>Save State</b> to store the current checklist to browser storage '
+        'for the shift record. Click <b>Export Report</b> to download a JSON summary '
+        'for documentation.',
+    ])
     s.append(PB())
     return s
 
@@ -632,32 +716,66 @@ def ch17():
     ])
     s.append(SP(6))
 
-    s.append(P('17.3  IAP One-Click PDF Compilation', H2))
+    s.append(P('17.3  IAP Assembly Page — Print and Save', H2))
+    s.append(P(
+        'The IAP Assembly page (iap.html) lets the Planning Section select which '
+        'ICS forms to include in the operational period package, then either print '
+        'the IAP immediately or save it as a portable file for off-site printing. '
+        'Two export options are available:'))
+    s.append(SP(4))
+    s.append(tbl(['OPTION', 'WHEN TO USE', 'HOW IT WORKS'], [
+        ['🖨 Print IAP',
+         'A printer is available on EMCOMM-NET or connected to the device being used.',
+         'Opens a formatted print window in a new browser tab with a cover page, '
+         'table of contents, and links to each selected ICS form. '
+         'The browser print dialog opens automatically.'],
+        ['💾 Save IAP File',
+         'No printer is on-site, or the IAP needs to be taken off-site, '
+         'emailed, or printed at a different location.',
+         'Downloads a self-contained HTML file with the IAP cover page and form index. '
+         'The file can be opened in any browser on any device and printed from there. '
+         'Copy it to a USB drive or email it to a location with a printer.'],
+    ], widths=[1.2*inch, 2.2*inch, CW-3.4*inch]))
+    s.append(SP(4))
+    s += steps([
+        'Navigate to <b>http://192.168.50.1/iap.html</b> or click IAP in the Planning section.',
+        'Select the operational period and variant (full/command/logistics).',
+        'Check the forms to include. Required forms are pre-checked. '
+        'Typically include ICS-202, 203, 204, 205, 205A, 206, 207, and 208.',
+        '<b>If printing on-site:</b> click <b>🖨 Print IAP</b>. '
+        'The print dialog opens in a new tab. Select the site printer.',
+        '<b>If no printer on site:</b> click <b>💾 Save IAP File</b>. '
+        'A file named <font face="Courier">IAP_[Incident]_Period[N]_[Date].html</font> '
+        'downloads automatically.',
+        'Copy the downloaded HTML file to a USB drive or email it.',
+        'On any device with a printer, open the HTML file in a browser and '
+        'select File → Print (or Ctrl+P / Cmd+P).',
+    ])
+    s.append(SP(6))
+
+    s.append(P('17.4  IAP PDF Compilation', H2))
     s.append(P(
         'The IAP Compile page (iap_compile.html) assembles all completed ICS forms '
-        'for the active incident into a single print-ready PDF with a cover page '
-        'and section dividers. This is the IAP package distributed to section chiefs '
-        'at each operational period briefing.'))
+        'into a single server-generated PDF with embedded signatures, a cover page, '
+        'and section dividers. This is the full distributable IAP package.'))
     s.append(SP(4))
     s += steps([
         'Navigate to <b>IAP Compile</b> from the dashboard or the Planning section.',
         'The page shows a checklist of all ICS forms for the active incident. '
-        'Completed forms are shown with a checkmark. Incomplete forms are flagged.',
-        'Select which forms to include using the checkboxes. '
-        'Typically include: ICS-202, 203, 204, 205, 206, and 207 at minimum.',
-        'Click <b>📄 Compile IAP PDF</b>. The server generates the PDF server-side '
-        'using ReportLab and pypdf. This takes 5–15 seconds.',
-        'The PDF downloads automatically. It includes a title page with the incident '
-        'name, operational period, and compilation timestamp; section dividers; '
-        'and all selected forms with embedded signatures.',
-        'Print the PDF at the Print Center (Chapter 27) for distribution.',
+        'Completed forms show a checkmark. Incomplete or missing forms are flagged.',
+        'Select which forms to include. '
+        'Required forms for a standard IAP: ICS-202, 203, 204, 205, 206, 207, 208.',
+        'Click <b>Download IAP PDF</b>. The Pi server generates the PDF — '
+        'this takes 5 to 15 seconds depending on how many forms are included.',
+        'The PDF downloads automatically. It can be printed from any device on '
+        'EMCOMM-NET or saved to USB for off-site printing.',
     ])
     s.append(SP(4))
     s.append(note(
-        'The IAP PDF is generated on the Pi server — not in the browser. '
-        'It can be generated from any device on EMCOMM-NET without requiring '
-        'a printer to be attached to that device. Print from any device through '
-        'the Print Center.', 'note'))
+        'The IAP PDF is generated on the Pi server and can be downloaded from any device '
+        'on EMCOMM-NET — no printer needs to be connected to the device that generates it. '
+        'The downloaded PDF is fully self-contained and can be printed at any location.',
+        'note'))
     s.append(PB())
     return s
 

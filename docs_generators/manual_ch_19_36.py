@@ -106,14 +106,14 @@ def ch21():
          'Who has formally checked into this incident? '
          'When did they arrive? Have they checked out?',
          'Check-in recorder at each entry point; '
-         'Resources Unit Leader (Resources Unit Leader (RESL)) collects and maintains'],
+         'Resources Unit Leader (RESL) collects and maintains'],
         ['Resource level',
          'T-Card Personnel Roster (ics/operations.html → Personnel tab)',
          'Who is assigned to each specific resource? '
          'Where is each crew member right now?',
          'Operations Section Chief; crew supervisors '
          'update their own T-card personnel list'],
-    ], widths=[1.0*inch, 1.4*inch, CW-3.1*inch, 0.7*inch]))
+    ], widths=[0.9*inch, 1.3*inch, CW-3.1*inch, 0.9*inch]))
     s.append(SP(4))
     s.append(note(
         'Both levels are required — neither alone is sufficient. '
@@ -914,7 +914,7 @@ def ch_appendix():
         ['9000',  'amprgate_status.py',      '44Net status — public read-only on EMCOMM-NET'],
         ['9001',  'amprgate_status.py',      'Tunnel control — localhost only'],
         ['80',    'nginx',                   'Serves all HTML pages and static assets'],
-    ], widths=[0.6*inch, 1.8*inch, CW-2.4*inch]))
+    ], widths=[0.65*inch, 1.8*inch, CW-2.45*inch]))
     s.append(SP(6))
 
     s.append(P('A.3  Background Services (systemd)', H2))

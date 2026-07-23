@@ -398,7 +398,7 @@ def ch5():
          'Enter the IC\'s name or callsign in the Incident Commander field '
          'when creating the incident. The ICS-203 org chart will show one IC '
          'at the top of the command structure.'],
-        ['Unified Command (Unified Command (UC))',
+        ['Unified Command (UC)',
          'Two or more agencies or jurisdictions share command authority — '
          'common in multi-agency responses, complex disasters, or incidents '
          'crossing jurisdictional boundaries. Each contributing agency provides '

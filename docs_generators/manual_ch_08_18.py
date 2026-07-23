@@ -352,7 +352,7 @@ def ch15():
          'Incident overview, general info, ICS-201 initial briefing, '
          'ICS-202 objectives, ICS-207 org chart, ICS-208 safety message, '
          'position checklists, meeting scheduler. '
-         'Note: the Safety Officer (Safety Officer (SOFR)) and Public Information Officer (PIO) '
+         'Note: the Safety Officer (SOFR) and Public Information Officer (PIO) '
          'are Command Staff — they report directly to the Incident Commander (IC), not to a section.'],
         ['Operations',
          'resources.html',
@@ -540,7 +540,7 @@ def ch17():
          'Planning Section Chief / Incident Commander (IC)',
          'Planning · ✓ IAP'],
         ['ICS-203',  'Organization Assignment List',
-         'Resources Unit Leader (Resources Unit Leader (RESL)) — Planning',
+         'Resources Unit Leader (RESL) — Planning',
          'Planning · ✓ IAP'],
         ['ICS-204',  'Assignment List',
          'Resources Unit Leader (RESL) — Planning',
@@ -552,13 +552,13 @@ def ch17():
          'Comms Unit Leader (COML) — <b>Logistics</b>/Service Branch',
          'Supplemental — often attached to IAP'],
         ['ICS-206',  'Medical Plan',
-         'Medical Unit Leader (Medical Unit Leader (MEDL)) — <b>Logistics</b>/Service Branch',
+         'Medical Unit Leader (MEDL) — <b>Logistics</b>/Service Branch',
          'Planning assembles into IAP · ✓ IAP'],
         ['ICS-207',  'Incident Organization Chart',
          'Resources Unit Leader (RESL) — Planning',
          'Command display · ✓ IAP'],
         ['ICS-208',  'Safety Message / Plan',
-         'Safety Officer (Safety Officer (SOFR)) — Command Staff',
+         'Safety Officer (SOFR) — Command Staff',
          'Planning assembles into IAP · ✓ IAP'],
         ['ICS-209',  'Incident Status Summary',
          'Situation Unit Leader (SITL) — Planning',
@@ -584,7 +584,7 @@ def ch17():
         ['ICS-309',  'Communications Log',
          'Comms Unit Leader (COML) / any operator — <b>Logistics</b>',
          'Communications unit records — not in IAP'],
-    ], widths=[0.65*inch, 1.35*inch, 1.8*inch, CW-3.8*inch]))
+    ], widths=[0.78*inch, 1.35*inch, 1.75*inch, CW-3.88*inch]))
     s.append(SP(6))
     s.append(P('17.1a  ICS Doctrine Notes — Forms That Cross Section Lines', H2))
     s.append(P(

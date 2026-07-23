@@ -594,6 +594,15 @@ story.append(PB())
 story.append(section_hdr('📡', 'Amateur Radio EMCOMM Tools',
                          'http://192.168.50.1/', EOC, EOC_BG))
 story.append(SP(4))
+story.append(tip(
+    '<b>AMPRNet / 44Net Gateway applies only when an amateur radio group '
+    'leads or is a key partner in the deployment.</b> '
+    'FCC amateur license required for registration — '
+    'a public safety agency or served organization cannot register independently. '
+    'All other tools on this page work for any deployment. '
+    'See User Manual Ch. 28 and Installation Guide Step 11 for full details.',
+    RED, RED_BG))
+story.append(SP(4))
 story.append(ref_tbl(
     ['TOOL', 'URL', 'QUICK USE'],
     [

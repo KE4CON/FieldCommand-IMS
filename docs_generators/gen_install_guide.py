@@ -2008,6 +2008,212 @@ story.append(SP(8))
 story.append(H1('Step 11:  AMPRNet / 44Net Gateway Setup'))
 story.append(HR(EOC_LT, 0.5))
 story.append(SP(4))
+
+# ── 44Net Connect Overview ────────────────────────────────────────────────────
+story.append(H2('What is AMPRNet and 44Net Connect?'))
+story.append(P(
+    'AMPRNet — Amateur Packet Radio Network — is the global amateur radio IP network '
+    'operating on the 44.0.0.0/8 address block, an entire Class A range permanently '
+    'assigned by IANA to ARRL specifically for amateur radio use. '
+    'Every licensed amateur radio operator in the world can apply for a block of '
+    '44.x.x.x IP addresses. These addresses are globally routable and reachable by '
+    'any other AMPRNet participant, whether over RF (packet radio, APRS, mesh) '
+    'or via an encrypted internet tunnel.'))
+story.append(SP(4))
+story.append(P(
+    '<b>44Net Connect</b> (connect.44net.cloud) is the current WireGuard-based tunneling '
+    'service that makes AMPRNet accessible over the internet. '
+    'The AMPRNet portal (portal.ampr.org) manages IP allocations and generates the '
+    'WireGuard configuration for each registered operator. '
+    'Once configured, the tunnel brings 44.0.0.0/8 directly to your gateway Pi — '
+    'every device on EMCOMM-NET can reach any AMPRNet address worldwide '
+    'as if it were a local IP address.'))
+story.append(SP(8))
+
+story.append(H2('Is AMPRNet Right for Your Deployment?'))
+story.append(P(
+    '<b>AMPRNet is beneficial when an amateur radio group is the lead organization '
+    'or a key partner in the EMCOMM-NET deployment.</b> '
+    'If FieldCommand is being deployed by or with an ARES, RACES, Amateur Radio Club, '
+    'or other FCC-licensed amateur radio group, AMPRNet adds significant value: '
+    'Winlink via radio-path gateways, APRS connectivity, inter-node FieldCommand '
+    'communication, and access to a global amateur radio data network — '
+    'all without touching the commercial internet.'))
+story.append(SP(4))
+story.append(P(
+    '<b>If the deployment is primarily for public safety or served agency personnel '
+    'without an amateur radio group involved, the AMPRNet gateway adds hardware '
+    'cost and complexity with limited benefit.</b> '
+    'FieldCommand IMS runs entirely without AMPRNet — all 49 web pages, ICS forms, '
+    'FEMA documentation, net loggers, personnel accountability, and all other tools '
+    'operate locally on EMCOMM-NET with no dependency on AMPRNet. '
+    'The 44Net Gateway Pi is an optional enhancement, not a requirement.'))
+story.append(SP(6))
+story.append(tbl(['SCENARIO', 'AMPRNet RECOMMENDED?', 'REASON'], [
+    ['ARES/RACES group leads the deployment',
+     '✓ Yes — strong benefit',
+     'Winlink via AMPRNet path, APRS-IS, inter-node data, global amateur station reach'],
+    ['Amateur radio club operates the EOC comms',
+     '✓ Yes — strong benefit',
+     'Same as above — the licensed operators can register and maintain the allocation'],
+    ['Amateur radio operators are supporting partners',
+     '△ Consider — moderate benefit',
+     'Beneficial if the licensed operators take ownership of the AMPRNet registration'],
+    ['Public safety agency only — no amateur radio group',
+     '✗ Not recommended',
+     'Requires FCC amateur license for registration. Adds complexity with limited payoff.'],
+    ['Municipal EOC with some licensed staff',
+     '△ Consider — if a licensed operator leads',
+     'One designated licensed operator can register under their callsign and maintain it'],
+], [2.0*inch, 1.5*inch, CW-3.5*inch]))
+story.append(SP(8))
+
+story.append(H2('The Amateur Radio Group Must Lead This Process'))
+story.append(NoteBox(
+    'The AMPRNet registration and maintenance process requires an FCC-licensed '
+    'amateur radio operator. It cannot be done by a public safety agency, '
+    'a municipality, or an IT department acting alone. '
+    'The IP block is assigned to a callsign, maintained under that callsign, '
+    'and all use is subject to Part 97 rules. '
+    'The amateur radio group must own this — the served agency or EOC cannot.',
+    'warn'))
+story.append(SP(6))
+story.append(P(
+    'In practical terms, this means the process should be initiated and led by '
+    'the ARES Emergency Coordinator (EC), club President, or a designated '
+    'technical lead who holds an FCC amateur license. '
+    'The following organizational steps should happen before any hardware is purchased '
+    'or any software is configured:'))
+story.append(SP(4))
+story.append(tbl(['STEP', 'WHO DOES IT', 'WHAT HAPPENS'], [
+    ['Designate the AMPRNet technical lead',
+     'ARES EC or club President',
+     'Identify a licensed amateur (any class) who will own the registration, '
+     'maintain the allocation, and be the point of contact for AMPRNet administrators. '
+     'Their callsign becomes the registered callsign for the subnet.'],
+    ['Coordinate with the regional AMPRNet administrator',
+     'Designated technical lead',
+     'AMPRNet is regionally administered. In Illinois, contact the Illinois AMPRNet '
+     'coordinator (reachable via ARRL Illinois or the AMPRNet mailing list) '
+     'to understand what address blocks are available in your area '
+     'and to establish a relationship before submitting the formal request.'],
+    ['Agree on the subnet size and naming',
+     'Technical lead + club leadership',
+     'A /29 gives 6 usable addresses (enough for one FieldCommand deployment plus growth). '
+     'A /28 gives 14 addresses (suitable for multiple fixed and portable stations). '
+     'The technical lead proposes this in the registration justification.'],
+    ['Establish a club or group callsign if needed',
+     'Club leadership',
+     'The allocation can be under a personal callsign (e.g. KE4CON) or a club '
+     'callsign (e.g. K9ESV). A club callsign is preferable for organizational '
+     'deployments — it survives individual license changes and transfers more easily.'],
+    ['Plan for long-term maintenance',
+     'Club leadership + technical lead',
+     'AMPRNet allocations are permanent but require the license to remain active '
+     'and the portal account to be maintained. Identify a backup technical lead '
+     'in case the primary moves or is unavailable at activation time.'],
+], [0.9*inch, 1.6*inch, CW-2.5*inch]))
+story.append(SP(8))
+
+story.append(H2('What AMPRNet Enables — Capabilities and Restrictions'))
+story.append(tbl(['CAPABILITY', 'DESCRIPTION', 'REQUIRES WAN?'], [
+    ['Winlink via AMPRNet path',
+     'Connect to Winlink RMS gateways that have 44.x.x.x addresses. '
+     'Keeps Winlink traffic within the amateur radio network rather than the commercial internet. '
+     'Useful when you want to avoid commercial internet dependency for message handling.',
+     'Yes — WireGuard tunnel requires internet to establish, but once up, '
+     'Winlink sessions travel over the 44-net tunnel'],
+    ['APRS-IS via AMPRNet',
+     'APRS-IS network servers are reachable on 44.x.x.x addresses. '
+     'Configure Graywolf or YAAC to use the AMPRNet path instead of the public internet.',
+     'Yes — same tunnel dependency'],
+    ['Inter-node FieldCommand',
+     'Two FieldCommand systems with 44Net gateways can share net log data, '
+     'resource board status, and incident information over AMPRNet '
+     'without routing through the commercial internet. '
+     'Useful for multi-site EOC deployments.',
+     'Yes — tunnel required'],
+    ['Direct 44.x.x.x station access',
+     'Any amateur station worldwide reachable on 44.x.x.x — '
+     'whether via RF packet, mesh networking, or WireGuard — '
+     'is directly addressable from any EMCOMM-NET device.',
+     'Yes — tunnel required'],
+    ['Static globally routable IP addresses',
+     'Your 44.x.x.x block is permanently yours and globally routable. '
+     'Other AMPRNet participants can reach your stations at a fixed address '
+     'that never changes, regardless of your ISP or location.',
+     'No — addresses are permanent; reachability requires tunnel'],
+], [1.6*inch, 3.3*inch, CW-4.9*inch]))
+story.append(SP(6))
+story.append(NoteBox(
+    '<b>Part 97 restrictions apply to all AMPRNet traffic:</b> '
+    'No encryption of content (WireGuard tunnel encryption of transport is permitted). '
+    'No commercial traffic. '
+    'Station identification required. '
+    'No third-party traffic unless authorized. '
+    'AMPRNet is a tool for the amateur radio community — '
+    'public safety agencies using it through an amateur radio group '
+    'must ensure all traffic complies with Part 97.',
+    'warn'))
+story.append(SP(8))
+
+story.append(H2('How to Get Your AMPRNet IP Allocation — Overview'))
+story.append(P(
+    'The process is straightforward but not fast. '
+    'Allow <b>2–6 weeks</b> from initial registration to receiving a confirmed allocation. '
+    'Regional administrators are volunteers and response times vary. '
+    'Start this process well before your planned activation date.'))
+story.append(SP(6))
+story.append(tbl(['PHASE', 'ACTION', 'TIMELINE'], [
+    ['1 — Coordinate locally',
+     'Contact your regional AMPRNet coordinator before registering. '
+     'Ask what blocks are available in your area, introduce your organization, '
+     'and confirm they are aware of the incoming request. '
+     'Illinois: check ARRL Illinois Section or the AMPRNet-Illinois mailing list.',
+     '1–2 days'],
+    ['2 — Create portal account',
+     'Go to https://portal.ampr.org and register. '
+     'Use your FCC callsign as your username. '
+     'The portal verifies your license automatically against the FCC ULS database.',
+     '1 day'],
+    ['3 — Request subnet',
+     'Log in → Subnets → Request Subnet. '
+     'Select your region. '
+     'Request a /29 (6 addresses) or /28 (14 addresses). '
+     'In the justification field, describe your organization, your role in EMCOMM, '
+     'the number of fixed and portable stations, and intended use. '
+     'A clear, detailed justification speeds approval.',
+     '1 day to submit'],
+    ['4 — Wait for approval',
+     'The regional AMPRNet administrator reviews your request and may contact you '
+     'with questions. Once approved, your allocation appears in '
+     'portal.ampr.org → Subnets → My Subnets with status Active.',
+     '1–6 weeks'],
+    ['5 — Download WireGuard config',
+     'After approval, the portal generates a WireGuard configuration specific to '
+     'your subnet. Download it — it contains your private key, your 44.x.x.x address, '
+     'and the connect.44net.cloud endpoint details. '
+     'Store this securely — it is the credential for your tunnel.',
+     'Immediate after approval'],
+    ['6 — Configure gateway Pi',
+     'Follow Part B of this installation guide to configure the gateway Pi '
+     'with the WireGuard config from the portal.',
+     '1–2 hours'],
+], [0.9*inch, 4.0*inch, CW-4.9*inch]))
+story.append(SP(4))
+story.append(NoteBox(
+    'Keep a printed copy of your portal login, assigned subnet, and WireGuard '
+    'configuration in your FieldCommand go-kit. '
+    'If the gateway Pi needs to be rebuilt at a future activation, '
+    'you will need these credentials. '
+    'The portal generates a new WireGuard private key if needed — '
+    'store the portal login credentials, not just the key file.',
+    'tip'))
+story.append(SP(8))
+
+story.append(H2('AMPRNet in FieldCommand — What the Software Does'))
+
+story.append(SP(4))
 story.append(P(
     'The following files are part of FieldCommand and work together to provide '
     'integrated 44Net gateway support across both Pis:'))

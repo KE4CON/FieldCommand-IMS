@@ -531,36 +531,133 @@ def ch27():
 
 
 def ch28():
-    s = chapter(28, 'Amateur Packet Radio Network (AMPRNet) (44Net) Gateway',
+    s = chapter(28, 'Amateur Packet Radio Network (AMPRNet) / 44Net Gateway',
                 'http://192.168.50.1/amprgate.html')
-    s.append(P(
-        'The AMPRNet gateway provides a WireGuard-based tunnel into the 44.0.0.0/8 '
-        'amateur radio IP network when internet is available. It runs on a dedicated '
-        'second Raspberry Pi (192.168.50.2) — completely isolated from the primary '
-        'FieldCommand server. If the gateway fails, nothing on the primary server is affected.'))
+
+    # ── Does this apply to your deployment? ──────────────────────────────────
+    s.append(note(
+        '<b>This chapter applies only to deployments that include an amateur radio '
+        'group as the lead or a key partner.</b> '
+        'If your deployment is operated entirely by a public safety agency, '
+        'municipality, or served organization without a licensed amateur radio group '
+        'involved, the AMPRNet gateway does not apply to you — skip this chapter. '
+        'FieldCommand IMS runs fully and completely without AMPRNet. '
+        'All 49 tools, ICS forms, net loggers, FEMA documentation, personnel '
+        'accountability, and every other feature operate on EMCOMM-NET with '
+        'no dependency on AMPRNet whatsoever.',
+        'warn'))
     s.append(SP(6))
 
-    s.append(P('27.1  Access Control', H2))
     s.append(P(
-        'The AMPRNet gateway enforces Part 97 access control: only licensed amateur '
-        'operators with a valid Federal Communications Commission (FCC) callsign may authenticate. Authentication is '
-        'validated against the offline FCC database. All access attempts are logged '
-        'to /var/log/amprgate-access.log with callsign, IP, timestamp, and result. '
+        'AMPRNet — Amateur Packet Radio Network — is the global amateur radio IP network '
+        'operating on the 44.0.0.0/8 address block permanently assigned by IANA to ARRL '
+        'for amateur radio use. The <b>44Net Connect</b> service (connect.44net.cloud) '
+        'provides a WireGuard-encrypted tunnel into that network over the internet. '
+        'When configured on the dedicated gateway Raspberry Pi (192.168.50.2), '
+        'every device on EMCOMM-NET gains access to AMPRNet resources — '
+        'Winlink gateways, APRS-IS servers, and other amateur stations worldwide '
+        'reachable on 44.x.x.x addresses.'))
+    s.append(SP(4))
+    s.append(P(
+        'The gateway Pi is completely isolated from the primary FieldCommand server. '
+        'If it goes down or is not deployed, nothing else on EMCOMM-NET is affected.'))
+    s.append(SP(8))
+
+    s.append(P('28.1  Who Should Deploy AMPRNet?', H2))
+    s.append(tbl(['SITUATION', 'DEPLOY AMPRNET?'], [
+        ['ARES/RACES group leads or co-leads the deployment',
+         '✓ Yes — Winlink via AMPRNet path, APRS-IS, inter-node data. '
+         'Licensed operators handle the registration under their callsign.'],
+        ['Amateur radio club operates the EOC comms section',
+         '✓ Yes — same benefits. Club callsign (e.g. K9ESV) is preferable '
+         'for organizational deployments.'],
+        ['Licensed amateurs are supporting partners with the served agency',
+         '△ Consider — only if the licensed operators take full ownership '
+         'of the AMPRNet registration and ongoing maintenance.'],
+        ['Public safety agency only — no amateur radio group involved',
+         '✗ Not applicable — FCC amateur license required for registration. '
+         'AMPRNet is a Part 97 resource; it cannot be registered or operated '
+         'by a non-licensed agency.'],
+    ], [2.0*inch, CW-2.0*inch]))
+    s.append(SP(8))
+
+    s.append(P('28.2  The Amateur Radio Group Must Lead This', H2))
+    s.append(P(
+        'AMPRNet IP addresses are assigned to a licensed amateur callsign and governed '
+        'by Part 97. The registration process, ongoing maintenance, and all operational '
+        'use must be led by the amateur radio group — not the served agency, '
+        'not the EOC IT department, and not the municipality. '
+        'The practical steps are:'))
+    s.append(SP(4))
+    s.append(tbl(['STEP', 'WHO'], [
+        ['Designate a licensed technical lead (any FCC license class)',
+         'ARES EC or club President'],
+        ['Contact the regional AMPRNet coordinator before registering',
+         'Technical lead — Illinois: via ARRL Illinois Section'],
+        ['Register at portal.ampr.org using the club or personal callsign',
+         'Technical lead'],
+        ['Request a /29 subnet (6 usable IPs) or /28 (14 IPs)',
+         'Technical lead — allow 2–6 weeks for approval'],
+        ['Download the WireGuard config and configure the gateway Pi',
+         'Technical lead — see Installation Guide Step 11'],
+        ['Maintain the portal account and license going forward',
+         'Technical lead + designated backup'],
+    ], [3.5*inch, CW-3.5*inch]))
+    s.append(SP(8))
+
+    s.append(P('28.3  What AMPRNet Enables', H2))
+    s.append(tbl(['CAPABILITY', 'DESCRIPTION'], [
+        ['Winlink via AMPRNet path',
+         'Reach Winlink RMS gateways at 44.x.x.x addresses without using the '
+         'commercial internet — keeps message handling within the amateur radio network.'],
+        ['APRS-IS via AMPRNet',
+         'APRS-IS servers are reachable on 44.x.x.x. Configure Graywolf or YAAC '
+         'to use the AMPRNet path instead of the public internet.'],
+        ['Inter-node FieldCommand',
+         'Two FieldCommand deployments with 44Net gateways can share net log data and '
+         'resource status over AMPRNet — no commercial internet required.'],
+        ['Global amateur station reach',
+         'Any amateur station worldwide with a 44.x.x.x address is directly '
+         'reachable from any EMCOMM-NET device.'],
+        ['Permanent static IPs',
+         'Your 44.x.x.x block is yours permanently — fixed addresses that never '
+         'change regardless of ISP or location.'],
+    ], [1.8*inch, CW-1.8*inch]))
+    s.append(SP(6))
+    s.append(note(
+        '<b>Part 97 applies to all AMPRNet traffic:</b> no encryption of content '
+        '(WireGuard tunnel encryption of the transport layer is permitted), '
+        'no commercial traffic, station identification required. '
+        'All use must comply with Part 97 rules.',
+        'note'))
+    s.append(SP(8))
+
+    s.append(P('28.4  Access Control on EMCOMM-NET', H2))
+    s.append(P(
+        'The AMPRNet gateway enforces Part 97 access control: '
+        'only licensed amateur operators with a valid FCC callsign may authenticate. '
+        'Callsigns are validated against the offline FCC database. '
+        'All access attempts are logged to /var/log/amprgate-access.log '
+        'with callsign, IP, timestamp, and result. '
         'Session tokens have an 8-hour TTL.'))
     s.append(SP(6))
 
-    s.append(P('27.2  Gateway Status Page', H2))
+    s.append(P('28.5  Gateway Status Page', H2))
     s.append(P(
-        'The AMPRNet status page (amprgate.html) shows: tunnel up/down status, '
+        'The AMPRNet status page (amprgate.html) shows tunnel up/down status, '
         'your assigned 44.x.x.x address, connected peers, and the access log. '
-        'The public read-only port (9000) is accessible from any device on '
-        'EMCOMM-NET. Tunnel control is restricted to the Pi console (port 9001, '
-        'localhost only).'))
+        'The public read-only port (9000) is accessible from any EMCOMM-NET device. '
+        'Tunnel control is restricted to the gateway Pi console (port 9001, '
+        'localhost only) — an operator must be physically at the gateway Pi '
+        'keyboard to bring the tunnel up or down.'))
     s.append(SP(4))
     s.append(note(
-        'AMPRNet IP allocation requires registration at portal.ampr.org. '
-        'Request a /29 subnet under your callsign. See the Installation Guide '
-        'for the complete AMPRNet setup procedure.', 'note'))
+        'Full AMPRNet setup procedures — WireGuard configuration, IP forwarding, '
+        'route advertisement, and verification checklist — are in '
+        'Installation Guide Step 11. '
+        'Portal registration: portal.ampr.org. '
+        'WireGuard tunnel service: connect.44net.cloud.',
+        'note'))
     s.append(PB())
     return s
 

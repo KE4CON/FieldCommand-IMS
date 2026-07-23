@@ -308,7 +308,8 @@ story.append(ref_tbl(
         ['🟢 Green — Cellular',  'Primary internet active — all live features enabled'],
         ['🔵 Blue — Satellite',  'Satellite failover active — all live features enabled'],
         ['🔴 Red — Offline',     'No internet — ALL core ICS tools still fully operational'],
-        ['🟢 AMPRNet UP',        '44Net WireGuard tunnel active (gateway Pi)'],
+        ['🟢 Green — AMPRNet UP',  '44Net WireGuard tunnel active — gateway Pi reachable — 44.x.x.x address shown'],
+        ['🔴 Red — AMPRNet DOWN',  '44Net tunnel down or gateway Pi unreachable — amateur radio group only'],
     ],
     [1.8*inch, CW-1.8*inch]))
 story.append(SP(4))

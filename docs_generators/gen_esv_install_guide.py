@@ -272,7 +272,7 @@ def steps(items):
                           textColor=EOC_LT, alignment=TA_CENTER, leading=11)),
             P(item, S('sa', fontSize=8.5, leading=12)),
         ])
-    t = Table(data, colWidths=[0.38*inch, CW-0.38*inch])
+    t = Table(data, colWidths=[0.50*inch, CW-0.50*inch])
     t.setStyle(TableStyle([
         ('BACKGROUND',    (0,0), (-1,0),  EOC),
         ('TEXTCOLOR',     (0,0), (-1,0),  white),
@@ -322,27 +322,30 @@ story.append(HR(GOLD, 1.0))
 story.append(SP(8))
 
 TOC = [
-    ('1.', 'Overview & What\'s Included', '3'),
-    ('2.', 'Hardware Requirements', '4'),
-    ('3.', 'Before You Begin — Prerequisites', '11'),
-    ('4.', 'Step 1: Network Hardware Setup', '13'),
-    ('5.', 'Step 2: Download & Run the Installer', '16'),
-    ('6.', 'Step 3: Installer Configuration Options', '19'),
-    ('7.', 'Step 4: Raspberry Pi 5 — Static IP Configuration', '20'),
-    ('7b.', 'Step 4b: RAID 1 NVMe Setup — Pironman MAX 5', '22'),
-    ('8.', 'Step 5: Kiwix Offline Library Setup', '24'),
-    ('9.', 'Step 6: FCC Amateur Database', '26'),
-    ('10.', 'Step 7: APRS Setup (Graywolf + YAAC)', '27'),
-    ('11.', 'Step 8: Printer Setup', '31'),
-    ('12.', 'Step 9: Pat Winlink — Verify & Configure', '36'),
-    ('12.', 'Step 10: Windows Laptop — Winlink Express + JS8Call', '37'),
-    ('13.', 'Step 11: First Boot Verification', '41'),
-    ('14.', 'Network Architecture Reference', '43'),
-    ('14.', 'Web Dashboard Reference', '45'),
-    ('14.', 'Service & Port Reference', '46'),
-    ('15.', 'Maintenance & Updates', '47'),
-    ('16.', 'Troubleshooting', '48'),
-    ('17.', 'Quick Reference Card', '50'),
+    ('1.',   'Overview & Hardware Requirements',                '3'),
+    ('2.',   'Before You Begin — Prerequisites',               '10'),
+    ('3.',   'Step 1: Flash the OS and Build the RAID Array',  '11'),
+    ('4.',   'Step 2: Network Hardware Setup — ASUS + UniFi',  '12'),
+    ('5.',   'Step 3: Download & Run the FieldCommand Installer','14'),
+    ('6.',   'Step 4: Installer Configuration Options',        '16'),
+    ('7.',   'Step 5: Raspberry Pi 5 — Static IP Configuration','17'),
+    ('7b.',  'Step 5b: RAID 1 NVMe Setup — Pironman MAX 5',   '18'),
+    ('8.',   'Step 6: Kiwix Offline Library Setup',            '20'),
+    ('9.',   'Step 7: Printer Setup',                          '22'),
+    ('10.',  'Step 8: First Boot Verification',                '27'),
+    ('',     'Network Architecture Reference',                 '29'),
+    ('',     'Web Dashboard Reference',                        '30'),
+    ('',     'Service & Port Reference',                       '32'),
+    ('',     'New Feature Configuration',                      '33'),
+    ('',     'Maintenance & Updates',                          '39'),
+    ('',     'Troubleshooting',                                '40'),
+    ('',     '- PART 2: AMATEUR RADIO GROUP SETUP -',         ''),
+    ('2A.',  'AMPRNet / 44Net Gateway Setup',                  '42'),
+    ('2B.',  'FCC Amateur Database',                           '49'),
+    ('2C.',  'APRS Setup — Graywolf + YAAC',                  '50'),
+    ('2D.',  'Pat Winlink — Verify & Configure',               '55'),
+    ('2E.',  'Windows Laptop — Winlink Express + JS8Call',     '57'),
+    ('2F.',  'SCS PACTOR Modem Setup',                        '59'),
 ]
 for num, title, pg in TOC:
     row = Table([[
@@ -407,7 +410,7 @@ story.append(tbl(['COMPONENT', 'DESCRIPTION', 'COMPONENT', 'DESCRIPTION'], [
 story.append(PB())
 
 # ── SECTION 2 — HARDWARE REQUIREMENTS ────────────────────────────────────────
-story.append(H1('2. Hardware Requirements'))
+story.append(H1('1.  Hardware Requirements'))
 story.append(HR(EOC_LT, 0.5))
 story.append(SP(6))
 story.append(H2('Supported Hardware — Raspberry Pi Servers'))
@@ -551,54 +554,26 @@ bom_rows = [
     ['UniFi Switch Lite 16 PoE', 'Ubiquiti USW-Lite-16-PoE  (16-port GbE, 8× PoE, 2× SFP uplink, 45W)  —  replaces Flex 2.5G-5', 'ui.com · Amazon · B&H  (~$200)'],
     ['CAT 6 Ethernet cables × 10', '1 ft – 6 ft CAT 6 patch cables  —  router to switch, both Pis, laptop, printer, 4× workstations', 'Amazon · Monoprice'],
     cat_row('Radio & Comms  (McHenry County ESV — K9ESV)'),
-    ['Icom IC-7300MK2 HF transceiver', 'Icom IC-7300MK2 (HF/50 MHz)  —  next-generation IC-7300: HDMI output for external monitor, USB-C with dual COM ports + audio, LAN port for RS-BA1 remote, built-in CW decoder, improved RMDR (~105 dB), RX antenna IN/OUT  —  check current Icom coupons before purchase', 'Ham Radio Outlet · DX Engineering · R&L · GigaParts  (~$1,500)'],
-    ['13.8 V DC power supply', 'Astron RS-35M  —  13.8 VDC linear regulated, 25 A continuous / 35 A peak, dual meters  —  powers IC-7300 with headroom  —  RS-35M-AP variant adds Anderson Powerpole outputs', 'Ham Radio Outlet · DX Engineering · GigaParts  (~$320-345)'],
-    ['LDG IT-100 automatic antenna tuner', 'LDG IT-100  —  125 W desktop autotuner made for Icom  —  matches up to 10:1 SWR  —  powered and controlled directly from the transceiver TUNER button via included interface cable  —  2,000 tuning memories  —  station-side tuner for coax-fed antennas', 'DX Engineering · GigaParts · Ham Radio Outlet  (~$170-190)'],
-    ['Chameleon CHA MPAS 2.0 antenna system', 'Modular Portable Antenna System 2.0  —  1.8-54 MHz (160m-6m)  —  deploys as vertical, sloper, inverted-V, inverted-L, NVIS, or man-pack in under 2 minutes  —  includes HYBRID matching unit, MIL 2.0 + MIL EXT 2.0 whips, spike mount, 73 ft + 25 ft Kevlar PTFE wire, 50 ft coax with RFI choke, sling bag  —  the primary field HF antenna for all deployments', 'chameleonantenna.com · DX Engineering · GigaParts  (~$600)'],
-    ['Chameleon CHA URT1 remote tuner', 'Universal Remote Tuner 1  —  1.8-54 MHz  —  weatherproof tuner unit mounts at the antenna feedpoint (eliminates feedline SWR loss)  —  matches 5-1,500 ohm loads  —  125 W SSB/CW  —  16,000 memories  —  power and control sent over the coax via bias-T coupler, works with any transceiver, no radio-specific cable', 'chameleonantenna.com · DX Engineering · R&L  (~$390)'],
-    ['Chameleon antenna wire  —  300 ft', '300 ft Chameleon tinned-copper Kevlar PTFE antenna wire (12× 25 ft spools or equivalent bulk)  —  field-expedient long wires, NVIS, dipoles, counterpoises, and radial systems for the MPAS 2.0 and URT1', 'chameleonantenna.com  (~$300)'],
-    ['Wire winders', '4× heavy-duty wire winders sized for 75-100 ft each  —  tangle-free storage and rapid deployment/recovery of antenna wire in the field', 'chameleonantenna.com · DX Engineering  (~$60)'],
-    ['USB-A to USB-B cable (IC-7300 to laptop)', 'USB-A to USB-B, shielded, 6 ft', 'Amazon · Monoprice'],
-    ['Windows laptop (Winlink Express + JS8Call)', 'Any Windows 10/11 laptop with USB-A port and Wi-Fi', 'Best Buy · Amazon'],
-    ['USB TNC — Digirig Mobile', 'Digirig Mobile v1.x — USB soundcard + serial CAT in one compact unit', 'digirig.net · Amazon'],
-    ['USB TNC — SignaLink USB  (alternative)', 'Tigertronics SignaLink USB — requires rig-specific interface cable', 'tigertronics.com · Ham Radio Outlet · Amazon'],
+    ['Icom IC-7300MK2 HF transceiver', 'Icom IC-7300MK2 (HF/50 MHz)  —  HDMI output, USB-C dual COM + audio, LAN port, built-in CW decoder, improved RMDR  —  check Icom coupons before purchase', 'Ham Radio Outlet · DX Engineering · R&L · GigaParts  (~$1,500)'],
+    ['13.8 V DC power supply', 'Astron RS-35M  —  13.8 VDC regulated, 25A continuous / 35A peak, dual meters  —  RS-35M-AP adds Anderson Powerpole outputs', 'Ham Radio Outlet · DX Engineering · GigaParts  (~$320-345)'],
+    ['LDG IT-100 automatic antenna tuner', 'LDG IT-100  —  125 W autotuner for Icom  —  powered from IC-7300 TUNER button  —  2,000 memories', 'DX Engineering · GigaParts · Ham Radio Outlet  (~$170-190)'],
+    ['Chameleon CHA MPAS 2.0 antenna system', 'Modular Portable Antenna System 2.0  —  1.8-54 MHz  —  vertical/sloper/NVIS in under 2 min  —  includes HYBRID unit, MIL 2.0 + MIL EXT 2.0 whips, 50 ft coax with RFI choke, sling bag', 'chameleonantenna.com · DX Engineering · GigaParts  (~$600)'],
+    ['Chameleon CHA URT1 remote tuner', 'Universal Remote Tuner 1  —  1.8-54 MHz  —  weatherproof feedpoint tuner  —  125 W  —  16,000 memories  —  power over coax via bias-T', 'chameleonantenna.com · DX Engineering · R&L  (~$390)'],
+    ['Chameleon antenna wire  —  300 ft', '300 ft tinned-copper Kevlar PTFE wire  —  field-expedient long wires, NVIS, dipoles, radials', 'chameleonantenna.com  (~$300)'],
+    ['Wire winders', '4x heavy-duty winders for 75-100 ft  —  tangle-free field deployment', 'chameleonantenna.com · DX Engineering  (~$60)'],
+    ['USB-A to USB-B cable  (IC-7300 to laptop)', 'USB-A to USB-B, shielded, 6 ft', 'Amazon · Monoprice'],
+    ['Windows laptop  (Winlink Express + JS8Call)', 'Any Windows 10/11 laptop with USB-A port and Wi-Fi', 'Best Buy · Amazon'],
+    ['USB TNC — Digirig Mobile', 'Digirig Mobile v1.x  —  USB soundcard + serial CAT in one unit', 'digirig.net · Amazon'],
+    ['USB TNC — SignaLink USB  (alternative)', 'Tigertronics SignaLink USB  —  requires rig-specific interface cable', 'tigertronics.com · Ham Radio Outlet · Amazon'],
     cat_row('WAN Connectivity — InstyConnect Cellular Antenna  (Primary WAN)'),
-    ['InstyConnect Drum antenna  (primary)',
-     'InstyConnect Drum  —  omnidirectional 5G/LTE antenna  —  PoE powered  —  '
-     'mounts on any standard 1.5\" to 2\" pole  —  includes PoE injector and 25 ft PoE Ethernet cable  —  '
-     'connects directly to ASUS RT-BE58 Go WAN port  —  T-Mobile + Verizon multi-carrier',
-     'instyconnect.com  (~$350-400)'],
-    ['InstyConnect Switchblade  (directional backup)',
-     'Compact folding directional LTE/5G antenna — PoE powered — deploys and folds flat for transport  —  '
-     'use when Drum signal is insufficient at the deployment site  —  '
-     'same PoE cable connection as Drum — swap in minutes',
-     'instyconnect.com  (~$400-450)'],
-    ['InstyConnect PoE Ethernet cable  (spare)',
-     '25 ft outdoor-rated PoE Ethernet cable  —  connects outdoor antenna unit to ASUS WAN port  —  '
-     'one included with each antenna  —  carry one spare',
-     'instyconnect.com  or  Amazon  (~$20)'],
-    ['InstyConnect Multi-Network Unlimited data plan',
-     'InstyConnect Multi-Network Unlimited plan  —  T-Mobile + Verizon dual-carrier  —  '
-     'automatic carrier failover  —  1.2 TB fair use per carrier (2.4 TB total)  —  '
-     'pause after first month for $5/month standby  —  '
-     'activate only during emergency activations  —  no long-term contract required',
-     'instyconnect.com  (~$79-99/month active  /  $5/month standby)'],
+    ['InstyConnect Drum antenna  (primary)', 'InstyConnect Drum  —  omnidirectional 5G/LTE  —  PoE powered  —  mounts on 1.5-2 in pole  —  T-Mobile + Verizon multi-carrier', 'instyconnect.com  (~$350-400)'],
+    ['InstyConnect Switchblade  (directional backup)', 'Compact folding directional LTE/5G  —  PoE powered  —  folds flat for transport  —  same PoE connection as Drum', 'instyconnect.com  (~$400-450)'],
+    ['InstyConnect PoE Ethernet cable  (spare)', '25 ft outdoor-rated PoE cable  —  one included with each antenna  —  carry one spare', 'instyconnect.com or Amazon  (~$20)'],
+    ['InstyConnect Multi-Network Unlimited data plan', 'T-Mobile + Verizon dual-carrier  —  1.2 TB fair use per carrier  —  pause for $5/month standby between activations', 'instyconnect.com  (~$79-99/month  /  $5/month standby)'],
     cat_row('WAN Connectivity — Starlink  (Secondary WAN / Automatic Failover)'),
-    ['Starlink Standard or Flat High Performance dish',
-     'Starlink Standard or Flat High Performance dish  —  includes dish, router, cables, and mount  —  '
-     'connects to ASUS RT-BE58 Go via Starlink Ethernet adapter  —  automatic failover when InstyConnect drops  —  '
-     'note: Starlink uses CGNAT  —  inbound connections from internet not possible',
-     'starlink.com  (~$350-600 hardware  +  $120/month service)'],
-    ['Starlink Ethernet adapter',
-     'Official Starlink Ethernet adapter  —  converts Starlink dish output to standard RJ45  —  '
-     'required to connect Starlink to ASUS router without using Starlink router  —  '
-     'plug Ethernet output into USB-to-Ethernet adapter for ASUS USB WAN port',
-     'starlink.com  (~$25)'],
-    ['USB-to-Ethernet adapter  (Starlink to ASUS USB WAN)',
-     'USB-A to Gigabit Ethernet adapter  —  plugs into ASUS RT-BE58 Go USB port  —  '
-     'connects Starlink Ethernet adapter to ASUS USB WAN for secondary WAN failover  —  '
-     'ASIX AX88179 chipset recommended for best ASUS router compatibility',
-     'Amazon  (~$15-20)'],
+    ['Starlink Standard or Flat High Performance dish', 'Includes dish, router, cables, mount  —  connects via Starlink Ethernet adapter  —  auto-failover when InstyConnect drops  —  CGNAT: no inbound connections', 'starlink.com  (~$350-600 hardware  +  $120/month)'],
+    ['Starlink Ethernet adapter', 'Official Starlink Ethernet adapter  —  converts dish output to RJ45', 'starlink.com  (~$25)'],
+    ['USB-to-Ethernet adapter  (Starlink to ASUS USB WAN)', 'USB-A to Gigabit Ethernet  —  ASIX AX88179 chipset recommended', 'Amazon  (~$15-20)'],
     cat_row('Accessories — Backup & Connectivity'),
     ['USB-A drive (32 GB+, labeled FIELDCOMMAND)', '32 GB+ USB 3.0 drive — auto-backup trigger when inserted', 'Amazon'],
     ['External USB hard drive 1 TB+  (e.g. LaCie Rugged)', '1 TB+ USB 3.0/USB-C portable drive — label FIELDCOMMAND for auto-backup', 'B&H · Amazon · Best Buy'],
@@ -734,7 +709,8 @@ story.append(H2('1A  Flash the Operating System'))
 story.append(tbl(['OS EDITION', 'PROS', 'CONS'], [
     ['Raspberry Pi OS Lite (64-bit)  —  Recommended for production',
      'Minimal overhead.  All RAM available to FieldCommand.  Fast boot.  Smaller attack surface.',
-     'No local browser or GUI.  All interaction via SSH or via EMCOMM-NET browser on another device.'],
+     'No local browser or GUI — configuration via SSH from your laptop.  '
+     'FieldCommand itself is always accessed from EMCOMM-NET devices, not the Pi directly.'],
     ['Raspberry Pi OS Desktop (64-bit)  —  Good for setup and troubleshooting',
      'Local browser for testing.  GUI for initial Wi-Fi setup and configuration.  Easier for new users.',
      'More RAM used by desktop environment.  Slightly longer install time.'],
@@ -751,7 +727,9 @@ story.append(tbl(['IMAGER OPTION', 'VALUE  /  REASON'], [
     ['Hostname',          'fieldcommand.local  — makes the Pi discoverable as fieldcommand.local on the network'],
     ['Username',          'fieldcommand  — the FieldCommand installer expects this username'],
     ['Password',          'Choose a strong password and record it  —  required for SSH and CUPS admin'],
-    ['Enable SSH',        'Yes  —  required for remote access from your laptop during setup'],
+    ['Enable SSH',        '<b>Lite:</b> Yes — required (only access method without a display).  '
+                          '<b>Desktop:</b> Recommended for remote diagnostics, but optional if '
+                          'you have a monitor and keyboard connected to the Pi.'],
     ['Wi-Fi',             'Set your home or lab Wi-Fi during initial OS setup.  EMCOMM-NET comes later.'],
     ['Locale / Timezone', 'US/Central for local operations'],
     ], [2.6*inch, CW-2.6*inch]))
@@ -843,7 +821,7 @@ story.append(NoteBox(
     'use the standard FieldCommand Installation Guide.',
     'note'))
 story.append(SP(8))
-story.append(H1('3. Before You Begin — Prerequisites'))
+story.append(H1('2.  Before You Begin — Prerequisites'))
 story.append(HR(EOC_LT, 0.5))
 story.append(SP(6))
 story.append(P('Complete these prerequisites before running the installer. The installer requires an internet '
@@ -854,7 +832,8 @@ story.append(H2('3.1  Flash the Operating System'))
 story.append(tbl(['OS EDITION', 'PROS', 'CONS'], [
     ['Raspberry Pi OS Lite (64-bit) — Recommended for production',
      'Minimal overhead, faster boot, all RAM available to FieldCommand services, smaller attack surface',
-     'No local browser or GUI — all interaction via SSH or EMCOMM-NET browser'],
+     'No local browser or GUI — configuration via SSH from your laptop.  '
+     'FieldCommand is accessed from EMCOMM-NET devices, not from the Pi itself.'],
     ['Raspberry Pi OS Desktop (64-bit) — Good for setup and troubleshooting',
      'GUI for initial setup, Raspberry Pi Configuration tool, local browser for testing',
      'More RAM used by desktop environment; install takes longer'],
@@ -867,7 +846,9 @@ story.append(H2('3.2  First Boot — Initial Setup'))
 story.append(steps([
     'On first boot, complete the initial setup wizard: set username to <b>fieldcommand</b>, set a strong password, configure locale and keyboard, expand filesystem.',
     'If using Desktop edition: complete the initial desktop setup wizard.',
-    'Enable SSH (Lite only): run <font face="Courier">sudo raspi-config → Interface Options → SSH → Enable</font>',
+    '<b>Lite only — Enable SSH:</b> run <font face="Courier">sudo raspi-config</font> '
+    '→ Interface Options → SSH → Enable. '
+    '<b>Desktop users skip this step</b> — use the local terminal instead of SSH for all remaining steps.',
 ]))
 story.append(SP(6))
 story.append(P('Run a full system update before installing FieldCommand (works the same on both editions — Terminal or SSH):'))
@@ -945,15 +926,15 @@ story.append(P(
     'The UniFi Switch Lite 16 PoE is the central wiring hub for the entire EMCOMM-NET deployment. '
     'Connect everything to the switch, and the switch connects up to the ASUS router. '
     'Use short CAT 6 patch cables (1 ft to 3 ft) to keep the rack or case tidy. '
-    'The the cellular antenna unit Drum antenna connects directly to the ASUS WAN port via its PoE Ethernet cable '
+    'The primary cellular modem or antenna connects directly to the ASUS WAN port via its PoE Ethernet cable '
     '— this is completely separate from the switch and does not use a switch port.'))
 story.append(SP(4))
 story.append(tbl(['CONNECTION', 'DEVICE', 'IP / NOTES'], [
     ['ASUS WAN port  (PoE Ethernet)',
      'Cellular antenna  (primary WAN)',
-     'Primary internet — cellular via your cellular carrier.  '
-     'PoE cable from outdoor antenna unit to ASUS WAN port directly.  '
-     'the cellular antenna unit serves DHCP on its own subnet — ASUS bridges to EMCOMM-NET.'],
+     'Primary internet — PoE cable from outdoor cellular modem/antenna '
+     'directly to ASUS WAN port.  '
+     'Cellular modem serves DHCP on its own subnet — ASUS bridges to EMCOMM-NET.'],
     ['ASUS USB WAN port  (USB-to-Ethernet)',
      'Satellite dish  (secondary WAN)',
      'Secondary internet — satellite.  '
@@ -992,78 +973,6 @@ story.append(tbl(['DEVICE', 'POWER SOURCE'], [
     ['44Net Gateway Pi 5  (Argon NEO 5)', 'Official Raspberry Pi 27W USB-C PD supply directly to Pi USB-C port'],
 ], [2.4*inch, CW-2.4*inch]))
 story.append(SP(6))
-story.append(H2('1.2  the cellular antenna unit — Physical Setup and Antenna Mounting'))
-story.append(P(
-    'The the cellular antenna unit system consists of an outdoor antenna/modem unit connected by a single PoE '
-    'Ethernet cable to the ASUS router WAN port. '
-    'The modem is built into the antenna enclosure — no separate modem box to install. '
-    'A single cable carries both power to the outdoor unit and data back to the router.'))
-story.append(SP(6))
-
-story.append(H3('Drum Antenna  (Primary — Omnidirectional)'))
-story.append(steps([
-    '<b>Mount the Drum</b> on a standard 1.5" to 2" mast, pole, or tripod at the deployment site. '
-    'Higher is better — roof edge, vehicle roof rack, or portable mast. '
-    'The Drum is omnidirectional so pointing direction does not matter.',
-    '<b>Run the PoE Ethernet cable</b> from the Drum down to the ASUS router location. '
-    'The cable carries power to the Drum and data back to the router. '
-    'Maximum cable length is typically 100 meters (328 ft) for PoE over CAT 6.',
-    '<b>Connect the PoE cable</b> to the <b>ASUS RT-BE58 Go WAN port</b>. '
-    'Do not connect to the switch — this goes directly to the router WAN port.',
-    '<b>Power on the the cellular antenna unit system.</b> '
-    'The Drum status LED will indicate cellular connection status. '
-    'Open http://my.insty or http://10.1.1.1 on any device temporarily connected to the the cellular antenna unit '
-    'Wi-Fi to verify the modem has cellular signal.',
-    '<b>Verify the ASUS WAN port shows "Connected"</b> in the ASUS router admin at '
-    'http://192.168.50.254 → WAN → Internet Status.',
-]))
-story.append(SP(6))
-
-story.append(H3('Switchblade Antenna  (Backup — Directional)'))
-story.append(P(
-    'Deploy the Switchblade when the Drum cannot get adequate signal at a specific site — '
-    'typically in areas with marginal cellular coverage or significant RF obstruction. '
-    'The Switchblade folds flat for transport and deploys in under 5 minutes.'))
-story.append(SP(4))
-story.append(steps([
-    '<b>Unfold the Switchblade</b> and mount it on the same mast or a portable tripod.',
-    '<b>Open the the cellular antenna unit signal app</b> on a phone connected to the the cellular antenna unit Wi-Fi. '
-    'Slowly rotate the Switchblade while watching signal strength in the app. '
-    'Stop at the direction giving the highest signal — typically facing the nearest '
-    'the nearest cellular tower.',
-    '<b>Unplug the Drum PoE cable</b> from the ASUS WAN port.',
-    '<b>Connect the Switchblade PoE cable</b> to the same ASUS WAN port.',
-    '<b>Verify connection</b> in the ASUS router admin — WAN should show "Connected" '
-    'with the the cellular modem IP.',
-]))
-story.append(SP(6))
-
-story.append(H3('the cellular antenna unit Data Plan — Activation and Standby'))
-story.append(tbl(['STATE', 'COST', 'WHEN TO USE', 'HOW TO CHANGE'], [
-    ['Active — Multi-Network',
-     '~$79-99/month',
-     'During activations, exercises, and training events',
-     'Log in to the cellular antenna unit portal — activate plan'],
-    ['Standby mode',
-     '$5/month',
-     'Between activations — holds your plan and SIM active without full monthly charge',
-     'Log in to the cellular antenna unit portal — pause plan (available after first month)'],
-    ['Cancelled',
-     '$0',
-     'Extended periods of non-use  (re-activation required)',
-     'Cancel in portal — re-activate and receive new SIM when needed'],
-    ], [2.0*inch, 0.9*inch, 1.8*inch, CW-4.7*inch]))
-story.append(SP(4))
-story.append(NoteBox(
-    'For your organization operations, the recommended approach is to keep the plan in '
-    'Standby mode ($5/month) between activations. '
-    'This maintains the SIM, the phone number, and the multi-network capability '
-    'so you can activate at full speed the moment an emergency is declared. '
-    'The standby cost is negligible for a 501(c)(3) organization and avoids the '
-    'delay of re-activating a cancelled plan during an actual emergency.',
-    'tip'))
-story.append(SP(8))
-
 story.append(H2('1.2  Configure the ASUS RT-BE58 Go'))
 story.append(steps([
     'Power on the router. Connect a device to it via Wi-Fi (default SSID on label) or Ethernet. Open http://192.168.50.1 (or the default router IP on the label).',
@@ -1076,87 +985,53 @@ story.append(steps([
 ]))
 story.append(SP(6))
 story.append(P(
-    'The ASUS RT-BE58 Go supports dual WAN with automatic failover. '
-    'the cellular modem is the primary WAN source. '
-    'satellite dish is the secondary — the ASUS switches automatically if cellular drops. '
-    'When both are unavailable, FieldCommand continues operating on all local features '
-    'without interruption — net logging, ICS platform, APRS, and all tools remain fully functional.'))
+    'The ASUS RT-BE58 Go supports dual WAN with automatic failover between a primary '
+    'and secondary internet source. '
+    'When both WAN sources are unavailable, FieldCommand continues operating '
+    'on all local features without interruption — net logging, ICS platform, '
+    'APRS, and all tools remain fully functional.'))
 story.append(SP(6))
-story.append(tbl(['PRIORITY', 'WAN SOURCE', 'ASUS CONNECTION', 'SETUP', 'ACTIVATES'], [
-    ['1  — Primary', 'the cellular antenna unit Drum  (omnidirectional cellular)',
-     'WAN Ethernet port  (PoE from modem)',
-     'PoE Ethernet cable from the cellular antenna unit outdoor unit to ASUS WAN port.  '
-     'Set WAN → Automatic IP (DHCP).  the cellular antenna unit modem serves DHCP.',
-     'Always — deployed at every activation'],
-    ['1b — Swap', 'the cellular antenna unit Switchblade  (directional cellular)',
-     'Same WAN Ethernet port  (replaces Drum cable)',
-     'Unplug Drum PoE cable.  Plug Switchblade PoE cable into same ASUS WAN port.  '
-     'Aim Switchblade toward nearest tower using the cellular antenna unit signal app.',
-     'Manual — when Drum signal is poor at the deployment site'],
-    ['2  — Secondary', 'satellite internet',
-     'ASUS USB WAN port  (via Ethernet adapter)',
-     'satellite Ethernet adapter → USB-to-Ethernet adapter → ASUS USB WAN port.  '
-     'Set ASUS WAN failover: primary = WAN port, secondary = USB port.  '
-     'Automatic failover when cellular WAN drops.',
-     'Automatic — when the cellular antenna unit WAN is down or degraded'],
-    ['3  — Site network', 'EOC site Ethernet',
-     'WAN Ethernet port  (replaces the cellular antenna unit)',
-     'Plug site Ethernet directly into ASUS WAN port.  '
-     'Set WAN → Automatic IP (DHCP).  Use when site has reliable wired internet.',
-     'Manual — when site LAN is available at an EOC or shelter'],
-    ['4  — Last resort', 'USB smartphone tether',
+story.append(NoteBox(
+    'FieldCommand supports any WAN source your ASUS router can connect to: '
+    'cellular modem or antenna (PoE Ethernet to WAN port), '
+    'satellite dish (via Ethernet adapter to USB WAN), '
+    'site Ethernet, USB smartphone tether, or venue Wi-Fi (WISP mode). '
+    'Configure your specific WAN hardware according to that device\'s documentation, '
+    'then connect it to the ASUS router as shown in the table below. '
+    'See the ESV Installation Guide for specific WAN hardware configuration.',
+    'note'))
+story.append(SP(6))
+story.append(tbl(['WAN SOURCE', 'ASUS CONNECTION', 'SETUP NOTES', 'ACTIVATES'], [
+    ['Primary WAN  (cellular modem or antenna)',
+     'WAN Ethernet port',
+     'Connect the PoE Ethernet cable from your outdoor cellular modem or antenna '
+     'directly to the ASUS WAN port. Set WAN → Automatic IP (DHCP).',
+     'Always — primary source at every activation'],
+    ['Secondary WAN  (satellite dish)',
+     'ASUS USB WAN port  (via USB-to-Ethernet adapter)',
+     'Satellite Ethernet adapter → USB-to-Ethernet adapter → ASUS USB port. '
+     'Set ASUS WAN failover: primary = WAN port, secondary = USB port.',
+     'Automatic — when primary WAN drops'],
+    ['EOC site Ethernet',
+     'WAN Ethernet port  (replaces cellular modem)',
+     'Plug site Ethernet directly into the ASUS WAN port. '
+     'Set WAN → Automatic IP (DHCP). Use when the site has reliable wired internet.',
+     'Manual — when site LAN is available'],
+    ['USB smartphone tether',
      'ASUS USB WAN port',
-     'Enable hotspot on phone.  Plug USB into ASUS router USB port.  '
+     'Enable hotspot on phone. Plug USB cable into ASUS router USB port. '
      'Set WAN → USB Tethering.',
      'Manual — last resort when all other WAN sources are unavailable'],
-    ['5  — Site Wi-Fi', 'WISP (venue Wi-Fi)',
+    ['Venue Wi-Fi  (WISP mode)',
      'ASUS wireless WAN',
-     'ASUS Web UI → Operation Mode → WISP.  '
-     'Select venue Wi-Fi and enter password.',
+     'ASUS admin → Operation Mode → WISP. Select venue Wi-Fi and enter password.',
      'Manual — hospital, shelter, or venue with existing guest Wi-Fi'],
-], [0.9*inch, 1.5*inch, 1.4*inch, 1.8*inch, CW-5.6*inch]))
+], [1.6*inch, 1.5*inch, 2.3*inch, CW-5.4*inch]))
 story.append(SP(8))
-story.append(H2('1.3  Configure Dual WAN Failover  (the cellular antenna unit Primary  +  satellite dish Secondary)'))
-story.append(P(
-    'With the cellular antenna unit connected to the WAN port and satellite dish connected via USB, '
-    'configure the ASUS router to switch automatically between them. '
-    'This takes about 3 minutes and requires no changes to FieldCommand software.'))
-story.append(SP(6))
-story.append(steps([
-    'Open the ASUS router admin: <b>http://192.168.50.254</b>',
-    'Go to <b>WAN → Dual WAN</b>.',
-    'Set <b>Enable Dual WAN</b> to ON.',
-    'Set <b>Primary WAN</b> to <b>WAN</b> (the physical WAN port — the cellular antenna unit).',
-    'Set <b>Secondary WAN</b> to <b>USB</b> (the USB port — satellite dish via adapter).',
-    'Set <b>Dual WAN mode</b> to <b>Failover mode</b>.',
-    'Under <b>Heartbeat server</b>, set the primary check target to <b>1.1.1.1</b> (Cloudflare) '
-    'and secondary to <b>8.8.8.8</b> (Google). These are the IPs the router pings to confirm WAN is up.',
-    'Set <b>Failback to primary WAN when primary WAN is recovered</b> to ON. '
-    'This switches back to the cellular antenna unit automatically when cellular returns.',
-    'Click <b>Apply</b>.',
-    'Test failover: unplug the the cellular antenna unit PoE cable from the WAN port. '
-    'Within 30-60 seconds, the ASUS should switch to satellite dish USB. '
-    'Check WAN status in the router admin — it should show USB WAN active. '
-    'Reconnect the cellular antenna unit — the router should failback to WAN port within 60 seconds.',
-]))
-story.append(SP(4))
-story.append(tbl(['WAN STATE', 'WHAT EMCOMM-NET DEVICES SEE', 'FIELDCOMMAND IMPACT'], [
-    ['InstyConnect UP  (primary)',
-     'Full internet — 5G/LTE via InstyConnect (T-Mobile/Verizon)',
-     'NWS weather alerts live, APRS-IS active, FCC DB refresh available, Pat Winlink via internet'],
-    ['InstyConnect DOWN → Starlink UP  (failover)',
-     'Full internet via Starlink — slightly higher latency (~20-40ms)',
-     'All internet features remain active.  CGNAT on satellite dish means no inbound connections possible.'],
-    ['Both WAN sources DOWN',
-     'No internet — EMCOMM-NET still fully operational.',
-     'All local FieldCommand features work normally.  NWS alerts, APRS-IS, FCC refresh paused until WAN returns.'],
-], [2.0*inch, 2.0*inch, CW-4.0*inch]))
-story.append(SP(8))
-
-story.append(H2('1.4  AiMesh Mesh Node Setup — Extending EMCOMM-NET Coverage'))
+story.append(H2('1.3  AiMesh Mesh Node Setup — Extending EMCOMM-NET Coverage'))
 story.append(P(
     'The standard FieldCommand deployment includes three ASUS RT-BE58 Go routers: '
-    'one primary (connected to the cellular antenna unit WAN and the UniFi switch) '
+    'one primary (connected to the WAN source and the UniFi switch) '
     'and two mesh nodes that extend EMCOMM-NET to additional rooms, floors, or outdoor areas. '
     'All three use the same hardware, the same SSID, and the same password. '
     'Devices roam between them automatically.'))
@@ -1335,7 +1210,15 @@ story.append(P('The Pi must always be reachable at 192.168.50.1. If the installe
                'reservation in the ASUS router, verify with <font face="Courier">ip addr show eth0</font> and '
                'skip to Step 5 if 192.168.50.1/24 is shown.'))
 story.append(SP(6))
-story.append(H2('Path A — Raspberry Pi OS Lite (SSH)'))
+story.append(NoteBox(
+    '<b>Choose the path that matches your OS edition:</b>  '
+    'Path A is for Raspberry Pi OS Lite users who configure the Pi over SSH from their laptop.  '
+    'Path B is for Raspberry Pi OS Desktop users who have a monitor and keyboard connected — '
+    'use the Pi\'s own terminal, no SSH required.  '
+    'If you used raspi-config during OS setup, use Path C.',
+    'note'))
+story.append(SP(6))
+story.append(H2('Path A — Raspberry Pi OS Lite  (via SSH from your laptop)'))
 story.append(CodeBlock([
     '# SSH into the Pi (use the IP shown in your router DHCP table)',
     'ssh fieldcommand@[current-pi-ip]',
@@ -1351,7 +1234,7 @@ story.append(CodeBlock([
     'ip addr show eth0',
 ]))
 story.append(SP(6))
-story.append(H2('Path B — Raspberry Pi OS Desktop (GUI)'))
+story.append(H2('Path B — Raspberry Pi OS Desktop  (via Terminal on the Pi)'))
 story.append(steps([
     'Click the <b>network icon</b> in the taskbar (top-right corner).',
     'Click <b>Advanced Options → Edit Connections</b>.',
@@ -1382,7 +1265,7 @@ story.append(PB())
 # ── STEP 4b — RAID ───────────────────────────────────────────────────────────
 story.append(StepBox('4b', 'RAID 1 NVMe Setup — Pironman MAX 5'))
 story.append(SP(8))
-story.append(H1('7b. RAID 1 NVMe Setup — Pironman MAX 5'))
+story.append(H1('Step 5b:  RAID 1 NVMe Setup — Pironman MAX 5'))
 story.append(HR(EOC_LT, 0.5))
 story.append(SP(4))
 story.append(P('The Pironman MAX 5 enclosure has two M.2 NVMe slots. Configure them as a RAID 1 mirror so '
@@ -1435,9 +1318,9 @@ story.append(NoteBox('RAID 1 protects against drive failure — it is NOT a back
 story.append(PB())
 
 # ── STEP 5 — KIWIX ───────────────────────────────────────────────────────────
-story.append(StepBox(5, 'Kiwix Offline Library Setup'))
+story.append(StepBox(6, 'Kiwix Offline Library Setup'))
 story.append(SP(8))
-story.append(H1('8. Step 5: Kiwix Offline Library Setup'))
+story.append(H1('Step 6:  Kiwix Offline Library Setup'))
 story.append(HR(EOC_LT, 0.5))
 story.append(SP(4))
 story.append(P('Kiwix provides an offline web library served on port 8081. All devices on EMCOMM-NET can browse '
@@ -1547,7 +1430,859 @@ story.append(PB())
 # ── STEP 6 — FCC ─────────────────────────────────────────────────────────────
 story.append(StepBox(6, 'FCC Amateur Database'))
 story.append(SP(8))
-story.append(H1('9. Step 6: FCC Amateur Database'))
+story.append(H1('Step 7:  Printer Setup'))
+story.append(HR(EOC_LT, 0.5))
+story.append(SP(4))
+story.append(P('FieldCommand has print buttons on 17 pages. All printing uses the browser standard '
+               'window.print() function, which sends the job to whatever printer the operator\'s browser '
+               'can reach. Three printer connection methods are supported:'))
+story.append(SP(6))
+story.append(H2('Option A — Client Device Prints to Its Own Printer (Simplest)'))
+story.append(P('Each operator\'s laptop or tablet prints to its own locally connected printer. '
+               'No Pi configuration needed. Zero setup required — works immediately.'))
+story.append(SP(6))
+story.append(NoteBox('This is the simplest option and requires zero configuration on the Pi. '
+                     'The only requirement is that the operator\'s device has a printer configured.', 'tip'))
+story.append(SP(8))
+story.append(H2('Option B — USB Printer Shared via Pi (CUPS)'))
+story.append(P('A USB printer is connected directly to the Pi. CUPS shares it across EMCOMM-NET. '
+               'Installed automatically by the FieldCommand installer. CUPS admin UI at http://192.168.50.1:631.'))
+story.append(SP(4))
+story.append(H3('B.2  Add the USB Printer via CUPS Web Admin'))
+story.append(steps([
+    'Plug the USB printer into one of the Pi\'s USB ports (or powered USB hub).',
+    'On any device on EMCOMM-NET, open a browser and go to: <b>http://192.168.50.1:631</b>',
+    'Click <b>Administration → Add Printer</b>.',
+    'If prompted for credentials, enter the Pi username and password (e.g. fieldcommand / your password).',
+    'Your USB printer appears in the <b>Local Printers</b> list. Select it and click <b>Continue</b>.',
+    'Enter a Name (e.g. FieldCommand-Printer), Description, and Location. Check <b>Share This Printer</b>. Click Continue.',
+    'Select the correct printer driver. Click <b>Add Printer</b>.',
+    'Set default options (paper size: Letter) and click <b>Set Default Options</b>.',
+    'Click <b>Print Test Page</b> to confirm the printer is working.',
+]))
+story.append(SP(6))
+story.append(H3('B.3  Add the Shared Printer on Operator Devices'))
+story.append(tbl(['DEVICE TYPE', 'HOW TO ADD THE SHARED PRINTER'], [
+    ['Windows laptop  (Winlink / JS8Call station)',
+     'Settings → Bluetooth & devices → Printers & scanners → Add a printer or scanner.  '
+     'Windows discovers the CUPS shared printer automatically on EMCOMM-NET via Bonjour.  '
+     'Select FieldCommand-Printer when it appears and click Add device.'],
+    ['Mac / macOS',
+     'System Settings → Printers & Scanners → click + (Add Printer).  '
+     'Click the Default tab — the shared printer appears via Bonjour discovery.  '
+     'Select it and click Add.'],
+    ['iPad / iPhone  (AirPrint)',
+     'No setup required.  CUPS + Avahi advertises the printer as AirPrint-compatible.  '
+     'Open any FieldCommand page → tap the Share icon → tap Print → select the printer.  '
+     'Works on any iOS device on EMCOMM-NET.'],
+    ['Android tablet / phone',
+     'Install the free CUPS Print app from Google Play.  '
+     'Open the app → Add Printer → enter IP 192.168.50.1,  Port 631,  Protocol IPP.  '
+     'The printer appears in the Android print dialog for all apps.'],
+    ['Chromebook',
+     'Settings → Advanced → Printing → Printers → Add Printer.  '
+     'Enter:  Name = FieldCommand-Printer,  Address = 192.168.50.1,  Protocol = IPP,  '
+     'Queue = /printers/FieldCommand-Printer.  Click Add.'],
+    ['Raspberry Pi 500 / 500+  (operator workstation)',
+     'Chromium browser  (pre-installed): the CUPS printer appears automatically in the print dialog.  '
+     'No additional setup needed — Chromium on Pi OS discovers CUPS printers via Bonjour.  '
+     'For Firefox ESR on the Pi 500:  install via  sudo apt install firefox-esr  '
+     'then open Print → More Settings → select the printer from the destination list.  '
+     'Alternatively, run:  sudo usermod -aG lpadmin fieldcommand  to give the Pi 500 user '
+     'full access to the CUPS admin at http://192.168.50.1:631.'],
+], [1.6*inch, CW-1.6*inch]))
+story.append(SP(6))
+story.append(H3('B.4  Recommended Printers for Field Use'))
+story.append(P('<b>Monochrome Laser  (recommended for most EOC deployments)</b>',
+               S('ph2', fontSize=9.5, fontName='Helvetica-Bold', textColor=EOC_LT, leading=13)))
+story.append(SP(3))
+story.append(tbl(['PRINTER', 'CONNECTION', 'WHY IT WORKS WELL'], [
+    ['Brother HL-L2350DW',
+     'USB  or  Wi-Fi',
+     'Excellent Linux driver support out of the box.  Fast, compact, duplex, durable.  '
+     'Best all-round choice for field EOC use.  Under $130.'],
+    ['HP LaserJet Pro M15w  /  P1102w',
+     'USB  or  Wi-Fi',
+     'Full Linux support via HP HPLIP driver (installed automatically with CUPS).  '
+     'Fast, reliable, very low cost per page.  Under $150.'],
+], [1.8*inch, 1.3*inch, CW-3.1*inch]))
+story.append(SP(6))
+story.append(P('<b>Color Multifunction Laser  (ICS maps, colored forms, and chart printing)</b>',
+               S('ph2', fontSize=9.5, fontName='Helvetica-Bold', textColor=EOC_LT, leading=13)))
+story.append(SP(3))
+story.append(tbl(['PRINTER', 'CONNECTION', 'WHY IT WORKS WELL'], [
+    ['Brother MFC-L3770CDW',
+     'USB,  Wi-Fi,  or  Ethernet',
+     'Color laser all-in-one with duplex, scan, copy, fax.  '
+     'Full Linux support via Brother driver.  '
+     'Prints color ICS maps and resource boards clearly.  Under $400.'],
+    ['HP Color LaserJet Pro MFP M479fdw',
+     'USB,  Wi-Fi,  or  Ethernet',
+     'Color laser multifunction — print, scan, copy, fax.  '
+     'HPLIP driver works with CUPS out of the box.  '
+     'Excellent for IAP packages with color-coded sections.  Under $500.'],
+    ['Canon imageCLASS MF743Cdw',
+     'USB,  Wi-Fi,  or  Ethernet',
+     'Color laser multifunction with excellent Linux CUPS driver (CAPT driver).  '
+     'Handles letter and legal paper.  Good choice for permanent EOC installations.  Under $450.'],
+], [1.8*inch, 1.5*inch, CW-3.3*inch]))
+story.append(SP(6))
+story.append(P('<b>Portable / Battery-Powered  (mobile and field deployments without shore power)</b>',
+               S('ph2', fontSize=9.5, fontName='Helvetica-Bold', textColor=EOC_LT, leading=13)))
+story.append(SP(3))
+story.append(tbl(['PRINTER', 'CONNECTION', 'WHY IT WORKS WELL'], [
+    ['Canon PIXMA TR150',
+     'USB  or  Wi-Fi  (battery built-in)',
+     'Compact inkjet with rechargeable battery.  Prints ~200 pages per charge.  '
+     'Letter size.  Wi-Fi connects directly to EMCOMM-NET.  Under $200.'],
+    ['HP OfficeJet 200',
+     'USB  or  Wi-Fi  (battery optional)',
+     'Portable inkjet with larger paper tray than TR150.  Optional battery accessory.  '
+     'Good for shelter check-in stations and mobile command posts.  Under $180.'],
+], [1.8*inch, 1.5*inch, CW-3.3*inch]))
+story.append(PB())
+
+story.append(H2('Option C — Network Printer on EMCOMM-NET (Simplest Shared Setup)'))
+story.append(P(
+    'A Wi-Fi or Ethernet printer is connected directly to the ASUS router or UniFi switch — '
+    'no Pi involvement required at all. '
+    'All devices on EMCOMM-NET can discover and print to it automatically via Bonjour / mDNS. '
+    'This works with any network-capable printer including color multifunction laser printers '
+    'that have built-in Wi-Fi or Ethernet. '
+    'This is the simplest option for permanent EOC installations where a color MFP is already on site.'))
+story.append(SP(6))
+story.append(P(
+    'Option C works with any network-capable printer — including all three color multifunction '
+    'laser printers listed in the BOM. These are the best choice for a permanent EOC installation '
+    'because they connect directly to EMCOMM-NET with no Pi configuration, provide color printing '
+    'for ICS maps and IAP packages, and are discoverable by every device on scene automatically.'))
+story.append(SP(6))
+story.append(tbl(['CONNECTION METHOD', 'COMPATIBLE PRINTERS', 'HOW TO SET UP'], [
+    ['Wi-Fi  (wireless)',
+     'Brother MFC-L3770CDW  /  HP Color LaserJet M479fdw  /  Canon MF743Cdw  /  Canon PIXMA TR150  /  HP OfficeJet 200',
+     'Use the printer control panel to join EMCOMM-NET. '
+     'Enter the Wi-Fi password when prompted. '
+     'The printer receives a 192.168.50.x address from the ASUS router automatically. '
+     'All EMCOMM-NET devices discover it via Bonjour — no driver installation needed.'],
+    ['Ethernet  (wired)',
+     'Brother MFC-L3770CDW  /  HP Color LaserJet M479fdw  /  Canon MF743Cdw',
+     'Run a CAT 6 cable from the printer Ethernet port to any spare UniFi Switch port (Ports 3 through 5). '
+     'The printer receives an IP automatically. '
+     'Set a static DHCP reservation in the ASUS router so the IP never changes between activations.'],
+    ], [1.7*inch, 1.8*inch, CW-3.5*inch]))
+story.append(SP(6))
+story.append(H3('Reserve a Static IP for the Printer (Recommended)'))
+story.append(CodeBlock([
+    '# On the ASUS router web UI (http://192.168.50.1):',
+    '# LAN → DHCP Server → Manually Assigned IP',
+    '# Enter the printer MAC address → assign a fixed IP, e.g.: 192.168.50.10',
+    '# Reboot the printer to pick up the reservation',
+    '# Confirm: ping 192.168.50.10',
+]))
+story.append(SP(6))
+story.append(H2('Printer Option Comparison'))
+story.append(tbl(['', 'Option A — Client Printer', 'Option B — USB via Pi / CUPS', 'Option C — Network Printer'], [
+    ['Pi configuration needed', 'None', 'CUPS (auto-installed)', 'None'],
+    ['One printer for all operators', 'Each device needs own printer', 'Shared across EMCOMM-NET', 'Shared across EMCOMM-NET'],
+    ['Works without internet', 'Yes', 'Yes', 'Yes'],
+    ['iOS / AirPrint support', 'Requires AirPrint printer', 'Yes via CUPS + Avahi', 'Yes if AirPrint printer'],
+    ['Battery printer support', 'Yes', 'Yes (USB connected)', 'Yes (Wi-Fi connected)'],
+    ['Best for', 'Single operator or tablet with own printer', 'Any USB printer, shared to all devices', 'Wi-Fi/Ethernet printer already on site'],
+], [1.6*inch, 1.6*inch, 1.8*inch, CW-5.0*inch]))
+story.append(SP(4))
+story.append(NoteBox('For most your callsign field activations, Option B (USB printer via CUPS) is recommended. '
+                     'A Brother HL-L2350DW or HP LaserJet plugged into the Pi USB hub covers all ICS forms, '
+                     'net logs, and cheat sheets needed for a typical activation.', 'tip'))
+story.append(PB())
+
+story.append(StepBox(8, 'First Boot Verification  —  Full System'))
+story.append(SP(8))
+story.append(H1('Step 8:  First Boot Verification'))
+story.append(HR(EOC_LT, 0.5))
+story.append(SP(4))
+story.append(P(
+    'After the installer completes and the Pi reboots, run through this verification checklist '
+    'before handing off the system. Every service should show "active" and the dashboard '
+    'should load cleanly from another device on EMCOMM-NET. '
+    'If anything is not running, the troubleshooting section at the end of this guide '
+    'covers the most common issues and their fixes.'))
+story.append(SP(6))
+story.append(CodeBlock([
+    '# Check all FieldCommand services',
+    'for svc in fcc-lookup health-monitor deadmans ics-platform kiwix nginx pat; do',
+    '  echo "$svc: $(systemctl is-active $svc)"',
+    'done',
+    '',
+    '# Test the dashboard from the Pi itself',
+    'curl -s http://localhost/ | head -5',
+    '# Test API endpoints',
+    'curl http://localhost:5050/health      # FCC API health check',
+    'curl http://localhost:5051/health      # System health monitor',
+    '# Verify Pi has the correct static IP',
+    'ip addr show eth0',
+    '# Should show: inet 192.168.50.1/24',
+]))
+story.append(PB())
+
+# ── REFERENCE SECTIONS ────────────────────────────────────────────────────────
+
+
+# ══════════════════════════════════════════════════════════════════════════════
+# PART 2 — AMATEUR RADIO GROUP SETUP
+# ══════════════════════════════════════════════════════════════════════════════
+story.append(PB())
+story.append(Table([[
+    P('<b>PART 2 — AMATEUR RADIO GROUP SETUP</b>',
+      S('ph', fontName='Helvetica-Bold', fontSize=16, textColor=white,
+        leading=20, alignment=TA_CENTER)),
+]],  colWidths=[CW]))
+story[-1].setStyle(TableStyle([
+    ('BACKGROUND',    (0,0), (-1,-1), EOC),
+    ('TOPPADDING',    (0,0), (-1,-1), 18),
+    ('BOTTOMPADDING', (0,0), (-1,-1), 18),
+    ('LEFTPADDING',   (0,0), (-1,-1), 20),
+    ('RIGHTPADDING',  (0,0), (-1,-1), 20),
+]))
+story.append(SP(8))
+story.append(NoteBox(
+    '<b>Skip this entire section if no licensed amateur radio group is involved '
+    'in your deployment.</b>  '
+    'FieldCommand IMS operates fully and completely without any of the components '
+    'in Part 2. All 49 web tools, ICS forms, net loggers, FEMA documentation, '
+    'personnel accountability, and every other feature in Part 1 work independently '
+    'of amateur radio hardware or services.  '
+    'Part 2 is for deployments where an ARES, RACES, amateur radio club, or '
+    'other FCC-licensed amateur radio group is the lead or a key partner. '
+    'A licensed amateur operator must lead the registration and setup for '
+    'every item in this section.',
+    'warn'))
+story.append(SP(6))
+story.append(tbl(['PART 2 SECTION', 'WHAT IT INSTALLS / CONFIGURES', 'SKIP IF...'], [
+    ['A — AMPRNet / 44Net Gateway',
+     'WireGuard tunnel to 44.0.0.0/8 amateur radio IP network. '
+     'Dedicated gateway Pi. FCC callsign authentication.',
+     'No licensed amateur group leads the deployment'],
+    ['B — FCC Amateur Database',
+     'Offline SQLite database of 800K+ US amateur licensees. '
+     'Enables callsign lookup in net loggers, check-in, and AMPRNet auth.',
+     'No amateur radio net logging or callsign validation needed'],
+    ['C — APRS Setup  (Graywolf + YAAC)',
+     'APRS receive/transmit via TNC or radio interface. '
+     'Graywolf RF receive daemon + YAAC tactical display. '
+     'Digirig, SignaLink, or other USB TNC required.',
+     'No APRS capability needed or no TNC available'],
+    ['D — Pat Winlink',
+     'Winlink email-over-radio. Packet (VHF), VARA HF, VARA FM, Telnet. '
+     'Callsign required. TNC or IC-7300 required for RF sessions.',
+     'No Winlink needed or no HF/VHF radio station'],
+    ['E — Windows Laptop  (Winlink Express + JS8Call)',
+     'Winlink Express + VARA HF on Windows. JS8Call HF keyboard messaging. '
+     'IC-7300 or compatible HF transceiver required.',
+     'No HF station or Windows laptop in the deployment'],
+    ['F — SCS PACTOR Modem',
+     'PACTOR 1/2/3/4 HF digital modem for Winlink. '
+     'Highest throughput and reliability on HF. '
+     'SCS PXdragon or compatible modem required.',
+     'No PACTOR modem or PACTOR not required for your nets'],
+], [1.7*inch, 3.0*inch, CW-4.7*inch]))
+story.append(SP(8))
+
+story.append(H1('Part 2A — AMPRNet / 44Net Gateway Setup'))
+story.append(HR(EOC_LT, 0.5))
+story.append(SP(4))
+
+# ── 44Net Connect Overview ────────────────────────────────────────────────────
+story.append(H2('What is AMPRNet and 44Net Connect?'))
+story.append(P(
+    'AMPRNet — Amateur Packet Radio Network — is the global amateur radio IP network '
+    'operating on the 44.0.0.0/8 address block, an entire Class A range permanently '
+    'assigned by IANA to ARRL specifically for amateur radio use. '
+    'Every licensed amateur radio operator in the world can apply for a block of '
+    '44.x.x.x IP addresses. These addresses are globally routable and reachable by '
+    'any other AMPRNet participant, whether over RF (packet radio, APRS, mesh) '
+    'or via an encrypted internet tunnel.'))
+story.append(SP(4))
+story.append(P(
+    '<b>44Net Connect</b> (connect.44net.cloud) is the current WireGuard-based tunneling '
+    'service that makes AMPRNet accessible over the internet. '
+    'The AMPRNet portal (portal.ampr.org) manages IP allocations and generates the '
+    'WireGuard configuration for each registered operator. '
+    'Once configured, the tunnel brings 44.0.0.0/8 directly to your gateway Pi — '
+    'every device on EMCOMM-NET can reach any AMPRNet address worldwide '
+    'as if it were a local IP address.'))
+story.append(SP(8))
+
+story.append(H2('Is AMPRNet Right for Your Deployment?'))
+story.append(P(
+    '<b>AMPRNet is beneficial when an amateur radio group is the lead organization '
+    'or a key partner in the EMCOMM-NET deployment.</b> '
+    'If FieldCommand is being deployed by or with an ARES, RACES, Amateur Radio Club, '
+    'or other FCC-licensed amateur radio group, AMPRNet adds significant value: '
+    'Winlink via radio-path gateways, APRS connectivity, inter-node FieldCommand '
+    'communication, and access to a global amateur radio data network — '
+    'all without touching the commercial internet.'))
+story.append(SP(4))
+story.append(P(
+    '<b>If the deployment is primarily for public safety or served agency personnel '
+    'without an amateur radio group involved, the AMPRNet gateway adds hardware '
+    'cost and complexity with limited benefit.</b> '
+    'FieldCommand IMS runs entirely without AMPRNet — all 49 web pages, ICS forms, '
+    'FEMA documentation, net loggers, personnel accountability, and all other tools '
+    'operate locally on EMCOMM-NET with no dependency on AMPRNet. '
+    'The 44Net Gateway Pi is an optional enhancement, not a requirement.'))
+story.append(SP(6))
+story.append(tbl(['SCENARIO', 'AMPRNet RECOMMENDED?', 'REASON'], [
+    ['ARES/RACES group leads the deployment',
+     '✓ Yes — strong benefit',
+     'Winlink via AMPRNet path, APRS-IS, inter-node data, global amateur station reach'],
+    ['Amateur radio club operates the EOC comms',
+     '✓ Yes — strong benefit',
+     'Same as above — the licensed operators can register and maintain the allocation'],
+    ['Amateur radio operators are supporting partners',
+     '△ Consider — moderate benefit',
+     'Beneficial if the licensed operators take ownership of the AMPRNet registration'],
+    ['Public safety agency only — no amateur radio group',
+     '✗ Not recommended',
+     'Requires FCC amateur license for registration. Adds complexity with limited payoff.'],
+    ['Municipal EOC with some licensed staff',
+     '△ Consider — if a licensed operator leads',
+     'One designated licensed operator can register under their callsign and maintain it'],
+], [2.0*inch, 1.5*inch, CW-3.5*inch]))
+story.append(SP(8))
+
+story.append(H2('The Amateur Radio Group Must Lead This Process'))
+story.append(NoteBox(
+    'The AMPRNet registration and maintenance process requires an FCC-licensed '
+    'amateur radio operator. It cannot be done by a public safety agency, '
+    'a municipality, or an IT department acting alone. '
+    'The IP block is assigned to a callsign, maintained under that callsign, '
+    'and all use is subject to Part 97 rules. '
+    'The amateur radio group must own this — the served agency or EOC cannot.',
+    'warn'))
+story.append(SP(6))
+story.append(P(
+    'In practical terms, this means the process should be initiated and led by '
+    'the ARES Emergency Coordinator (EC), club President, or a designated '
+    'technical lead who holds an FCC amateur license. '
+    'The following organizational steps should happen before any hardware is purchased '
+    'or any software is configured:'))
+story.append(SP(4))
+story.append(tbl(['STEP', 'WHO DOES IT', 'WHAT HAPPENS'], [
+    ['Designate the AMPRNet technical lead',
+     'ARES EC or club President',
+     'Identify a licensed amateur (any class) who will own the registration, '
+     'maintain the allocation, and be the point of contact for AMPRNet administrators. '
+     'Their callsign becomes the registered callsign for the subnet.'],
+    ['Coordinate with the regional AMPRNet administrator',
+     'Designated technical lead',
+     'AMPRNet is regionally administered. In Illinois, contact the Illinois AMPRNet '
+     'coordinator (reachable via ARRL Illinois or the AMPRNet mailing list) '
+     'to understand what address blocks are available in your area '
+     'and to establish a relationship before submitting the formal request.'],
+    ['Agree on the subnet size and naming',
+     'Technical lead + club leadership',
+     'A /29 gives 6 usable addresses (enough for one FieldCommand deployment plus growth). '
+     'A /28 gives 14 addresses (suitable for multiple fixed and portable stations). '
+     'The technical lead proposes this in the registration justification.'],
+    ['Establish a club or group callsign if needed',
+     'Club leadership',
+     'The allocation can be under a personal callsign (e.g. KE4CON) or a club '
+     'callsign (e.g. K9ESV). A club callsign is preferable for organizational '
+     'deployments — it survives individual license changes and transfers more easily.'],
+    ['Plan for long-term maintenance',
+     'Club leadership + technical lead',
+     'AMPRNet allocations are permanent but require the license to remain active '
+     'and the portal account to be maintained. Identify a backup technical lead '
+     'in case the primary moves or is unavailable at activation time.'],
+], [0.9*inch, 1.6*inch, CW-2.5*inch]))
+story.append(SP(8))
+
+story.append(H2('What AMPRNet Enables — Capabilities and Restrictions'))
+story.append(tbl(['CAPABILITY', 'DESCRIPTION', 'REQUIRES WAN?'], [
+    ['Winlink via AMPRNet path',
+     'Connect to Winlink RMS gateways that have 44.x.x.x addresses. '
+     'Keeps Winlink traffic within the amateur radio network rather than the commercial internet. '
+     'Useful when you want to avoid commercial internet dependency for message handling.',
+     'Yes — WireGuard tunnel requires internet to establish, but once up, '
+     'Winlink sessions travel over the 44-net tunnel'],
+    ['APRS-IS via AMPRNet',
+     'APRS-IS network servers are reachable on 44.x.x.x addresses. '
+     'Configure Graywolf or YAAC to use the AMPRNet path instead of the public internet.',
+     'Yes — same tunnel dependency'],
+    ['Inter-node FieldCommand',
+     'Two FieldCommand systems with 44Net gateways can share net log data, '
+     'resource board status, and incident information over AMPRNet '
+     'without routing through the commercial internet. '
+     'Useful for multi-site EOC deployments.',
+     'Yes — tunnel required'],
+    ['Direct 44.x.x.x station access',
+     'Any amateur station worldwide reachable on 44.x.x.x — '
+     'whether via RF packet, mesh networking, or WireGuard — '
+     'is directly addressable from any EMCOMM-NET device.',
+     'Yes — tunnel required'],
+    ['Static globally routable IP addresses',
+     'Your 44.x.x.x block is permanently yours and globally routable. '
+     'Other AMPRNet participants can reach your stations at a fixed address '
+     'that never changes, regardless of your ISP or location.',
+     'No — addresses are permanent; reachability requires tunnel'],
+], [1.6*inch, 3.3*inch, CW-4.9*inch]))
+story.append(SP(6))
+story.append(NoteBox(
+    '<b>Part 97 restrictions apply to all AMPRNet traffic:</b> '
+    'No encryption of content (WireGuard tunnel encryption of transport is permitted). '
+    'No commercial traffic. '
+    'Station identification required. '
+    'No third-party traffic unless authorized. '
+    'AMPRNet is a tool for the amateur radio community — '
+    'public safety agencies using it through an amateur radio group '
+    'must ensure all traffic complies with Part 97.',
+    'warn'))
+story.append(SP(8))
+
+story.append(H2('How to Get Your AMPRNet IP Allocation — Overview'))
+story.append(P(
+    'The process is straightforward but not fast. '
+    'Allow <b>2–6 weeks</b> from initial registration to receiving a confirmed allocation. '
+    'Regional administrators are volunteers and response times vary. '
+    'Start this process well before your planned activation date.'))
+story.append(SP(6))
+story.append(tbl(['PHASE', 'ACTION', 'TIMELINE'], [
+    ['1 — Coordinate locally',
+     'Contact your regional AMPRNet coordinator before registering. '
+     'Ask what blocks are available in your area, introduce your organization, '
+     'and confirm they are aware of the incoming request. '
+     'Illinois: check ARRL Illinois Section or the AMPRNet-Illinois mailing list.',
+     '1–2 days'],
+    ['2 — Create portal account',
+     'Go to https://portal.ampr.org and register. '
+     'Use your FCC callsign as your username. '
+     'The portal verifies your license automatically against the FCC ULS database.',
+     '1 day'],
+    ['3 — Request subnet',
+     'Log in → Subnets → Request Subnet. '
+     'Select your region. '
+     'Request a /29 (6 addresses) or /28 (14 addresses). '
+     'In the justification field, describe your organization, your role in EMCOMM, '
+     'the number of fixed and portable stations, and intended use. '
+     'A clear, detailed justification speeds approval.',
+     '1 day to submit'],
+    ['4 — Wait for approval',
+     'The regional AMPRNet administrator reviews your request and may contact you '
+     'with questions. Once approved, your allocation appears in '
+     'portal.ampr.org → Subnets → My Subnets with status Active.',
+     '1–6 weeks'],
+    ['5 — Download WireGuard config',
+     'After approval, the portal generates a WireGuard configuration specific to '
+     'your subnet. Download it — it contains your private key, your 44.x.x.x address, '
+     'and the connect.44net.cloud endpoint details. '
+     'Store this securely — it is the credential for your tunnel.',
+     'Immediate after approval'],
+    ['6 — Configure gateway Pi',
+     'Follow Part B of this installation guide to configure the gateway Pi '
+     'with the WireGuard config from the portal.',
+     '1–2 hours'],
+], [0.9*inch, 4.0*inch, CW-4.9*inch]))
+story.append(SP(4))
+story.append(NoteBox(
+    'Keep a printed copy of your portal login, assigned subnet, and WireGuard '
+    'configuration in your FieldCommand go-kit. '
+    'If the gateway Pi needs to be rebuilt at a future activation, '
+    'you will need these credentials. '
+    'The portal generates a new WireGuard private key if needed — '
+    'store the portal login credentials, not just the key file.',
+    'tip'))
+story.append(SP(8))
+
+story.append(H2('AMPRNet in FieldCommand — What the Software Does'))
+
+story.append(SP(4))
+story.append(P(
+    'The following files are part of FieldCommand and work together to provide '
+    'integrated 44Net gateway support across both Pis:'))
+story.append(SP(4))
+story.append(tbl(['FILE', 'RUNS ON', 'PURPOSE'], [
+    ['scripts/setup_44net.sh',
+     'Gateway Pi  (192.168.50.2)',
+     'Installer for the gateway Pi.  Sets up WireGuard, static IP, IP forwarding, '
+     'status service, and Desktop autostart.  Run once on the gateway Pi.'],
+    ['python/amprgate_status.py',
+     'Gateway Pi  (192.168.50.2)',
+     'Flask status service on port 9000.  Serves the gateway dashboard UI and '
+     '/api/status JSON endpoint.  Installed by setup_44net.sh.'],
+    ['systemd/amprgate-status.service',
+     'Gateway Pi  (192.168.50.2)',
+     'Systemd unit that keeps amprgate_status.py running.  '
+     'Installed by setup_44net.sh.  Starts after wg-quick@ampr0.'],
+    ['python/amprgate_poll.py',
+     'FieldCommand Pi  (192.168.50.1)',
+     'Polls the gateway Pi every 30 seconds and writes status to '
+     '/opt/fieldcommand/data/amprgate_status.json for the dashboard.'],
+    ['systemd/amprgate-poll.service',
+     'FieldCommand Pi  (192.168.50.1)',
+     'Systemd unit for the poll service.  '
+     'Installed automatically by the FieldCommand install.sh.'],
+    ['html/amprgate.html',
+     'FieldCommand Pi  (192.168.50.1)',
+     'Dashboard page at http://192.168.50.1/amprgate.html.  '
+     'Shows tunnel state, AMPRNet address, traffic stats, and tunnel controls.'],
+], [1.6*inch, 1.8*inch, CW-3.4*inch]))
+story.append(SP(8))
+story.append(P(
+    'AMPRNet (Amateur Packet Radio Network) is the global amateur radio IP network '
+    'using the reserved 44.0.0.0/8 address block assigned by IANA to ARRL. '
+    'It provides licensed amateur radio operators with globally routable IP addresses '
+    'reachable over RF links or via encrypted internet tunnels to the AMPRNet gateway. '
+    'Adding a dedicated 44Net gateway Pi to FieldCommand gives every device on EMCOMM-NET '
+    'full access to the AMPRNet — Winlink gateways, APRS-IS servers, Mesh networking '
+    'nodes, and other amateur stations worldwide that are reachable on 44.x.x.x addresses.'))
+story.append(SP(4))
+story.append(NoteBox(
+    'The 44Net Gateway Pi is completely separate from the FieldCommand server Pi. '
+    'It runs WireGuard, ip routing, and a status page only. '
+    'If the gateway goes down or needs reconfiguring, FieldCommand continues operating normally. '
+    'This isolation was an intentional design choice — keep routing infrastructure '
+    'separate from the communications server.',
+    'note'))
+story.append(SP(8))
+
+story.append(H2('Part A  —  Get Your AMPRNet Allocation  (Do This First — Allow 2-4 Weeks)'))
+story.append(P(
+    'Before configuring any software, you need an AMPRNet IP address block assigned to your callsign. '
+    'This is a one-time registration process managed by the AMPRNet administrators at ampr.org. '
+    'The block you receive will be something like 44.x.x.x/29 (6 usable addresses) '
+    'or 44.x.x.x/28 (14 usable addresses) depending on what is available in your region.'))
+story.append(SP(6))
+story.append(steps([
+    '<b>Create an account at portal.ampr.org</b> — go to https://portal.ampr.org and click Register. '
+    'You must use your callsign your callsign as your username. '
+    'Verify your license via the FCC ULS lookup that the portal performs automatically.',
+    '<b>Request a subnet allocation</b> — after logging in, click Subnets → Request Subnet. '
+    'Select your region (Illinois — typically 44.24.x.x or 44.172.x.x range). '
+    'Request a /29 block for a small deployment or a /28 if you anticipate growth. '
+    'In the justification field, explain the your organization EMCOMM-NET deployment and intended use.',
+    '<b>Coordinate with your regional AMPRNet administrator</b> — Illinois AMPRNet administration '
+    'is coordinated through ARRL. You may be contacted by the regional admin for verification. '
+    'Response times vary from days to several weeks. Be patient.',
+    '<b>Receive your allocation</b> — you will get an email with your assigned 44.x.x.x/29 block. '
+    'The portal will also show your allocation under Subnets → My Subnets. '
+    'Record this allocation — you will need it in Part B.',
+    '<b>Note your WireGuard endpoint credentials</b> — the portal provides a WireGuard '
+    'configuration for your specific subnet. Download or copy this — it contains your '
+    'private key, allowed IPs, and the amprgw.ampr.org endpoint address.',
+]))
+story.append(SP(4))
+story.append(NoteBox(
+    'ARRL membership is not required for an AMPRNet allocation, but a valid FCC amateur '
+    'radio license (any class) is required. The your club or personal callsign is valid for this purpose. '
+    'The allocation is tied to the callsign and is permanent as long as the license remains active.',
+    'note'))
+story.append(SP(8))
+
+story.append(H2('Part B  —  Set Up the 44Net Gateway Pi'))
+story.append(P(
+    'Once you have your AMPRNet allocation, the following steps configure the dedicated '
+    'gateway Pi running in the Argon NEO 5 case. '
+    'This Pi should be freshly flashed with Raspberry Pi OS Lite (64-bit). '
+    'It does not need the FieldCommand installer — it runs WireGuard and routing only.'))
+story.append(SP(6))
+
+story.append(H3('B.1  Initial OS Setup'))
+story.append(P(
+    'Flash Raspberry Pi OS Desktop (64-bit) to the M.2 SATA SSD using Raspberry Pi Imager. '
+    'Desktop is used on the gateway Pi so any team member can check tunnel status '
+    'from the local keyboard and monitor without SSH. '
+    'Chromium opens the status page automatically on login. '
+    'During Imager advanced options set:'))
+story.append(SP(4))
+story.append(tbl(['OPTION', 'VALUE'], [
+    ['Hostname',  'amprgate.local  —  discoverable as amprgate.local on EMCOMM-NET'],
+    ['Username',  'amprgate  —  used by the gateway setup script'],
+    ['Password',  'Choose a strong password and record it with the FieldCommand credentials'],
+    ['Enable SSH','Yes  —  useful for remote diagnostics if the monitor is not available'],
+    ['Wi-Fi',     'Your home or lab Wi-Fi for initial package downloads  —  switched to wired EMCOMM-NET after setup'],
+    ['Locale',    'US/Central  —  matches the FieldCommand Pi for consistent log timestamps'],
+], [1.6*inch, CW-1.6*inch]))
+story.append(SP(6))
+
+story.append(H3('B.2  Assign Static IP and Install WireGuard'))
+story.append(CodeBlock([
+    '# SSH into the gateway Pi',
+    'ssh amprgate@[current-pi-ip]',
+    '',
+    '# Update packages',
+    'sudo apt-get update && sudo apt-get full-upgrade -y',
+    '',
+    '# Install WireGuard',
+    'sudo apt-get install -y wireguard wireguard-tools',
+    '',
+    '# Set static IP on eth0',
+    'sudo nmcli con mod "Wired connection 1",' +
+    '    ipv4.addresses 192.168.50.2/24,' +
+    '    ipv4.gateway 192.168.50.254,' +
+    '    ipv4.dns "8.8.8.8 8.8.4.4",' +
+    '    ipv4.method manual',
+    'sudo nmcli con up "Wired connection 1"',
+    '',
+    '# Verify',
+    'ip addr show eth0',
+    '# Expected: inet 192.168.50.2/24',
+]))
+story.append(SP(6))
+
+story.append(H3('B.3  Configure the WireGuard Tunnel'))
+story.append(P(
+    'The AMPRNet portal provides a WireGuard configuration specific to your subnet. '
+    'The following is the general structure — replace the placeholder values with '
+    'the actual values from your portal allocation.'))
+story.append(SP(4))
+story.append(CodeBlock([
+    '# Create the WireGuard config directory',
+    'sudo mkdir -p /etc/wireguard',
+    'sudo chmod 700 /etc/wireguard',
+    '',
+    '# Create the tunnel config file',
+    'sudo nano /etc/wireguard/ampr0.conf',
+    '',
+    '# Paste the following — replace ALL values in [brackets] with your portal values:',
+    '[Interface]',
+    'PrivateKey = [your-private-key-from-portal]',
+    'Address = [your-44.x.x.x/29-address]',
+    'ListenPort = 51820',
+    'PostUp   = ip route add 44.0.0.0/8 dev ampr0',
+    'PostUp   = iptables -A FORWARD -i ampr0 -j ACCEPT',
+    'PostUp   = iptables -A FORWARD -o ampr0 -j ACCEPT',
+    'PostUp   = iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE',
+    'PostDown = ip route del 44.0.0.0/8 dev ampr0',
+    'PostDown = iptables -D FORWARD -i ampr0 -j ACCEPT',
+    'PostDown = iptables -D FORWARD -o ampr0 -j ACCEPT',
+    'PostDown = iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE',
+    '',
+    '[Peer]',
+    'PublicKey = [amprnet-gateway-public-key-from-portal]',
+    'Endpoint  = amprgw.ampr.org:51820',
+    'AllowedIPs = 44.0.0.0/8',
+    'PersistentKeepalive = 25',
+]))
+story.append(SP(6))
+
+story.append(H3('B.4  Enable IP Forwarding and Start the Tunnel'))
+story.append(CodeBlock([
+    '# Enable IP forwarding (required for routing between EMCOMM-NET and AMPRNet)',
+    'echo "net.ipv4.ip_forward = 1" | sudo tee -a /etc/sysctl.conf',
+    'sudo sysctl -p',
+    '',
+    '# Start the WireGuard tunnel',
+    'sudo wg-quick up ampr0',
+    '',
+    '# Enable at boot',
+    'sudo systemctl enable wg-quick@ampr0',
+    '',
+    '# Check tunnel status',
+    'sudo wg show ampr0',
+    '# Expected: shows latest handshake, transfer stats, allowed IPs',
+    '',
+    '# Test reachability into AMPRNet',
+    'ping 44.0.0.1 -c 4',
+    '# Expected: replies from 44.0.0.1 (AMPRNet gateway)',
+]))
+story.append(SP(6))
+
+story.append(H3('B.5  Access Control — Who Can Reach What'))
+story.append(P(
+    'FieldCommand restricts access to the 44Net gateway on two levels. '
+    'This is both a security measure and a Part 97 compliance measure — '
+    'only licensed amateur radio operators should be able to view or control '
+    'the AMPRNet gateway.'))
+story.append(SP(4))
+story.append(tbl(['PORT', 'ACCESSIBLE FROM', 'AUTH REQUIRED', 'PROVIDES'], [
+    ['Port 9000  (0.0.0.0)',
+     'Any EMCOMM-NET device  (192.168.50.x)',
+     'None for /api/status  (machine poll).  Valid FCC callsign for web UI.',
+     'Read-only status JSON.  Callsign-authenticated web dashboard.'],
+    ['Port 9001  (127.0.0.1)',
+     'Gateway Pi keyboard only  (localhost — not reachable from network)',
+     'Valid callsign session from port 9000 login.  Physical presence required.',
+     'Tunnel control: up / down / restart.'],
+    ], [1.4*inch, 1.6*inch, 1.8*inch, CW-4.8*inch]))
+story.append(SP(4))
+story.append(NoteBox(
+    'Tunnel controls (up/down/restart) are intentionally inaccessible from the network. '
+    'An operator who wants to restart the WireGuard tunnel must sit at the gateway Pi keyboard, '
+    'open Chromium, log in with their FCC callsign, and use the local control interface. '
+    'This prevents accidental or unauthorized tunnel disruption from operator laptops or phones. '
+    'The FieldCommand Pi polling service reads /api/status on port 9000 without authentication '
+    '— this is a read-only machine-to-machine call and is intentional.',
+    'note'))
+story.append(SP(6))
+story.append(H3('B.5  Advertise the 44Net Route to EMCOMM-NET Devices'))
+story.append(P(
+    'For other devices on EMCOMM-NET to use the 44Net gateway automatically, '
+    'the ASUS router needs to push a static route to all DHCP clients. '
+    'This tells every device: "to reach anything in 44.0.0.0/8, use 192.168.50.2".'))
+story.append(SP(4))
+story.append(steps([
+    'Open the ASUS router admin at <b>http://192.168.50.254</b>.',
+    'Go to <b>LAN → Route</b>.',
+    'Click <b>Add</b> and enter: Network/Host IP = <b>44.0.0.0</b>, '
+    'Netmask = <b>255.0.0.0</b>, Gateway = <b>192.168.50.2</b>, Interface = <b>LAN</b>.',
+    'Click <b>Apply</b>.',
+    'On any EMCOMM-NET device, verify the route was received:',
+]))
+story.append(CodeBlock([
+    '# On any EMCOMM-NET device (Pi 500, Windows laptop, etc.)',
+    'ip route show | grep 44',
+    '# Expected: 44.0.0.0/8 via 192.168.50.2 dev eth0',
+    '',
+    '# Windows equivalent (Command Prompt)',
+    'route print | find "44."',
+    '# Expected: 44.0.0.0  0.0.0.0  192.168.50.2  ...',
+    '',
+    '# Test from the FieldCommand Pi',
+    'ping 44.0.0.1 -c 4',
+    '# If reachable, FieldCommand can now connect to AMPRNet resources',
+]))
+story.append(SP(6))
+
+story.append(H3('B.6  Gateway Status Page'))
+story.append(P(
+    'Install a lightweight status page on the 44Net Pi so operators can verify '
+    'the tunnel state from any EMCOMM-NET browser without SSH access. '
+    'This is a small Flask application that displays tunnel status, '
+    'connected peers, and recent handshake times.'))
+story.append(SP(4))
+story.append(CodeBlock([
+    '# Install Python and Flask on the 44Net Pi',
+    'sudo apt-get install -y python3 python3-pip python3-venv',
+    'python3 -m venv /opt/amprgate/venv',
+    '/opt/amprgate/venv/bin/pip install flask',
+    '',
+    '# Create the status app',
+    'sudo mkdir -p /opt/amprgate',
+    'sudo nano /opt/amprgate/status.py',
+    '',
+    '# Paste the following into status.py:',
+    '# ---',
+    'from flask import Flask, jsonify',
+    'import subprocess, json',
+    'app = Flask(__name__)',
+    '',
+    '@app.route("/")',
+    'def index():',
+    '    return open("/opt/amprgate/status.html").read()',
+    '',
+    '@app.route("/api/status")',
+    'def status():',
+    '    wg = subprocess.run(["sudo","wg","show","ampr0","dump"],',
+    '        capture_output=True, text=True).stdout',
+    '    lines = [l.split("\t") for l in wg.strip().split("\n") if l]',
+    '    return jsonify({"tunnel":"up" if lines else "down","peers":len(lines)-1})',
+    '',
+    'if __name__ == "__main__":',
+    '    app.run(host="0.0.0.0", port=9000)',
+    '# ---',
+    '',
+    '# Create systemd service',
+    'sudo nano /etc/systemd/system/amprgate-status.service',
+    '# Paste:',
+    '[Unit]',
+    'Description=AMPRNet Gateway Status Page',
+    'After=network.target wg-quick@ampr0.service',
+    '',
+    '[Service]',
+    'User=amprgate',
+    'ExecStart=/opt/amprgate/venv/bin/python /opt/amprgate/status.py',
+    'Restart=always',
+    '',
+    '[Install]',
+    'WantedBy=multi-user.target',
+    '',
+    'sudo systemctl enable --now amprgate-status',
+    '# Status page now at: http://192.168.50.2:9000',
+]))
+story.append(SP(8))
+
+story.append(H2('Part C  —  What You Can Do on AMPRNet'))
+story.append(P(
+    'Once the gateway is operational and the route is advertised to EMCOMM-NET, '
+    'every device on EMCOMM-NET has full access to the AMPRNet. '
+    'Here are the most useful applications for your organization operations:'))
+story.append(SP(6))
+story.append(tbl(['APPLICATION', 'HOW IT USES 44NET', 'ACCESS FROM EMCOMM-NET'], [
+    ['Winlink via AMPRNet',
+     'Some Winlink RMS gateways have 44.x.x.x addresses. '
+     'Pat Winlink on the FieldCommand Pi can connect to them directly over the AMPRNet tunnel '
+     'rather than the commercial internet — useful when only amateur radio paths are available.',
+     'Pat Winlink at http://192.168.50.1:8090  Add AMPRNet RMS in Pat settings'],
+    ['APRS-IS via AMPRNet',
+     'The APRS-IS network has servers reachable on 44.x.x.x. '
+     'Graywolf and YAAC can connect to APRS-IS via the AMPRNet path, '
+     'keeping APRS traffic within the amateur radio network.',
+     'Configure APRS-IS server address in Graywolf or YAAC settings'],
+    ['Inter-node FieldCommand',
+     'If another your organization station runs a second FieldCommand system with its own 44Net gateway, '
+     'the two systems can share net data and resource boards over AMPRNet '
+     'without routing traffic through the commercial internet.',
+     'Future capability — requires second FieldCommand deployment'],
+    ['HamSphere / Echolink via AMPRNet',
+     'Some VoIP amateur radio nodes are reachable on 44.x.x.x addresses, '
+     'providing RF-to-AMPRNet linking without commercial internet dependency.',
+     'Direct connection to 44.x.x.x node addresses'],
+    ['Direct amateur station communication',
+     'Any amateur station worldwide with a 44.x.x.x address '
+     '(whether via RF packet or WireGuard tunnel) is directly reachable '
+     'from any EMCOMM-NET device for data exchange, file transfer, or status checking.',
+     'Direct TCP/IP connections to 44.x.x.x addresses'],
+    ], [2.1*inch, CW-2.1*inch]))
+story.append(SP(6))
+story.append(NoteBox(
+    'AMPRNet does not carry voice traffic and is not a replacement for your radio links. '
+    'It is a data network for IP-based amateur radio applications. '
+    'All traffic on AMPRNet is subject to Part 97 rules — no encryption of content, '
+    'no commercial traffic, licensed operator identification required. '
+    'WireGuard encryption of the tunnel itself is permitted as it is the transport, '
+    'not the content.',
+    'note'))
+story.append(SP(8))
+
+story.append(H2('Part D  —  Verification Checklist'))
+story.append(tbl(['CHECK', 'COMMAND / METHOD', 'EXPECTED RESULT'], [
+    ['AMPRNet portal shows allocation',
+     'Login to portal.ampr.org → Subnets → My Subnets',
+     'Your 44.x.x.x/29 block shows Status: Active'],
+    ['WireGuard tunnel is up on gateway Pi',
+     'SSH to 192.168.50.2 then: sudo wg show ampr0',
+     'Shows latest handshake within last 2 minutes'],
+    ['AMPRNet gateway reachable from gateway Pi',
+     'ping 44.0.0.1 -c 4',
+     'Replies received — round trip time typically 10-50 ms'],
+    ['EMCOMM-NET devices have 44 route',
+     'ip route show | grep 44  (on any EMCOMM-NET device)',
+     '44.0.0.0/8 via 192.168.50.2'],
+    ['AMPRNet reachable from FieldCommand Pi',
+     'ping 44.0.0.1 -c 4  (on FieldCommand Pi)',
+     'Replies received'],
+    ['Status page accessible',
+     'Open http://192.168.50.2:9000 in any browser on EMCOMM-NET',
+     'Shows callsign login page — enter a valid FCC callsign to proceed'],
+    ['Callsign login works',
+     'Enter your callsign at http://192.168.50.2:9000 login page',
+     'FCC database validates callsign — dashboard loads showing tunnel status'],
+    ['Access log recording',
+     'SSH to gateway Pi: tail /var/log/amprgate-access.log',
+     'Shows LOGIN-OK entry with your callsign, IP, and license class'],
+    ['Tunnel control blocked from network',
+     'From a laptop on EMCOMM-NET: curl http://192.168.50.2:9001',
+     'Connection refused — port 9001 is localhost-only'],
+    ['AMPRNet reachable from Pi 500 workstation',
+     'Open http://192.168.50.2:9000 in Chromium on Pi 500',
+     'Status page loads and shows tunnel UP'],
+], [1.8*inch, 1.6*inch, 1.5*inch, CW-4.9*inch]))
+story.append(PB())
+
+
+story.append(StepBox('B', 'FCC Amateur Database  (Part 2B)'))
+story.append(SP(8))
+story.append(H1('Part 2B — FCC Amateur Database'))
 story.append(HR(EOC_LT, 0.5))
 story.append(SP(4))
 story.append(P(
@@ -1578,9 +2313,10 @@ story.append(CodeBlock([
 story.append(PB())
 
 # ── STEP 7 — APRS ────────────────────────────────────────────────────────────
-story.append(StepBox(7, 'APRS Setup — Graywolf + YAAC'))
+
+story.append(StepBox('C', 'APRS Setup — Graywolf + YAAC  (Part 2C)'))
 story.append(SP(8))
-story.append(H1('10. Step 7: APRS Setup (Graywolf + YAAC)'))
+story.append(H1('Part 2C — APRS Setup (Graywolf + YAAC)'))
 story.append(HR(EOC_LT, 0.5))
 story.append(SP(4))
 story.append(P(
@@ -1664,7 +2400,7 @@ story.append(PB())
 # ── STEP 8 — PRINTER ─────────────────────────────────────────────────────────
 story.append(StepBox(8, 'Printer Setup — Three Connection Options'))
 story.append(SP(8))
-story.append(H1('11. Step 8: Printer Setup'))
+story.append(H1('Step 7:  Printer Setup'))
 story.append(HR(EOC_LT, 0.5))
 story.append(SP(4))
 story.append(P('FieldCommand has print buttons on 17 pages. All printing uses the browser standard '
@@ -1830,9 +2566,10 @@ story.append(NoteBox('For most your callsign field activations, Option B (USB pr
 story.append(PB())
 
 # ── STEP 9 — PAT WINLINK ─────────────────────────────────────────────────────
-story.append(StepBox(9, 'Pat Winlink — Verify & Configure'))
+
+story.append(StepBox('D', 'Pat Winlink — Verify & Configure  (Part 2D)'))
 story.append(SP(8))
-story.append(H1('12. Step 9: Pat Winlink — Verify & Configure'))
+story.append(H1('Part 2D — Pat Winlink — Verify & Configure'))
 story.append(HR(EOC_LT, 0.5))
 story.append(SP(4))
 story.append(P(
@@ -1948,6 +2685,206 @@ story.append(PB())
 story.append(StepBox('10b', 'SCS PACTOR Modem Setup  (Optional — High-Performance HF)'))
 story.append(SP(8))
 story.append(H1('Step 10b:  SCS PACTOR Modem Setup'))
+story.append(HR(EOC_LT, 0.5))
+story.append(SP(4))
+story.append(P(
+    'PACTOR is a high-performance HF digital mode used extensively in Winlink operations. '
+    'It provides significantly better throughput than VARA HF on marginal or noisy HF paths, '
+    'and is the only mode that supports PACTOR 4 compression on Winlink. '
+    'SCS (Special Communications Systems) manufactures the only PACTOR-licensed TNCs available. '
+    'A PACTOR TNC connects between the IC-7300 and the Windows laptop. '
+    'This step is optional — Winlink via VARA HF works well for most activations.'))
+story.append(SP(6))
+
+story.append(H2('Supported SCS PACTOR Modems'))
+story.append(tbl(['MODEL', 'PACTOR LEVEL', 'INTERFACE', 'NOTES'], [
+    ['SCS Tracker DSP TNC',
+     'PACTOR 1 / 2 / 3',
+     'USB (COM port)',
+     'Entry-level PACTOR TNC.  Good for most Winlink operations.  '
+     'Also supports PACKET and ROBUST PR.  ~$250.'],
+    ['SCS PTC-IIIusb',
+     'PACTOR 1 / 2 / 3',
+     'USB (COM port)',
+     'Full-featured controller with front-panel display.  '
+     'Supports PACTOR, PACKET, AMTOR, RTTY.  ~$650.'],
+    ['SCS P4dragon DR-7400',
+     'PACTOR 1 / 2 / 3 / 4',
+     'USB (COM port)',
+     'Top-of-line PACTOR 4 TNC.  Maximum throughput on HF.  '
+     'Required for PACTOR 4 sessions.  ~$1,100.  '
+     'Recommended for permanent EOC and EMCOMM stations.'],
+], [2.0*inch, 1.4*inch, 1.2*inch, CW-4.6*inch]))
+story.append(SP(6))
+
+story.append(H2('Physical Connection'))
+story.append(tbl(['FROM', 'TO', 'CABLE / NOTE'], [
+    ['SCS TNC  —  AFSK audio output',
+     'IC-7300  —  ACC jack audio input  or  3.5mm mic input',
+     'SCS-supplied audio cable  (included with TNC)'],
+    ['SCS TNC  —  AFSK audio input',
+     'IC-7300  —  ACC jack audio output  or  3.5mm speaker output',
+     'SCS-supplied audio cable  (included with TNC)'],
+    ['SCS TNC  —  PTT output',
+     'IC-7300  —  remote jack  (ACC or SEND)',
+     'SCS-supplied PTT cable  (check your TNC model)'],
+    ['SCS TNC  —  USB port',
+     'Windows laptop  —  any USB-A port',
+     'USB-A to USB-B or USB-A to micro-USB  (included with TNC)'],
+], [1.8*inch, 2.2*inch, CW-4.0*inch]))
+story.append(SP(4))
+story.append(NoteBox(
+    'If you are also using VARA HF via the IC-7300 USB audio:  '
+    'configure the PACTOR TNC to use the IC-7300 ACC jack for audio, '
+    'not the USB sound card.  '
+    'This allows VARA (USB audio path) and PACTOR (ACC audio path) to coexist on the same radio.  '
+    'Never transmit both modes simultaneously.', 'warn'))
+story.append(SP(6))
+
+story.append(H2('Configure Winlink Express for PACTOR'))
+story.append(steps([
+    'In Winlink Express, go to <b>Settings → Radio Setup</b>.',
+    'Click <b>Add</b> to create a new radio entry.',
+    'Set <b>Template</b> to:  <b>SCS PTC-IIx</b>  (works for all SCS PACTOR TNCs including the Tracker and P4dragon).',
+    'Set <b>Control Port</b> to the COM port assigned to your SCS TNC.  '
+    'Check Windows Device Manager → Ports (COM & LPT) to find the correct number.  '
+    'The TNC appears as  "USB Serial Port  (COM X)".',
+    'Set <b>Baud Rate</b> to <b>115200</b>.',
+    'Leave <b>PTT via CAT</b> unchecked  —  the TNC handles PTT directly via the ACC cable.',
+    'Click <b>OK</b> to save the radio profile.',
+]))
+story.append(SP(6))
+
+story.append(H2('Open a PACTOR Winlink Session'))
+story.append(steps([
+    'In Winlink Express, click the session type dropdown and select <b>Open Session → PACTOR Winlink</b>.',
+    'The session window opens.  The TNC initializes and you will see the SCS banner text in the session log.',
+    'Set your frequency on the IC-7300 to a known Winlink RMS gateway frequency for your region.  '
+    'Common 40m PACTOR frequencies:  7.038 MHz,  7.040 MHz,  7.103 MHz.',
+    'Click <b>Start</b>.  Winlink Express scans for and connects to the nearest RMS gateway.',
+    'The PACTOR handshake completes automatically — the session connects at the highest common level '
+    '(PACTOR 1 through 4) that both stations support.',
+    'Send and receive messages as normal.  '
+    'PACTOR 4 typically completes a full ICS-213 exchange in under 2 minutes on a good path.',
+]))
+story.append(SP(6))
+
+story.append(H2('Verify the TNC is Responding'))
+story.append(CodeBlock([
+    '# Method: use PuTTY or Windows Terminal to open a direct serial session',
+    '# Open PuTTY  →  Connection type: Serial  →  COM port: (your TNC port)',
+    '# Speed: 115200  →  click Open',
+    '',
+    '# Type the following TNC command:',
+    'cmd',
+    '# The TNC responds with its command prompt:  cmd:',
+    '',
+    '# Useful TNC verification commands:',
+    'ver              # shows firmware version and TNC model',
+    'status           # shows current operating status',
+    'mycall YOURCALL  # replace YOURCALL with your FCC callsign',
+    '',
+    '# If the TNC does not respond:',
+    '#   1. Confirm the correct COM port in Device Manager',
+    '#   2. Confirm no other application has the COM port open',
+    '#   3. Try baud rate 9600 (some TNC models default lower)',
+]))
+story.append(SP(4))
+story.append(NoteBox(
+    'PACTOR levels 3 and 4 require a separate Winlink license fee beyond the standard Winlink account.  '
+    'PACTOR 1 and 2 are available to all licensed amateur radio operators at no additional cost.  '
+    'The SCS TNC also supports AX.25 Packet, which Pat Winlink on the Pi can use via a KISS TCP connection '
+    '(typically for VHF packet via a separate TNC or via the Digirig).  '
+    'This provides a VHF backup to the HF PACTOR path.', 'note'))
+story.append(PB())
+
+# ── STEP 11 — FIRST BOOT ─────────────────────────────────────────────────────
+story.append(StepBox(11, 'AMPRNet  /  44Net Gateway Setup'))
+story.append(SP(8))
+
+story.append(H1('Part 2E — Windows Laptop Setup  (Winlink Express + JS8Call)'))
+story.append(HR(EOC_LT, 0.5))
+story.append(SP(4))
+story.append(P('The Windows laptop is the primary HF digital station. It runs Winlink Express and JS8Call '
+               'with the IC-7300 connected via a single USB cable. Connect the laptop to EMCOMM-NET '
+               '(Wi-Fi) or the UniFi switch Port 3 (wired Ethernet).'))
+story.append(SP(6))
+story.append(H2('9.1  IC-7300 One-Time Radio Setup'))
+story.append(tbl(['IC-7300 MENU PATH', 'SETTING'], [
+    ['SET → Connectors → CI-V Baud Rate', '115200'],
+    ['SET → Connectors → CI-V Transceive', 'ON'],
+    ['SET → Connectors → USB Send/Keying → USB Send', 'RTS'],
+    ['SET → Connectors → MOD Input → USB MOD Level', '40–50%'],
+    ['COMP button (speech compression)', 'OFF'],
+    ['Mode for digital operation', 'USB-D'],
+], [2.5*inch, CW-2.5*inch]))
+story.append(SP(6))
+story.append(H2('9.2  Install Winlink Express + VARA HF'))
+story.append(steps([
+    'Download Winlink Express from: <b>winlink.org/client-software</b>. Run installer, accept defaults.',
+    'On first launch: enter your callsign, Winlink password, and grid square <your grid> (your county).',
+    'Settings → Radio Setup: Radio=IC-7300, Control Port=(check Device Manager), Baud Rate=115200, PTT via CAT=checked.',
+    'Settings → Sound Card: Input=USB Audio CODEC (IC-7300), Output=USB Audio CODEC (IC-7300).',
+    'Download and install VARA HF from: winlink.org → VARA → VARA HF Modem. Set same audio devices in VARA HF Settings.',
+    'Test: Open a VARA HF session in Winlink Express → connect to any Winlink RMS gateway on 40m to confirm audio and CAT control work.',
+]))
+story.append(SP(6))
+story.append(H2('9.3  Install JS8Call'))
+story.append(steps([
+    'Download JS8Call from: <b>js8call.com</b> → Windows installer. Run installer, accept defaults.',
+    'Launch JS8Call. Open File → Settings (F2). General tab: My Call=<your callsign>, My Grid=<your grid square>.',
+    'Audio tab: Input=USB Audio CODEC (IC-7300), Output=USB Audio CODEC (IC-7300).',
+    'Radio tab: Rig=IC-7300, PTT Method=CAT, Serial Port=(same COM port as Winlink), Baud Rate=115200.',
+    'Reporting tab (CRITICAL): TCP Server Hostname=<b>0.0.0.0</b> (MUST change from 127.0.0.1). Enable TCP Server API=checked. TCP Server Port=<b>2442</b>. Accept TCP Requests=checked.',
+    'Click OK. Restart JS8Call for API settings to take effect.',
+    'Set VFO to 7.078 MHz (JS8 40m calling frequency). Mode → Normal.',
+]))
+story.append(SP(6))
+story.append(H2('9.4  Windows Firewall — Allow JS8Call Port 2442'))
+story.append(CodeBlock([
+    '1. Search "Windows Defender Firewall" → Advanced Settings',
+    '2. Inbound Rules → New Rule → Port → TCP → Specific port: 2442 → Allow → All profiles',
+    '3. Name the rule: JS8Call API',
+]))
+story.append(SP(6))
+story.append(H2('9.5  Find the Windows Laptop IP on EMCOMM-NET'))
+story.append(CodeBlock([
+    '# Run in Windows Command Prompt:',
+    'ipconfig',
+    '# Note the IPv4 Address for the EMCOMM-NET adapter (e.g. 192.168.50.105)',
+    '# Set a DHCP reservation (recommended — gives laptop a fixed IP):',
+    '# ASUS Web UI → LAN → DHCP Server → Manually Assigned IP',
+    '# Enter laptop MAC address → assign 192.168.50.2',
+    '',
+    '# Configure the FieldCommand dashboard JS8Call card:',
+    '# 1. Connect to EMCOMM-NET, open http://192.168.50.1',
+    '# 2. Find the JS8Call card (purple) in Amateur Radio section',
+    '# 3. Tap/click the card',
+    '# 4. Enter the Windows laptop IP (e.g. 192.168.50.105)',
+    '# 5. Card saves IP and opens http://192.168.50.105:2442',
+]))
+story.append(SP(6))
+story.append(tbl(['SWITCHING TO...', 'PROCEDURE'], [
+    ['Winlink Express  (from JS8Call)',
+     'Click Disconnect in JS8Call or close it.  '
+     'Open VARA HF — it automatically reclaims the USB audio device.  '
+     'Open Winlink Express and connect normally.'],
+    ['JS8Call  (from Winlink)',
+     'Finish any active Winlink transmission.  '
+     'Close VARA HF.  Minimize Winlink Express.  '
+     'Open JS8Call and click Connect — it reclaims the COM port and audio.'],
+    ['Both simultaneously  (two radios)',
+     'Connect a second HF radio via a separate USB audio and CAT interface.  '
+     'Configure JS8Call to use that radio\'s COM port and audio device.  '
+     'Both run at the same time without conflicts.'],
+], [1.6*inch, CW-1.6*inch]))
+story.append(PB())
+
+# ── STEP 10b — SCS PACTOR MODEM ──────────────────────────────────────────────
+story.append(StepBox('10b', 'SCS PACTOR Modem Setup  (Optional — High-Performance HF)'))
+story.append(SP(8))
+
+story.append(H1('Part 2F — SCS PACTOR Modem Setup'))
 story.append(HR(EOC_LT, 0.5))
 story.append(SP(4))
 story.append(P(
@@ -2450,43 +3387,14 @@ story.append(tbl(['CHECK', 'COMMAND / METHOD', 'EXPECTED RESULT'], [
 ], [1.8*inch, 1.6*inch, 1.5*inch, CW-4.9*inch]))
 story.append(PB())
 
-story.append(StepBox(12, 'First Boot Verification  —  Full System'))
-story.append(SP(8))
-story.append(H1('Step 12:  First Boot Verification'))
-story.append(HR(EOC_LT, 0.5))
-story.append(SP(4))
-story.append(P(
-    'After the installer completes and the Pi reboots, run through this verification checklist '
-    'before handing off the system. Every service should show "active" and the dashboard '
-    'should load cleanly from another device on EMCOMM-NET. '
-    'If anything is not running, the troubleshooting section at the end of this guide '
-    'covers the most common issues and their fixes.'))
-story.append(SP(6))
-story.append(CodeBlock([
-    '# Check all FieldCommand services',
-    'for svc in fcc-lookup health-monitor deadmans ics-platform kiwix nginx pat; do',
-    '  echo "$svc: $(systemctl is-active $svc)"',
-    'done',
-    '',
-    '# Test the dashboard from the Pi itself',
-    'curl -s http://localhost/ | head -5',
-    '# Test API endpoints',
-    'curl http://localhost:5050/health      # FCC API health check',
-    'curl http://localhost:5051/health      # System health monitor',
-    '# Verify Pi has the correct static IP',
-    'ip addr show eth0',
-    '# Should show: inet 192.168.50.1/24',
-]))
-story.append(PB())
 
-# ── REFERENCE SECTIONS ────────────────────────────────────────────────────────
 story.append(H1('14. Network Architecture Reference'))
 story.append(HR(EOC_LT, 0.5))
 story.append(SP(6))
 story.append(H2('Full Network Topology'))
 story.append(P(
     'The EMCOMM-NET deployment uses the ASUS RT-BE58 Go as the Wi-Fi access point and DHCP server. '
-    'The the cellular antenna unit Drum provides primary cellular WAN (your cellular carrier) via a PoE Ethernet '
+    'The primary cellular modem provides WAN connectivity via a PoE Ethernet '
     'cable directly to the ASUS WAN port. '
     'satellite dish provides automatic secondary WAN failover via the ASUS USB WAN port. '
     'The UniFi Switch Lite 16 PoE distributes wired connections to both Pi servers, '
@@ -2871,9 +3779,9 @@ story.append(tbl(['ITEM', 'VALUE'], [
     ['Wi-Fi network (SSID)',   'EMCOMM-NET'],
     ['WAN status dashboard',   'http://192.168.50.1/wan-status.html'],
     ['FieldCommand Pi static IP','192.168.50.1'],
-    ['the cellular antenna unit modem admin','http://10.1.1.1  or  http://my.insty  (connect to the cellular antenna unit Wi-Fi first)'],
-    ['the cellular antenna unit data plan', 'instyconnect.com  —  Multi-Network Unlimited  —  pause in portal between activations'],
-    ['satellite dish admin',         'http://192.168.10.1  (satellite dish app or browser)'],
+    ['Cellular modem admin',     'See your cellular modem documentation for the admin URL (often 192.168.1.1 or 10.0.0.1)'],
+    ['WAN data plan',            'Manage via your cellular carrier or satellite provider portal'],
+    ['Satellite dish admin',     'See your satellite dish documentation for the admin URL'],
     ['44Net Gateway Pi IP',    '192.168.50.2'],
     ['44Net gateway status',   'http://192.168.50.2:9000'],
     ['AMPRNet tunnel check',   'ping 44.0.0.1  (from any EMCOMM-NET device)'],

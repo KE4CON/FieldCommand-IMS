@@ -25,7 +25,7 @@ def ch8():
                               'Radio ID in station column'],
         ['Typical use',       'ARES / RACES / AUXCOMM',
                               'Public safety agency nets, interop exercises'],
-    ], widths=[1.3*inch, CW*0.38, CW-1.3*inch-CW*0.38]))
+    ], widths=[1.3*inch, CW*0.40, CW-1.3*inch-CW*0.40]))
     s.append(SP(6))
     s.append(P('Operation follows the same workflow as the Amateur Net Logger — '
                'open the net, log check-ins by radio ID, and export ICS-309 at close. '
@@ -97,7 +97,7 @@ def ch10():
          'Type a member ID, callsign, or radio ID in the manual entry field '
          'and press Enter or click Look Up. Same roster lookup as camera scan.',
          'When camera unavailable; walk-in personnel without a QR code'],
-    ], widths=[1.1*inch, CW-2.3*inch, 1.2*inch]))
+    ], widths=[1.3*inch, CW-3.1*inch, 1.8*inch]))
     s.append(SP(6))
 
     s.append(P('10.2  Check-In Workflow', H2))
@@ -129,7 +129,7 @@ def ch10():
         ['2nd', 'member_id',   'ESV-042'],
         ['3rd', 'callsign',    'KE4CON'],
         ['4th', 'radio_id',    '412'],
-    ], widths=[0.8*inch, 1.1*inch, CW-1.9*inch]))
+    ], widths=[0.9*inch, 1.3*inch, CW-2.2*inch]))
     s.append(SP(4))
     s.append(note(
         'BarcodeDetector is supported on Chrome (Android and desktop), Edge, '
@@ -177,7 +177,7 @@ def ch11():
         ['ICS-213 / ICS-214',
          'The "From" callsign field in the general message form validates '
          'against the FCC database and fills the operator name.'],
-    ], widths=[1.4*inch, CW-1.4*inch]))
+    ], widths=[1.6*inch, CW-1.6*inch]))
     s.append(SP(4))
     s.append(note(
         'The FCC database is updated quarterly. To update, download the FCC '
@@ -206,7 +206,7 @@ def ch12():
          'Visual flashing banner on the Dead Man\'s page.'],
         ['Reset',
          'Any new check-in in the Net Control Logger resets the timer automatically.'],
-    ], widths=[1.4*inch, CW-1.4*inch]))
+    ], widths=[1.6*inch, CW-1.6*inch]))
     s.append(SP(6))
     s.append(P('12.2  Operating the Dead Man\'s Switch', H2))
     s += steps([
@@ -241,7 +241,7 @@ def ch13():
         ['RF APRS stations',       'Local Terminal Node Controller (TNC) or direwolf connected to Pi',     '✗ Offline — always available'],
         ['SARTopo overlays',       'GeoJSON import from sartopo_import.html',   '✗ Offline once imported'],
         ['Weather alert polygons', 'National Weather Service (NWS) API',                                   '✓ WAN required'],
-    ], widths=[1.6*inch, CW-2.8*inch, 1.2*inch]))
+    ], widths=[1.5*inch, CW-3.1*inch, 1.6*inch]))
     s.append(SP(6))
 
     s.append(P('13.2  Station Markers', H2))
@@ -294,7 +294,7 @@ def ch14():
         ['Auto-refresh 30s',
          'Enable automatic position refresh every 30 seconds. '
          'Use when resources are actively moving and updating their positions.'],
-    ], widths=[1.4*inch, CW-1.4*inch]))
+    ], widths=[1.6*inch, CW-1.6*inch]))
     s.append(SP(6))
 
     s.append(P('14.2  Marker Colors by Status', H2))
@@ -324,7 +324,7 @@ def ch14():
         ['Manual coordinates',
          'Type decimal latitude and longitude directly into the fields.',
          'Position known from a paper map, GPS receiver, or radio report'],
-    ], widths=[1.1*inch, CW-2.4*inch, 1.3*inch]))
+    ], widths=[1.4*inch, CW-3.2*inch, 1.8*inch]))
     s.append(SP(4))
     s.append(P(
         'Optionally enter a <b>Location Label</b> (e.g. "Division Alpha staging area") '
@@ -382,7 +382,7 @@ def ch15():
          'ICS-214 activity log import. '
          'Note: ICS-214 is completed by all supervisors in every section — '
          'Finance/Admin collects them for cost documentation and records.'],
-    ], widths=[1.2*inch, 1.4*inch, CW-2.6*inch]))
+    ], widths=[1.2*inch, 1.5*inch, CW-2.7*inch]))
     s.append(SP(6))
 
     s.append(P('15.1  Command Structure — Single IC or Unified Command', H2))
@@ -471,7 +471,7 @@ def ch16():
                                'Auto-filled from roster when name is matched.'],
         ['Contact / Callsign', 'Radio callsign, channel, or phone number for this person. '
                                'Auto-filled from roster when a licensed amateur is matched.'],
-    ], widths=[1.6*inch, CW-1.6*inch]))
+    ], widths=[2.0*inch, CW-2.0*inch]))
     s.append(SP(6))
 
     s.append(P('16.4  Using the Personnel Tab', H2))
@@ -537,54 +537,54 @@ def ch17():
     s.append(SP(4))
     s.append(tbl(['FORM', 'TITLE', 'DEVELOPED BY', 'DISTRIBUTED THROUGH / IN IAP?'], [
         ['ICS-202',  'Incident Objectives',
-         'Planning Section Chief / Incident Commander (IC)',
+         'Planning Section Chief / IC',
          'Planning · ✓ IAP'],
         ['ICS-203',  'Organization Assignment List',
          'Resources Unit Leader (RESL) — Planning',
          'Planning · ✓ IAP'],
         ['ICS-204',  'Assignment List',
          'Resources Unit Leader (RESL) — Planning',
-         'Operations supervisors · ✓ IAP'],
+         'Operations (from Planning) · ✓ IAP'],
         ['ICS-205',  'Radio Communications Plan',
          'Comms Unit Leader (Communications Unit Leader (COML)) — <b>Logistics</b>/Service Branch',
-         'Planning assembles into IAP · ✓ IAP'],
+         'Via Planning into IAP · ✓ IAP'],
         ['ICS-205A', 'Communications List',
          'Comms Unit Leader (COML) — <b>Logistics</b>/Service Branch',
-         'Supplemental — often attached to IAP'],
+         'Supplemental — often in IAP'],
         ['ICS-206',  'Medical Plan',
          'Medical Unit Leader (MEDL) — <b>Logistics</b>/Service Branch',
-         'Planning assembles into IAP · ✓ IAP'],
+         'Via Planning into IAP · ✓ IAP'],
         ['ICS-207',  'Incident Organization Chart',
          'Resources Unit Leader (RESL) — Planning',
          'Command display · ✓ IAP'],
         ['ICS-208',  'Safety Message / Plan',
          'Safety Officer (SOFR) — Command Staff',
-         'Planning assembles into IAP · ✓ IAP'],
+         'Via Planning into IAP · ✓ IAP'],
         ['ICS-209',  'Incident Status Summary',
          'Situation Unit Leader (SITL) — Planning',
-         'Sent upward to MAC/EOC — not in IAP'],
+         'Sent to MAC/EOC — not in IAP'],
         ['ICS-211',  'Incident Check-In List',
          'Resources Unit Leader (RESL) — Planning',
-         'Check-in recorder at entry points — not in IAP'],
+         'Entry point recorders — not in IAP'],
         ['ICS-213',  'General Message',
          'Any ICS position',
          'Any section — not in IAP'],
         ['ICS-214',  'Activity Log',
          'All supervisors — every section',
-         'Retained as documentation — not in IAP'],
+         'Documentation only — not in IAP'],
         ['ICS-215A', 'IAP Safety Analysis',
          'Safety Officer (SOFR) — Command Staff, with Ops input',
-         'Planning assembles into IAP · ✓ IAP'],
+         'Via Planning into IAP · ✓ IAP'],
         ['ICS-218',  'Support Vehicle/Equipment Inventory',
          'Ground Support Unit Leader (GSUL) — Logistics/Support Branch',
          'Logistics internal — not in IAP'],
         ['ICS-221',  'Demobilization Check-Out',
-         'Demobilization Unit Leader (DMOB) — Planning',
-         'Signed by each demobilizing resource — not in IAP'],
+         'Demob Unit Leader (DMOB) — Planning',
+         'Signed by demob resources — not in IAP'],
         ['ICS-309',  'Communications Log',
          'Comms Unit Leader (COML) / any operator — <b>Logistics</b>',
-         'Communications unit records — not in IAP'],
-    ], widths=[0.78*inch, 1.35*inch, 1.75*inch, CW-3.88*inch]))
+         'Comms unit records — not in IAP'],
+    ], widths=[0.78*inch, 2.15*inch, 2.55*inch, CW-5.48*inch]))
     s.append(SP(6))
     s.append(P('17.1a  ICS Doctrine Notes — Forms That Cross Section Lines', H2))
     s.append(P(
@@ -604,7 +604,7 @@ def ch17():
          'Also developed by the <b>COML</b> under Logistics. The 205A is a '
          'supplemental contact directory — not always formally in the IAP but '
          'typically attached. Same attribution rule: developed in Logistics, '
-         'distributed through Planning.'],
+         'Via Planning.'],
         ['ICS-206\nMedical Plan',
          'The <b>Medical Unit Leader (MEDL)</b> develops the ICS-206. '
          'The MEDL also reports to the Service Branch Director under Logistics. '
@@ -688,7 +688,7 @@ def ch18():
         ['Fringe benefit rate',  'Fringe as percentage of wages (FEMA requires fringe documentation)'],
         ['Total with fringe',    'Calculated automatically: (hours × rate) × (1 + fringe%)'],
         ['ICS-214 import',       'Import hours directly from a completed ICS-214 Activity Log'],
-    ], widths=[1.5*inch, CW-1.5*inch]))
+    ], widths=[1.7*inch, CW-1.7*inch]))
     s.append(SP(6))
 
     s.append(P('18.2  Equipment', H2))

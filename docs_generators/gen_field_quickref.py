@@ -65,6 +65,32 @@ class NC(canvas.Canvas):
 
     def _draw_cover(self):
         """Full-page canvas-drawn cover."""
+        # ── Pull org identity from station_config if DB is available ──────────
+        line1 = 'FieldCommand Incident Management System'
+        line2 = 'Open-Source  ·  Offline-First  ·  Field-Deployable'
+        try:
+            import sqlite3, os
+            db_path = os.environ.get(
+                'FIELDCOMMAND_DB',
+                '/opt/fieldcommand/data/fieldcommand.db'
+            )
+            if os.path.exists(db_path):
+                conn = sqlite3.connect(db_path)
+                row = conn.execute(
+                    "SELECT callsign, org_name, org_short, agency_name FROM station_config WHERE id=1"
+                ).fetchone()
+                conn.close()
+                if row:
+                    callsign, org_name, org_short, agency_name = row
+                    if org_name and callsign:
+                        line1 = f'{callsign}  ·  {org_name}'
+                        line2 = agency_name if agency_name else 'Emergency Communications  ·  ICS/NIMS'
+                    elif org_name:
+                        line1 = org_name
+                        line2 = agency_name if agency_name else 'Emergency Communications  ·  ICS/NIMS'
+        except Exception:
+            pass  # fall through to universal defaults
+        # ─────────────────────────────────────────────────────────────────────
         self.setFillColor(HexColor('#1a3a6b'))
         self.rect(0, 0, PAGE_W, PAGE_H, fill=1, stroke=0)
         self.setFillColor(HexColor('#f0c040'))
@@ -75,12 +101,10 @@ class NC(canvas.Canvas):
         self.rect(0, PAGE_H*0.38, PAGE_W, PAGE_H*0.36, fill=1, stroke=0)
         self.setFillColor(HexColor('#f0c040'))
         self.setFont('Helvetica-Bold', 10)
-        self.drawCentredString(PAGE_W/2, PAGE_H - 0.70*inch,
-            'your callsign  ·  your county Emergency Services Volunteers')
+        self.drawCentredString(PAGE_W/2, PAGE_H - 0.70*inch, line1)
         self.setFillColor(HexColor('#c0d4f0'))
         self.setFont('Helvetica', 9)
-        self.drawCentredString(PAGE_W/2, PAGE_H - 0.88*inch,
-            'and your county Emergency Management Agency')
+        self.drawCentredString(PAGE_W/2, PAGE_H - 0.88*inch, line2)
         self.setFillColor(HexColor('#ffffff'))
         self.setFont('Helvetica-Bold', 58)
         self.drawCentredString(PAGE_W/2, PAGE_H*0.60, 'FIELDCOMMAND')
@@ -737,8 +761,7 @@ story.append(HR(EOC_LT, 0.8))
 story.append(SP(8))
 
 bm = Table([[
-    P('your callsign  ·  your county Emergency Services Volunteers\n'
-      'and your county Emergency Management Agency',
+    P('FieldCommand Incident Management System',
       S('bm', fontName='Helvetica-Bold', fontSize=9, textColor=EOC, leading=13)),
     P('RACES · ARES · Starcom\nhttp://192.168.50.1',
       S('bm', fontName='Helvetica-Bold', fontSize=9, textColor=EOC,
@@ -762,7 +785,7 @@ doc = SimpleDocTemplate(
     leftMargin=M, rightMargin=M,
     topMargin=0.58*inch, bottomMargin=0.40*inch,
     title='FieldCommand IMS v1.0 — Field Quick-Reference',
-    author='your county Emergency Services Volunteers and your county Emergency Management Agency')
+    author='James Rospopo KE4CON — Open-Source Field-Deployable ICS Platform')
 doc.build(story, canvasmaker=NC)
 
 from pypdf import PdfReader, PdfWriter

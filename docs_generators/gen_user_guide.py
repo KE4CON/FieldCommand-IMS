@@ -87,14 +87,39 @@ class NC(canvas.Canvas):
         self.rect(0, 0, PAGE_W, 0.18*inch, fill=1, stroke=0)
         self.setFillColor(HexColor('#1e4480'))
         self.rect(0, PAGE_H*0.38, PAGE_W, PAGE_H*0.36, fill=1, stroke=0)
+
+        # ── Pull org identity from station_config if DB is available ──────────
+        line1 = 'FieldCommand Incident Management System'
+        line2 = 'Open-Source  ·  Offline-First  ·  Field-Deployable'
+        try:
+            import sqlite3, os
+            db_path = os.environ.get(
+                'FIELDCOMMAND_DB', '/opt/fieldcommand/data/fieldcommand.db'
+            )
+            if os.path.exists(db_path):
+                conn = sqlite3.connect(db_path)
+                row = conn.execute(
+                    "SELECT callsign, org_name, agency_name "
+                    "FROM station_config WHERE id=1"
+                ).fetchone()
+                conn.close()
+                if row:
+                    callsign, org_name, agency_name = row
+                    if org_name and callsign:
+                        line1 = f'{callsign}  \u00b7  {org_name}'
+                        line2 = agency_name or 'Emergency Communications  \u00b7  ICS/NIMS'
+                    elif org_name:
+                        line1 = org_name
+                        line2 = agency_name or 'Emergency Communications  \u00b7  ICS/NIMS'
+        except Exception:
+            pass
+        # ──────────────────────────────────────────────────────────────────────
         self.setFillColor(HexColor('#f0c040'))
         self.setFont('Helvetica-Bold', 10)
-        self.drawCentredString(PAGE_W/2, PAGE_H - 0.70*inch,
-            'your callsign  ·  FieldCommand IMS')
+        self.drawCentredString(PAGE_W/2, PAGE_H - 0.70*inch, line1)
         self.setFillColor(HexColor('#c0d4f0'))
         self.setFont('Helvetica', 9)
-        self.drawCentredString(PAGE_W/2, PAGE_H - 0.88*inch,
-            'and your emergency management agency')
+        self.drawCentredString(PAGE_W/2, PAGE_H - 0.88*inch, line2)
         self.setFillColor(HexColor('#ffffff'))
         self.setFont('Helvetica-Bold', 58)
         self.drawCentredString(PAGE_W/2, PAGE_H*0.60, 'FIELDCOMMAND')

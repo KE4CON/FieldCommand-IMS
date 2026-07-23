@@ -37,6 +37,33 @@ class NC(canvas.Canvas):
         super().save()
     def _chrome(self,total):
         self.setFillColor(EOC); self.rect(0,PAGE_H-0.50*inch,PAGE_W,0.50*inch,fill=1,stroke=0)
+
+        # ── Pull org identity from station_config if DB is available ──────────
+        line1 = 'FieldCommand Incident Management System'
+        line2 = 'Open-Source  ·  Offline-First  ·  Field-Deployable'
+        try:
+            import sqlite3, os
+            db_path = os.environ.get(
+                'FIELDCOMMAND_DB', '/opt/fieldcommand/data/fieldcommand.db'
+            )
+            if os.path.exists(db_path):
+                conn = sqlite3.connect(db_path)
+                row = conn.execute(
+                    "SELECT callsign, org_name, agency_name "
+                    "FROM station_config WHERE id=1"
+                ).fetchone()
+                conn.close()
+                if row:
+                    callsign, org_name, agency_name = row
+                    if org_name and callsign:
+                        line1 = f'{callsign}  \u00b7  {org_name}'
+                        line2 = agency_name or 'Emergency Communications  \u00b7  ICS/NIMS'
+                    elif org_name:
+                        line1 = org_name
+                        line2 = agency_name or 'Emergency Communications  \u00b7  ICS/NIMS'
+        except Exception:
+            pass
+        # ──────────────────────────────────────────────────────────────────────
         self.setFillColor(GOLD); self.rect(0,PAGE_H-0.52*inch,PAGE_W,0.02*inch,fill=1,stroke=0)
         if Path(LOGO).exists():
             try: self.drawImage(LOGO,M,PAGE_H-0.47*inch,width=1.0*inch,height=0.40*inch,preserveAspectRatio=True,mask='auto')
@@ -44,7 +71,7 @@ class NC(canvas.Canvas):
         self.setFillColor(white); self.setFont('Helvetica-Bold',10.5)
         self.drawString(M+1.15*inch,PAGE_H-0.21*inch,'Incident Management System v1.0')
         self.setFont('Helvetica',7.5)
-        self.drawString(M+1.15*inch,PAGE_H-0.36*inch,'FieldCommand IMS · your callsign · RACES/ARES/Starcom')
+        self.drawString(M+1.15*inch,PAGE_H-0.36*inch,line1)
         self.setFillColor(EOC); self.rect(0,0,PAGE_W,0.26*inch,fill=1,stroke=0)
         self.setFillColor(GOLD); self.rect(0,0.26*inch,PAGE_W,0.013*inch,fill=1,stroke=0)
         self.setFillColor(white); self.setFont('Helvetica',6.5)

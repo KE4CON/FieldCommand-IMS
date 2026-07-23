@@ -67,12 +67,12 @@ def ch1():
         'ICS-309 communications logs, ICS-214 activity logs, and the Incident Action Plan (IAP).'))
     s.append(SP(6))
     s.append(tbl(['PLATFORM', 'OFFLINE?', 'SELF-CONTAINED?', 'NATIVE EMCOMM?', 'COST'], [
-        ['FieldCommand IMS',   '✓ Fully offline',    '✓ Own network + server', '✓ Full EMCOMM suite',   'Free / open source'],
-        ['WebEOC',             '✗ Cloud only',       '✗ Requires infrastructure','✗ None',              '$10,000–50,000/yr'],
-        ['E-Team / Veoci',     '✗ Cloud only',       '✗ Requires infrastructure','✗ None',              'Subscription'],
+        ['FieldCommand IMS',   '✓ Fully offline',    '✓ Own network + server', '✓ Full EMCOMM',   'Free / open source'],
+        ['WebEOC',             '✗ Cloud only',       '✗ Needs infrastructure','✗ None',              '$10,000–50,000/yr'],
+        ['E-Team / Veoci',     '✗ Cloud only',       '✗ Needs infrastructure','✗ None',              'Subscription'],
         ['NIMSIAP',            '✗ Internet required','✗ Requires connectivity', '✗ None',               'Free'],
-        ['E-iSuite',           '△ Limited',          '△ Laptop only, no network','✗ None',              'License fee'],
-    ], widths=[1.4*inch, 0.85*inch, 1.25*inch, 1.1*inch, CW-4.6*inch]))
+        ['E-iSuite',           '△ Limited',          '△ Laptop, no network','✗ None',              'License fee'],
+    ], widths=[1.4*inch, 1.15*inch, 1.55*inch, 1.3*inch, CW-5.4*inch]))
     s.append(SP(6))
 
     s.append(P('1.3  System Architecture', H2))
@@ -101,7 +101,7 @@ def ch1():
          'Any device with a modern browser: smartphones, tablets, laptops, '
          'Raspberry Pi 500 desktops, Windows or macOS laptops',
          'DHCP assigned'],
-    ], widths=[1.8*inch, CW-2.8*inch, 1.0*inch]))
+    ], widths=[1.9*inch, CW-2.9*inch, 1.0*inch]))
     s.append(SP(4))
     s.append(note(
         'The default server address is 192.168.50.1. This is configurable during '
@@ -146,7 +146,7 @@ def ch1():
          'Kiwix offline Wikipedia and reference library. Radio frequency cheat sheets. '
          'Hospital and facilities directory. Repeater database. Channel library. '
          'NIMS resource typing library. ICS position checklists.'],
-    ], widths=[1.6*inch, CW-1.6*inch]))
+    ], widths=[1.9*inch, CW-1.9*inch]))
     s.append(PB())
     return s
 
@@ -185,11 +185,11 @@ def ch2():
         'Switching modes does not affect any data — all tools remain accessible in every mode.'))
     s.append(SP(4))
     s.append(tbl(['MODE', 'TOOLS SHOWN PROMINENTLY', 'BEST FOR'], [
-        ['All-Hazards Incident Command System (ICS)',
+        ['All-Hazards ICS',
          'Full ICS platform, Incident Action Plan (IAP) forms, T-card resource board, personnel '
          'check-in, Federal Emergency Management Agency (FEMA) cost documentation, event templates, cost dashboard',
          'Any active incident requiring ICS structure'],
-        ['Amateur Radio Emergency Communications (EMCOMM)',
+        ['Amateur Radio EMCOMM',
          'Net control logger, Federal Communications Commission (FCC) callsign lookup, Automatic Packet Reporting System (APRS) map, Winlink, '
          'JS8Call, Amateur Packet Radio Network (AMPRNet) gateway, High Frequency (HF) propagation, National Traffic System (NTS) radiogram',
          'Amateur radio net operations, ARES/RACES activations'],
@@ -197,7 +197,7 @@ def ch2():
          'Starcom net logger, radio ID roster, resource map, Wide Area Network (WAN) status, '
          'weather radar, hospital directory, facilities',
          'Public safety radio nets, Starcom check-in operations'],
-    ], widths=[1.3*inch, CW-2.7*inch, 1.4*inch]))
+    ], widths=[1.3*inch, CW-3.1*inch, 1.8*inch]))
     s.append(SP(6))
 
     s.append(P('2.3  WAN Status Indicators', H2))
@@ -211,7 +211,7 @@ def ch2():
         ['🔴 Red — Offline',     'No internet — all core tools continue',         'None — fully operational'],
         ['🟢 AMPRNet UP',        '44Net WireGuard tunnel active',                 'N/A'],
         ['🔴 AMPRNet DOWN',      '44Net tunnel down or gateway Pi unreachable',   'N/A'],
-    ], widths=[1.6*inch, CW-3.0*inch, 1.4*inch]))
+    ], widths=[1.6*inch, CW-3.4*inch, 1.8*inch]))
     s.append(SP(4))
     s.append(note(
         'A red WAN indicator means internet-dependent features are paused — National Weather Service (NWS) radar, '
@@ -256,21 +256,21 @@ def ch3():
     s.append(P('3.2  Offline vs. Online Feature Table', H2))
     s.append(tbl(['FEATURE', 'OFFLINE?', 'NOTES WHEN OFFLINE'], [
         ['ICS platform — all five sections',    '✓ Full',  'No change'],
-        ['All ICS forms and Incident Action Plan (IAP)',               '✓ Full',  'No change'],
+        ['All ICS forms and IAP',               '✓ Full',  'No change'],
         ['T-card resource board',               '✓ Full',  'No change'],
-        ['Federal Emergency Management Agency (FEMA) cost tracking',                  '✓ Full',  'No change'],
+        ['FEMA cost tracking',                  '✓ Full',  'No change'],
         ['Event templates',                     '✓ Full',  'No change'],
-        ['IAP Portable Document Format (PDF) compilation',                 '✓ Full',  'No change'],
+        ['IAP PDF compilation',                 '✓ Full',  'No change'],
         ['Digital signatures on forms',         '✓ Full',  'No change'],
         ['Net control loggers (both)',           '✓ Full',  'No change'],
         ['FCC callsign lookup',                 '✓ Full',  'Uses local SQLite database — no internet needed'],
-        ['Member roster and Quick Response (QR) code check-in',       '✓ Full',  'No change'],
-        ['Global Positioning System (GPS) resource map',                    '✓ Full',  'No change'],
+        ['Member roster and QR check-in',       '✓ Full',  'No change'],
+        ['GPS resource map',                    '✓ Full',  'No change'],
         ['Barcode / QR scan check-in',          '✓ Full',  'No change'],
         ['Offline tactical APRS map',           '✓ Full',  'Map tiles local — RF APRS still works'],
         ['Kiwix reference library',             '✓ Full',  'No change'],
-        ['National Weather Service (NWS) weather alerts',                  '△ Wide Area Network (WAN)',   'Paused — last alert cached and displayed'],
-        ['Next Generation Radar (NEXRAD) animated radar',               '△ WAN',   'Tiles unavailable — offline banner shown'],
+        ['NWS weather alerts',                  '△ WAN',   'Paused — last alert cached and displayed'],
+        ['NEXRAD animated radar',               '△ WAN',   'Tiles unavailable — offline banner shown'],
         ['APRS-IS internet feed',               '△ WAN',   'RF APRS continues — internet feed pauses'],
         ['HF propagation data',                 '△ WAN',   'Last retrieved data shown until WAN returns'],
         ['AMPRNet / 44Net tunnel',              '△ WAN',   'Tunnel drops — local network unaffected'],
@@ -305,7 +305,7 @@ def ch4():
         ['License class',    'Technician, General, Amateur Extra — displayed on net log entries.'],
         ['Phone / Email',    'Contact information — stored locally, never transmitted externally.'],
         ['Grid square',      'Maidenhead grid locator for RF planning.'],
-    ], widths=[1.3*inch, CW-1.3*inch]))
+    ], widths=[1.9*inch, CW-1.9*inch]))
     s.append(SP(6))
 
     s.append(P('4.2  Adding and Editing Members', H2))
@@ -392,13 +392,13 @@ def ch5():
         'not a software setting.'))
     s.append(SP(4))
     s.append(tbl(['STRUCTURE', 'WHEN USED', 'HOW TO CONFIGURE IN FIELDCOMMAND'], [
-        ['Single Incident Commander (IC)',
+        ['Single IC',
          'One agency or jurisdiction has clear authority. '
          'Most activations involving a single responding organization.',
          'Enter the IC\'s name or callsign in the Incident Commander field '
          'when creating the incident. The ICS-203 org chart will show one IC '
          'at the top of the command structure.'],
-        ['Unified Command (UC)',
+        ['Unified Command',
          'Two or more agencies or jurisdictions share command authority — '
          'common in multi-agency responses, complex disasters, or incidents '
          'crossing jurisdictional boundaries. Each contributing agency provides '
@@ -457,7 +457,7 @@ def ch5():
          'Permanently removes the incident and all associated data from the Pi SSD. '
          'Run only after confirming the archive is on USB.',
          '✗ Permanent'],
-    ], widths=[1.3*inch, CW-2.3*inch, 1.0*inch]))
+    ], widths=[1.3*inch, CW-2.6*inch, 1.3*inch]))
     s.append(SP(4))
     s.append(note(
         'The USB drive must be labelled FIELDCOMMAND (all caps). Any USB drive '
@@ -514,7 +514,7 @@ def ch6():
         ['Exercise / Training Scenario',
          'Training objectives, evaluator and observer resource types, '
          'exercise control channel, scenario-tagged (🧪)'],
-    ], widths=[1.6*inch, CW-1.6*inch]))
+    ], widths=[1.9*inch, CW-1.9*inch]))
     s.append(SP(6))
 
     s.append(P('6.2  Activating a Template', H2))

@@ -66,7 +66,7 @@ def ch20():
         ['Per-period breakdown',
          'Cost summary broken out by operational period — useful for '
          'after-action documentation and FEMA Project Worksheet (PW) preparation.'],
-    ], widths=[1.5*inch, CW-1.5*inch]))
+    ], widths=[1.8*inch, CW-1.8*inch]))
     s.append(SP(4))
     s.append(note(
         'The cost dashboard draws data from both the FEMA cost entries '
@@ -106,15 +106,14 @@ def ch21():
          'When did each person arrive? Have they checked out? '
          'Every person on the incident must have an ICS-211 entry '
          'regardless of agency, role, or resource assignment.',
-         'Check-in recorder at each entry point. '
-         'Resources Unit Leader (RESL) collects and maintains the master list.'],
-        ['Resource level\n\nT-Card Personnel tab\n(ics/operations.html)',
+         'Check-in recorder at entry points. '
+         'Resources Unit Leader (RESL) maintains the master list.'],
+        ['Resource level\n\nT-Card Personnel tab',
          'Who is assigned to each specific resource? '
          'Which crew or unit is each person on? '
          'Where should each crew member be right now?',
-         'Operations Section Chief (OSC) and individual crew supervisors '
-         'update their own T-card personnel list.'],
-    ], widths=[1.4*inch, CW-3.1*inch, 1.7*inch]))
+         'Ops Section Chief (OSC); crew supervisors update T-card lists.'],
+    ], widths=[1.6*inch, CW-4.1*inch, 2.5*inch]))
     s.append(SP(4))
     s.append(note(
         'Both levels are required — neither alone is sufficient. '
@@ -143,7 +142,7 @@ def ch21():
         ['Scan page manual fallback (scan_checkin.html)',
          'When camera is unavailable — type the member ID, callsign, or radio ID '
          'directly into the manual entry field on the scan page.'],
-    ], widths=[2.2*inch, CW-2.2*inch]))
+    ], widths=[2.5*inch, CW-2.5*inch]))
     s.append(SP(6))
 
     s.append(P('21.3  ICS-211 Check-Out', H2))
@@ -264,7 +263,7 @@ def ch21():
          'to a hazardous area, but are not in the formal accountability system.',
          'Direct them to complete ICS-211 check-in immediately. '
          'If they cannot be located, escalate to the IC.'],
-    ], widths=[1.5*inch, CW-3.0*inch, 1.5*inch]))
+    ], widths=[1.8*inch, CW-3.8*inch, 2.0*inch]))
     s.append(SP(4))
     s.append(note(
         'Run the cross-reference at the start of each operational period and any time '
@@ -398,24 +397,24 @@ def ch24():
          'See the table below for all methods.'],
         ['Enabled',
          'Toggle a source on or off without deleting its configuration.'],
-    ], widths=[1.4*inch, CW-1.4*inch]))
+    ], widths=[1.6*inch, CW-1.6*inch]))
     s.append(SP(6))
 
     s.append(P('23.2  Detection Methods', H2))
     s.append(tbl(['METHOD', 'HOW IT WORKS', 'BEST FOR'], [
         ['internet_only',
          'Attempts an outbound internet connection. Succeeds if any internet '
-         'path exists. Does not ping a gateway.',
+         'Any internet path succeeds.',
          'Phone hotspots, Universal Serial Bus (USB) cellular dongles, any source without a fixed gateway IP'],
         ['ping',
          'Pings a specific IP address — typically the modem or router gateway. '
-         'Enter the gateway IP in the field provided.',
+         'Enter the gateway IP address.',
          'Sources with a known gateway IP (e.g. a cellular router on 192.168.1.1)'],
         ['admin_reachable',
          'Checks if the modem\'s admin web interface is reachable at a given Uniform Resource Locator (URL). '
          'Faster than a full internet check for modems with local admin pages.',
          'Cellular modems with a local admin interface'],
-    ], widths=[1.3*inch, CW-2.7*inch, 1.4*inch]))
+    ], widths=[1.6*inch, CW-3.4*inch, 1.8*inch]))
     s.append(SP(6))
 
     s.append(P('23.3  Swapping Preferred and Fallback', H2))
@@ -484,7 +483,7 @@ def ch26():
         ['20m',         'Long-haul — 2000+ miles, daytime primary'],
         ['15m / 10m',   'Long-haul when solar conditions are favorable'],
         ['6m / 2m',     'Very High Frequency (VHF) — not covered by HF propagation tool'],
-    ], widths=[1.0*inch, CW-1.0*inch]))
+    ], widths=[1.2*inch, CW-1.2*inch]))
     s.append(SP(4))
     s.append(P(
         'The tool shows Solar Flux Index (SFI), A-index, K-index, and '
@@ -510,7 +509,7 @@ def ch27():
         ['Winlink Express',  'Windows laptop',         'VARA High Frequency (HF), VARA FM, Telnet, Pactor'],
         ['Pat',              'Raspberry Pi / Linux',   'VARA FM (via Wine), Telnet, AX.25'],
         ['RMS Express',      'Windows laptop',         'Pactor (requires SCS modem)'],
-    ], widths=[1.3*inch, 1.2*inch, CW-2.5*inch]))
+    ], widths=[1.3*inch, 1.5*inch, CW-2.8*inch]))
     s.append(SP(6))
 
     s.append(P('26.2  Winlink Form Import', H2))
@@ -913,7 +912,7 @@ def ch_appendix():
         ['9000',  'amprgate_status.py',      '44Net status — public read-only on EMCOMM-NET'],
         ['9001',  'amprgate_status.py',      'Tunnel control — localhost only'],
         ['80',    'nginx',                   'Serves all HTML pages and static assets'],
-    ], widths=[0.65*inch, 1.8*inch, CW-2.45*inch]))
+    ], widths=[0.5*inch, 2.2*inch, CW-2.7*inch]))
     s.append(SP(6))
 
     s.append(P('A.3  Background Services (systemd)', H2))

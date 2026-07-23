@@ -489,6 +489,20 @@ class ICSHandler(BaseHTTPRequestHandler):
             })
 
 
+
+        # ── T-Card Personnel ────────────────────────────────────────────────
+        # GET /api/ics/tcard_personnel?tcard_id=X
+        elif path == "/api/ics/tcard_personnel":
+            tcard_id = qs.get("tcard_id",[""])[0]
+            if not tcard_id:
+                return self.send_json({"error":"tcard_id required"},400)
+            rows = rows_to_list(c.execute(
+                """SELECT * FROM tcard_personnel
+                   WHERE tcard_id=? ORDER BY name""",
+                (tcard_id,)
+            ).fetchall())
+            return self.send_json(rows)
+
         # ── Resource GPS Update ─────────────────────────────────────────────
         # GET  /api/ics/resources/gps?incident_id=X  → all resource positions
         # POST /api/ics/resources/gps                → update position for one resource
@@ -1144,6 +1158,41 @@ class ICSHandler(BaseHTTPRequestHandler):
                 "UPDATE ics_tcards SET lat=NULL, lon=NULL, gps_source='', location_label='' WHERE id=?",
                 (card_id,)
             )
+            c.commit()
+            return self.send_json({"ok":True})
+
+
+        # ── T-Card Personnel POST ─────────────────────────────────────────────
+        elif path == "/api/ics/tcard_personnel":
+            import uuid
+            pid      = body.get("id") or str(uuid.uuid4())
+            tcard_id = body.get("tcard_id","")
+            inc_id   = body.get("incident_id","")
+            name     = body.get("name","").strip()
+            if not tcard_id or not name:
+                return self.send_json({"error":"tcard_id and name required"},400)
+            c.execute(
+                """INSERT OR REPLACE INTO tcard_personnel
+                   (id, tcard_id, incident_id, name, ics_position, agency,
+                    contact, roster_id, callsign, added)
+                   VALUES (?,?,?,?,?,?,?,?,?,?)""",
+                (pid, tcard_id, inc_id, name,
+                 body.get("ics_position",""),
+                 body.get("agency",""),
+                 body.get("contact",""),
+                 body.get("roster_id",""),
+                 body.get("callsign",""),
+                 body.get("added", now))
+            )
+            c.commit()
+            return self.send_json({"ok":True,"id":pid})
+
+        # ── T-Card Personnel DELETE ───────────────────────────────────────────
+        elif path == "/api/ics/tcard_personnel/delete":
+            pid = body.get("id","")
+            if not pid:
+                return self.send_json({"error":"id required"},400)
+            c.execute("DELETE FROM tcard_personnel WHERE id=?", (pid,))
             c.commit()
             return self.send_json({"ok":True})
 

@@ -74,6 +74,37 @@
 .tab.active{color:var(--red);border-bottom-color:var(--red);}
 .tab-pane{display:none;}
 .tab-pane.active{display:block;}
+
+.tab-bar { display:flex; gap:0; border-bottom:1px solid var(--line); margin-bottom:12px; }
+.tab-btn { padding:6px 14px; font-size:11px; font-family:var(--font-hd);
+           letter-spacing:.06em; background:none; border:none; border-bottom:2px solid transparent;
+           color:var(--muted); cursor:pointer; }
+.tab-btn.active { color:var(--eoc); border-bottom-color:var(--eoc); }
+.tab-pane { display:none; }
+.tab-pane.active { display:block; }
+.personnel-row {
+  display:flex; align-items:center; gap:8px; padding:7px 0;
+  border-bottom:1px solid var(--line-lt); font-size:12px;
+}
+.personnel-row:last-child { border-bottom:none; }
+.personnel-name { font-weight:600; color:var(--txt); flex:1; }
+.personnel-meta { font-size:10px; color:var(--muted); }
+.personnel-remove { font-size:11px; padding:2px 7px; background:var(--red-bg);
+                    border:1px solid #fca5a5; color:var(--red); border-radius:3px; cursor:pointer; }
+.add-personnel-form { background:var(--panel2); border:1px solid var(--line);
+                      border-radius:var(--r-md); padding:12px; margin-top:10px; }
+.add-personnel-form .fg { margin-bottom:8px; }
+.add-personnel-form label { display:block; font-size:10px; color:var(--muted);
+                             text-transform:uppercase; letter-spacing:.06em; margin-bottom:3px; }
+.add-personnel-form input, .add-personnel-form select {
+  width:100%; box-sizing:border-box; padding:6px 9px; font-size:12px;
+  background:var(--input-bg); border:1px solid var(--input-border);
+  color:var(--txt); border-radius:var(--r-sm);
+}
+.tcard-personnel-count { font-size:10px; color:var(--green); margin-top:2px; }
+.roster-suggestion { font-size:10px; color:var(--blue); cursor:pointer;
+                     padding:3px 6px; background:var(--blue-bg);
+                     border:1px solid #93c5fd; border-radius:3px; margin-top:4px; display:inline-block; }
 </style>
 </head>
 <body>
@@ -495,6 +526,7 @@ function renderBoard(){
           <div class="tcard-id">${r.resource_id||r.id}</div>
           <div class="tcard-name">${r.name}</div>
           ${r.assignment ? `<div class="tcard-assign">→ ${r.assignment}</div>` : ''}
+          ${(r.num_personnel||0) > 0 ? `<div class="tcard-personnel-count">👤 ${r.num_personnel} personnel</div>` : ''}
         </div>`).join('') ||
       `<div style="text-align:center;padding:20px;color:var(--muted);font-size:11px">None</div>`;
   });
@@ -561,19 +593,264 @@ function showResDetail(id){
   if(!r) return;
   document.getElementById('rdTitle').textContent = `${r.resource_id||r.id} — ${r.name}`;
   document.getElementById('rdContent').innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
-      <div><label style="font-size:10px;color:var(--muted);display:block;margin-bottom:3px">Type</label><span style="font-size:13px;color:var(--txt)">${typeIcons[r.type]} ${r.type}</span></div>
-      <div><label style="font-size:10px;color:var(--muted);display:block;margin-bottom:3px">Status</label><span class="status-chip ${chipClass[r.status]}">${statusLabel[r.status]||r.status}</span></div>
-      <div><label style="font-size:10px;color:var(--muted);display:block;margin-bottom:3px">Capability</label><span style="font-size:12px;color:var(--txt)">${r.capability||'—'}</span></div>
-      <div><label style="font-size:10px;color:var(--muted);display:block;margin-bottom:3px">Contact</label><span style="font-size:12px;color:var(--txt)">${r.contact||'—'}</span></div>
+    <!-- Tab bar -->
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab('info')">INFO</button>
+      <button class="tab-btn" onclick="switchTab('personnel')" id="personnelTabBtn">
+        👤 PERSONNEL <span id="personnelCount" style="font-size:10px;color:var(--muted)"></span>
+      </button>
     </div>
-    <div style="margin-bottom:10px">
-      <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:4px">Assignment / Location</label>
-      <input type="text" id="rdAssignInput" value="${r.assignment||''}" placeholder="Division / Sector" style="width:100%;box-sizing:border-box;background:var(var(--input-bg);border:1px solid var(--line);border-radius:4px;color:var(--txt);padding:7px 10px;font-size:13px">
+
+    <!-- Info tab -->
+    <div class="tab-pane active" id="tab-info">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+        <div><label style="font-size:10px;color:var(--muted);display:block;margin-bottom:3px">Type</label>
+          <span style="font-size:13px;color:var(--txt)">${typeIcons[r.type]||'📦'} ${r.type}</span></div>
+        <div><label style="font-size:10px;color:var(--muted);display:block;margin-bottom:3px">Status</label>
+          <span class="status-chip ${chipClass[r.status]}">${statusLabel[r.status]||r.status}</span></div>
+        <div><label style="font-size:10px;color:var(--muted);display:block;margin-bottom:3px">Leader</label>
+          <span style="font-size:12px;color:var(--txt)">${r.leader||'—'}</span></div>
+        <div><label style="font-size:10px;color:var(--muted);display:block;margin-bottom:3px">Contact</label>
+          <span style="font-size:12px;color:var(--txt)">${r.contact||'—'}</span></div>
+        <div><label style="font-size:10px;color:var(--muted);display:block;margin-bottom:3px">Home Agency</label>
+          <span style="font-size:12px;color:var(--txt)">${r.home_agency||'—'}</span></div>
+        <div><label style="font-size:10px;color:var(--muted);display:block;margin-bottom:3px">Personnel (count)</label>
+          <span style="font-size:12px;color:var(--txt)">${r.num_personnel||0}</span></div>
+      </div>
+      <div style="margin-bottom:10px">
+        <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:4px">Assignment / Division / Sector</label>
+        <input type="text" id="rdAssignInput" value="${r.assignment||''}" placeholder="Division Alpha / Sector 3"
+          style="width:100%;box-sizing:border-box;background:var(--input-bg);border:1px solid var(--line);
+                 border-radius:4px;color:var(--txt);padding:7px 10px;font-size:13px">
+      </div>
+      ${r.notes ? `<div style="font-size:11px;color:var(--muted);margin-bottom:10px;
+                               background:var(--panel2);padding:8px;border-radius:4px">${r.notes}</div>` : ''}
+      <button class="btn btn-sm" onclick="updateAssignment()" style="border-color:var(--eoc-lt);color:var(--eoc)">
+        Update Assignment
+      </button>
     </div>
-    <button class="btn btn-sm" onclick="updateAssignment()" style="border-color: var(--eoc-lt);color:var(--eoc)">Update Assignment</button>
+
+    <!-- Personnel tab -->
+    <div class="tab-pane" id="tab-personnel">
+      <div id="personnelList" style="min-height:40px">
+        <div style="text-align:center;padding:12px;color:var(--muted);font-size:11px">Loading...</div>
+      </div>
+
+      <!-- Add person form -->
+      <div class="add-personnel-form">
+        <div style="font-size:10px;font-family:var(--font-hd);color:var(--eoc);
+                    letter-spacing:.08em;margin-bottom:8px">+ ADD PERSONNEL</div>
+        <div class="fg">
+          <label>Name *</label>
+          <input type="text" id="pName" placeholder="First Last"
+            oninput="rosterAutocomplete(this.value)">
+          <div id="rosterSuggestions"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div class="fg">
+            <label>ICS Position on Resource</label>
+            <select id="pPosition">
+              <option value="">— select —</option>
+              <option>Crew Boss</option>
+              <option>Single Resource Boss</option>
+              <option>Division Supervisor</option>
+              <option>Task Force Leader</option>
+              <option>Strike Team Leader</option>
+              <option>Paramedic / EMT</option>
+              <option>Firefighter</option>
+              <option>Emergency Radio Operator</option>
+              <option>Net Control</option>
+              <option>Operator</option>
+              <option>Driver / Operator</option>
+              <option>Equipment Operator</option>
+              <option>Logistics Support</option>
+              <option>Other</option>
+            </select>
+          </div>
+          <div class="fg">
+            <label>Agency</label>
+            <input type="text" id="pAgency" placeholder="Home agency">
+          </div>
+          <div class="fg">
+            <label>Contact / Callsign</label>
+            <input type="text" id="pContact" placeholder="Callsign or radio channel">
+          </div>
+        </div>
+        <button onclick="addPersonnel()"
+          style="width:100%;margin-top:6px;padding:8px;background:var(--eoc);
+                 border:none;color:#fff;border-radius:var(--r-sm);
+                 font-size:12px;cursor:pointer;font-weight:600">
+          ✓ Add to Resource
+        </button>
+      </div>
+    </div>
   `;
   document.getElementById('resDetailModal').classList.add('open');
+  loadPersonnel(id);
+}
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach((b,i) => {
+    b.classList.toggle('active', ['info','personnel'][i] === tab);
+  });
+  document.querySelectorAll('.tab-pane').forEach(p => {
+    p.classList.toggle('active', p.id === 'tab-'+tab);
+  });
+}
+
+// ── Personnel functions ────────────────────────────────────────────
+let personnelData = [];
+let rosterData    = [];
+
+async function loadPersonnel(tcardId) {
+  try {
+    const r = await fetch(`${ICS_API}/api/ics/tcard_personnel?tcard_id=${tcardId}`);
+    personnelData = r.ok ? await r.json() : [];
+    renderPersonnel();
+    // Load roster for autocomplete (once)
+    if (!rosterData.length) {
+      const rr = await fetch(`${API}/api/roster`);
+      if (rr.ok) { const d = await rr.json(); rosterData = d.members || d || []; }
+    }
+  } catch(e) {
+    document.getElementById('personnelList').innerHTML =
+      `<div style="color:var(--red);font-size:11px;padding:8px">Error: ${e.message}</div>`;
+  }
+}
+
+function renderPersonnel() {
+  const count = personnelData.length;
+  const countEl = document.getElementById('personnelCount');
+  if (countEl) countEl.textContent = count ? `(${count})` : '';
+
+  const list = document.getElementById('personnelList');
+  if (!list) return;
+  if (!count) {
+    list.innerHTML = '<div style="text-align:center;padding:12px;color:var(--muted);font-size:11px">' +
+                     'No personnel assigned yet — add below.</div>';
+    return;
+  }
+  list.innerHTML = personnelData.map(p => `
+    <div class="personnel-row">
+      <div style="flex:1">
+        <div class="personnel-name">${esc(p.name)}
+          ${p.callsign ? `<span style="font-size:10px;color:var(--muted);font-family:var(--font-mono)"> ${esc(p.callsign)}</span>` : ''}
+        </div>
+        <div class="personnel-meta">
+          ${[p.ics_position, p.agency, p.contact].filter(Boolean).join(' · ')}
+        </div>
+      </div>
+      <button class="personnel-remove" onclick="removePersonnel('${p.id}')">✕</button>
+    </div>`).join('');
+}
+
+async function addPersonnel() {
+  const name = (document.getElementById('pName').value || '').trim();
+  if (!name) { alert('Name is required'); return; }
+  const card = resources.find(x => x.id === selectedId);
+  const payload = {
+    tcard_id:     selectedId,
+    incident_id:  incId,
+    name,
+    ics_position: document.getElementById('pPosition').value,
+    agency:       document.getElementById('pAgency').value.trim(),
+    contact:      document.getElementById('pContact').value.trim(),
+  };
+  // Check if roster match
+  const match = rosterData.find(m =>
+    (`${m.first_name||''} ${m.last_name||''}`).trim().toLowerCase() === name.toLowerCase()
+    || (m.callsign && m.callsign.toUpperCase() === name.toUpperCase())
+  );
+  if (match) {
+    payload.roster_id = match.member_id || '';
+    payload.callsign  = match.callsign  || '';
+    if (!payload.agency && match.visitor_agency) payload.agency = match.visitor_agency;
+    if (!payload.contact && match.callsign)       payload.contact = match.callsign;
+  }
+  try {
+    const r = await fetch(`${ICS_API}/api/ics/tcard_personnel`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+    if (r.ok) {
+      document.getElementById('pName').value    = '';
+      document.getElementById('pAgency').value  = '';
+      document.getElementById('pContact').value = '';
+      document.getElementById('pPosition').value = '';
+      document.getElementById('rosterSuggestions').innerHTML = '';
+      // Update num_personnel on the tcard
+      const idx = resources.findIndex(x => x.id === selectedId);
+      if (idx >= 0) {
+        const newCount = personnelData.length + 1;
+        resources[idx].num_personnel = newCount;
+        // Persist count update
+        await fetch(`${ICS_API}/api/ics/tcards`, {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({
+            ...resources[idx],
+            resource_name: resources[idx].name,
+            resource_type: resources[idx].type,
+            num_personnel: newCount,
+          })
+        });
+        renderBoard();
+      }
+      await loadPersonnel(selectedId);
+    }
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+async function removePersonnel(pid) {
+  if (!confirm('Remove this person from the resource?')) return;
+  try {
+    await fetch(`${ICS_API}/api/ics/tcard_personnel/delete`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({id: pid})
+    });
+    // Update num_personnel count
+    const idx = resources.findIndex(x => x.id === selectedId);
+    if (idx >= 0 && resources[idx].num_personnel > 0) {
+      resources[idx].num_personnel--;
+      await fetch(`${ICS_API}/api/ics/tcards`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          ...resources[idx],
+          resource_name: resources[idx].name,
+          resource_type: resources[idx].type,
+          num_personnel: resources[idx].num_personnel,
+        })
+      });
+      renderBoard();
+    }
+    await loadPersonnel(selectedId);
+  } catch(e) { alert('Error: ' + e.message); }
+}
+
+// Roster autocomplete
+function rosterAutocomplete(val) {
+  const box = document.getElementById('rosterSuggestions');
+  if (!box) return;
+  if (!val || val.length < 2 || !rosterData.length) { box.innerHTML = ''; return; }
+  const q = val.toLowerCase();
+  const matches = rosterData.filter(m => {
+    const n = `${m.first_name||''} ${m.last_name||''}`.toLowerCase();
+    const cs = (m.callsign||'').toLowerCase();
+    return n.includes(q) || cs.includes(q);
+  }).slice(0,5);
+  box.innerHTML = matches.map(m => {
+    const name = `${m.first_name||''} ${m.last_name||''}`.trim();
+    const cs   = m.callsign ? ` ${m.callsign}` : '';
+    return `<span class="roster-suggestion"
+      onclick="fillFromRoster('${name}','${m.callsign||''}','${m.visitor_agency||''}')"
+    >${name}${cs}</span>`;
+  }).join(' ');
+}
+
+function fillFromRoster(name, callsign, agency) {
+  document.getElementById('pName').value    = name;
+  document.getElementById('pContact').value = callsign;
+  document.getElementById('pAgency').value  = agency;
+  document.getElementById('rosterSuggestions').innerHTML = '';
 }
 
 function closeResDetail(){ document.getElementById('resDetailModal').classList.remove('open'); selectedId=null; }

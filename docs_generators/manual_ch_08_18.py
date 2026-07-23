@@ -349,24 +349,39 @@ def ch15():
     s.append(tbl(['ICS SECTION', 'PAGE', 'KEY TOOLS'], [
         ['Command',
          'incident.html',
-         'Incident overview, general info, ICS-201 briefing, objectives, '
-         'organizational chart, position checklists, meeting scheduler'],
+         'Incident overview, general info, ICS-201 initial briefing, '
+         'ICS-202 objectives, ICS-207 org chart, ICS-208 safety message, '
+         'position checklists, meeting scheduler. '
+         'Note: the Safety Officer (SOFR) and Public Information Officer (PIO) '
+         'are Command Staff — they report directly to the IC, not to a section.'],
         ['Operations',
          'resources.html',
          'T-card resource board by type and status, assignment tracking, '
-         'GPS resource map, ICS-204 assignment lists'],
+         'GPS resource map, ICS-204 assignment lists. '
+         'Note: ICS-204 is developed by the Resources Unit (Planning) '
+         'but distributed to and used by Operations supervisors.'],
         ['Planning',
          'iap.html',
-         'IAP assembly, ICS-202 objectives, ICS-203 org assignment, '
-         'ICS-205 comms plan, ICS-206 medical plan, Planning P cycle'],
+         'IAP assembly, ICS-202 objectives, ICS-203 org assignment list, '
+         'ICS-209 status summary, ICS-211 check-in list, ICS-221 demobilization, '
+         'Planning P cycle. '
+         'Note: Planning assembles and distributes the IAP but does not develop '
+         'all forms in it — see the form table in Chapter 17 for development responsibility.'],
         ['Logistics',
          'ics-form.html',
-         'ICS-215A safety analysis, ICS-218 support vehicle, '
-         'facilities directory, channel library, resource requests'],
+         'ICS-205 radio comms plan (COML), ICS-205A comms list (COML), '
+         'ICS-206 medical plan (MEDL), ICS-218 support vehicle inventory (GSUL), '
+         'ICS-309 communications log (COML), facilities directory, channel library. '
+         'Note: the Communications Unit and Medical Unit are in the '
+         'Logistics Service Branch. They develop ICS-205, 205A, 206, and 309 — '
+         'these forms are then included in the IAP by the Planning Section.'],
         ['Finance / Admin',
          'fema_costs.html',
-         'FEMA PA cost tracking, Force Account Labor, Equipment with rate '
-         'schedule, Materials, cost dashboard, ICS-214 import'],
+         'FEMA PA cost tracking, Force Account Labor with fringe, Equipment '
+         'with FEMA rate schedule, Materials, Contracts, cost dashboard, '
+         'ICS-214 activity log import. '
+         'Note: ICS-214 is completed by all supervisors in every section — '
+         'Finance/Admin collects them for cost documentation and records.'],
     ], widths=[1.2*inch, 1.4*inch, CW-2.6*inch]))
     s.append(SP(6))
 
@@ -434,7 +449,58 @@ def ch16():
     ], widths=[1.5*inch, CW-1.5*inch]))
     s.append(SP(6))
 
-    s.append(P('16.3  Adding and Managing Resources', H2))
+    s.append(P('16.3  Personnel Assigned to a Resource', H2))
+    s.append(P(
+        'On a physical ICS T-card, the back of the card lists the individual personnel '
+        'assigned to that resource — not just the count, but the names, ICS positions, '
+        'and contact information for each person on the crew, unit, or team. '
+        'FieldCommand IMS replicates this with a dedicated Personnel tab on every T-card '
+        'detail panel. This roster is linked to the master Member Roster so that '
+        'names auto-fill from existing records.'))
+    s.append(SP(4))
+    s.append(tbl(['FIELD', 'DESCRIPTION'], [
+        ['Name',               'Full name of the assigned person. '
+                               'Begin typing to see roster autocomplete suggestions — '
+                               'selecting a suggestion fills name, callsign, and agency automatically.'],
+        ['ICS Position on Resource',
+                               'The specific role this person fills on this resource. '
+                               'Examples: Crew Boss, Paramedic/EMT, Emergency Radio Operator, '
+                               'Driver/Operator, Equipment Operator. Different from their '
+                               'overall ICS position on the org chart.'],
+        ['Agency',             'Home agency or mutual aid source. '
+                               'Auto-filled from roster when name is matched.'],
+        ['Contact / Callsign', 'Radio callsign, channel, or phone number for this person. '
+                               'Auto-filled from roster when a licensed amateur is matched.'],
+    ], widths=[1.6*inch, CW-1.6*inch]))
+    s.append(SP(6))
+
+    s.append(P('16.4  Using the Personnel Tab', H2))
+    s += steps([
+        'Click any T-card on the resource board to open the detail panel.',
+        'Click the <b>👤 PERSONNEL</b> tab at the top of the panel. '
+        'The count in parentheses shows how many personnel are currently listed.',
+        'Begin typing a name in the Name field. If the person is in the roster, '
+        'their name appears as a blue suggestion chip below the field. '
+        'Click the chip to auto-fill name, callsign, and agency.',
+        'Select the person\'s ICS position on this specific resource from the dropdown. '
+        'This is their functional role on the resource — Crew Boss, EMT, Operator, etc.',
+        'Fill in agency and contact if not auto-filled from the roster.',
+        'Click <b>✓ Add to Resource</b>. The person appears in the personnel list '
+        'and the personnel count on the T-card board updates automatically.',
+        'To remove a person, click the <b>✕</b> button on their row. '
+        'The count updates automatically.',
+    ])
+    s.append(SP(4))
+    s.append(note(
+        'The Personnel tab roster is separate from the check-in list (ICS-211). '
+        'The personnel list answers "who is on this resource?" — '
+        'the check-in list answers "who has checked into this incident?" '
+        'A person can be in both, or either. For example, a mutual-aid crew '
+        'might all be listed on their engine\'s T-card personnel tab '
+        'but only the crew boss may check into the ICS-211 on behalf of the crew.', 'note'))
+    s.append(SP(6))
+
+    s.append(P('16.5  Adding and Managing Resources', H2))
     s += steps([
         'On the T-Card board, click <b>+ Add Resource</b>.',
         'Fill in the resource name, type, status, and assignment.',
@@ -461,24 +527,91 @@ def ch17():
     s.append(SP(6))
 
     s.append(P('17.1  IAP Form Set', H2))
-    s.append(tbl(['FORM', 'TITLE', 'SECTION'], [
-        ['ICS-202',  'Incident Objectives',                       'Planning'],
-        ['ICS-203',  'Organization Assignment List',              'Planning'],
-        ['ICS-204',  'Assignment List (per branch/division)',     'Operations'],
-        ['ICS-205',  'Incident Radio Communications Plan',       'Planning/Comms'],
-        ['ICS-205A', 'Communications List',                      'Planning/Comms'],
-        ['ICS-206',  'Medical Plan',                             'Planning/Medical'],
-        ['ICS-207',  'Incident Organization Chart',              'Command'],
-        ['ICS-208',  'Safety Message / Plan',                    'Command/Safety'],
-        ['ICS-209',  'Incident Status Summary',                  'Planning'],
-        ['ICS-211',  'Incident Check-In List',                   'Planning'],
-        ['ICS-213',  'General Message',                          'Any section'],
-        ['ICS-214',  'Activity Log',                             'Any section'],
-        ['ICS-215A', 'Incident Action Plan Safety Analysis',     'Safety/Planning'],
-        ['ICS-218',  'Support Vehicle/Equipment Inventory',      'Logistics'],
-        ['ICS-221',  'Demobilization Check-Out',                 'Planning/Demob'],
-        ['ICS-309',  'Communications Log',                       'Comms Unit'],
-    ], widths=[0.7*inch, CW-1.4*inch, 0.7*inch]))
+    s.append(P(
+        'The table below shows every ICS form in FieldCommand IMS with two key '
+        'attributes: who is responsible for <b>developing</b> it, and which section '
+        'it is <b>distributed through</b>. These are not always the same. '
+        'Several forms are developed by Logistics unit leaders but assembled into '
+        'the IAP and distributed by the Planning Section — a distinction that '
+        'confuses many operators and is explained in the notes below the table.'))
+    s.append(SP(4))
+    s.append(tbl(['FORM', 'TITLE', 'DEVELOPED BY', 'DISTRIBUTED THROUGH / IN IAP?'], [
+        ['ICS-202',  'Incident Objectives',
+         'Planning Section Chief / IC',
+         'Planning · ✓ IAP'],
+        ['ICS-203',  'Organization Assignment List',
+         'Resources Unit Leader (RESL) — Planning',
+         'Planning · ✓ IAP'],
+        ['ICS-204',  'Assignment List',
+         'Resources Unit Leader (RESL) — Planning',
+         'Operations supervisors · ✓ IAP'],
+        ['ICS-205',  'Radio Communications Plan',
+         'Comms Unit Leader (COML) — <b>Logistics</b>/Service Branch',
+         'Planning assembles into IAP · ✓ IAP'],
+        ['ICS-205A', 'Communications List',
+         'Comms Unit Leader (COML) — <b>Logistics</b>/Service Branch',
+         'Supplemental — often attached to IAP'],
+        ['ICS-206',  'Medical Plan',
+         'Medical Unit Leader (MEDL) — <b>Logistics</b>/Service Branch',
+         'Planning assembles into IAP · ✓ IAP'],
+        ['ICS-207',  'Incident Organization Chart',
+         'Resources Unit Leader (RESL) — Planning',
+         'Command display · ✓ IAP'],
+        ['ICS-208',  'Safety Message / Plan',
+         'Safety Officer (SOFR) — Command Staff',
+         'Planning assembles into IAP · ✓ IAP'],
+        ['ICS-209',  'Incident Status Summary',
+         'Situation Unit Leader (SITL) — Planning',
+         'Sent upward to MAC/EOC — not in IAP'],
+        ['ICS-211',  'Incident Check-In List',
+         'Resources Unit Leader (RESL) — Planning',
+         'Check-in recorder at entry points — not in IAP'],
+        ['ICS-213',  'General Message',
+         'Any ICS position',
+         'Any section — not in IAP'],
+        ['ICS-214',  'Activity Log',
+         'All supervisors — every section',
+         'Retained as documentation — not in IAP'],
+        ['ICS-215A', 'IAP Safety Analysis',
+         'Safety Officer (SOFR) — Command Staff, with Ops input',
+         'Planning assembles into IAP · ✓ IAP'],
+        ['ICS-218',  'Support Vehicle/Equipment Inventory',
+         'Ground Support Unit Leader (GSUL) — Logistics/Support Branch',
+         'Logistics internal — not in IAP'],
+        ['ICS-221',  'Demobilization Check-Out',
+         'Demobilization Unit Leader (DMOB) — Planning',
+         'Signed by each demobilizing resource — not in IAP'],
+        ['ICS-309',  'Communications Log',
+         'Comms Unit Leader (COML) / any operator — <b>Logistics</b>',
+         'Communications unit records — not in IAP'],
+    ], widths=[0.65*inch, 1.35*inch, 1.8*inch, CW-3.8*inch]))
+    s.append(SP(6))
+    s.append(P('17.1a  ICS Doctrine Notes — Forms That Cross Section Lines', H2))
+    s.append(P(
+        'Three forms are commonly misattributed in the field because they appear '
+        'in the IAP (which Planning assembles) but are developed by Logistics unit '
+        'leaders. Understanding the distinction matters for knowing who to ask '
+        'when a form needs to be corrected or updated.'))
+    s.append(SP(4))
+    s.append(tbl(['FORM', 'THE DOCTRINE DISTINCTION'], [
+        ['ICS-205\nRadio Comms Plan',
+         'The <b>Communications Unit Leader (COML)</b> develops the ICS-205. '
+         'The COML reports to the Service Branch Director under the Logistics Section. '
+         'The completed ICS-205 is handed to the Planning Section, which includes '
+         'it in the IAP and distributes it at the operational period briefing. '
+         'If the ICS-205 needs to be corrected, go to the COML — not the Planning Section Chief.'],
+        ['ICS-205A\nComms List',
+         'Also developed by the <b>COML</b> under Logistics. The 205A is a '
+         'supplemental contact directory — not always formally in the IAP but '
+         'typically attached. Same attribution rule: developed in Logistics, '
+         'distributed through Planning.'],
+        ['ICS-206\nMedical Plan',
+         'The <b>Medical Unit Leader (MEDL)</b> develops the ICS-206. '
+         'The MEDL also reports to the Service Branch Director under Logistics. '
+         'The completed ICS-206 goes to Planning for IAP inclusion. '
+         'The Safety Officer (SOFR) must review and concur with the ICS-206 '
+         'before it is finalized — their signature appears on the form.'],
+    ], widths=[1.0*inch, CW-1.0*inch]))
     s.append(SP(6))
 
     s.append(P('17.2  Digital Signature Capture', H2))

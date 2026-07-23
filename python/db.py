@@ -658,6 +658,20 @@ CREATE TABLE IF NOT EXISTS resmap_state (
 );
 INSERT OR IGNORE INTO resmap_state(id) VALUES(1);
 
+-- ── T-Card Personnel Roster ────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS tcard_personnel (
+    id              TEXT PRIMARY KEY,
+    tcard_id        TEXT NOT NULL REFERENCES ics_tcards(id) ON DELETE CASCADE,
+    incident_id     TEXT NOT NULL DEFAULT '',
+    name            TEXT NOT NULL DEFAULT '',
+    ics_position    TEXT DEFAULT '',
+    agency          TEXT DEFAULT '',
+    contact         TEXT DEFAULT '',
+    roster_id       TEXT DEFAULT '',
+    callsign        TEXT DEFAULT '',
+    added           TEXT NOT NULL DEFAULT ''
+);
+
 -- ── Station / Organization configuration (singleton) ────────────────────────
 CREATE TABLE IF NOT EXISTS station_config (
     id              INTEGER PRIMARY KEY DEFAULT 1,
@@ -885,8 +899,7 @@ def init_db():
 
 
 # ── NIMS Resource Type seeding ────────────────────────────────────────────────
-def seed_resource_types(conn)
-    seed_channel_library(conn):
+def seed_resource_types(conn):
     try:
         existing = conn.execute("SELECT COUNT(*) FROM resource_types").fetchone()[0]
         if existing == 0:
@@ -1930,7 +1943,7 @@ BUILTIN_TEMPLATES = [
         "div_a_label": "Functional Area Alpha",
         "div_b_label": "Functional Area Bravo"
       },
-      "is_scenario": true
+      "is_scenario": True
     }
   }
 ]
@@ -2094,11 +2107,11 @@ def _alter_existing_tables():
     # ics_tcards — GPS tracking fields
     tc2_existing = {r[1] for r in conn.execute("PRAGMA table_info(ics_tcards)").fetchall()}
     gps_additions = [
-        ("lat",           "REAL DEFAULT NULL"),   -- current GPS latitude
-        ("lon",           "REAL DEFAULT NULL"),   -- current GPS longitude
-        ("gps_updated",   "TEXT DEFAULT ''"),     -- timestamp of last GPS update
-        ("gps_source",    "TEXT DEFAULT ''"),     -- 'device','manual','aprs'
-        ("location_label","TEXT DEFAULT ''"),     -- human label e.g. 'Division Alpha staging'
+        ("lat",            "REAL DEFAULT NULL"),
+        ("lon",            "REAL DEFAULT NULL"),
+        ("gps_updated",    "TEXT DEFAULT ''"),
+        ("gps_source",     "TEXT DEFAULT ''"),
+        ("location_label", "TEXT DEFAULT ''"),
     ]
     for col, defn in gps_additions:
         if col not in tc2_existing:
@@ -2111,9 +2124,9 @@ def _alter_existing_tables():
     # ics_tcards — cost rate fields for cost dashboard
     tc_existing = {r[1] for r in conn.execute("PRAGMA table_info(ics_tcards)").fetchall()}
     tc_additions = [
-        ("daily_cost",   "REAL DEFAULT 0"),   -- $/day for this resource
-        ("hourly_rate",  "REAL DEFAULT 0"),   -- $/hr (alternative to daily)
-        ("cost_basis",   "TEXT DEFAULT ''"),  -- 'daily','hourly','contract','donated'
+        ("daily_cost",   "REAL DEFAULT 0"),
+        ("hourly_rate",  "REAL DEFAULT 0"),
+        ("cost_basis",   "TEXT DEFAULT ''"),
         ("hours_on_incident", "REAL DEFAULT 0"),
     ]
     for col, defn in tc_additions:
@@ -2130,7 +2143,7 @@ def _alter_existing_tables():
         ("archived",      "INTEGER NOT NULL DEFAULT 0"),
         ("archive_path",  "TEXT DEFAULT ''"),
         ("archived_at",   "TEXT DEFAULT ''"),
-        ("is_scenario",   "INTEGER NOT NULL DEFAULT 0"),  -- beta/training scenario flag
+        ("is_scenario",   "INTEGER NOT NULL DEFAULT 0"),
     ]
     for col, defn in inc_additions:
         if col not in inc_existing:

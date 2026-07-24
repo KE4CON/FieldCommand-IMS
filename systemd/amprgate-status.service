@@ -1,6 +1,6 @@
 [Unit]
 Description=AMPRNet Gateway Status Service (Public :9000 + Control :9001)
-Documentation=https://github.com/KE4CON/CrossPlatformAPRS
+Documentation=https://github.com/KE4CON/FieldCommand-IMS
 After=network.target wg-quick@ampr0.service
 Wants=wg-quick@ampr0.service
 

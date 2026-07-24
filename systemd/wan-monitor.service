@@ -1,6 +1,6 @@
 [Unit]
 Description=WAN Status Monitor (InstyConnect + Starlink)
-Documentation=https://github.com/KE4CON/CrossPlatformAPRS
+Documentation=https://github.com/KE4CON/FieldCommand-IMS
 After=network.target fcc-lookup.service
 Wants=network.target
 

@@ -1,6 +1,6 @@
 [Unit]
 Description=AMPRNet Gateway Status Poller
-Documentation=https://github.com/KE4CON/CrossPlatformAPRS
+Documentation=https://github.com/KE4CON/FieldCommand-IMS
 After=network.target fcc-lookup.service
 Wants=network.target
 

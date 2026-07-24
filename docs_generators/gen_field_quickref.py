@@ -293,6 +293,15 @@ story.append(steps_tbl([
     ('4', '<b>Bookmark it</b> — on a phone tap Share → Add to Home Screen for one-tap access.'),
 ]))
 story.append(SP(6))
+story.append(tip(
+    '<b>Pre-Deployment — load this data before leaving the office or EOC:</b>  '
+    'Organization setup at /setup.html · '
+    'Roster via CSV import at /roster.html · '
+    'Repeater database from repeaterbook.com CSV at /repeaters.html · '
+    'Channel library at /channel_library.html · '
+    'Active incident at /incident.html.  '
+    'Then run Pre-Flight Check (/preflight.html) — it auto-verifies all five items.'))
+story.append(SP(6))
 story.append(ref_tbl(
     ['MODE', 'USE IT FOR'],
     [

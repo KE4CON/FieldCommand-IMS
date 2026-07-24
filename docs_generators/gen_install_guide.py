@@ -3648,21 +3648,31 @@ story.append(tbl(['METHOD', 'HOW TO USE'], [
 ], [1.8*inch, CW-1.8*inch]))
 story.append(SP(8))
 
-story.append(H2('15.5  IAP One-Click PDF Compilation'))
+story.append(H2('15.5  IAP Export — Print, PDF, and Off-Site Saving'))
 story.append(P(
-    'The IAP compiler (/iap_compile.html) generates a print-ready PDF containing all '
-    'selected ICS forms for the active incident. Digital signatures are embedded. '
-    'Generated server-side using ReportLab and pypdf — no browser PDF library needed.',
+    'FieldCommand provides three ways to output the IAP, covering both on-site printing '
+    'and off-site/no-printer scenarios. All three are accessible from the IAP Assembly page (iap.html).',
     S('B', fontSize=9, leading=13)))
 story.append(SP(4))
-story.append(steps([
-    'Ensure the active incident has completed ICS forms with signatures',
-    'Navigate to http://192.168.50.1/iap_compile.html',
-    'Check the forms to include (ICS-202, 203, 204, 205, 206, and 207 minimum)',
-    'Click <b>📄 Compile IAP PDF</b> — server generates the PDF (5–15 seconds)',
-    'PDF downloads automatically with title page, section dividers, and all forms',
-    'Print from any device using the Print Center (/printcenter.html)',
-]))
+story.append(tbl(['OPTION', 'HOW TO USE', 'BEST FOR'], [
+    ['🖨 Print IAP',
+     'iap.html → select period and forms → click Print IAP',
+     'Printer available on EMCOMM-NET or device'],
+    ['📄 Save as PDF  (recommended)',
+     'iap.html → select period and forms → click Save as PDF. '
+     'Pi server generates a proper 8.5×11 PDF. Downloads as .pdf file.',
+     'Off-site printing, emailing, archiving. '
+     'Guaranteed correct layout. Copy to USB or email.'],
+    ['💾 Save as HTML  (fallback)',
+     'iap.html → select period and forms → click Save as HTML. '
+     'Browser generates HTML file directly — no server call.',
+     'Fallback if server unreachable. Open in any browser and use File → Print. '
+     'Page layout may vary by browser.'],
+    ['📄 Full PDF Compiler',
+     'iap_compile.html → check forms → click Download IAP PDF (5–15 sec).',
+     'Full PDF with cover page, section dividers, embedded signatures. '
+     'Best for the official distributable IAP package.'],
+], [1.1*inch, 2.4*inch, CW-3.5*inch]))
 story.append(SP(8))
 
 story.append(H2('15.6  NEXRAD Animated Radar'))

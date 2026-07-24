@@ -378,14 +378,14 @@ def ch5():
         'incident type, and initial operational period.',
         'Select the incident commander from your roster, or type a name if '
         'the Incident Commander (IC) is not in the roster. For incidents operating under '
-        '<b>Unified Command</b>, see Section 5.3 below.',
+        '<b>Unified Command</b>, see Section 5.2 below.',
         'Click <b>Create Incident</b>. The incident opens immediately and becomes '
         'the active incident. The incident name appears in the dashboard header '
         'and in all form headers.',
     ])
     s.append(SP(6))
 
-    s.append(P('5.2  Single Incident Commander vs. Unified Command', H2))
+    s.append(P('5.2  Command Structure — Single Incident Commander vs. Unified Command', H2))
     s.append(P(
         'ICS supports two command structures, and FieldCommand IMS accommodates both '
         'without any configuration change. The difference is a workflow convention, '

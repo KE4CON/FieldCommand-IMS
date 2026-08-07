@@ -143,8 +143,9 @@
 </div>
 
 <!-- Entry form -->
-<div class="entry-form no-print" id="entryForm" style="display:none">
-  <div style="font-size:11px;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:1px">Log Station Check-In / Traffic</div>
+<div class="entry-form no-print" id="entryForm" style="display:none"
+     onkeydown="if(event.key==='Enter' && event.target.tagName!=='TEXTAREA'){event.preventDefault();logEntry();}">
+  <div style="font-size:11px;color:var(--muted);margin-bottom:10px;text-transform:uppercase;letter-spacing:1px">Log Station Check-In / Traffic — press <b>Enter</b> to log</div>
 
   <!-- FCC Autofill card -->
   <div class="fcc-card" id="fccCard">
@@ -291,6 +292,16 @@
         📡 Pick
       </button>
     </div>
+    <div style="display:flex;gap:6px;align-items:center">
+      <select id="newNetMode" style="flex:1" title="Operating mode for this net">
+        <option value="">Mode (optional)</option>
+        <option>SSB</option><option>FM</option><option>AM</option><option>CW</option>
+        <option>Digital</option><option>FT8</option><option>Winlink</option><option>Other</option>
+      </select>
+      <input type="datetime-local" id="newNetOpened" style="flex:1"
+        title="When the net opened — leave blank to use the current time (use this to back-date a net that already started)">
+    </div>
+    <div style="font-size:10px;color:var(--muted)">Mode and open time are optional. Blank open time = right now.</div>
     <input type="text" id="newNetNC" placeholder="Net Control Callsign">
   </div>
   <div style="display:flex;gap:8px;margin-top:16px">
@@ -385,13 +396,28 @@ function entryDuration(checkinIso, checkoutIso, netCloseIso) {
   return roundUpQH(mins);
 }
 
+// Live elapsed-time clock — ticks every second while the net is open.
+let _netTimer = null;
+function startNetTimer(openIso, closeIso) {
+  if (_netTimer) { clearInterval(_netTimer); _netTimer = null; }
+  const el = document.getElementById("netDurationDisplay");
+  if (!el || !openIso || closeIso) return;   // only run for an open net
+  _netTimer = setInterval(() => {
+    if (!currentNet || currentNet.net_closed || !currentNet.active) {
+      clearInterval(_netTimer); _netTimer = null; return;
+    }
+    el.textContent = netDuration(openIso, null);
+  }, 1000);
+}
+
 function renderNet() {
   if (!currentNet) return;
   const opened = currentNet.net_opened;
   const closed = currentNet.net_closed;
 
   document.getElementById("netName").textContent = currentNet.name;
-  document.getElementById("netType").textContent = `${currentNet.type} · ${currentNet.id}`;
+  const modeBit = currentNet.mode ? ` · ${currentNet.mode}` : "";
+  document.getElementById("netType").textContent = `${currentNet.type}${modeBit} · ${currentNet.id}`;
   document.getElementById("entryForm").style.display = "";
   document.getElementById("closeNetBtn").style.display = currentNet.active ? "" : "none";
   document.getElementById("sumName").textContent = currentNet.name;
@@ -402,6 +428,7 @@ function renderNet() {
   document.getElementById("netOpenedDisplay").textContent = fmtTime(opened);
   document.getElementById("netClosedDisplay").textContent = closed ? fmtTime(closed) : (currentNet.active ? "Net open" : "—");
   document.getElementById("netDurationDisplay").textContent = netDuration(opened, closed);
+  startNetTimer(opened, closed);
 
   const entries = currentNet.entries || [];
   const traffic = currentNet.traffic || [];
@@ -657,14 +684,20 @@ async function createNet() {
   const name = document.getElementById("newNetName").value.trim();
   const type = document.getElementById("newNetType").value;
   const freq = document.getElementById("newNetFreq").value.trim();
+  const mode = document.getElementById("newNetMode").value;
   const nc   = document.getElementById("newNetNC").value.trim().toUpperCase();
   if (!name) { alert("Enter a net name"); return; }
+  // Optional back-dated open time (datetime-local is in local time → convert to UTC ISO)
+  const openedLocal = document.getElementById("newNetOpened").value;
+  let net_opened;
+  if (openedLocal) { const d = new Date(openedLocal); if (!isNaN(d)) net_opened = d.toISOString(); }
 
   const netId = "net-" + Date.now();
   try {
     await fetch(`${API}/api/nets`, {
       method: "POST", headers: {"Content-Type":"application/json"},
-      body: JSON.stringify({id: netId, name, type, freq, net_control: nc, starcom: false})
+      body: JSON.stringify({id: netId, name, type, freq, mode, net_control: nc, starcom: false,
+                            ...(net_opened ? {net_opened} : {})})
     });
     document.getElementById("newNetModal").style.display = "none";
     await loadNets();
@@ -789,7 +822,7 @@ function exportICS309() {
   </div>
   <div class="meta">
     <div class="meta-box"><div class="meta-label">Net Type</div>${currentNet.type||"—"}</div>
-    <div class="meta-box"><div class="meta-label">Frequency / Mode</div>${currentNet.freq||"—"}</div>
+    <div class="meta-box"><div class="meta-label">Frequency / Mode</div>${[currentNet.freq,currentNet.mode].filter(Boolean).join(" ")||"—"}</div>
     <div class="meta-box"><div class="meta-label">Net Opened</div>${fmtTime(opened)}</div>
     <div class="meta-box"><div class="meta-label">Net Closed</div>${closed?fmtTime(closed):"Still Open"}</div>
     <div class="meta-box"><div class="meta-label">Net Duration</div>${dur}</div>

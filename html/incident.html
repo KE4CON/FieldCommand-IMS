@@ -163,9 +163,16 @@
 <div class="modal-box">
   <div class="modal-title">📋 CREATE NEW INCIDENT</div>
 
-  <div class="form-group">
-    <label>Incident Name *</label>
-    <input type="text" id="ni-name" placeholder="e.g. McHenry County Winter Storm Response 2026">
+  <div class="form-grid-2">
+    <div class="form-group">
+      <label>Incident Name *</label>
+      <input type="text" id="ni-name" placeholder="e.g. McHenry County Winter Storm Response 2026">
+    </div>
+    <div class="form-group">
+      <label>Incident Number</label>
+      <input type="text" id="ni-number" placeholder="e.g. 2026-0142">
+      <div style="font-size:10px;color:var(--dim);margin-top:4px">Your agency's tracking number for this incident. Optional — leave blank if you don't assign one.</div>
+    </div>
   </div>
 
   <div class="form-grid-2">
@@ -234,7 +241,9 @@
   <div class="form-grid-2">
     <div class="form-group">
       <label>Incident Commander</label>
-      <input type="text" id="ni-ic" placeholder="Name / Callsign">
+      <input type="text" id="ni-ic" list="ic-roster" placeholder="Pick from roster or type a name">
+      <datalist id="ic-roster"></datalist>
+      <div style="font-size:10px;color:var(--dim);margin-top:4px">Start typing to pick a roster member, or type any name/callsign for someone not on the roster.</div>
     </div>
     <div class="form-group">
       <label>Operational Period Duration</label>
@@ -309,6 +318,28 @@ async function loadOrgDefaults() {
       const j = [cfg.county, cfg.state].filter(Boolean).join(', ');
       if (j) document.getElementById('ni-jurisdiction').value = j;
     }
+    // Pre-fill the incident name from the setup default (only if the operator hasn't typed one)
+    const nameEl = document.getElementById('ni-name');
+    if (cfg.default_incident_name && nameEl && !nameEl.value) nameEl.value = cfg.default_incident_name;
+  } catch(e) {}
+  loadICRoster();
+}
+
+// Populate the Incident Commander picker from the roster (names + callsigns).
+async function loadICRoster() {
+  try {
+    const r = await fetch(`${MAIN_API}/api/roster/members`);
+    if (!r.ok) return;
+    const members = await r.json();
+    const seen = new Set();
+    const opts = [];
+    (Array.isArray(members) ? members : []).forEach(m => {
+      const name = `${m.first_name||''} ${m.last_name||''}`.trim();
+      const label = [name, m.callsign].filter(Boolean).join(' — ') || m.callsign || name;
+      if (label && !seen.has(label)) { seen.add(label); opts.push(`<option value="${label}">`); }
+    });
+    const dl = document.getElementById('ic-roster');
+    if (dl) dl.innerHTML = opts.join('');
   } catch(e) {}
 }
 
@@ -351,6 +382,7 @@ function incCard(inc) {
     </div>
     <div class="inc-meta">
       <span class="inc-badge-type">${inc.type || 'Unknown'}</span>
+      ${inc.incident_number ? `<span>#${inc.incident_number}</span>` : ''}
       <span>Period ${inc.current_period || 1}</span>
       <span>${started}</span>
       ${inc.incident_commander ? `<span>IC: ${inc.incident_commander}</span>` : ''}
@@ -556,6 +588,7 @@ async function createIncident() {
   const payload = {
     name,
     type,
+    incident_number:      document.getElementById('ni-number').value.trim(),
     jurisdiction:         document.getElementById('ni-jurisdiction').value.trim(),
     location:             document.getElementById('ni-location').value.trim(),
     incident_commander:   document.getElementById('ni-ic').value.trim(),

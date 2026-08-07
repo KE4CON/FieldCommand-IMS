@@ -327,7 +327,8 @@ class Handler(BaseHTTPRequestHandler):
                 logo_data,logo_mime,software_author,software_url,
                 setup_complete,configured_at,active_modules,
                 ps_system_name,ps_system_type,ps_id_label,ps_dispatch,
-                ps_system2_name,ps_system2_type,ps_member_id_label,ps_member_lookup
+                ps_system2_name,ps_system2_type,ps_member_id_label,ps_member_lookup,
+                grid,default_incident_name,wifi_ssid,server_url,time_zone
                 FROM station_config WHERE id=1""").fetchone()
             if row:
                 keys = ['callsign','personal_call','org_name','org_short',
@@ -336,7 +337,8 @@ class Handler(BaseHTTPRequestHandler):
                         'logo_data','logo_mime','software_author','software_url',
                         'setup_complete','configured_at','active_modules',
                         'ps_system_name','ps_system_type','ps_id_label','ps_dispatch',
-                        'ps_system2_name','ps_system2_type','ps_member_id_label','ps_member_lookup']
+                        'ps_system2_name','ps_system2_type','ps_member_id_label','ps_member_lookup',
+                        'grid','default_incident_name','wifi_ssid','server_url','time_zone']
                 return self.send_json(dict(zip(keys, row)))
             return self.send_json({})
 
@@ -345,7 +347,7 @@ class Handler(BaseHTTPRequestHandler):
 
         elif path == "/api/nets":
             sc = qs.get("starcom",[None])[0]
-            sql = ("SELECT id,name,type,starcom,drill,active,created,closed,freq,ncs,"
+            sql = ("SELECT id,name,type,starcom,drill,active,created,closed,freq,mode,ncs,"
                    "(SELECT COUNT(*) FROM net_entries e WHERE e.net_id=n.id) entry_count"
                    " FROM nets n")
             if sc is not None:
@@ -689,7 +691,8 @@ class Handler(BaseHTTPRequestHandler):
                       'city','state','county','lat','lon','ics_form_variant',
                       'logo_data','logo_mime','setup_complete','active_modules',
                       'ps_system_name','ps_system_type','ps_id_label','ps_dispatch',
-                      'ps_system2_name','ps_system2_type','ps_member_id_label','ps_member_lookup']
+                      'ps_system2_name','ps_system2_type','ps_member_id_label','ps_member_lookup',
+                      'grid','default_incident_name','wifi_ssid','server_url','time_zone']
             sets = [f"{f}=?" for f in fields if f in body]
             vals = [body[f] for f in fields if f in body]
             if sets:
@@ -705,15 +708,17 @@ class Handler(BaseHTTPRequestHandler):
             net_id = body.get("id") or f"net-{int(time.time())}"
             sc = 1 if (body.get("starcom") or net_id.startswith("sc-")) else 0
             c.execute("""
-                INSERT INTO nets(id,name,type,starcom,drill,active,freq,ncs,created,net_opened,roster_chips)
-                VALUES(?,?,?,?,?,?,?,?,?,?,?)
+                INSERT INTO nets(id,name,type,starcom,drill,active,freq,mode,ncs,created,net_opened,roster_chips)
+                VALUES(?,?,?,?,?,?,?,?,?,?,?,?)
                 ON CONFLICT(id) DO UPDATE SET name=excluded.name,type=excluded.type,
-                drill=excluded.drill,active=excluded.active,freq=excluded.freq,
+                drill=excluded.drill,active=excluded.active,freq=excluded.freq,mode=excluded.mode,
                 ncs=excluded.ncs,roster_chips=excluded.roster_chips
             """,(net_id,body.get("name",f"Net {net_id}"),
                  body.get("type","SC Dispatch" if sc else "Amateur"),sc,
                  1 if body.get("drill") else 0,1 if body.get("active",True) else 0,
-                 body.get("freq",""),body.get("ncs",""),now,now,
+                 body.get("freq",""),body.get("mode",""),
+                 body.get("ncs") or body.get("net_control",""),now,
+                 body.get("net_opened") or now,
                  jdump(body.get("roster_chips",[]))))
             c.commit()
             return self.send_json({"ok":True,"id":net_id})

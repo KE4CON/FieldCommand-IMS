@@ -742,12 +742,12 @@ class ICSHandler(BaseHTTPRequestHandler):
             inc_id=body.get("id") or f"inc-{int(time.time()*1000)}"
             c.execute("""INSERT INTO incidents
                 (id,name,type,status,jurisdiction,incident_commander,
-                 location,summary,current_period,started)
-                VALUES(?,?,?,?,?,?,?,?,?,?)""",
+                 location,summary,incident_number,current_period,started)
+                VALUES(?,?,?,?,?,?,?,?,?,?,?)""",
                 (inc_id,body.get("name",""),body.get("type",""),
                  "active",body.get("jurisdiction",""),
                  body.get("incident_commander",""),body.get("location",""),
-                 body.get("summary",""),1,now))
+                 body.get("summary",""),body.get("incident_number",""),1,now))
             # Create period 1 — persist the chosen Operational Period Duration
             try: shift_hours = int(body.get("period_hours") or 12)
             except (TypeError, ValueError): shift_hours = 12
@@ -766,7 +766,7 @@ class ICSHandler(BaseHTTPRequestHandler):
             if sub in ("","update"):
                 if not row: return self.send_json({"error":"Not found"},404)
                 allowed=["name","type","status","jurisdiction","incident_commander",
-                         "location","summary"]
+                         "location","summary","incident_number"]
                 sets=[]; vals=[]
                 for k in allowed:
                     if k in body: sets.append(f"{k}=?"); vals.append(body[k])

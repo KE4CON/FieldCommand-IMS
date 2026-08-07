@@ -822,6 +822,7 @@ def init_db():
     # Migration: add new columns to existing databases (idempotent)
     migrations = [
         "ALTER TABLE nets ADD COLUMN net_opened TEXT",
+        "ALTER TABLE nets ADD COLUMN mode TEXT DEFAULT ''",
         "ALTER TABLE nets ADD COLUMN net_closed TEXT",
         "ALTER TABLE net_entries ADD COLUMN checkout_time TEXT",
         "ALTER TABLE net_entries ADD COLUMN ema_id TEXT DEFAULT ''",
@@ -851,7 +852,13 @@ def init_db():
         "ALTER TABLE station_config ADD COLUMN ps_system2_type TEXT DEFAULT ''",
         "ALTER TABLE station_config ADD COLUMN ps_member_id_label TEXT DEFAULT 'EMA ID'",
         "ALTER TABLE station_config ADD COLUMN ps_member_lookup TEXT DEFAULT 'radio_id'",
+        "ALTER TABLE station_config ADD COLUMN grid TEXT DEFAULT ''",
+        "ALTER TABLE station_config ADD COLUMN default_incident_name TEXT DEFAULT ''",
+        "ALTER TABLE station_config ADD COLUMN wifi_ssid TEXT DEFAULT 'EMCOMM-NET'",
+        "ALTER TABLE station_config ADD COLUMN server_url TEXT DEFAULT 'http://192.168.50.1'",
+        "ALTER TABLE station_config ADD COLUMN time_zone TEXT DEFAULT ''",
         "ALTER TABLE incidents ADD COLUMN ics_variant TEXT DEFAULT 'FEMA'",
+        "ALTER TABLE incidents ADD COLUMN incident_number TEXT DEFAULT ''",
         "ALTER TABLE net_entries ADD COLUMN ics_position TEXT DEFAULT ''",
         "ALTER TABLE resource_history ADD COLUMN resource_type TEXT DEFAULT ''",
         "ALTER TABLE channel_library ADD COLUMN division TEXT DEFAULT ''",

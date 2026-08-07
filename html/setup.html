@@ -212,6 +212,38 @@
         <label>Longitude (decimal)</label>
         <input type="number" id="lon" placeholder="-88.3822" step="0.0001">
       </div>
+      <div class="form-group">
+        <label>Grid Square (Maidenhead)</label>
+        <input type="text" id="grid" placeholder="EN52wa" maxlength="8">
+        <span class="hint">Your 4- or 6-character ham grid locator (e.g. EN52wa). Leave blank to skip — lat/lon above is what maps and weather actually use.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 2b: System & Network -->
+  <div class="setup-section">
+    <h2>🖥️ System &amp; Network</h2>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Default Incident Name</label>
+        <input type="text" id="default_incident_name" placeholder="e.g. County EOC Activation">
+        <span class="hint">Pre-fills the name when you start a new incident. Leave blank and you'll type it each time.</span>
+      </div>
+      <div class="form-group">
+        <label>Wi-Fi Network Name (SSID)</label>
+        <input type="text" id="wifi_ssid" placeholder="EMCOMM-NET">
+        <span class="hint">The name of the field Wi-Fi people join to reach this server. This is a label shown in the app; changing it here does not rename the actual Wi-Fi (that's set on the router).</span>
+      </div>
+      <div class="form-group">
+        <label>Server Address</label>
+        <input type="text" id="server_url" placeholder="http://192.168.50.1">
+        <span class="hint">The web address operators type to reach the dashboard. Leave the default unless your Pi uses a different address.</span>
+      </div>
+      <div class="form-group">
+        <label>Time Zone</label>
+        <input type="text" id="time_zone" placeholder="America/Chicago">
+        <span class="hint">Your local time zone (e.g. America/Chicago). Used for local-time displays. Blank falls back to the device's own time zone.</span>
+      </div>
     </div>
   </div>
 
@@ -555,6 +587,11 @@ async function saveConfig() {
     contact_email:    document.getElementById('contact_email').value.trim(),
     lat:              parseFloat(document.getElementById('lat').value) || 42.3247,
     lon:              parseFloat(document.getElementById('lon').value) || -88.3822,
+    grid:             document.getElementById('grid').value.trim().toUpperCase(),
+    default_incident_name: document.getElementById('default_incident_name').value.trim(),
+    wifi_ssid:        document.getElementById('wifi_ssid').value.trim(),
+    server_url:       document.getElementById('server_url').value.trim(),
+    time_zone:        document.getElementById('time_zone').value.trim(),
     ics_form_variant: selectedVariant,
     logo_data:        logoData,
     logo_mime:        logoMime,
@@ -600,7 +637,8 @@ async function loadConfig() {
 
     const fields = ['callsign','personal_call','org_name','org_short',
                     'agency_name','agency_short','city','county','state',
-                    'contact_email','lat','lon',
+                    'contact_email','lat','lon','grid',
+                    'default_incident_name','wifi_ssid','server_url','time_zone',
                     'ps_system_name','ps_id_label','ps_dispatch',
                     'ps_system2_name','ps_member_id_label'];
     fields.forEach(f => {

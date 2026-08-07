@@ -450,7 +450,7 @@ story.append(tbl(['DEVICE', 'ROLE', 'NOTES'], [
     ['UniFi Switch Lite 16 PoE',
      '16-port gigabit managed switch  /  8x PoE + 8x non-PoE  /  2x 1G SFP uplink',
      'Port layout: 1=ASUS router uplink, 2=FieldCommand Pi, 3=44Net Gateway Pi, '
-     '4=Windows laptop, 5=color MFP printer, 6-9=Pi 500 workstations, '
+     '4=Windows laptop, 5=color MFP printer, 6-9=Pi 500+ workstations, '
      '10=Satellite dish (optional), 11-12=AiMesh nodes, 13-16=spare.  '
      '~$200.  PoE ports power cameras, future UniFi APs, or PoE devices without a separate injector.'],
         ], [1.6*inch, 1.8*inch, CW-3.4*inch]))
@@ -636,13 +636,12 @@ bom_rows = [
     cat_row('Printers — Portable / Battery-Powered  (field deployments without shore power)'),
     ['Canon PIXMA TR150', 'Compact inkjet — built-in rechargeable battery — ~200 pages per charge — USB + Wi-Fi — letter size', 'Best Buy · Amazon  (~$200)'],
     ['HP OfficeJet 200', 'Portable inkjet — larger paper tray — optional battery accessory — USB + Wi-Fi — good for shelter stations', 'Best Buy · Amazon  (~$180)'],
-    cat_row('Operator Workstations — Raspberry Pi 500 / 500+  (qty: 4 recommended)'),
-    ['Raspberry Pi 500 keyboard computer  ×4', 'Pi 500 standalone — Pi 5 chip, 8 GB RAM, 32 GB A2 microSD, integrated keyboard — one per operator station', 'raspberrypi.com · Adafruit · Amazon  (~$130 each — DRAM shortage pricing)'],
-    ['Raspberry Pi 500+  ×4  (alternative)', 'Pi 500+ — same as Pi 500 but with Pi 5 latest revision chip and 2× USB3 — specify if 501(c)(3) funding allows premium spec', 'raspberrypi.com · Adafruit  (~$410 each — significantly increased by DRAM shortage; standard Pi 500 recommended)'],
-    ['Raspberry Pi Monitor 15.6"  ×4', '15.6" Full HD IPS touchscreen — built-in speakers — kickstand — VESA mount — USB-C powered from Pi 500 — one per station', 'raspberrypi.com · GigaParts · Amazon  (~$100 each)'],
-    ['micro-HDMI to HDMI cable  ×4', '1m micro-HDMI to standard HDMI — Pi 500 to Monitor video connection — one per station', 'Included in Pi 500 Desktop Kit · Amazon  (~$8 each)'],
-    ['USB-C power supply for Pi 500  ×4', 'Official Raspberry Pi 27W USB-C PD supply — one per station — Pi 500 can also be powered from Monitor USB-C port', 'raspberrypi.com · Adafruit  (~$12 each)'],
-    ['Raspberry Pi 500 Desktop Kit  ×4  (bundle option)', 'Pi 500 + official mouse + micro-HDMI cable bundled — add Monitor separately — simpler ordering than individual parts', 'raspberrypi.com · Amazon  (~$160 each — DRAM shortage pricing)'],
+    cat_row('Operator Workstations — Raspberry Pi 500+  (qty: 4 recommended)'),
+    ['Raspberry Pi 500+  ×4', 'Pi 500+ keyboard PC — 16 GB RAM, 256 GB NVMe SSD, mechanical keyboard (Gateron KS-33 Blue), 2× USB3, latest-revision Pi 5 chip — one per operator station', 'raspberrypi.com · Adafruit  (~$410 each — DRAM shortage pricing)'],
+    ['Raspberry Pi Monitor 15.6"  ×4', '15.6" Full HD IPS touchscreen — built-in speakers — kickstand — VESA mount — USB-C powered from Pi 500+ — one per station', 'raspberrypi.com · GigaParts · Amazon  (~$100 each)'],
+    ['micro-HDMI to HDMI cable  ×4', '1m micro-HDMI to standard HDMI — Pi 500+ to Monitor video connection — one per station', 'Included in Pi 500+ Desktop Kit · Amazon  (~$8 each)'],
+    ['USB-C power supply for Pi 500+  ×4', 'Official Raspberry Pi 27W USB-C PD supply — one per station — Pi 500+ can also be powered from Monitor USB-C port', 'raspberrypi.com · Adafruit  (~$12 each)'],
+    ['Raspberry Pi 500+ Desktop Kit  ×4  (bundle option)', 'Pi 500+ + official mouse + 27W USB-C PSU + micro-HDMI cable bundled — add Monitor separately — simpler ordering than individual parts', 'raspberrypi.com · Amazon  (~$430 each — DRAM shortage pricing)'],
 ]
 all_bom = [bom_data[0]] + [[r[0], r[1], r[2]] if len(r)==3 else r for r in bom_rows]
 
@@ -936,7 +935,7 @@ story.append(H2('3.5  Operator Workstation — Browser Options'))
 story.append(P(
     'FieldCommand runs entirely in a web browser. '
     'Any modern browser on any device connected to EMCOMM-NET works. '
-    'For the Raspberry Pi 500 / 500+ used as an operator workstation, '
+    'For the Raspberry Pi 500+ used as an operator workstation, '
     'three browsers are available:'))
 story.append(SP(6))
 story.append(tbl(['BROWSER', 'HOW TO INSTALL', 'NOTES FOR FIELDCOMMAND'], [
@@ -948,18 +947,18 @@ story.append(tbl(['BROWSER', 'HOW TO INSTALL', 'NOTES FOR FIELDCOMMAND'], [
      'sudo apt install firefox-esr',
      'Excellent compatibility with all FieldCommand pages. '
      'Good fallback if Chromium behaves unexpectedly. '
-     'Also discovers network printers. Slightly lower memory footprint on the Pi 500.'],
+     'Also discovers network printers. Slightly lower memory footprint on the Pi 500+.'],
     ['GNOME Web  (Epiphany)',
      'sudo apt install epiphany-browser',
-     'Very lightweight WebKit browser. Good for Pi 500 with many tabs open. '
+     'Very lightweight WebKit browser. Good for Pi 500+ with many tabs open. '
      'Best for dedicated check-in stations where memory is tight.'],
     ], [1.6*inch, 1.8*inch, CW-3.4*inch]))
 story.append(SP(6))
 story.append(NoteBox(
-    'For dedicated FieldCommand operator stations running Pi 500:  '
+    'For dedicated FieldCommand operator stations running Pi 500+:  '
     'set Chromium to open http://192.168.50.1 on startup. '
     'In Chromium: Settings → On startup → Open a specific page → enter http://192.168.50.1. '
-    'The dashboard loads automatically every time the Pi 500 boots.',
+    'The dashboard loads automatically every time the Pi 500+ boots.',
     'tip'))
 story.append(SP(4))
 story.append(NoteBox(
@@ -1008,7 +1007,7 @@ story.append(tbl(['CONNECTION', 'DEVICE', 'IP / NOTES'], [
     ['Port 5',
      'Color MFP Network Printer', '192.168.50.10  (recommended static reservation)  —  auto-discovered by all devices via Bonjour.'],
     ['Ports 6 – 9',
-     'Pi 500 Operator Workstations  (up to 4)', '192.168.50.20 – 192.168.50.23  (static DHCP reservations)'],
+     'Pi 500+ Operator Workstations  (up to 4)', '192.168.50.20 – 192.168.50.23  (static DHCP reservations)'],
     ['Port 10',
      'Satellite dish router  (optional)', 'Optional — connect satellite Ethernet to switch as WAN source on ASUS router.'],
     ['Port 11',
@@ -1541,12 +1540,12 @@ story.append(tbl(['DEVICE TYPE', 'HOW TO ADD THE SHARED PRINTER'], [
      'Settings → Advanced → Printing → Printers → Add Printer.  '
      'Enter:  Name = FieldCommand-Printer,  Address = 192.168.50.1,  Protocol = IPP,  '
      'Queue = /printers/FieldCommand-Printer.  Click Add.'],
-    ['Raspberry Pi 500 / 500+  (operator workstation)',
+    ['Raspberry Pi 500+  (operator workstation)',
      'Chromium browser  (pre-installed): the CUPS printer appears automatically in the print dialog.  '
      'No additional setup needed — Chromium on Pi OS discovers CUPS printers via Bonjour.  '
-     'For Firefox ESR on the Pi 500:  install via  sudo apt install firefox-esr  '
+     'For Firefox ESR on the Pi 500+:  install via  sudo apt install firefox-esr  '
      'then open Print → More Settings → select the printer from the destination list.  '
-     'Alternatively, run:  sudo usermod -aG lpadmin fieldcommand  to give the Pi 500 user '
+     'Alternatively, run:  sudo usermod -aG lpadmin fieldcommand  to give the Pi 500+ user '
      'full access to the CUPS admin at http://192.168.50.1:631.'],
 ], [1.6*inch, CW-1.6*inch]))
 story.append(SP(6))
@@ -2241,7 +2240,7 @@ story.append(steps([
     'On any EMCOMM-NET device, verify the route was received:',
 ]))
 story.append(CodeBlock([
-    '# On any EMCOMM-NET device (Pi 500, Windows laptop, etc.)',
+    '# On any EMCOMM-NET device (Pi 500+, Windows laptop, etc.)',
     'ip route show | grep 44',
     '# Expected: 44.0.0.0/8 via 192.168.50.2 dev eth0',
     '',
@@ -2385,8 +2384,8 @@ story.append(tbl(['CHECK', 'COMMAND / METHOD', 'EXPECTED RESULT'], [
     ['Tunnel control blocked from network',
      'From a laptop on EMCOMM-NET: curl http://192.168.50.2:9001',
      'Connection refused — port 9001 is localhost-only'],
-    ['AMPRNet reachable from Pi 500 workstation',
-     'Open http://192.168.50.2:9000 in Chromium on Pi 500',
+    ['AMPRNet reachable from Pi 500+ workstation',
+     'Open http://192.168.50.2:9000 in Chromium on Pi 500+',
      'Status page loads and shows tunnel UP'],
 ], [1.8*inch, 1.6*inch, 1.5*inch, CW-4.9*inch]))
 story.append(PB())
@@ -2772,7 +2771,7 @@ story.append(tbl(['DEVICE', 'IP ADDRESS', 'ROLE', 'CONNECTION'], [
     ['Color MFP Printer', '192.168.50.10  (DHCP reservation)',
      'Network printer shared to all devices',
      'Wired via Port 5 or Wi-Fi (EMCOMM-NET).'],
-    ['Pi 500 Workstations x4', '192.168.50.20-23  (DHCP reservations)',
+    ['Pi 500+ Workstations x4', '192.168.50.20-23  (DHCP reservations)',
      'Operator browser stations',
      'Wired via Ports 6-9 or Wi-Fi (EMCOMM-NET).'],
     ['ASUS RT-BE58 Go  Mesh Node 1', 'Managed by AiMesh',
@@ -3192,7 +3191,13 @@ story.append(tbl(['ITEM', 'VALUE'], [
 ], [2.0*inch, CW-2.0*inch]))
 
 # ── Build ─────────────────────────────────────────────────────────────────────
-out = '/mnt/user-data/outputs/FieldCommand_ESV_Installation_Guide.pdf'
+# Portable output: FC_ESV_INSTALL_OUT overrides; otherwise write into the repo's docs/.
+_DEFAULT_OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'docs',
+                            'FieldCommand_ESV_Installation_Guide.pdf')
+out = os.environ.get('FC_ESV_INSTALL_OUT') or (
+    '/mnt/user-data/outputs/FieldCommand_ESV_Installation_Guide.pdf'
+    if os.path.isdir('/mnt/user-data/outputs') else os.path.normpath(_DEFAULT_OUT))
+os.makedirs(os.path.dirname(out), exist_ok=True)
 doc = SimpleDocTemplate(
     out, pagesize=letter,
     leftMargin=M, rightMargin=M,
@@ -3201,18 +3206,23 @@ doc = SimpleDocTemplate(
     author='your organization')
 doc.build(story, canvasmaker=NC)
 
-# Append Pi 500 addendum
-from pypdf import PdfReader, PdfWriter
-addendum = '/home/claude/pi500_addendum.pdf'
-if os.path.exists(addendum):
-    base = PdfReader(out); add = PdfReader(addendum)
-    w = PdfWriter()
-    for p in base.pages: w.add_page(p)
-    for p in add.pages:  w.add_page(p)
-    buf = io.BytesIO()
-    w.write(buf)
-    with open(out, 'wb') as f: f.write(buf.getvalue())
+# Append Pi 500+ addendum (optional — needs pypdf and the addendum PDF; skipped if absent)
+try:
+    from pypdf import PdfReader, PdfWriter
+    addendum = '/home/claude/pi500_addendum.pdf'
+    if os.path.exists(addendum):
+        base = PdfReader(out); add = PdfReader(addendum)
+        w = PdfWriter()
+        for p in base.pages: w.add_page(p)
+        for p in add.pages:  w.add_page(p)
+        buf = io.BytesIO()
+        w.write(buf)
+        with open(out, 'wb') as f: f.write(buf.getvalue())
+    pages = len(PdfReader(out).pages)
+except ModuleNotFoundError:
+    print('(pypdf not installed — skipped addendum merge and page count)')
+    pages = None
 
-r = PdfReader(out)
 print(f'BUILT: {out}')
-print(f'Pages: {len(r.pages)}')
+if pages is not None:
+    print(f'Pages: {pages}')

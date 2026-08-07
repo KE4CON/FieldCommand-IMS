@@ -253,6 +253,10 @@
       <span style="color:var(--muted)">Supported formats: RepeaterBook CSV · RepeaterBook JSON · FieldCommand repeaters.json</span>
     </div>
   </div>
+  <div style="text-align:center;margin-top:12px">
+    <button class="btn btn-sm" onclick="openAddRepeater()" style="border-color:var(--green);color:var(--green)">➕ Add a Repeater Manually</button>
+    <div style="font-size:11px;color:var(--muted);margin-top:4px">No file? Enter a repeater by hand — useful for a single local machine or a repeater not in RepeaterBook.</div>
+  </div>
 </div>
 
 <div id="panel-server" style="display:none">
@@ -348,6 +352,8 @@
     </select>
   </div>
   <div style="margin-left:auto;display:flex;gap:8px;align-items:flex-end">
+    <button class="btn btn-sm" id="addRepBtn" onclick="openAddRepeater()" style="background:var(--panel2);border-color:var(--green);color:var(--green)">➕ Add Repeater</button>
+    <button class="btn btn-sm" id="mapViewBtn" onclick="openMapModal()" style="background:var(--panel2);border-color:var(--eoc-lt);color:var(--eoc-lt)">🗺 Map View <span id="mapBtnCount"></span></button>
     <button class="btn btn-sm" onclick="exportCSV()" style="background:var(--panel2)">⬇ CSV</button>
     <button class="btn btn-sm" onclick="window.print()" style="background:var(--panel2)">🖨 Print</button>
   </div>
@@ -1223,6 +1229,42 @@ function updateMapBtn() {
   }
 }
 
+// ── Add Repeater (manual entry) ───────────────────────────────────
+function openAddRepeater() { document.getElementById('addRepModal').style.display = 'flex'; }
+function closeAddRepeater() { document.getElementById('addRepModal').style.display = 'none'; }
+function saveNewRepeater() {
+  const v = id => (document.getElementById(id).value || '').trim();
+  const output = v('ar-output');
+  if (!output) { alert('Output frequency is required.'); return; }
+  const rep = {
+    callsign: v('ar-callsign'), output_freq: output, input_freq: v('ar-input'),
+    tone: v('ar-tone'), mode: v('ar-mode') || 'FM', city: v('ar-city'),
+    state: v('ar-state').toUpperCase(),
+    lat: parseFloat(v('ar-lat')) || null, lon: parseFloat(v('ar-lon')) || null,
+    notes: v('ar-notes'),
+    ares: document.getElementById('ar-ares').checked ? 'Yes' : '',
+    races: document.getElementById('ar-races').checked ? 'Yes' : '',
+    skywarn: document.getElementById('ar-skywarn').checked ? 'Yes' : '',
+    manual: true,
+  };
+  const wasEmpty = !allRepeaters.length;
+  allRepeaters.push(rep);
+  // If this is the first entry, make sure the toolbar/table are shown.
+  if (wasEmpty) {
+    document.getElementById('dropZone').style.display = 'none';
+    document.getElementById('toolbar').style.display = '';
+    document.getElementById('tableWrap').style.display = '';
+    document.getElementById('headerState').textContent = `${allRepeaters.length} repeaters`;
+  }
+  updateMapBtn();
+  applyFilters();
+  // Reset the form for the next add
+  ['ar-callsign','ar-output','ar-input','ar-tone','ar-city','ar-state','ar-lat','ar-lon','ar-notes']
+    .forEach(id => document.getElementById(id).value = '');
+  ['ar-ares','ar-races','ar-skywarn'].forEach(id => document.getElementById(id).checked = false);
+  closeAddRepeater();
+}
+
 // Keyboard close
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && repMapOpen) closeMapModal();
@@ -1231,6 +1273,36 @@ document.addEventListener('keydown', e => {
 </script>
 
 <!-- ── Repeater Map Modal ──────────────────────────────────────────────── -->
+<!-- Add Repeater (manual entry) -->
+<div id="addRepModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1200;align-items:center;justify-content:center"
+     onclick="if(event.target===this)closeAddRepeater()">
+  <div style="background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:20px;width:460px;max-width:95vw;max-height:92vh;overflow:auto">
+    <div style="font-family:var(--font-hd);font-size:15px;color:var(--green);margin-bottom:4px">➕ Add Repeater</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:12px">Manually add a repeater not in your imported data. It's added to the current list; export to CSV to keep it.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      <label style="font-size:11px">Callsign<input type="text" id="ar-callsign" style="width:100%;text-transform:uppercase" oninput="this.value=this.value.toUpperCase()" placeholder="W8XYZ"></label>
+      <label style="font-size:11px">Output Freq (MHz) *<input type="text" id="ar-output" style="width:100%" placeholder="146.940"></label>
+      <label style="font-size:11px">Input Freq (MHz)<input type="text" id="ar-input" style="width:100%" placeholder="146.340 (blank = auto/simplex)"></label>
+      <label style="font-size:11px">Tone / PL (Hz)<input type="text" id="ar-tone" style="width:100%" placeholder="103.5"></label>
+      <label style="font-size:11px">Mode<select id="ar-mode" style="width:100%"><option>FM</option><option>D-STAR</option><option>C4FM</option><option>DMR</option><option>P25</option><option>NXDN</option></select></label>
+      <label style="font-size:11px">City<input type="text" id="ar-city" style="width:100%" placeholder="Woodstock"></label>
+      <label style="font-size:11px">State<input type="text" id="ar-state" style="width:100%" placeholder="IL" maxlength="2"></label>
+      <label style="font-size:11px">Latitude<input type="text" id="ar-lat" style="width:100%" placeholder="42.32"></label>
+      <label style="font-size:11px">Longitude<input type="text" id="ar-lon" style="width:100%" placeholder="-88.38"></label>
+      <label style="font-size:11px;grid-column:1/-1">Notes<input type="text" id="ar-notes" style="width:100%" placeholder="EOC primary, wide-area coverage…"></label>
+    </div>
+    <div style="display:flex;gap:14px;margin:10px 0;font-size:12px">
+      <label><input type="checkbox" id="ar-ares"> ARES</label>
+      <label><input type="checkbox" id="ar-races"> RACES</label>
+      <label><input type="checkbox" id="ar-skywarn"> SKYWARN</label>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-sm" onclick="closeAddRepeater()">Cancel</button>
+      <button class="btn btn-sm" onclick="saveNewRepeater()" style="border-color:var(--green);color:var(--green)">Add to List</button>
+    </div>
+  </div>
+</div>
+
 <div id="mapModal">
   <div class="modal-hdr">
     <span>📍 REPEATER MAP</span>

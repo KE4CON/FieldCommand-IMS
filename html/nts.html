@@ -274,7 +274,12 @@ function countWords() {
   const text = document.getElementById('msg-text').value.trim();
   const words = text ? text.split(/\s+/).filter(w=>w.length>0) : [];
   const count = words.length;
-  document.getElementById('word-count-display').textContent = count;
+  // NTS radiogram text is capped at 25 words — flag when over.
+  const over = count > 25;
+  const disp = document.getElementById('word-count-display');
+  disp.parentElement.innerHTML =
+    `Word count: <span class="num" id="word-count-display" style="color:${over?'var(--red)':''}">${count}</span> / 25 max`
+    + (over ? ' — <b style="color:var(--red)">over limit</b>' : '');
   document.getElementById('msg-check').value = count;
   return count;
 }
@@ -319,6 +324,10 @@ function generateRadiogram() {
 
   if(!num||!origin||!text||!addrName) {
     alert('Please fill in: Message #, Station of Origin, Addressee Name, and Message Text.');
+    return;
+  }
+  if(countWords() > 25) {
+    alert('NTS radiogram text is limited to 25 words.\n\nShorten the message (spell out X for periods; drop non-essential words) so the check is 25 or fewer, then try again.');
     return;
   }
 

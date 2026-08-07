@@ -238,6 +238,12 @@ body { background:var(--bg); }
     Check Out removes them from the active accountability count.
     PAR confirms they are accounted for in this PAR cycle.
   </div>
+  <div style="margin-bottom:10px">
+    <button class="btn-out" onclick="checkAllOut()" style="font-size:11px;padding:5px 12px"
+      title="Check out everyone still shown as checked in — use at end of operation / demobilization">
+      ⏹ Check All Out
+    </button>
+  </div>
   <div id="ics211List">
     <div style="text-align:center;padding:20px;color:var(--muted)">Select an incident above.</div>
   </div>
@@ -707,6 +713,26 @@ async function checkOut(ciId, name) {
     });
     await loadPAR();
   } catch(e) { alert('Error: ' + e.message); }
+}
+
+// ── Mass check-out (end of operation / demobilization) ─────────────
+async function checkAllOut() {
+  const entries = (parData && parData.checkin_entries) || [];
+  const still = entries.filter(e => e.status !== 'Checked Out');
+  if (!still.length) { alert('Everyone is already checked out.'); return; }
+  if (!confirm(`Check out all ${still.length} personnel still shown as checked in?\n\nUse this at end of operation / demobilization.`)) return;
+  let ok = 0;
+  for (const e of still) {
+    try {
+      const r = await fetch(`${ICS_API}/api/ics/checkin/checkout`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({id: e.id, checked_out_by: 'PAR Board (Check All Out)'})
+      });
+      if (r.ok) ok++;
+    } catch(err) {}
+  }
+  await loadPAR();
+  alert(`Checked out ${ok} of ${still.length} personnel.`);
 }
 
 // ── Location modal ─────────────────────────────────────────────────

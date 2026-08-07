@@ -132,7 +132,14 @@ CHAPTER_FUNCS = [
 ]
 
 # ── Build ─────────────────────────────────────────────────────────────────────
-out = '/mnt/user-data/outputs/FieldCommand_Complete_User_Manual_v1.0.pdf'
+# Output path is portable: set FC_MANUAL_OUT to override; otherwise write into the
+# repo's docs/ folder (works on any OS). The legacy sandbox path is used only if it exists.
+_DEFAULT_OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'docs',
+                            'FieldCommand_Complete_User_Manual_v1.0.pdf')
+out = os.environ.get('FC_MANUAL_OUT') or (
+    '/mnt/user-data/outputs/FieldCommand_Complete_User_Manual_v1.0.pdf'
+    if os.path.isdir('/mnt/user-data/outputs') else os.path.normpath(_DEFAULT_OUT))
+os.makedirs(os.path.dirname(out), exist_ok=True)
 
 # Build chapter bodies FIRST — each chapter() call registers its real (num, title, url)
 # into SECTIONS, so the Table of Contents is generated from the actual chapter titles
@@ -155,23 +162,28 @@ doc = SimpleDocTemplate(
     author='FieldCommand IMS and Open-Source · Offline-First · Field-Deployable')
 doc.build(story, canvasmaker=ManualCanvas)
 
-# Append Pi 500 addendum
-from pypdf import PdfReader, PdfWriter
-addendum = os.path.join(os.path.dirname(__file__), '../../..', 'pi500_addendum.pdf')
-# Also try /home/claude/pi500_addendum.pdf
-for apath in [addendum, '/home/claude/pi500_addendum.pdf']:
-    if os.path.exists(apath):
-        base = PdfReader(out)
-        add  = PdfReader(apath)
-        w = PdfWriter()
-        for p in base.pages: w.add_page(p)
-        for p in add.pages:  w.add_page(p)
-        buf = io.BytesIO()
-        w.write(buf)
-        with open(out, 'wb') as f: f.write(buf.getvalue())
-        break
+# Append Pi 500 addendum (optional — needs pypdf and the addendum PDF; skipped if absent)
+try:
+    from pypdf import PdfReader, PdfWriter
+    addendum = os.path.join(os.path.dirname(__file__), '../../..', 'pi500_addendum.pdf')
+    # Also try /home/claude/pi500_addendum.pdf
+    for apath in [addendum, '/home/claude/pi500_addendum.pdf']:
+        if os.path.exists(apath):
+            base = PdfReader(out)
+            add  = PdfReader(apath)
+            w = PdfWriter()
+            for p in base.pages: w.add_page(p)
+            for p in add.pages:  w.add_page(p)
+            buf = io.BytesIO()
+            w.write(buf)
+            with open(out, 'wb') as f: f.write(buf.getvalue())
+            break
+    pages = len(PdfReader(out).pages)
+except ModuleNotFoundError:
+    print('(pypdf not installed — skipped Pi-500 addendum merge and page count)')
+    pages = None
 
-r = PdfReader(out)
 print(f'BUILT: {out}')
-print(f'Pages: {len(r.pages)}')
+if pages is not None:
+    print(f'Pages: {pages}')
 print(f'Chapters: {len(CHAPTER_FUNCS)}')

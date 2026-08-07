@@ -1,6 +1,13 @@
 #!/usr/bin/env python3
-"""FieldCommand IMS — Bill of Materials with verified June 2026 pricing"""
+"""FieldCommand IMS — Bill of Materials with verified June 2026 pricing.
 
+Emits BOTH editions from one source so they can never drift:
+  • ESV  — names the specific ESV gear (InstyConnect Drum/Switchblade, Starlink, Starcom).
+  • World — generic connectivity (cellular modem / satellite dish), no org/brand names.
+Set FC_BOM_OUTDIR to override the output directory (defaults to the repo's docs/).
+"""
+
+import os, io
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.colors import HexColor, white
 from reportlab.lib.units import inch
@@ -23,6 +30,38 @@ LINE  = HexColor('#c8d0dc')
 CATBG = HexColor('#dce8f8')
 
 TODAY = date.today().strftime('%B %d, %Y')
+
+# ── Edition definitions — the ONLY things that differ between ESV and World ────
+EDITIONS = {
+    'ESV': {
+        'suffix':       '',                       # ESV keeps the canonical filename
+        'byline':       'Developed by KE4CON for McHenry County ESV',
+        'author':       'James Rospopo KE4CON',
+        'cell_omni':    'InstyConnect Drum',
+        'cell_dir':     'InstyConnect Switchblade',
+        'sat_kit':      'Starlink Standard dish kit',
+        'sat_eth':      'Starlink Ethernet adapter',
+        'cell_plan':    'InstyConnect data plan',
+        'sat_service':  'Starlink service',
+        'pubsafety':    'Starcom (155.xxx MHz)',
+        'sources_extra':' · instyconnect.com · starlink.com',
+    },
+    'World': {
+        'suffix':       '_World',
+        'byline':       'Developed for public-service communications',
+        'author':       'FieldCommand IMS',
+        'cell_omni':    'Cellular modem/router — omnidirectional',
+        'cell_dir':     'Directional cellular antenna',
+        'sat_kit':      'Satellite internet dish kit',
+        'sat_eth':      'Satellite Ethernet adapter',
+        'cell_plan':    'cellular data plan',
+        'sat_service':  'satellite internet service',
+        'pubsafety':    'public-safety VHF (150-160 MHz)',
+        'sources_extra':'',
+    },
+}
+
+_BYLINE = EDITIONS['ESV']['byline']   # set per edition before each doc.build()
 
 def S(name, **kw):
     base = dict(fontName='Helvetica', fontSize=8.5, leading=11.5,
@@ -54,7 +93,7 @@ class BomCanvas(pdfcanvas.Canvas):
             self.setFillColor(GOLD)
             self.setFont('Helvetica', 8)
             self.drawString(M, PAGE_H-0.44*inch,
-                'Verified pricing — June 2026  ·  Developed by KE4CON for your organization')
+                f'Verified pricing — June 2026  ·  {_BYLINE}')
             self.setFillColor(white)
             self.setFont('Helvetica-Bold', 9)
             self.drawRightString(PAGE_W-M, PAGE_H-0.32*inch, 'v1.0')
@@ -104,17 +143,9 @@ def bom_table(sections):
     t.setStyle(TableStyle(style))
     return t
 
-story = []
-story.append(SP(2))
-story.append(P('Complete System Bill of Materials',
-    S('title', fontName='Helvetica-Bold', fontSize=14, textColor=EOC, leading=18, spaceAfter=2)))
-story.append(P('All prices verified against vendor listings and actual purchases, June 2026. Raspberry Pi '
-    'and all SSD/NAND storage reflect the current industry memory shortage (SSDs up 2-4× from '
-    '2025) and are expected to decline in 2027-2028. Icom frequently runs instant coupons — '
-    'check hamradio.com/special_offers before purchase.',
-    S('note', fontSize=8, textColor=DGRAY, leading=11, spaceAfter=6)))
 
-sections = [
+def make_sections(E):
+    return [
     ('FieldCommand Server  (192.168.50.1)', [
         ('Raspberry Pi 5 — 16 GB', 'Model B, 16 GB RAM — main application server', 1, '$305', '$305'),
         ('Pironman 5-MAX tower', 'SunFounder — dual NVMe RAID 0/1, OLED, tower cooler, RGB', 1, '$95', '$95'),
@@ -134,11 +165,11 @@ sections = [
         ('CAT6 cables', 'Assorted lengths', 10, '$3', '$30'),
     ], '$586'),
     ('WAN — Cellular + Satellite', [
-        ('the cellular antenna Drum', 'Omnidirectional 5G/LTE antenna+modem — dual-carrier cellular — primary WAN', 1, '$375', '$375'),
-        ('the cellular antenna Switchblade', 'Directional folding antenna — backup for weak-signal sites', 1, '$425', '$425'),
+        (E['cell_omni'], 'Omnidirectional 5G/LTE antenna+modem — dual-carrier cellular — primary WAN', 1, '$375', '$375'),
+        (E['cell_dir'], 'Directional folding antenna — backup for weak-signal sites', 1, '$425', '$425'),
         ('Spare PoE cable', 'Outdoor-rated shielded CAT6', 1, '$20', '$20'),
-        ('the satellite dish kit', 'Standard dish — automatic failover WAN (price DROP from $499; regional promos lower)', 1, '$349', '$349'),
-        ('the satellite dish Ethernet adapter', 'Official adapter', 1, '$25', '$25'),
+        (E['sat_kit'], 'Standard dish — automatic failover WAN (price DROP from $499; regional promos lower)', 1, '$349', '$349'),
+        (E['sat_eth'], 'Official adapter', 1, '$25', '$25'),
         ('USB-to-Ethernet adapter', 'GbE USB 3.0 — ASUS USB WAN port', 1, '$18', '$18'),
     ], '$1,212'),
     ('Operator Workstations', [
@@ -159,7 +190,7 @@ sections = [
     ], '$2,159'),
     ('VHF / UHF Station', [
         ('Yaesu FTM-510DR', '144/430 MHz dual band C4FM digital + FM — 55W VHF / 50W UHF — built-in GPS + APRS (1200/9600 baud) — Super-DX weak-signal mode — 2.4" color touch display — detachable panel — WiRES-X / Fusion digital — in-stock HRO (FTM-510DR ASP w/ DSP board $749.95 if preferred)', 1, '$670', '$670'),
-        ('Comet CA-2X4SRNMO antenna', 'Wideband 2m/70cm mobile vertical designed for SAR/EMCOMM — 140-160 / 435-465 MHz covers Starcom (155.xxx MHz) AND ham bands — 3.8/6.2 dBi — 150W — 40" fold-over — NMO connector', 1, '$72', '$72'),
+        ('Comet CA-2X4SRNMO antenna', f'Wideband 2m/70cm mobile vertical designed for SAR/EMCOMM — 140-160 / 435-465 MHz covers {E["pubsafety"]} AND ham bands — 3.8/6.2 dBi — 150W — 40" fold-over — NMO connector', 1, '$72', '$72'),
         ('Comet CM-5NMO mag mount', '3.25" heavy-duty magnetic base, NMO connector, RG-58 coax tail — vehicle roof or equipment case lid mount', 1, '$35', '$35'),
         ('RG-8X coax jumper', 'Short jumper: CM-5NMO coax tail to FTM-510DR SO-239 antenna port', 1, '$15', '$15'),
         ('Digirig Mobile', 'Rev 1.11 — USB digital modes interface — combines audio codec, serial CAT and PTT — single USB-C connection — works with Windows/Mac/Linux — enables FT8, JS8Call, SSTV, VARA FM, packet on VHF/UHF via the FTM-510DR', 1, '$50', '$50'),
@@ -183,55 +214,79 @@ sections = [
         ('USB flash 32 GB', 'Sneakernet transfer', 1, '$10', '$10'),
         ('USB GPS receiver', 'u-blox — time + position for dashboard', 1, '$35', '$35'),
     ], '$590'),
-]
+    ]
 
-story.append(bom_table(sections))
-story.append(SP(8))
 
-# Totals table
-tot_rows = [
-    ('Core infrastructure (server, gateway, network, WAN, workstations, printing/accessories)', '$5,691'),
-    ('HF station (IC-7300MK2, 2× Astron RS-35M-AP, LDG IT-100, cable, laptop)', '$3,378'),
-    ('VHF/UHF station (FTM-510DR, Comet CA-2X4SRNMO, mag mount, coax)', '$792'),
-    ('Transport cases (6× Harbor Freight Apache 4800 XL @ $59.99 list)', '$360'),
-    ('Field antenna system (MPAS 2.0, URT1, wire, winders)', '$1,410'),
-]
-data = [[P(l, S('tl', fontSize=9, leading=12)),
-         P(f'<b>{v}</b>', S('tv', fontSize=9, leading=12, fontName='Helvetica-Bold'))]
-        for l, v in tot_rows]
-data.append([P('<b>COMPLETE SYSTEM TOTAL</b>',
-               S('gt', fontSize=11, fontName='Helvetica-Bold', textColor=white, leading=14)),
-             P('<b>$14,075</b>',
-               S('gtv', fontSize=11, fontName='Helvetica-Bold', textColor=GOLD, leading=14))])
-t = Table(data, colWidths=[CW-1.2*inch, 1.2*inch])
-t.setStyle(TableStyle([
-    ('BACKGROUND',    (0,-1), (-1,-1), EOC),
-    ('ROWBACKGROUNDS',(0,0), (-1,-2), [LGRAY, white]),
-    ('GRID',          (0,0), (-1,-1), 0.3, LINE),
-    ('ALIGN',         (1,0), (1,-1), 'RIGHT'),
-    ('TOPPADDING',    (0,0), (-1,-1), 5),
-    ('BOTTOMPADDING', (0,0), (-1,-1), 5),
-    ('LEFTPADDING',   (0,0), (-1,-1), 8),
-    ('RIGHTPADDING',  (0,0), (-1,-1), 8),
-]))
-story.append(t)
-story.append(SP(6))
-story.append(P(
-    '<b>Recurring costs:</b>  the cellular antenna data plan — $5/month standby, $79-99/month during '
-    'activations only  ·  the satellite dish service — ~$120/month or Roam plan (pausable)  ·  No '
-    'software licenses, subscriptions, or per-seat fees.',
-    S('rec', fontSize=8.5, leading=12, textColor=DGRAY)))
-story.append(P(
-    '<b>Pricing sources:</b>  raspberrypi.com · R&L Electronics · DX Engineering · GigaParts · '
-    'Ham Radio Outlet · chameleonantenna.com · instyconnect.com · starlink.com — verified June 2026.',
-    S('src', fontSize=8, leading=11, textColor=DGRAY)))
+def make_story(E):
+    story = []
+    story.append(SP(2))
+    story.append(P('Complete System Bill of Materials',
+        S('title', fontName='Helvetica-Bold', fontSize=14, textColor=EOC, leading=18, spaceAfter=2)))
+    story.append(P('All prices verified against vendor listings and actual purchases, June 2026. Raspberry Pi '
+        'and all SSD/NAND storage reflect the current industry memory shortage (SSDs up 2-4× from '
+        '2025) and are expected to decline in 2027-2028. Icom frequently runs instant coupons — '
+        'check hamradio.com/special_offers before purchase.',
+        S('note', fontSize=8, textColor=DGRAY, leading=11, spaceAfter=6)))
 
-doc = SimpleDocTemplate('/mnt/user-data/outputs/FieldCommand_BOM.pdf',
-    pagesize=letter, leftMargin=M, rightMargin=M,
-    topMargin=0.72*inch, bottomMargin=0.45*inch,
-    title='FieldCommand IMS Bill of Materials', author='James Rospopo KE4CON')
-doc.build(story, canvasmaker=BomCanvas)
+    story.append(bom_table(make_sections(E)))
+    story.append(SP(8))
 
-from pypdf import PdfReader
-r = PdfReader('/mnt/user-data/outputs/FieldCommand_BOM.pdf')
-print(f"BUILT: {len(r.pages)} pages")
+    # Totals table
+    tot_rows = [
+        ('Core infrastructure (server, gateway, network, WAN, workstations, printing/accessories)', '$5,691'),
+        ('HF station (IC-7300MK2, 2× Astron RS-35M-AP, LDG IT-100, cable, laptop)', '$3,378'),
+        ('VHF/UHF station (FTM-510DR, Comet CA-2X4SRNMO, mag mount, coax)', '$792'),
+        ('Transport cases (6× Harbor Freight Apache 4800 XL @ $59.99 list)', '$360'),
+        ('Field antenna system (MPAS 2.0, URT1, wire, winders)', '$1,410'),
+    ]
+    data = [[P(l, S('tl', fontSize=9, leading=12)),
+             P(f'<b>{v}</b>', S('tv', fontSize=9, leading=12, fontName='Helvetica-Bold'))]
+            for l, v in tot_rows]
+    data.append([P('<b>COMPLETE SYSTEM TOTAL</b>',
+                   S('gt', fontSize=11, fontName='Helvetica-Bold', textColor=white, leading=14)),
+                 P('<b>$14,075</b>',
+                   S('gtv', fontSize=11, fontName='Helvetica-Bold', textColor=GOLD, leading=14))])
+    t = Table(data, colWidths=[CW-1.2*inch, 1.2*inch])
+    t.setStyle(TableStyle([
+        ('BACKGROUND',    (0,-1), (-1,-1), EOC),
+        ('ROWBACKGROUNDS',(0,0), (-1,-2), [LGRAY, white]),
+        ('GRID',          (0,0), (-1,-1), 0.3, LINE),
+        ('ALIGN',         (1,0), (1,-1), 'RIGHT'),
+        ('TOPPADDING',    (0,0), (-1,-1), 5),
+        ('BOTTOMPADDING', (0,0), (-1,-1), 5),
+        ('LEFTPADDING',   (0,0), (-1,-1), 8),
+        ('RIGHTPADDING',  (0,0), (-1,-1), 8),
+    ]))
+    story.append(t)
+    story.append(SP(6))
+    story.append(P(
+        f'<b>Recurring costs:</b>  the {E["cell_plan"]} — $5/month standby, $79-99/month during '
+        f'activations only  ·  the {E["sat_service"]} — ~$120/month or pausable plan  ·  No '
+        'software licenses, subscriptions, or per-seat fees.',
+        S('rec', fontSize=8.5, leading=12, textColor=DGRAY)))
+    story.append(P(
+        '<b>Pricing sources:</b>  raspberrypi.com · R&L Electronics · DX Engineering · GigaParts · '
+        'Ham Radio Outlet · chameleonantenna.com' + E['sources_extra'] + ' — verified June 2026.',
+        S('src', fontSize=8, leading=11, textColor=DGRAY)))
+    return story
+
+
+# ── Build both editions ───────────────────────────────────────────────────────
+OUTDIR = os.environ.get('FC_BOM_OUTDIR') or (
+    '/mnt/user-data/outputs' if os.path.isdir('/mnt/user-data/outputs')
+    else os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'docs')))
+os.makedirs(OUTDIR, exist_ok=True)
+
+for edkey, E in EDITIONS.items():
+    _BYLINE = E['byline']
+    out = os.path.join(OUTDIR, f'FieldCommand_BOM{E["suffix"]}.pdf')
+    doc = SimpleDocTemplate(out,
+        pagesize=letter, leftMargin=M, rightMargin=M,
+        topMargin=0.72*inch, bottomMargin=0.45*inch,
+        title=f'FieldCommand IMS Bill of Materials ({edkey})', author=E['author'])
+    doc.build(make_story(E), canvasmaker=BomCanvas)
+    try:
+        from pypdf import PdfReader
+        print(f"BUILT [{edkey}]: {out}  ({len(PdfReader(out).pages)} pages)")
+    except ModuleNotFoundError:
+        print(f"BUILT [{edkey}]: {out}")

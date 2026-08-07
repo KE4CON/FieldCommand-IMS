@@ -299,8 +299,8 @@ def poll():
 
     # Build source_a / source_b for backwards-compat with wan-status.html
     src_list = cfg.get("wan_sources", [])
-    wa = source_details.get(src_list[0]["id"] if src_list else "source_a", {})
-    wb = source_details.get(src_list[1]["id"] if len(src_list) > 1 else "source_b", {})
+    wa = source_details.get(src_list[0].get("id","source_a") if src_list else "source_a", {})
+    wb = source_details.get(src_list[1].get("id","source_b") if len(src_list) > 1 else "source_b", {})
 
     return {
         "timestamp":           ts,

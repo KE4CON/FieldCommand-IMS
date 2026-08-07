@@ -102,7 +102,7 @@ body { display:flex; flex-direction:column; }
 .msg-send-form { padding:10px; border-top:1px solid var(--line); flex-shrink:0; }
 .msg-send-form input, .msg-send-form textarea {
   width:100%; box-sizing:border-box;
-  background:var(var(--input-bg); border:1px solid var(--line); border-radius:4px;
+  background:var(--input-bg); border:1px solid var(--line); border-radius:4px;
   color:var(--txt); padding:6px 8px; font-size:12px; margin-bottom:6px;
 }
 .msg-send-form input:focus, .msg-send-form textarea:focus { outline:none; border-color: var(--eoc-lt); }
@@ -110,7 +110,7 @@ body { display:flex; flex-direction:column; }
 /* ── Overlays form ──────────────────────────────── */
 .pad10 { padding:10px; }
 .field-label { font-size:11px; color:var(--muted); display:block; margin-bottom:3px; }
-.form-input { width:100%; box-sizing:border-box; background:var(var(--input-bg); border:1px solid var(--line); border-radius:4px; color:var(--txt); padding:6px 8px; font-size:12px; margin-bottom:8px; }
+.form-input { width:100%; box-sizing:border-box; background:var(--input-bg); border:1px solid var(--line); border-radius:4px; color:var(--txt); padding:6px 8px; font-size:12px; margin-bottom:8px; }
 .form-input:focus { outline:none; border-color: var(--eoc-lt); }
 
 /* ── Settings ───────────────────────────────────── */
@@ -118,7 +118,7 @@ body { display:flex; flex-direction:column; }
 .settings-title { font-family:var(--font-hd); font-size:10px; letter-spacing:0.15em; text-transform:uppercase; color:var(--eoc); margin-bottom:8px; }
 .setting-row { display:flex; flex-direction:column; margin-bottom:8px; }
 .setting-row label { font-size:11px; color:var(--muted); margin-bottom:3px; }
-.setting-row input, .setting-row select { background:var(var(--input-bg); border:1px solid var(--line); border-radius:4px; color:var(--txt); padding:5px 8px; font-size:12px; width:100%; box-sizing:border-box; }
+.setting-row input, .setting-row select { background:var(--input-bg); border:1px solid var(--line); border-radius:4px; color:var(--txt); padding:5px 8px; font-size:12px; width:100%; box-sizing:border-box; }
 .setting-row input:focus, .setting-row select:focus { outline:none; border-color: var(--eoc-lt); }
 
 /* ── Legend ─────────────────────────────────────── */
@@ -134,9 +134,9 @@ body { display:flex; flex-direction:column; }
 
 /* ── Filter bar ─────────────────────────────────── */
 .filter-bar { padding:6px 10px; border-bottom:1px solid var(--line); display:flex; gap:6px; }
-.filter-bar input { flex:1; background:var(var(--input-bg); border:1px solid var(--line); border-radius:4px; color:var(--txt); padding:4px 7px; font-size:11px; }
+.filter-bar input { flex:1; background:var(--input-bg); border:1px solid var(--line); border-radius:4px; color:var(--txt); padding:4px 7px; font-size:11px; }
 .filter-bar input:focus { outline:none; border-color: var(--eoc-lt); }
-.filter-bar select { background:var(var(--input-bg); border:1px solid var(--line); border-radius:4px; color:var(--txt); padding:4px 5px; font-size:11px; }
+.filter-bar select { background:var(--input-bg); border:1px solid var(--line); border-radius:4px; color:var(--txt); padding:4px 5px; font-size:11px; }
 
 /* ── Sidebar tabs panel for messages ─────────── */
 .msgs-body { flex:1; overflow-y:auto; }
@@ -223,10 +223,10 @@ body.picking #map { cursor:crosshair !important; }
       </div>
       <div class="msg-send-form">
         <div style="font-family:var(--font-hd);font-size:10px;color:var(--eoc);letter-spacing:0.1em;margin-bottom:6px">SEND APRS MESSAGE</div>
-        <input type="text" id="msg-to" placeholder="To callsign (e.g. W8ABC)" style="margin-bottom:6px;width:100%;box-sizing:border-box;background:var(var(--input-bg);border:1px solid var(--line);border-radius:4px;color:var(--txt);padding:6px 8px;font-size:12px">
-        <textarea id="msg-body" placeholder="Message text (max 67 chars)" rows="2" maxlength="67" style="width:100%;box-sizing:border-box;resize:none;background:var(var(--input-bg);border:1px solid var(--line);border-radius:4px;color:var(--txt);padding:6px 8px;font-size:12px"></textarea>
+        <input type="text" id="msg-to" placeholder="To callsign (e.g. W8ABC)" style="margin-bottom:6px;width:100%;box-sizing:border-box;background:var(--input-bg);border:1px solid var(--line);border-radius:4px;color:var(--txt);padding:6px 8px;font-size:12px">
+        <textarea id="msg-body" placeholder="Message text (max 67 chars)" rows="2" maxlength="67" style="width:100%;box-sizing:border-box;resize:none;background:var(--input-bg);border:1px solid var(--line);border-radius:4px;color:var(--txt);padding:6px 8px;font-size:12px"></textarea>
         <div style="display:flex;gap:6px;margin-top:4px">
-          <select id="msg-via" style="background:var(var(--input-bg);border:1px solid var(--line);border-radius:4px;color:var(--txt);padding:5px;font-size:11px;flex:1">
+          <select id="msg-via" style="background:var(--input-bg);border:1px solid var(--line);border-radius:4px;color:var(--txt);padding:5px;font-size:11px;flex:1">
             <option value="gw">Via Graywolf</option>
             <option value="yc">Via YAAC</option>
           </select>
@@ -349,7 +349,7 @@ body.picking #map { cursor:crosshair !important; }
           </div>
           <div style="padding:6px 10px">
             <label style="font-size:10px;color:var(--muted);display:block;margin-bottom:3px">aprs.fi API key (optional)</label>
-            <input type="text" id="aprsfi-key" placeholder="Leave blank to disable" style="width:100%;box-sizing:border-box;background:var(var(--input-bg);border:1px solid var(--line);border-radius:4px;color:var(--txt);padding:5px 8px;font-size:11px" oninput="saveSettings()">
+            <input type="text" id="aprsfi-key" placeholder="Leave blank to disable" style="width:100%;box-sizing:border-box;background:var(--input-bg);border:1px solid var(--line);border-radius:4px;color:var(--txt);padding:5px 8px;font-size:11px" oninput="saveSettings()">
           </div>
         </div>
 
@@ -753,7 +753,7 @@ function normalizeGW(r) {
     symbolTable: r.symbol_table || r.symbolTable || '/',
     symbolCode:  r.symbol_code  || r.symbolCode  || '>',
     path:        r.path || '',
-    type:        r.type || stationTypeFromSymbol(r.symbolTable, r.symbolCode),
+    type:        r.type || stationTypeFromSymbol(r.symbol_table || r.symbolTable, r.symbol_code || r.symbolCode),
     power:       r.power || null,
     source:      'gw',
     _sources:    new Set(['gw']),
@@ -1432,7 +1432,8 @@ function showYAACSetup(){ document.getElementById('yaac-modal').style.display='f
 initMap();
 </script>
 
-<script src="/lib/identity.js">
+<script src="/lib/identity.js"></script>
+<script>
 // ── REPEATER OVERLAY ──────────────────────────────────────────────────────────
 let repOverlayLoaded = false;
 let repOverlayOn = false;

@@ -893,6 +893,8 @@ def init_db():
     seed_hospitals(conn)
     seed_resource_types(conn)
     seed_channel_library(conn)
+    seed_incident_templates(conn)
+    seed_fema_equipment_rates(conn)
     log.info(f"Database initialised: {DB_PATH}")
 
 

@@ -945,7 +945,7 @@ confirm_and_run() {
     echo -e "  ${DIM}Re-running resumes from where it stopped.${NC}"
     echo ""
 
-    read -rp "Proceed? [Y/n]: " CONFIRM
+    if [[ "${NO_PROMPT:-}" == "1" ]]; then CONFIRM=Y; else read -rp "Proceed? [Y/n]: " CONFIRM; fi
     CONFIRM="${CONFIRM:-Y}"
     [[ "$CONFIRM" =~ ^[Yy] ]] || { echo "Cancelled."; exit 0; }
 
@@ -998,6 +998,7 @@ while [[ $# -gt 0 ]]; do
             CLI_AREA="county_mchenry"; CLI_ZMIN=8; CLI_ZMAX=16
             CLI_SOURCES=(usgs_imgtopo usgs_topo esri_street); MODE="cli" ;;
         --no-prompt)
+            NO_PROMPT=1
             [[ -z "$CLI_AREA" ]] && CLI_AREA="county_mchenry"
             [[ ${#CLI_SOURCES[@]} -eq 0 ]] && CLI_SOURCES=(usgs_imgtopo esri_street)
             MODE="cli" ;;

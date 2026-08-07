@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-gen_install_guide.py — FieldCommand Installation Guide Generator
+gen_esv_install_guide.py — FieldCommand ESV Installation Guide Generator
 Complete installation guide covering hardware, software, configuration, and reference.
-Output: /mnt/user-data/outputs/FieldCommand_Installation_Guide.pdf
+Output: /mnt/user-data/outputs/FieldCommand_ESV_Installation_Guide.pdf
 """
 import datetime, io, os
 from reportlab.lib.pagesizes import letter

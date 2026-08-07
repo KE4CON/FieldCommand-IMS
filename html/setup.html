@@ -491,44 +491,6 @@ function setModules(cfg) {
     document.getElementById('pubsafety-config').style.display = '';
   }
 }
-  try {
-    const r = await fetch(`${API}/api/config`);
-    if (!r.ok) return;
-    const cfg = await r.json();
-
-    // Populate fields
-    const fields = ['callsign','personal_call','org_name','org_short',
-                    'agency_name','agency_short','city','county','state',
-                    'contact_email','lat','lon'];
-    fields.forEach(f => {
-      const el = document.getElementById(f);
-      if (el && cfg[f]) el.value = cfg[f];
-    });
-
-    // Uppercase callsigns
-    ['callsign','personal_call'].forEach(f => {
-      const el = document.getElementById(f);
-      if (el) el.value = (el.value || '').toUpperCase();
-    });
-
-    // Form variant
-    if (cfg.ics_form_variant) selectVariant(cfg.ics_form_variant);
-
-    // Logo
-    if (cfg.logo_data && cfg.logo_mime) {
-      logoData = cfg.logo_data;
-      logoMime = cfg.logo_mime;
-      showLogo(`data:${cfg.logo_mime};base64,${cfg.logo_data}`);
-    }
-
-    // Setup complete banner
-    if (cfg.setup_complete) {
-      document.getElementById('completeBanner').style.display = 'block';
-    }
-  } catch(e) {
-    console.log('Config load failed — running offline or first run', e);
-  }
-}
 
 function selectVariant(v) {
   selectedVariant = v;

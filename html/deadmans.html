@@ -381,11 +381,13 @@ function playAlarm() {
   } catch {}
 }
 
+let tickTimer = null;
 function resetPoll() {
   if(pollTimer) clearInterval(pollTimer);
   pollTimer = setInterval(fetchState, (parseInt(document.getElementById('cfg-poll').value)||15)*1000);
   // 1-second tick to keep countdown timers live without hitting the API
-  setInterval(() => { if(Object.keys(dmsState.nets||{}).length) renderNets(); }, 1000);
+  if(tickTimer) clearInterval(tickTimer);
+  tickTimer = setInterval(() => { if(Object.keys(dmsState.nets||{}).length) renderNets(); }, 1000);
 }
 
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }

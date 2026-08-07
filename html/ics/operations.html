@@ -64,7 +64,7 @@
 .modal-title{font-family:var(--font-hd);font-size:18px;color:var(--red);margin-bottom:16px;}
 .field{margin-bottom:10px;}
 .field label{font-size:11px;color:var(--muted);display:block;margin-bottom:4px;}
-.field input,.field select,.field textarea{width:100%;box-sizing:border-box;background:var(var(--input-bg);border:1px solid var(--line);border-radius:4px;color:var(--txt);padding:7px 10px;font-size:13px;}
+.field input,.field select,.field textarea{width:100%;box-sizing:border-box;background:var(--input-bg);border:1px solid var(--line);border-radius:4px;color:var(--txt);padding:7px 10px;font-size:13px;}
 .field input:focus,.field select:focus{outline:none;border-color:var(--red);}
 .two-f{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 
@@ -271,6 +271,8 @@
 const API = 'http://192.168.50.1:5055/api/ics';
 const STORE = 'ics_resources';
 let resources = [], selectedId = null;
+const ICS_API = 'http://192.168.50.1:5055';
+function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 function uid(){ return 'R' + Date.now().toString(36).toUpperCase(); }
 
@@ -338,7 +340,7 @@ async function drop(e, newStatus) {
 async function syncTCardTo204(resource, oldStatus, newStatus) {
   const incId = getIncidentId();
   if (!incId) return;
-  const ICS_API = 'http://192.168.50.1:5051';
+  const ICS_API = 'http://192.168.50.1:5055';
 
   try {
     // Find all 204s for this incident that reference this resource
@@ -431,7 +433,7 @@ function save() {
 async function sync204ToTCards() {
   const incId  = getIncidentId();
   if (!incId) return;
-  const ICS_API = 'http://192.168.50.1:5051';
+  const ICS_API = 'http://192.168.50.1:5055';
   try {
     const r = await fetch(`${ICS_API}/api/ics/forms/ics204?incident_id=${incId}`);
     if (!r.ok) return;
@@ -709,7 +711,7 @@ async function loadPersonnel(tcardId) {
     renderPersonnel();
     // Load roster for autocomplete (once)
     if (!rosterData.length) {
-      const rr = await fetch(`${API}/api/roster`);
+      const rr = await fetch('http://192.168.50.1:5050/api/roster');
       if (rr.ok) { const d = await rr.json(); rosterData = d.members || d || []; }
     }
   } catch(e) {
@@ -750,7 +752,7 @@ async function addPersonnel() {
   const card = resources.find(x => x.id === selectedId);
   const payload = {
     tcard_id:     selectedId,
-    incident_id:  incId,
+    incident_id:  getIncidentId(),
     name,
     ics_position: document.getElementById('pPosition').value,
     agency:       document.getElementById('pAgency').value.trim(),

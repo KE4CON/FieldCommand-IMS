@@ -574,7 +574,7 @@ function showCSVImportModal(csvText, filename) {
                      color:var(--txt);padding:4px 8px;font-size:11px;border-radius:4px">
               ${(() => {
                 const idx = mapping[field];
-                return ['<option value="-1"'+(idx===-1?' selected':''+'>(skip)</option>'),
+                return ['<option value="-1"'+(idx===-1?' selected':'')+'>(skip)</option>',
                   ...headers.map((h,i) =>
                     `<option value="${i}"${i===idx?' selected':''}>${h}</option>`)
                 ].join('');

@@ -103,6 +103,11 @@ case "$CHOICE" in
             tile_server.py
             apply_theme.py
             ics_pdf_downloader.py
+            amprgate_poll.py
+            wan_monitor.py
+            iap_pdf.py
+            nims_definitions.py
+            nims_resource_types.py
         )
         PY_UPDATED=0
         for f in "${PY_FILES[@]}"; do
@@ -115,7 +120,7 @@ case "$CHOICE" in
         done
         echo -e "${GREEN}Python files updated: ${PY_UPDATED} files copied to $FC_HOME/python/${NC}"
         # Restart services to pick up changes
-        for svc in fcc-lookup health-monitor deadmans ics-platform fieldcommand-refs; do
+        for svc in fcc-lookup health-monitor deadmans ics-platform fieldcommand-refs fieldcommand-tiles amprgate-poll wan-monitor; do
             sudo systemctl restart "$svc.service" 2>/dev/null && \
                 echo -e "  ${GREEN}Restarted: $svc${NC}" || \
                 echo -e "  ${AMBER}Could not restart: $svc (may not be running)${NC}"

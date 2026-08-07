@@ -585,7 +585,7 @@ async function openChannelPicker(freqFieldId, nameFieldId) {
   let channels = [];
   try {
     const r = await fetch(
-      `http://192.168.50.1:5051/api/ics/active_channels?incident_id=${incId}&period=1`
+      `http://192.168.50.1:5055/api/ics/active_channels?incident_id=${incId}&period=1`
     );
     if (r.ok) channels = (await r.json()).channels || [];
   } catch(e) {}
@@ -615,16 +615,16 @@ async function openChannelPicker(freqFieldId, nameFieldId) {
             : ch.source==='Repeater DB'?'<span style="font-size:9px;color:var(--green)"> RPT</span>'
             : '<span style="font-size:9px;color:var(--dim)"> LIB</span>';
           const disp = ch.source==='Repeater DB'
-            ? \`\${ch.rx_freq} \${ch.mode||'FM'}\${ch.pl_tone?' PL '+ch.pl_tone:''} — \${ch.name}\`
-            : \`\${ch.rx_freq} \${ch.mode||'FM'}\${ch.pl_tone?' PL '+ch.pl_tone:''}\`;
-          return \`<div class="picker-row" data-s="\${ch.name} \${ch.rx_freq} \${ch.function}"
-            onclick="selectChannel(\${i})"
+            ? `${ch.rx_freq} ${ch.mode||'FM'}${ch.pl_tone?' PL '+ch.pl_tone:''} — ${ch.name}`
+            : `${ch.rx_freq} ${ch.mode||'FM'}${ch.pl_tone?' PL '+ch.pl_tone:''}`;
+          return `<div class="picker-row" data-s="${ch.name} ${ch.rx_freq} ${ch.function}"
+            onclick="selectChannel(${i})"
             style="padding:7px 12px;border-bottom:1px solid var(--line);cursor:pointer"
             onmouseover="this.style.background='rgba(200,118,10,0.08)'"
             onmouseout="this.style.background=''">
-            <div style="font-size:12px;font-weight:bold">\${ch.name}\${src}</div>
-            <div style="font-size:11px;color:var(--muted);font-family:monospace">\${disp}</div>
-          </div>\`;
+            <div style="font-size:12px;font-weight:bold">${ch.name}${src}</div>
+            <div style="font-size:11px;color:var(--muted);font-family:monospace">${disp}</div>
+          </div>`;
         }).join('')}
       </div>
       <div style="margin-top:10px;display:flex;justify-content:flex-end">
@@ -648,10 +648,10 @@ function selectChannel(idx) {
     // For Starcom: show channel name + frequency
     if (ch.source === 'ICS-205' || ch.name) {
       el.value = ch.name
-        ? \`\${ch.name} (\${ch.rx_freq})\`
+        ? `${ch.name} (${ch.rx_freq})`
         : ch.rx_freq;
     } else {
-      el.value = \`\${ch.rx_freq} \${ch.mode||'FM'}\`;
+      el.value = `${ch.rx_freq} ${ch.mode||'FM'}`;
     }
   }
   if (window._pickerNameField) {

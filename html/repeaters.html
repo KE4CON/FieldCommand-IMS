@@ -42,7 +42,7 @@
   padding: 10px 20px; display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end;
 }
 .toolbar input[type=text], .toolbar select {
-  background: var(var(--input-bg); border: 1px solid var(--line); border-radius: 4px;
+  background: var(--input-bg); border: 1px solid var(--line); border-radius: 4px;
   color: var(--txt); padding: 6px 10px; font-size: 13px;
 }
 .toolbar input:focus, .toolbar select:focus { outline: none; border-color: var(--eoc-lt); }
@@ -260,7 +260,7 @@
     🖥 Loaded from local server API (fetch_repeaters.py)
     <button class="btn btn-sm" onclick="loadFromServer()" style="margin-left:auto;border-color:var(--blue);color:var(--blue)">⟳ Refresh</button>
   </div>
-  <div style="padding:10px 14px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--border)">
+  <div style="padding:10px 14px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--line)">
     ⚠ The Server API requires an <strong>approved RepeaterBook API token</strong> — this is a separate application process
     from a regular repeaterbook.com account login. Most deployments should use the
     <strong>Offline File</strong> tab instead: download a CSV export from repeaterbook.com (any logged-in account)
@@ -1051,7 +1051,8 @@ window.addEventListener('load', () => {
 });
 </script>
 
-<script src="/lib/identity.js">
+<script src="/lib/identity.js"></script>
+<script>
 // ── Push repeater to Channel Library ─────────────────────────────
 async function addRepToChannelLibrary() {
   const r = selectedRep;
@@ -1075,7 +1076,7 @@ async function addRepToChannelLibrary() {
     active:     1,
   };
   try {
-    const res = await fetch('http://192.168.50.1:5051/api/ics/channel_library', {
+    const res = await fetch('http://192.168.50.1:5055/api/ics/channel_library', {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify(payload)
     });
@@ -1143,7 +1144,7 @@ function makeRepPopup(r) {
     ${r.sponsor ? `<div class="rp-row"><span class="rp-lbl">Sponsor</span><span class="rp-val">${r.sponsor}</span></div>` : ''}
     <div class="rp-badges">${ares}${races}${skyw}${echo}${tone}</div>
     ${r.notes ? `<div style="font-size:11px;color:#888;margin-top:6px;line-height:1.5">${r.notes}</div>` : ''}
-    <button class="add-ch" onclick="addRepToChannelLib(${JSON.stringify({callsign:r.callsign,output_freq:r.output_freq,input_freq:r.input_freq,tone:r.tone,mode:r.mode}).replace(/"/g,'&quot;')})">
+    <button class="add-ch" onclick="addRepToChannelLibrary(${JSON.stringify({callsign:r.callsign,output_freq:r.output_freq,input_freq:r.input_freq,tone:r.tone,mode:r.mode}).replace(/"/g,'&quot;')})">
       + Add to Channel Library
     </button>
   </div>`;

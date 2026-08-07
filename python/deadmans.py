@@ -14,7 +14,7 @@ The main API server (port 5050) also handles /api/dms/* endpoints.
 This service provides the background monitoring loop and UI API.
 """
 
-import json, time, threading, signal, sys
+import json, os, time, threading, signal, sys
 from datetime import datetime, timezone
 from pathlib import Path
 from http.server import HTTPServer, BaseHTTPRequestHandler
@@ -37,7 +37,9 @@ def load_json(p, default):
     return default
 
 def save_json(p, obj):
-    Path(p).write_text(json.dumps(obj, indent=2, default=str))
+    tmp = str(p) + ".tmp"
+    Path(tmp).write_text(json.dumps(obj, indent=2, default=str))
+    os.replace(tmp, p)
 
 def get_net_last_activity(net_id):
     """Find the most recent entry timestamp in a net"""
@@ -82,8 +84,16 @@ def monitor_loop():
 
                 dms["last_activity"] = latest
 
+                last_dt = None
                 if latest:
-                    last_dt = datetime.fromisoformat(latest.replace("Z","+00:00"))
+                    try:
+                        last_dt = datetime.fromisoformat(str(latest).replace("Z","+00:00"))
+                        if last_dt.tzinfo is None:
+                            last_dt = last_dt.replace(tzinfo=timezone.utc)
+                    except Exception as _te:
+                        print(f"[deadmans] unparseable activity timestamp {latest!r}: {_te}")
+                        last_dt = None
+                if last_dt:
                     elapsed = (datetime.now(timezone.utc) - last_dt).total_seconds()
 
                     prev_state = dms.get("state")

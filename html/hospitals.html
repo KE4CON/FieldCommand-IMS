@@ -335,7 +335,7 @@
 
 <script>
 const API     = 'http://192.168.50.1:5050';
-const ICS_API = 'http://192.168.50.1:5051';
+const ICS_API = 'http://192.168.50.1:5055';
 let hospitals = [];
 let sortBy    = 'air_miles';
 let incLat    = null;
@@ -391,8 +391,8 @@ function calcDistances() {
 }
 
 function recalcDistances() {
-  incLat = parseFloat(document.getElementById('incLat').value) || null;
-  incLon = parseFloat(document.getElementById('incLon').value) || null;
+  incLat = parseFloat(document.getElementById('incLat').value); if (isNaN(incLat)) incLat = null;
+  incLon = parseFloat(document.getElementById('incLon').value); if (isNaN(incLon)) incLon = null;
   const status = document.getElementById('distStatus');
   status.textContent = (incLat && incLon)
     ? `✓ Distances calculated from ${incLat.toFixed(4)}, ${incLon.toFixed(4)}`

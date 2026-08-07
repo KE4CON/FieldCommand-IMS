@@ -585,7 +585,7 @@ function clearEntryForm() {
   document.getElementById("fccCard").classList.remove("show");
 }
 
-async async function promoteToRoster(entryId) {
+async function promoteToRoster(entryId) {
   const entry = currentNet?.entries?.find(e => e.id === entryId);
   if (!entry) return;
   try {
@@ -613,7 +613,7 @@ async async function promoteToRoster(entryId) {
   }
 }
 
-function removeEntry(entryId) {
+async function removeEntry(entryId) {
   if (!confirm("Remove this entry?")) return;
   if (!currentNet) return;
   currentNet.entries = (currentNet.entries || []).filter(e => e.id !== entryId);
@@ -827,7 +827,7 @@ async function openChannelPicker(freqFieldId, nameFieldId) {
   let channels = [];
   try {
     const r = await fetch(
-      `http://192.168.50.1:5051/api/ics/active_channels?incident_id=${incId}&period=${period}`
+      `http://192.168.50.1:5055/api/ics/active_channels?incident_id=${incId}&period=${period}`
     );
     if (r.ok) {
       const d = await r.json();

@@ -78,7 +78,7 @@ iframe#previewFrame {
 .field label { font-size: 11px; color: var(--muted); display: block; margin-bottom: 4px; }
 .field input, .field select, .field textarea {
   width: 100%; box-sizing: border-box;
-  background: var(var(--input-bg); border: 1px solid var(--line); border-radius: 4px;
+  background: var(--input-bg); border: 1px solid var(--line); border-radius: 4px;
   color: var(--txt); padding: 7px 10px; font-size: 13px;
 }
 .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--eoc-lt); }
@@ -261,7 +261,7 @@ iframe#previewFrame {
       </div>
       <div class="field">
         <label>Date / Time</label>
-        <input type="text" id="csDate" id="csDate">
+        <input type="text" id="csDate">
       </div>
     </div>
     <div class="form-row">
@@ -386,7 +386,7 @@ function printCover() {
     td:first-child{font-weight:bold;width:160px}
     .divider{border-top:2px solid #000;margin:20px 0}
     </style></head><body>${el.innerHTML}
-<script src="/lib/identity.js"></script>
+<script src="/lib/identity.js"><\/script>
 </body></html>`);
   w.document.close();
   w.print();

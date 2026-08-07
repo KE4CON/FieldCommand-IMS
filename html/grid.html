@@ -33,7 +33,7 @@
 label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 4px; }
 input[type=text], input[type=number] {
   width: 100%; box-sizing: border-box;
-  background: var(var(--input-bg); border: 1px solid var(--line); border-radius: 4px;
+  background: var(--input-bg); border: 1px solid var(--line); border-radius: 4px;
   color: var(--txt); padding: 8px 10px; font-size: 14px; font-family: var(--font-hd);
   margin-bottom: 10px;
 }
@@ -389,6 +389,7 @@ function drawMap() {
   ctx.strokeRect(0, 0, W, H);
 }
 
+const canvas = document.getElementById('gridCanvas');
 canvas.addEventListener('click', function(e) {
   const rect = this.getBoundingClientRect();
   const px = e.clientX - rect.left, py = e.clientY - rect.top;
@@ -403,7 +404,6 @@ canvas.addEventListener('click', function(e) {
 window.addEventListener('load', () => { calcFromLatLon(); });
 window.addEventListener('resize', drawMap);
 
-const canvas = document.getElementById('gridCanvas');
 </script>
 
 <script src="/lib/identity.js"></script>

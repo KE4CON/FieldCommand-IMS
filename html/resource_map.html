@@ -192,7 +192,7 @@ html,body { height:100%;margin:0;padding:0; }
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 const API     = 'http://192.168.50.1:5050';
-const ICS_API = 'http://192.168.50.1:5051';
+const ICS_API = 'http://192.168.50.1:5055';
 
 let map, markersLayer;
 let allTCards    = [];   // all tcards for incident (with and without GPS)
@@ -400,7 +400,7 @@ function makePopup(card) {
 
 // ── Set position modal ─────────────────────────────────────────────
 function openPosModal(cardId) {
-  editingCard = allTCards.find(c => c.id === cardId);
+  editingCard = allTCards.find(c => String(c.id) === String(cardId));
   if (!editingCard) return;
   mapClickMode = false;
 

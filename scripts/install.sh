@@ -11,7 +11,7 @@ FC_HOME="/opt/fieldcommand"
 FC_DATA="$FC_HOME/data"
 FC_PYTHON="$FC_HOME/python"
 FC_VENV="$FC_HOME/venv"
-FC_WEB="/var/www/html"
+FC_WEB="/opt/fieldcommand/html"
 FC_LOG="/var/log/fieldcommand-install.log"
 
 AMBER='\033[0;33m'
@@ -21,6 +21,7 @@ BLUE='\033[0;34m'
 CYAN='\033[0;36m'
 BOLD='\033[1m'
 NC='\033[0m'
+DIM='\033[2m'
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
@@ -107,7 +108,7 @@ read -rp "Station latitude [42.3153]: " STATION_LAT
 STATION_LAT=${STATION_LAT:-42.3153}
 
 read -rp "Station longitude [-88.4473]: " STATION_LON
-STATION_LON=${STATION_LON:-88.4473}
+STATION_LON=${STATION_LON:--88.4473}
 
 read -rp "WiFi AP SSID [EMCOMM-NET]: " AP_SSID
 AP_SSID=${AP_SSID:-EMCOMM-NET}
@@ -221,6 +222,8 @@ dirs=(
     "$FC_DATA/forms"
     "$FC_DATA/ics"
     "$FC_PYTHON"
+    "$FC_HOME/scripts"
+    "$FC_HOME/docs"
 )
 
 for d in "${dirs[@]}"; do
@@ -240,7 +243,7 @@ if [[ "$PROFILE" != "3" ]]; then
     fi
     
     "$FC_VENV/bin/pip" install --quiet --upgrade pip 2>>"$FC_LOG"
-    "$FC_VENV/bin/pip" install --quiet flask flask-cors requests gpsd-py3 2>>"$FC_LOG"
+    "$FC_VENV/bin/pip" install --quiet flask flask-cors requests gpsd-py3 reportlab pypdf 2>>"$FC_LOG"
     success "Python packages installed: flask, flask-cors, requests, gpsd-py3"
 fi
 
@@ -261,11 +264,21 @@ if [[ "$PROFILE" != "3" ]]; then
         tile_server.py
         amprgate_poll.py
         wan_monitor.py
+        ics_pdf_downloader.py
+        apply_theme.py
+        iap_pdf.py
+        nims_definitions.py
+        nims_resource_types.py
     )
     
+    if [[ -f "$SCRIPT_DIR/../python/wan_config_defaults.json" ]]; then
+        cp "$SCRIPT_DIR/../python/wan_config_defaults.json" "$FC_PYTHON/wan_config_defaults.json"
+        success "Installed: wan_config_defaults.json"
+    fi
+
     for f in "${PY_FILES[@]}"; do
-        if [[ -f "$SCRIPT_DIR/python/$f" ]]; then
-            cp "$SCRIPT_DIR/python/$f" "$FC_PYTHON/$f"
+        if [[ -f "$SCRIPT_DIR/../python/$f" ]]; then
+            cp "$SCRIPT_DIR/../python/$f" "$FC_PYTHON/$f"
             chmod 755 "$FC_PYTHON/$f"
             success "Installed: $f"
         else
@@ -277,8 +290,8 @@ fi
 # ── Copy web files ─────────────────────────────────────────────────
 step "Installing Web Frontend"
 
-if [[ -d "$SCRIPT_DIR/html" ]]; then
-    rsync -a --delete "$SCRIPT_DIR/html/" "$FC_WEB/" 2>>"$FC_LOG"
+if [[ -d "$SCRIPT_DIR/../html" ]]; then
+    rsync -a --delete "$SCRIPT_DIR/../html/" "$FC_WEB/" 2>>"$FC_LOG"
     success "HTML files deployed to $FC_WEB"
 else
     error "html/ directory not found in $SCRIPT_DIR"
@@ -314,8 +327,8 @@ if [[ "$PROFILE" != "3" ]]; then
     )
     
     for f in "${SERVICES[@]}"; do
-        if [[ -f "$SCRIPT_DIR/systemd/$f" ]]; then
-            cp "$SCRIPT_DIR/systemd/$f" "/etc/systemd/system/$f"
+        if [[ -f "$SCRIPT_DIR/../systemd/$f" ]]; then
+            cp "$SCRIPT_DIR/../systemd/$f" "/etc/systemd/system/$f"
             success "Installed: $f"
         else
             warn "Not found (skipping): systemd/$f"
@@ -324,7 +337,7 @@ if [[ "$PROFILE" != "3" ]]; then
     
     systemctl daemon-reload
     
-    for svc in fcc-lookup health-monitor deadmans ics-platform amprgate-poll wan-monitor; do
+    for svc in fcc-lookup health-monitor deadmans ics-platform fieldcommand-refs amprgate-poll wan-monitor; do
         systemctl enable "$svc.service" 2>>"$FC_LOG" && success "Enabled: $svc"
     done
     
@@ -353,8 +366,8 @@ fi
 
 step "Configuring nginx"
 
-if [[ -f "$SCRIPT_DIR/udev/nginx-fieldcommand.conf" ]]; then
-    cp "$SCRIPT_DIR/udev/nginx-fieldcommand.conf" /etc/nginx/sites-available/fieldcommand
+if [[ -f "$SCRIPT_DIR/../udev/nginx-fieldcommand.conf" ]]; then
+    cp "$SCRIPT_DIR/../udev/nginx-fieldcommand.conf" /etc/nginx/sites-available/fieldcommand
     ln -sf /etc/nginx/sites-available/fieldcommand /etc/nginx/sites-enabled/fieldcommand
     rm -f /etc/nginx/sites-enabled/default
     nginx -t 2>>"$FC_LOG" && success "nginx config valid" || warn "nginx config test failed — check manually"
@@ -381,8 +394,8 @@ if [[ "$PROFILE" == "1" ]]; then
     nmcli con mod "$ETH_CON"         ipv4.addresses "$SERVER_IP/24"         ipv4.method manual 2>>"$FC_LOG"         && success "Static IP configured: $SERVER_IP/24 on $ETH_CON"         || warn "nmcli failed — set static IP manually after reboot (see manual Chapter 34.5)"
     
     # Also install the NetworkManager config file for reference
-    if [[ -f "$SCRIPT_DIR/udev/NetworkManager-static-ip.conf" ]]; then
-        cp "$SCRIPT_DIR/udev/NetworkManager-static-ip.conf"            /opt/fieldcommand/docs/NetworkManager-static-ip.conf
+    if [[ -f "$SCRIPT_DIR/../udev/NetworkManager-static-ip.conf" ]]; then
+        cp "$SCRIPT_DIR/../udev/NetworkManager-static-ip.conf"            /opt/fieldcommand/docs/NetworkManager-static-ip.conf
     fi
 fi
 
@@ -390,14 +403,14 @@ fi
 if [[ "$PROFILE" == "1" || "$PROFILE" == "2" ]]; then
     step "Installing USB Backup Trigger"
     
-    if [[ -f "$SCRIPT_DIR/udev/99-fieldcommand-backup.rules" ]]; then
-        cp "$SCRIPT_DIR/udev/99-fieldcommand-backup.rules" /etc/udev/rules.d/
+    if [[ -f "$SCRIPT_DIR/../udev/99-fieldcommand-backup.rules" ]]; then
+        cp "$SCRIPT_DIR/../udev/99-fieldcommand-backup.rules" /etc/udev/rules.d/
         udevadm control --reload-rules 2>>"$FC_LOG" && success "udev USB backup rule installed"
     fi
 
     # Install TNC udev rules (Digirig, SignaLink, etc.)
-    if [[ -f "$SCRIPT_DIR/udev/99-fieldcommand-tnc.rules" ]]; then
-        cp "$SCRIPT_DIR/udev/99-fieldcommand-tnc.rules" /etc/udev/rules.d/
+    if [[ -f "$SCRIPT_DIR/../udev/99-fieldcommand-tnc.rules" ]]; then
+        cp "$SCRIPT_DIR/../udev/99-fieldcommand-tnc.rules" /etc/udev/rules.d/
         udevadm control --reload-rules 2>>"$FC_LOG" && success "udev TNC rules installed — /dev/tnc0 symlink will auto-create on plug-in"
     fi
 fi
@@ -565,7 +578,7 @@ if [[ "$PROFILE" == "1" || "$PROFILE" == "2" ]]; then
         case "$TILE_PRESET" in
             1) TILE_FLAGS="--mchenry-essential" ;;
             2) TILE_FLAGS="--mchenry-standard" ;;
-            3) TILE_FLAGS="--area mchenry --zoom 8-17 --sources usgs_topo,esri_street,esri_imagery" ;;
+            3) TILE_FLAGS="--area county_mchenry --zoom 8-17 --sources usgs_topo,esri_street,esri_imagery" ;;
         esac
 
         info "Downloading McHenry County map tiles (Preset ${TILE_PRESET})…"
@@ -630,8 +643,8 @@ PATCFG
         fi
 
         # Install and enable pat.service
-        if [[ -f "$SCRIPT_DIR/systemd/pat.service" ]]; then
-            cp "$SCRIPT_DIR/systemd/pat.service" /etc/systemd/system/pat.service
+        if [[ -f "$SCRIPT_DIR/../systemd/pat.service" ]]; then
+            cp "$SCRIPT_DIR/../systemd/pat.service" /etc/systemd/system/pat.service
             systemctl daemon-reload
             systemctl enable pat.service 2>>"$FC_LOG" && success "pat.service enabled"
         else
@@ -757,8 +770,8 @@ if [[ "${SKIP_APRS:-0}" != "1" ]]; then
     fi
 
     # Install and enable yaac.service
-    if [[ -f "$YAAC_JAR" && -f "$SCRIPT_DIR/systemd/yaac.service" ]]; then
-        cp "$SCRIPT_DIR/systemd/yaac.service" /etc/systemd/system/yaac.service
+    if [[ -f "$YAAC_JAR" && -f "$SCRIPT_DIR/../systemd/yaac.service" ]]; then
+        cp "$SCRIPT_DIR/../systemd/yaac.service" /etc/systemd/system/yaac.service
         systemctl daemon-reload
         systemctl enable yaac.service 2>>"$FC_LOG" \
             && success "yaac.service enabled" \

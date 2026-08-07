@@ -24,7 +24,7 @@ def download_fcc(zip_path):
     print("This file is ~200MB and may take several minutes...")
     Path(zip_path).parent.mkdir(parents=True, exist_ok=True)
     def progress(count, block, total):
-        pct = min(100, count * block * 100 // total)
+        pct = min(100, count * block * 100 // total) if total and total > 0 else 0
         print(f"\r  {pct}% ({count*block//1024//1024}MB/{total//1024//1024}MB)", end="", flush=True)
     urllib.request.urlretrieve(FCC_URL, zip_path, reporthook=progress)
     print(f"\nDownloaded to {zip_path}")

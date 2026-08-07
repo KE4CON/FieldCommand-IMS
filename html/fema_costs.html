@@ -478,7 +478,7 @@
 </div>
 
 <script>
-const ICS_API = 'http://192.168.50.1:5051';
+const ICS_API = 'http://192.168.50.1:5055';
 const API     = 'http://192.168.50.1:5050';
 
 let laborData = [], equipData = [], matData = [];
@@ -643,7 +643,7 @@ function calcMatPreview() {
 function showLaborModal(id) {
   const modal = document.getElementById('laborModal');
   if (id) {
-    const r = laborData.find(x => x.id === id);
+    const r = laborData.find(x => String(x.id) === String(id));
     if (!r) return;
     document.getElementById('lab_id').value       = r.id;
     document.getElementById('lab_employee').value = r.employee;
@@ -707,7 +707,7 @@ async function deleteLaborEntry() {
 function showEquipModal(id) {
   const modal = document.getElementById('equipModal');
   if (id) {
-    const r = equipData.find(x => x.id === id);
+    const r = equipData.find(x => String(x.id) === String(id));
     if (!r) return;
     document.getElementById('eq_id').value       = r.id;
     document.getElementById('eq_equip').value    = r.equipment;
@@ -765,7 +765,7 @@ async function deleteEquipEntry() {
 function showMatModal(id) {
   const modal = document.getElementById('matModal');
   if (id) {
-    const r = matData.find(x => x.id === id);
+    const r = matData.find(x => String(x.id) === String(id));
     if (!r) return;
     document.getElementById('mat_id').value    = r.id;
     document.getElementById('mat_desc').value  = r.description;

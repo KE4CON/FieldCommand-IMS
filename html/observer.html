@@ -140,6 +140,7 @@ async function loadNets() {
       ).join("") || '<div style="color:var(--muted);text-align:center;padding:20px">No nets found</div>';
   } catch(e) {
     document.getElementById("netPicker").innerHTML = '<div class="panel" style="color:var(--red)">Cannot reach API server at 192.168.50.1:5050</div>';
+    document.getElementById("netPicker").style.display = '';
   }
 }
 

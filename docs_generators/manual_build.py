@@ -116,15 +116,14 @@ CHAPTERS = [
     (33, 'Offline Maps, GPS & Health Monitor',                ''),
     (34, 'Network Hardware — ASUS RT-BE58 Go & UniFi Switch', ''),
     (35, 'JS8Call — HF Digital Keyboard Messaging (Windows)', ''),
-    (36, 'ICS Planning P — Operational Planning Cycle',       'http://192.168.50.1/ics/planningp.html'),
-    (34, 'Appendix — Administration & Quick Reference',       ''),
+    (36, 'Appendix — Administration & Quick Reference',       ''),
 ]
 
 CHAPTER_FUNCS = [
     ch1, ch2, ch3, ch4, ch5, ch6, ch7,
     ch8, ch9, ch10, ch11, ch12, ch13, ch14, ch15, ch16, ch17, ch18,
     ch19, ch20, ch21, ch22, ch23, ch24, ch25, ch26, ch27, ch28,
-    ch29, ch30, ch31, ch32, ch33, ch34, ch_appendix,  ch_appendix,
+    ch29, ch30, ch31, ch32, ch33, ch34, ch35, ch_appendix,
 ]
 
 # ── Build ─────────────────────────────────────────────────────────────────────

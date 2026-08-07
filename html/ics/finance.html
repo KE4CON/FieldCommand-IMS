@@ -21,7 +21,7 @@
 .panel-title{font-family:var(--font-hd);font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:#c850ff;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
 .field{margin-bottom:10px;}
 .field label{font-size:11px;color:var(--muted);display:block;margin-bottom:4px;}
-.field input,.field select,.field textarea{width:100%;box-sizing:border-box;background:var(var(--input-bg);border:1px solid var(--line);border-radius:4px;color:var(--txt);padding:7px 10px;font-size:13px;}
+.field input,.field select,.field textarea{width:100%;box-sizing:border-box;background:var(--input-bg);border:1px solid var(--line);border-radius:4px;color:var(--txt);padding:7px 10px;font-size:13px;}
 .field textarea{resize:vertical;min-height:70px;}
 .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:#c850ff;}
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
@@ -304,7 +304,7 @@ const STORE = 'ics_finance';
 let state = { costs:[], times:[], procure:[] };
 
 const catColors = { personnel:'var(--blue)', equipment:'var(--amber)', supply:'var(--green)', food:'#ff8c00', transport:'var(--muted)', other:'#888' };
-const statusColor = { requested:'var(--amber)', ordered:'var(--blue)', delivered:'var(--green)', 'returned / closed':'var(--muted)' };
+const statusColor = { requested:'var(--amber)', ordered:'var(--blue)', delivered:'var(--green)', returned:'var(--muted)', closed:'var(--muted)' };
 
 function load() {
   try {

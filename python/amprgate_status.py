@@ -356,9 +356,7 @@ def get_token_from_request(handler):
 
 def get_client_ip(handler):
     """Get real client IP."""
-    xff = handler.headers.get("X-Forwarded-For", "")
-    if xff:
-        return xff.split(",")[0].strip()
+    # No reverse proxy is in front, so X-Forwarded-For is client-forgeable; use the real peer.
     return handler.client_address[0]
 
 

@@ -404,8 +404,8 @@ function load() {
       lastWanSource = active;
 
       // Capture config labels from status
-      if (data.config) {
-        _wanConfig = data.config;
+      if (d.config) {
+        _wanConfig = d.config;
         // Update page subtitle dynamically
         const sub = document.getElementById('wan-sub');
         if (sub) {
@@ -459,7 +459,7 @@ function load() {
       document.getElementById('sl-status').textContent = slUp
         ? (slActive ? 'Connected — Active WAN (Failover)' : 'Connected — Standby')
         : (sl.dish_present ? 'Dish present — not receiving WAN' : 'Not detected');
-      document.getElementById('sl-badge').textContent = slActive ? 'ACTIVE' : 'STANDBY';
+      { const _slb = document.getElementById('sl-badge'); if (_slb) _slb.textContent = slActive ? 'ACTIVE' : 'STANDBY'; }
       document.getElementById('sl-latency').textContent = sl.latency_ms ? sl.latency_ms + ' ms' : '—';
       document.getElementById('sl-throughput').textContent =
         sl.download_mbps ? sl.download_mbps + ' / ' + sl.upload_mbps + ' Mbps' : '—';
@@ -520,12 +520,11 @@ function runConnectivityTests() {
   });
 }
 
+let _wanConfig = null;
 load();
 setInterval(load, 30000);
 renderLog();
 </script>
 </body>
 </html>
-  // WAN config labels — populated from status JSON
-  let _wanConfig = null;
 

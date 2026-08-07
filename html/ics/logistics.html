@@ -21,7 +21,7 @@
 .panel-title{font-family:var(--font-hd);font-size:11px;letter-spacing:0.15em;text-transform:uppercase;color:var(--green);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
 .field{margin-bottom:10px;}
 .field label{font-size:11px;color:var(--muted);display:block;margin-bottom:4px;}
-.field input,.field select,.field textarea{width:100%;box-sizing:border-box;background:var(var(--input-bg);border:1px solid var(--line);border-radius:4px;color:var(--txt);padding:7px 10px;font-size:13px;}
+.field input,.field select,.field textarea{width:100%;box-sizing:border-box;background:var(--input-bg);border:1px solid var(--line);border-radius:4px;color:var(--txt);padding:7px 10px;font-size:13px;}
 .field textarea{resize:vertical;min-height:70px;}
 .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--green);}
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
@@ -37,7 +37,7 @@
 .comms-table{width:100%;border-collapse:collapse;font-size:12px;}
 .comms-table th{text-align:left;padding:6px 8px;color:var(--green);font-family:var(--font-hd);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;border-bottom:2px solid var(--line);background:var(--panel);}
 .comms-table td{padding:6px 8px;border-bottom:1px solid var(--line);color:var(--txt);}
-.comms-table td input,.comms-table td select{background:var(var(--input-bg);border:1px solid transparent;border-radius:3px;color:var(--txt);padding:3px 6px;font-size:12px;width:100%;box-sizing:border-box;}
+.comms-table td input,.comms-table td select{background:var(--input-bg);border:1px solid transparent;border-radius:3px;color:var(--txt);padding:3px 6px;font-size:12px;width:100%;box-sizing:border-box;}
 .comms-table td input:focus,.comms-table td select:focus{outline:none;border-color:var(--green);}
 .comms-table tr:hover td{background:var(--panel2);}
 
@@ -362,7 +362,7 @@ function renderComms() {
       <td><input value="${r.ch||''}" onchange="updateComms(${i},'ch',this.value)" placeholder="CH 1" style="width:60px"></td>
       <td><input value="${r.freq||''}" onchange="updateComms(${i},'freq',this.value)" placeholder="146.940" style="width:80px"></td>
       <td><input value="${r.tone||''}" onchange="updateComms(${i},'tone',this.value)" placeholder="100.0" style="width:60px"></td>
-      <td><select onchange="updateComms(${i},'mode',this.value)" style="background:var(var(--input-bg);border:1px solid transparent;border-radius:3px;color:var(--txt);padding:3px 4px;font-size:11px">
+      <td><select onchange="updateComms(${i},'mode',this.value)" style="background:var(--input-bg);border:1px solid transparent;border-radius:3px;color:var(--txt);padding:3px 4px;font-size:11px">
         ${['FM/Repeater','FM/Simplex','USB','LSB','CW','Digital'].map(m=>`<option ${r.mode===m?'selected':''}>${m}</option>`).join('')}
       </select></td>
       <td><input value="${r.remarks||''}" onchange="updateComms(${i},'remarks',this.value)" placeholder="Notes" style="width:100%"></td>

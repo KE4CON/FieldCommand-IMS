@@ -786,7 +786,7 @@ build_download_list() {
         echo -e "  Estimated download: ${BOLD}$(hr_size $total_mb)${NC} (installed files skipped)"
         echo ""
 
-        read -rp "Proceed with download? [Y/n]: " CONFIRM
+        if [[ "${NO_PROMPT:-}" == "1" ]]; then CONFIRM=Y; else read -rp "Proceed with download? [Y/n]: " CONFIRM; fi
         CONFIRM="${CONFIRM:-Y}"
         [[ "$CONFIRM" =~ ^[Yy] ]] || { echo "Cancelled."; exit 0; }
     fi
@@ -834,6 +834,7 @@ while [[ $# -gt 0 ]]; do
             ARG_MODE="update-install";    shift ;;
         --no-prompt)
             ARG_MODE="tier"
+            NO_PROMPT=1
             [[ -z "$SELECTED_TIER" ]] && SELECTED_TIER=1
             shift ;;
         *)

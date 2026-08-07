@@ -364,7 +364,7 @@ function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').
 
 // Try to restore last session
 const last=localStorage.getItem('fc_ics214_last');
-if(last){const d=JSON.parse(last);personnel=d.personnel||[];activities=d.activities||[];}
+if(last){try{const d=JSON.parse(last);personnel=d.personnel||[];activities=d.activities||[];}catch(e){}}
 
 // ── Winlink form import hook (opened from winlink-import.html?import=1) ────────
 function applyWinlinkImport(){

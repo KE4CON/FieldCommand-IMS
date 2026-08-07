@@ -306,7 +306,7 @@ body { background:var(--bg); }
 </div>
 
 <script>
-const ICS_API = 'http://192.168.50.1:5051';
+const ICS_API = 'http://192.168.50.1:5055';
 const API     = 'http://192.168.50.1:5050';
 
 let parData      = null;
@@ -465,8 +465,8 @@ function renderICS211() {
           ${parOk ? `<span class="p-badge badge-par">✓ PAR</span>` : ''}
           ${isOut ? `<span class="p-badge badge-out">Checked Out</span>` : ''}
           ${!isOut ? `
-            <button class="btn-loc" onclick="openLocModal('ci','${e.id}','${esc(e.name)}')">📍 Location</button>
-            <button class="btn-out" onclick="checkOut('${e.id}','${esc(e.name)}')">Check Out</button>` : ''}
+            <button class="btn-loc" onclick="openLocModal('ci','${e.id}','${jsq(e.name)}')">📍 Location</button>
+            <button class="btn-out" onclick="checkOut('${e.id}','${jsq(e.name)}')">Check Out</button>` : ''}
         </div>
       </div>
     </div>`;
@@ -521,7 +521,7 @@ function renderTCards() {
           <div class="btn-actions">
             ${!parOk ? `<button class="btn-par" onclick="confirmPARtcard('${p.id}')">✓ PAR</button>` : ''}
             ${parOk  ? `<span class="p-badge badge-par">✓ PAR ${p.par_time?(p.par_time.slice(11,16)):''}</span>` : ''}
-            <button class="btn-loc" onclick="openLocModal('tp','${p.id}','${esc(p.name)}')">📍 Location</button>
+            <button class="btn-loc" onclick="openLocModal('tp','${p.id}','${jsq(p.name)}')">📍 Location</button>
           </div>
         </div>
       </div>`;
@@ -560,8 +560,8 @@ function renderUnaccounted() {
         </div>
         <div class="btn-actions">
           <button class="btn-par" onclick="confirmPAR('${e.id}')">✓ PAR — Confirmed</button>
-          <button class="btn-out" onclick="checkOut('${e.id}','${esc(e.name)}')">Check Out</button>
-          <button class="btn-loc" onclick="openLocModal('ci','${e.id}','${esc(e.name)}')">📍 Location</button>
+          <button class="btn-out" onclick="checkOut('${e.id}','${jsq(e.name)}')">Check Out</button>
+          <button class="btn-loc" onclick="openLocModal('ci','${e.id}','${jsq(e.name)}')">📍 Location</button>
         </div>
       </div>
     </div>`).join('');
@@ -735,6 +735,7 @@ async function saveLocation() {
 }
 
 // ── Utilities ──────────────────────────────────────────────────────
+function jsq(s){ return String(s==null?'':s).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
 function esc(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }

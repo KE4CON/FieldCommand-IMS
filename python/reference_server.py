@@ -105,7 +105,11 @@ class RefsHandler(BaseHTTPRequestHandler):
 
     def read_json(self):
         n=int(self.headers.get('Content-Length',0))
-        return json.loads(self.rfile.read(n)) if n else {}
+        try:
+            d = json.loads(self.rfile.read(n)) if n else {}
+            return d if isinstance(d, dict) else {}
+        except Exception:
+            return {}
 
     def do_OPTIONS(self):
         self.send_response(204); self.cors(); self.end_headers()
@@ -273,6 +277,7 @@ class RefsHandler(BaseHTTPRequestHandler):
             updates['tags']=jdump(updates['tags'] if isinstance(updates['tags'],list)
                                   else [t.strip() for t in updates['tags'].split(',') if t.strip()])
         updates['modified']=utcnow()
+        updates={k:v for k,v in updates.items() if isinstance(k,str) and k.isidentifier()}
         if updates:
             sets=",".join(f"{k}=?" for k in updates)
             c.execute(f"UPDATE ref_documents SET {sets} WHERE id=?",(*updates.values(),doc_id))

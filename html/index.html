@@ -1003,7 +1003,7 @@ let STATION_CALL = "EMCOMM-NET";
 
 async function loadStationConfig() {
   try {
-    const r = await fetch(`${API}/api/config`);
+    const r = await fetch('http://192.168.50.1:5050/api/config');
     if (!r.ok) return;
     const cfg = await r.json();
     if (cfg.callsign) {
@@ -1072,7 +1072,7 @@ function updateClock() {
   // Mode-aware display:
   // Amateur radio → UTC primary (worldwide comms standard)
   // ICS / Public Safety → Local time primary (FEMA 502-2: "local time is typically used")
-  const utcPrimary = (currentMode === 'amateur');
+  const utcPrimary = ((window.currentMode || 'amateur') === 'amateur');
 
   document.getElementById("primaryClock").textContent   = utcPrimary ? utcTime : lclTime;
   document.getElementById("primaryLabel").textContent   = utcPrimary ? "UTC" : "LOCAL";
@@ -1456,7 +1456,6 @@ function openJS8Call(e) {
   initJS8Card();
   window.open('http://' + ip.trim() + ':2442', '_blank');
 }
-────────
 (function() {
   const MODE_KEY = 'fc_dashboard_mode';
 
@@ -1471,13 +1470,13 @@ function openJS8Call(e) {
 
     // Show/hide sections
     document.querySelectorAll('.amateur-section').forEach(el => {
-      el.classList.toggle('visible', mode === 'amateur');
+      el.classList.toggle('active', mode === 'amateur');
     });
     document.querySelectorAll('.starcom-section').forEach(el => {
-      el.classList.toggle('visible', mode === 'starcom');
+      el.classList.toggle('active', mode === 'starcom');
     });
     document.querySelectorAll('.ics-section').forEach(el => {
-      el.classList.toggle('visible', mode === 'ics');
+      el.classList.toggle('active', mode === 'ics');
     });
 
     // Update hero badge

@@ -281,7 +281,8 @@
 <div class="ics-print" id="printView"></div>
 
 <script>
-const ICS_API  = 'http://192.168.50.1:5051';
+const ICS_API  = 'http://192.168.50.1:5055';
+function markDirty(){ window.__fcFormDirty = true; }
 const MAIN_API = 'http://192.168.50.1:5050';
 
 const params    = new URLSearchParams(location.search);
@@ -645,8 +646,8 @@ function field(key, label, type='text', placeholder='', opts={}) {
   const tag = type === 'textarea' ? 'textarea' : 'input';
   const rows = opts.rows || 3;
   const inner = type === 'textarea'
-    ? `<textarea data-key="${key}" rows="${rows}" placeholder="${placeholder}">${v}</textarea>`
-    : `<input type="${type}" data-key="${key}" value="${v}" placeholder="${placeholder}">`;
+    ? `<textarea id="${key}" data-key="${key}" rows="${rows}" placeholder="${placeholder}">${v}</textarea>`
+    : `<input type="${type}" id="${key}" data-key="${key}" value="${v}" placeholder="${placeholder}">`;
 
   // Signature-eligible fields get a Sign button and a sig preview area
   const isSigField = /^(prepared_by|approved_by|signed_by)/.test(key) && type === 'text';
@@ -2707,39 +2708,39 @@ function add204Placeholder() {
   const nwcg = VARIANT==='NWCG'
     ? '<td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="res204_etd_'+i+'" style="width:60px;font-size:11px;padding:3px 4px"></td>'
     : '';
-  tr.innerHTML = \`
+  tr.innerHTML = `
     <td style="border:1px solid rgba(200,118,10,0.4);padding:3px;background:rgba(200,118,10,0.06)">
-      <input type="text" data-key="res204_id_\${i}" value="\${label}"
+      <input type="text" data-key="res204_id_${i}" value="${label}"
         placeholder="Placeholder"
         style="width:100%;font-size:11px;padding:3px 4px;color:var(--amber);
                font-style:italic;font-weight:bold;background:transparent;border:none">
     </td>
     <td style="border:1px solid rgba(200,118,10,0.3);padding:3px;background:rgba(200,118,10,0.04)">
-      <input type="text" data-key="res204_leader_\${i}" placeholder="TBD"
+      <input type="text" data-key="res204_leader_${i}" placeholder="TBD"
         style="width:100%;font-size:11px;padding:3px 4px;color:var(--muted);background:transparent;border:none">
     </td>
     <td style="border:1px solid rgba(200,118,10,0.3);padding:3px;background:rgba(200,118,10,0.04)">
-      <input type="text" data-key="res204_type_\${i}" value="\${label.replace('+','')}"
+      <input type="text" data-key="res204_type_${i}" value="${label.replace('+','')}"
         style="width:100%;font-size:11px;padding:3px 4px;color:var(--muted);background:transparent;border:none">
     </td>
     <td style="border:1px solid rgba(200,118,10,0.3);padding:3px;background:rgba(200,118,10,0.04);text-align:center">
-      <input type="number" data-key="res204_personnel_\${i}" placeholder="#"
+      <input type="number" data-key="res204_personnel_${i}" placeholder="#"
         style="width:46px;font-size:11px;padding:3px 4px;text-align:center;background:transparent;border:none;color:var(--muted)">
     </td>
     <td style="border:1px solid rgba(200,118,10,0.3);padding:3px;background:rgba(200,118,10,0.04)">
-      <input type="text" data-key="res204_contact_\${i}" placeholder="—"
+      <input type="text" data-key="res204_contact_${i}" placeholder="—"
         style="width:100%;font-size:11px;padding:3px 4px;background:transparent;border:none;color:var(--muted)">
     </td>
     <td style="border:1px solid rgba(200,118,10,0.3);padding:3px;background:rgba(200,118,10,0.04)">
-      <input type="text" data-key="res204_time_\${i}" placeholder="TBD"
+      <input type="text" data-key="res204_time_${i}" placeholder="TBD"
         style="width:100%;font-size:11px;padding:3px 4px;background:transparent;border:none;color:var(--muted)">
     </td>
     <td style="border:1px solid rgba(200,118,10,0.3);padding:3px;background:rgba(200,118,10,0.04)">
-      <input type="text" data-key="res204_location_\${i}" placeholder="Staging"
+      <input type="text" data-key="res204_location_${i}" placeholder="Staging"
         style="width:100%;font-size:11px;padding:3px 4px;background:transparent;border:none;color:var(--muted)">
     </td>
-    \${nwcg}
-  \`;
+    ${nwcg}
+  `;
   tbody.appendChild(tr);
   markDirty();
 }
@@ -6467,6 +6468,19 @@ FORMS['211'] = {
   badge: 'ICS-211',
   variants: { FEMA:'FEMA 010-0-11', USCG:'CG-5220', NWCG:'ICS-211 (NWCG)' },
 
+  _ciRow(i) {
+    return `<tr>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ci211_name_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ci211_id_${i}" style="width:100%;font-size:11px;padding:3px 4px;font-family:var(--font-hd)"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ci211_agency_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ci211_pos_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ci211_rtype_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ci211_in_${i}" style="width:100%;font-size:11px;padding:3px 4px;font-family:var(--font-hd)"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ci211_out_${i}" style="width:100%;font-size:11px;padding:3px 4px;font-family:var(--font-hd)"></td>
+              <td style="border:1px solid var(--line);padding:3px"><input type="text" data-key="ci211_equip_${i}" style="width:100%;font-size:11px;padding:3px 4px"></td>
+            </tr>`;
+  },
+
   render() {
     document.getElementById('formTitle').textContent = 'ICS-211 \u2014 Incident Check-In List';
     document.getElementById('formBadge').textContent = 'ICS-211';
@@ -9792,3 +9806,5 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 </script>
+</body>
+</html>

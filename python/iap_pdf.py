@@ -177,7 +177,7 @@ def render_ics202(d, incident_name, period):
     story.append(Spacer(1, 8))
 
     story.append(_section('2. Incident Objectives'))
-    objectives = d.get('objectives','')
+    objectives = d.get('objectives') or ''
     for line in objectives.split('\n'):
         if line.strip():
             story.append(Paragraph(line.strip(), S['body']))
@@ -194,7 +194,7 @@ def render_ics202(d, incident_name, period):
     story.append(Spacer(1, 6))
 
     story.append(_section('4. Safety Message'))
-    safety = d.get('safety_message','')
+    safety = d.get('safety_message') or ''
     for line in textwrap.wrap(safety, 100) or ['—']:
         story.append(Paragraph(line, S['body']))
     story.append(Spacer(1, 8))
@@ -322,7 +322,6 @@ def render_ics204(d, incident_name, period, div_label=''):
         if not rid and not rldr:
             if i > 5: break
             continue
-        is_placeholder = rid.endswith('+')
         row = [rid or '—', rldr or '—', rtyp or '—', str(rnum or ''), rcon or '']
         res_rows.append(row)
     rt = Table(res_rows, colWidths=[1.4*inch,1.8*inch,1.0*inch,0.8*inch,1.8*inch], repeatRows=1)

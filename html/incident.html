@@ -293,7 +293,7 @@
 </div>
 
 <script>
-const ICS_API = 'http://192.168.50.1:5051';
+const ICS_API = 'http://192.168.50.1:5055';
 const MAIN_API = 'http://192.168.50.1:5050';
 let currentInc = null;
 let incVariant = 'FEMA';
@@ -416,7 +416,7 @@ function renderWorkspace() {
         Started: ${(periods[periods.length-1].started||'').slice(0,16).replace('T',' ')} UTC
       </span>` : ''}
       <div style="margin-left:auto">
-        <a href="general_info.html?incident=${incId}&period=${period}"
+        <a href="general_info.html?incident=${inc.id}&period=${curPeriod}"
            style="background:var(--amber);border-color:var(--amber);
                   color:#001428;font-weight:bold;text-decoration:none;
                   padding:8px 16px;border-radius:4px;font-size:12px;
@@ -589,6 +589,8 @@ function clearNewIncForm() {
 }
 
 // ── Close incident ─────────────────────────────────────────────────────
+function editIncident(id){ location.href = 'incident_mgmt.html?edit=' + encodeURIComponent(id); }
+
 async function closeIncident(incId) {
   if (!confirm('Close this incident? This cannot be undone.')) return;
   await fetch(`${ICS_API}/api/ics/incidents/${incId}/close`, {method:'POST'});

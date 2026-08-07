@@ -1,0 +1,47 @@
+name: Syntax & Integrity Check
+
+# Catches the class of breakage that a browser-loaded, never-compiled app hides:
+# Python syntax errors, shell syntax errors, invalid JSON, duplicated-file corruption,
+# and JavaScript syntax errors inside HTML <script> blocks. Runs on every push/PR.
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Python — every .py must compile
+        run: python -m compileall -q python docs_generators
+
+      - name: Shell — every .sh must pass bash -n
+        run: |
+          rc=0
+          while IFS= read -r f; do bash -n "$f" || { echo "SHELL SYNTAX FAIL: $f"; rc=1; }; done \
+            < <(find scripts -name '*.sh')
+          exit $rc
+
+      - name: JSON — every .json must parse
+        run: |
+          rc=0
+          while IFS= read -r f; do python -m json.tool "$f" > /dev/null || { echo "INVALID JSON: $f"; rc=1; }; done \
+            < <(find . -path ./.git -prune -o -name '*.json' -print)
+          exit $rc
+
+      - name: Duplicated-file / corruption signature
+        run: python scripts/preflight_check.py --corruption-only
+
+      - name: JavaScript — node --check every HTML <script> block and .js
+        run: python scripts/preflight_check.py --js-only

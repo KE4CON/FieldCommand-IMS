@@ -110,6 +110,12 @@
           <input type="text" id="f-msg-num" placeholder="ICS-213-001">
         </div>
         <div class="form-group">
+          <label>From Callsign (auto-fills name)</label>
+          <input type="text" id="f-from-call" placeholder="KE4CON"
+            oninput="this.value=this.value.toUpperCase()" onchange="lookupFromCall(this.value)">
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">Type your callsign and tab out — the name below fills from the FCC database. Leave blank if not a ham.</div>
+        </div>
+        <div class="form-group">
           <label>From (Name / Title)</label>
           <input type="text" id="f-from-name" placeholder="Communications Unit Leader">
         </div>
@@ -138,6 +144,13 @@
         <label>Message Text</label>
         <textarea id="f-message" rows="8" placeholder="Enter the message here. Be clear and concise. State who needs to take action, what action is needed, and by when."></textarea>
       </div>
+      <div class="form-group">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer">
+          <input type="checkbox" id="f-reply-requested" style="width:16px;height:16px">
+          Reply Requested
+        </label>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">Check this if the recipient must send a reply back. It prints on the form so the reply block is clearly expected.</div>
+      </div>
     </div>
 
     <div class="form-card">
@@ -150,6 +163,13 @@
         <div class="form-group">
           <label>Approved By (Title / Position)</label>
           <input type="text" id="f-approved-pos" placeholder="Incident Command">
+        </div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label>Approved By (Signature — draw below)</label>
+          <canvas id="sig-approved" width="500" height="110"
+            style="border:1px solid var(--line);border-radius:4px;background:#fff;touch-action:none;cursor:crosshair;width:100%;max-width:520px;display:block"></canvas>
+          <button type="button" class="btn btn-secondary" onclick="clearSig('sig-approved')" style="font-size:10px;padding:3px 8px;margin-top:4px">Clear Signature</button>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">Sign with a mouse, stylus, or finger. Optional — leave blank to sign the printed copy by hand.</div>
         </div>
         <div class="form-group">
           <label>Reply (if applicable)</label>
@@ -230,6 +250,7 @@
     <div class="ics-row">
       <div class="ics-cell" style="flex:2;">
         <div class="label">7. Approved By (Signature)</div>
+        <img id="p-approved-sig" style="max-height:44px;display:none">
         <div class="val" id="p-approved-name" style="min-height:30px;"></div>
       </div>
       <div class="ics-cell" style="flex:2;">
@@ -244,7 +265,7 @@
 
     <div class="ics-row" style="background:#f5f5f5;">
       <div class="ics-cell" style="flex:1;">
-        <div class="label">8. Reply</div>
+        <div class="label">8. Reply <span id="p-reply-requested" style="color:#b00;font-weight:bold"></span></div>
         <div class="val ics-msg-body" id="p-reply" style="min-height:80px;"></div>
       </div>
     </div>
@@ -270,6 +291,8 @@
     <div style="display:flex;gap:8px;flex-wrap:wrap;">
       <button class="btn btn-primary" onclick="window.print()">🖨 Print Form</button>
       <button class="btn btn-secondary" onclick="saveToLog()">💾 Save to Log</button>
+      <button class="btn btn-secondary" onclick="exportText()">📄 Export (.txt)</button>
+      <button class="btn btn-secondary" onclick="sendViaWinlink()">📡 Send via Winlink</button>
       <button class="btn btn-secondary" onclick="document.getElementById('form-section').style.display='block';document.getElementById('ics-form').classList.remove('show');document.getElementById('preview-actions').style.display='none';">← Edit</button>
     </div>
   </div>
@@ -296,6 +319,24 @@
 const API='http://192.168.50.1:5050';
 let savedForms=JSON.parse(localStorage.getItem('fc_ics213_log')||'[]');
 let current=null;
+
+// ── Inline signature pad (mouse / stylus / touch) ────────────────────────────
+const _sigHas={};
+function initSigPad(id){
+  const c=document.getElementById(id); if(!c) return;
+  const ctx=c.getContext('2d'); ctx.lineWidth=2; ctx.lineCap='round'; ctx.strokeStyle='#111';
+  let drawing=false;
+  const pos=e=>{const r=c.getBoundingClientRect();const t=e.touches?e.touches[0]:e;
+    return {x:(t.clientX-r.left)*(c.width/r.width),y:(t.clientY-r.top)*(c.height/r.height)};};
+  const start=e=>{drawing=true;const p=pos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);_sigHas[id]=true;if(e.preventDefault)e.preventDefault();};
+  const move =e=>{if(!drawing)return;const p=pos(e);ctx.lineTo(p.x,p.y);ctx.stroke();if(e.preventDefault)e.preventDefault();};
+  const end  =()=>{drawing=false;};
+  c.addEventListener('mousedown',start); c.addEventListener('mousemove',move); window.addEventListener('mouseup',end);
+  c.addEventListener('touchstart',start,{passive:false}); c.addEventListener('touchmove',move,{passive:false}); c.addEventListener('touchend',end);
+}
+function clearSig(id){const c=document.getElementById(id);if(!c)return;c.getContext('2d').clearRect(0,0,c.width,c.height);_sigHas[id]=false;}
+function sigDataURL(id){return _sigHas[id]?document.getElementById(id).toDataURL('image/png'):'';}
+window.addEventListener('DOMContentLoaded',()=>initSigPad('sig-approved'));
 
 setInterval(()=>{ document.getElementById('utc-clock').textContent=new Date().toUTCString().slice(17,22)+'Z'; },1000);
 
@@ -330,6 +371,10 @@ function generateForm(){
   set('p-reply',f('f-reply'));
   set('p-replied-name',f('f-replied-name'));
   set('p-reply-dt',f('f-reply-dt'));
+  const replyReq=document.getElementById('f-reply-requested').checked;
+  set('p-reply-requested', replyReq ? '— REPLY REQUESTED' : '');
+  const sig=sigDataURL('sig-approved'); const sigImg=document.getElementById('p-approved-sig');
+  if(sig){ sigImg.src=sig; sigImg.style.display=''; } else { sigImg.style.display='none'; }
   document.getElementById('p-print-time').textContent=new Date().toUTCString().slice(0,25);
 
   document.getElementById('ics-form').classList.add('show');
@@ -337,7 +382,61 @@ function generateForm(){
   document.getElementById('form-section').style.display='none';
   document.getElementById('ics-form').scrollIntoView({behavior:'smooth'});
 
-  current={number:f('f-msg-num'),subject:f('f-subject'),to:f('f-to-name'),from:f('f-from-name'),date:dt,saved_at:new Date().toISOString()};
+  current={number:f('f-msg-num'),subject:f('f-subject'),to:f('f-to-name'),from:f('f-from-name'),
+           from_call:f('f-from-call'),message:f('f-message'),
+           reply_requested:document.getElementById('f-reply-requested').checked,
+           date:dt,saved_at:new Date().toISOString()};
+}
+
+// Auto-fill the From name from the FCC database when a callsign is entered.
+async function lookupFromCall(call){
+  call=(call||'').trim().toUpperCase();
+  if(!call) return;
+  try{
+    const r=await fetch(`${API}/api/fcc?call=${encodeURIComponent(call)}`);
+    if(!r.ok) return;
+    const d=await r.json();
+    if(d && d.name){
+      const nameEl=document.getElementById('f-from-name');
+      if(nameEl && !nameEl.value.trim()) nameEl.value=d.name;
+    }
+  }catch(e){}
+}
+
+// Build a plain-text ICS-213 (also the body handed to a Winlink client).
+function ics213Text(){
+  const f=id=>(document.getElementById(id).value||'').trim();
+  const L=[];
+  L.push('ICS-213 GENERAL MESSAGE');
+  L.push('Incident: '+f('f-incident'));
+  L.push('Msg #: '+f('f-msg-num'));
+  L.push('To: '+f('f-to-name')+(f('f-to-pos')?' / '+f('f-to-pos'):''));
+  L.push('From: '+f('f-from-name')+(f('f-from-call')?' ('+f('f-from-call')+')':'')+(f('f-from-pos')?' / '+f('f-from-pos'):''));
+  L.push('Date/Time: '+f('f-date')+(f('f-time')?' '+f('f-time'):''));
+  L.push('Subject: '+f('f-subject'));
+  if(document.getElementById('f-reply-requested').checked) L.push('** REPLY REQUESTED **');
+  L.push(''); L.push('MESSAGE:'); L.push(f('f-message'));
+  const appr=f('f-approved-name'); if(appr){ L.push(''); L.push('Approved by: '+appr+(f('f-approved-pos')?' / '+f('f-approved-pos'):'')); }
+  return L.join('\r\n');
+}
+function download213(name, text){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([text],{type:'text/plain'}));
+  a.download=name; a.click();
+}
+function exportText(){
+  const num=(document.getElementById('f-msg-num').value||'ICS-213').trim().replace(/[^a-z0-9\-]+/gi,'_');
+  download213(num+'.txt', ics213Text());
+}
+// Prepare a Winlink message: download a ready-to-send text the operator loads into
+// their Winlink client (Pat / Winlink Express). No live Winlink link is required.
+function sendViaWinlink(){
+  const to=(document.getElementById('f-to-name').value||'').trim();
+  const subj=(document.getElementById('f-subject').value||'ICS-213').trim();
+  const header='To: '+to+'\r\nSubject: '+subj+'\r\n\r\n';
+  const num=(document.getElementById('f-msg-num').value||'ICS-213').trim().replace(/[^a-z0-9\-]+/gi,'_');
+  download213('winlink_'+num+'.txt', header+ics213Text());
+  alert('Winlink message prepared and downloaded.\n\nOpen it in your Winlink client (Pat or Winlink Express) and send. Fill the recipient’s Winlink address in the To line.');
 }
 
 function saveToLog(){
@@ -365,7 +464,9 @@ function renderLog(){
 function deleteForm(i){if(!confirm('Delete?'))return;savedForms.splice(i,1);localStorage.setItem('fc_ics213_log',JSON.stringify(savedForms));renderLog();}
 function clearSaved(){if(!confirm('Clear all saved ICS-213 forms?'))return;savedForms=[];localStorage.setItem('fc_ics213_log','[]');renderLog();}
 function clearForm(){
-  ['f-incident','f-to-name','f-to-pos','f-msg-num','f-from-name','f-from-pos','f-date','f-time','f-subject','f-message','f-approved-name','f-approved-pos','f-reply','f-replied-name','f-reply-dt'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['f-incident','f-to-name','f-to-pos','f-msg-num','f-from-call','f-from-name','f-from-pos','f-date','f-time','f-subject','f-message','f-approved-name','f-approved-pos','f-reply','f-replied-name','f-reply-dt'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const rr=document.getElementById('f-reply-requested'); if(rr) rr.checked=false;
+  clearSig('sig-approved');
   document.getElementById('ics-form').classList.remove('show');
   document.getElementById('preview-actions').style.display='none';
   document.getElementById('form-section').style.display='block';

@@ -139,6 +139,19 @@
       </div>
     </div>
 
+    <!-- Resources Involved -->
+    <div class="form-card">
+      <h2>2b. Resources Involved</h2>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:6px">Equipment, vehicles, and other resources used this period (radios, generators, go-boxes, vehicles…). Optional.</div>
+      <table class="pers-table">
+        <thead><tr><th>Resource</th><th>Type / Kind</th><th style="width:36px;"></th></tr></thead>
+        <tbody id="res-body"></tbody>
+      </table>
+      <div style="margin-top:8px;">
+        <button class="btn btn-secondary" onclick="addResource()" style="font-size:11px;">+ Add Resource</button>
+      </div>
+    </div>
+
     <!-- Activity Log -->
     <div class="form-card">
       <h2>3. Activity Log</h2>
@@ -164,6 +177,13 @@
         <div class="form-group">
           <label>Date / Time Prepared</label>
           <input type="text" id="f-prep-dt">
+        </div>
+        <div class="form-group" style="grid-column:1/-1">
+          <label>Signature (draw below)</label>
+          <canvas id="sig-prep" width="500" height="110"
+            style="border:1px solid var(--line);border-radius:4px;background:#fff;touch-action:none;cursor:crosshair;width:100%;max-width:520px;display:block"></canvas>
+          <button type="button" class="btn btn-secondary" onclick="clearSig('sig-prep')" style="font-size:10px;padding:3px 8px;margin-top:4px">Clear Signature</button>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px">Sign with a mouse, stylus, or finger. Optional — leave blank to sign the printed copy by hand.</div>
         </div>
       </div>
     </div>
@@ -223,6 +243,16 @@
       </div>
     </div>
 
+    <div class="ics-field-row" id="p-res-row" style="display:none;">
+      <div class="ics-field" style="flex:1;">
+        <div class="lbl">4b. Resources Involved</div>
+        <table class="pers-print-table" id="p-res-table">
+          <thead><tr><th>Resource</th><th>Type / Kind</th></tr></thead>
+          <tbody id="p-res-body"></tbody>
+        </table>
+      </div>
+    </div>
+
     <div class="ics-field-row">
       <div class="ics-field" style="flex:1;">
         <div class="lbl">5. Activity Log</div>
@@ -236,6 +266,7 @@
     <div class="ics-field-row">
       <div class="ics-field" style="flex:2;">
         <div class="lbl">6. Prepared By (Name, Position)</div>
+        <img id="p-prep-sig" style="max-height:44px;display:none">
         <div class="val" id="p-prep"></div>
       </div>
       <div class="ics-field" style="flex:1;">
@@ -253,6 +284,7 @@
     <div style="display:flex;gap:8px;flex-wrap:wrap;">
       <button class="btn btn-primary" onclick="window.print()">🖨 Print Form</button>
       <button class="btn btn-secondary" onclick="saveLocal()">💾 Save</button>
+      <button class="btn btn-secondary" onclick="exportToFemaLabor()">💵 Export to FEMA Labor</button>
       <button class="btn btn-secondary" onclick="document.getElementById('form-section').style.display='block';document.getElementById('ics-form').classList.remove('show');document.getElementById('preview-actions').style.display='none';">← Edit</button>
     </div>
   </div>
@@ -262,8 +294,64 @@
 
 <script>
 const API='http://192.168.50.1:5050';
+const ICS_API='http://192.168.50.1:5055';
 let personnel=[];
 let activities=[];
+let resources=[];
+
+// ── Inline signature pad (mouse / stylus / touch) ────────────────────────────
+const _sigHas={};
+function initSigPad(id){
+  const c=document.getElementById(id); if(!c) return;
+  const ctx=c.getContext('2d'); ctx.lineWidth=2; ctx.lineCap='round'; ctx.strokeStyle='#111';
+  let drawing=false;
+  const pos=e=>{const r=c.getBoundingClientRect();const t=e.touches?e.touches[0]:e;
+    return {x:(t.clientX-r.left)*(c.width/r.width),y:(t.clientY-r.top)*(c.height/r.height)};};
+  const start=e=>{drawing=true;const p=pos(e);ctx.beginPath();ctx.moveTo(p.x,p.y);_sigHas[id]=true;if(e.preventDefault)e.preventDefault();};
+  const move =e=>{if(!drawing)return;const p=pos(e);ctx.lineTo(p.x,p.y);ctx.stroke();if(e.preventDefault)e.preventDefault();};
+  const end  =()=>{drawing=false;};
+  c.addEventListener('mousedown',start); c.addEventListener('mousemove',move); window.addEventListener('mouseup',end);
+  c.addEventListener('touchstart',start,{passive:false}); c.addEventListener('touchmove',move,{passive:false}); c.addEventListener('touchend',end);
+}
+function clearSig(id){const c=document.getElementById(id);if(!c)return;c.getContext('2d').clearRect(0,0,c.width,c.height);_sigHas[id]=false;}
+function sigDataURL(id){return _sigHas[id]?document.getElementById(id).toDataURL('image/png'):'';}
+window.addEventListener('DOMContentLoaded',()=>initSigPad('sig-prep'));
+
+function addResource(name='',type=''){ resources.push({name,type}); renderResources(); }
+function removeResource(i){ resources.splice(i,1); renderResources(); }
+function renderResources(){
+  const tbody=document.getElementById('res-body');
+  tbody.innerHTML=resources.map((r,i)=>`<tr>
+    <td><input type="text" value="${esc(r.name)}" oninput="resources[${i}].name=this.value" placeholder="Generator, Go-Box 1, Vehicle…"></td>
+    <td><input type="text" value="${esc(r.type)}" oninput="resources[${i}].type=this.value" placeholder="Equipment, Vehicle…"></td>
+    <td><button class="btn btn-danger" onclick="removeResource(${i})" style="padding:3px 6px;font-size:10px;">✕</button></td>
+  </tr>`).join('');
+}
+
+// Push this period's personnel to the FEMA Labor cost tracker (hours/rates filled there).
+async function exportToFemaLabor(){
+  const people=personnel.filter(p=>(p.name||'').trim());
+  if(!people.length){ alert('Add at least one person before exporting to FEMA Labor.'); return; }
+  const incId=localStorage.getItem('selectedIncident')||'';
+  const incName=document.getElementById('f-incident').value.trim();
+  const dateWorked=document.getElementById('f-op-from').value.trim();
+  let ok=0;
+  for(const p of people){
+    try{
+      const r=await fetch(`${ICS_API}/api/ics/fema/labor`,{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          incident_id:incId, employee:p.name, position:p.pos||'',
+          dept:p.aff||'', date_worked:dateWorked,
+          notes:'From ICS-214'+(incName?' — '+incName:'')
+        })
+      });
+      if(r.ok) ok++;
+    }catch(e){}
+  }
+  alert(`Exported ${ok} of ${people.length} personnel to FEMA Labor.\nOpen the FEMA cost page to enter hours and rates.`+
+        (incId?'':'\n\nNote: no incident is currently selected, so these were added without an incident link.'));
+}
 
 setInterval(()=>{ document.getElementById('utc-clock').textContent=new Date().toUTCString().slice(17,22)+'Z'; },1000);
 
@@ -328,11 +416,19 @@ function generateForm(){
   set('p-leader-pos',f('f-leader-pos'));
   set('p-prep',[f('f-prep-name'),f('f-prep-pos')].filter(Boolean).join(', '));
   set('p-prep-dt',f('f-prep-dt'));
+  const sig=sigDataURL('sig-prep'); const sigImg=document.getElementById('p-prep-sig');
+  if(sig){ sigImg.src=sig; sigImg.style.display=''; } else { sigImg.style.display='none'; }
   document.getElementById('p-print-time').textContent=new Date().toUTCString().slice(0,25);
 
   // Personnel
   const persTbody=document.getElementById('p-pers-body');
   persTbody.innerHTML=personnel.length ? personnel.map(p=>`<tr><td>${esc(p.name)}</td><td>${esc(p.pos)}</td><td>${esc(p.aff)}</td></tr>`).join('') : '<tr><td colspan="3" style="color:#999;">—</td></tr>';
+
+  // Resources involved
+  const resItems=resources.filter(r=>(r.name||'').trim());
+  const resRow=document.getElementById('p-res-row');
+  document.getElementById('p-res-body').innerHTML=resItems.map(r=>`<tr><td>${esc(r.name)}</td><td>${esc(r.type)}</td></tr>`).join('');
+  resRow.style.display=resItems.length?'':'none';
 
   // Activities
   const actTbody=document.getElementById('p-act-body');
@@ -345,7 +441,7 @@ function generateForm(){
 }
 
 function saveLocal(){
-  const data={incident:document.getElementById('f-incident').value,personnel,activities,saved_at:new Date().toISOString()};
+  const data={incident:document.getElementById('f-incident').value,personnel,activities,resources,saved_at:new Date().toISOString()};
   fetch(`${API}/api/forms`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).catch(()=>{});
   localStorage.setItem('fc_ics214_last',JSON.stringify(data));
   alert('Form saved.');
@@ -353,8 +449,9 @@ function saveLocal(){
 
 function clearForm(){
   ['f-incident','f-op-from','f-op-to','f-op-time-from','f-unit-name','f-leader-name','f-leader-pos','f-prep-name','f-prep-pos','f-prep-dt'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  personnel=[]; activities=[];
-  renderPersonnel(); renderActivities();
+  personnel=[]; activities=[]; resources=[];
+  renderPersonnel(); renderActivities(); renderResources();
+  clearSig('sig-prep');
   document.getElementById('ics-form').classList.remove('show');
   document.getElementById('preview-actions').style.display='none';
   document.getElementById('form-section').style.display='block';
@@ -364,7 +461,7 @@ function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').
 
 // Try to restore last session
 const last=localStorage.getItem('fc_ics214_last');
-if(last){try{const d=JSON.parse(last);personnel=d.personnel||[];activities=d.activities||[];}catch(e){}}
+if(last){try{const d=JSON.parse(last);personnel=d.personnel||[];activities=d.activities||[];resources=d.resources||[];}catch(e){}}
 
 // ── Winlink form import hook (opened from winlink-import.html?import=1) ────────
 function applyWinlinkImport(){
@@ -405,6 +502,7 @@ if(!personnel.length){addPersonnel();addPersonnel();addPersonnel();}
 else renderPersonnel();
 if(!activities.length){addEntry();addEntry();addEntry();addEntry();addEntry();}
 else renderActivities();
+renderResources();
 
 if(_imported){ generateForm(); }
 

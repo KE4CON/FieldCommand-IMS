@@ -56,7 +56,7 @@ EDITIONS = {
         'sat_eth':      'Satellite Ethernet adapter',
         'cell_plan':    'cellular data plan',
         'sat_service':  'satellite internet service',
-        'pubsafety':    'public-safety VHF (150-160 MHz)',
+        'pubsafety':    'public service communications',
         'sources_extra':'',
     },
 }

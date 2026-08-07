@@ -58,8 +58,8 @@ def ch20():
          'Personnel count and cost contribution from T-card resources, '
          'grouped by resource type.'],
         ['Cost projection',
-         'Extrapolated cost based on current daily burn rate × remaining '
-         'operational periods. Useful for budget management during multi-day incidents.'],
+         'Extrapolated cost at fixed horizons (12 hr, 24 hr, 72 hr, and 7 days) '
+         'based on the current burn rate. Useful for budget management during multi-day incidents.'],
         ['Budget tracker',
          'Compare actual costs against an authorized budget amount. '
          'Enter the budget figure to see remaining balance and percentage used.'],
@@ -358,14 +358,18 @@ def ch23():
     s.append(SP(6))
     s.append(P('22.2  ICS-309 Communications Log', H2))
     s.append(P(
-        'The ICS-309 is generated automatically from Net Logger data. '
-        'It can also be filled manually using the ICS-309 form (ics309.html) '
-        'for radio traffic not captured in the Net Logger.'))
+        'There are two ways to produce an ICS-309. The <b>automatic</b> one lives on the '
+        'Net Logger (netcontrol.html / starcom.html): its <b>Export ICS-309</b> button builds a '
+        'Communications Log from that net — the message traffic first (from/to/time/precedence/'
+        'message), then the station check-in list, with the net name, frequency/mode, and '
+        'open/close times in the header. It both downloads a saved file and opens a print view. '
+        'Separately, <b>ics309.html</b> is a manual-entry ICS-309 for traffic not captured in a '
+        'Net Logger.'))
     s += steps([
-        'Navigate to <b>ICS-309</b> from the Communications section.',
-        'Select the net or communications log to reference.',
-        'Add manual entries for traffic not logged in the Net Logger.',
-        'Click <b>Export ICS-309</b> to download the formatted log for the Incident Action Plan (IAP).',
+        'For a net you logged: open that net in the Net Logger and click <b>Export ICS-309</b>.',
+        'For manual entry: open <b>ics309.html</b> and type each log line by hand.',
+        'Either way, the exported ICS-309 downloads as a file (and can be printed) for the '
+        'Incident Action Plan (IAP).',
     ])
     s.append(PB())
     return s
@@ -437,26 +441,26 @@ def ch25():
     s = chapter(25, 'National Weather Service (NWS) Animated Radar',
                 'http://192.168.50.1/radar.html')
     s.append(P(
-        'The Next Generation Radar (NEXRAD) Radar page displays animated radar loops from the National '
-        'Weather Service using NWS RIDGE II tiles. It requires an active internet '
-        'connection and shows an offline banner when Wide Area Network (WAN) is unavailable. '
+        'The Next Generation Radar (NEXRAD) Radar page displays animated radar loops sourced from '
+        'RadrView, with an Iowa Environmental Mesonet (IEM) NEXRAD Web Map Service (WMS) fallback if '
+        'RadrView is unavailable. It requires an active internet connection to fetch new frames. '
         'The radar page is accessible from all three dashboard modes.'))
     s.append(SP(6))
 
-    s.append(P('24.1  Radar Controls', H2))
+    s.append(P('25.1  Radar Controls', H2))
     s.append(tbl(['CONTROL', 'FUNCTION'], [
         ['▶ / ⏸ Play/Pause',   'Start or stop the radar animation loop'],
         ['◀ / ▶ Step',         'Advance one frame at a time — useful for analyzing storm movement'],
         ['Timeline scrubber',  'Jump to any point in the loaded radar loop'],
-        ['Speed selector',     '0.5× · 1× · 2× · 4× — controls animation playback speed'],
-        ['Palette',            'Standard (reflectivity color scale) · Dual-pol · Enhanced'],
-        ['Station selector',   'Select the nearest NEXRAD radar station for your deployment area'],
+        ['Speed selector',     'Slow · Medium · Fast — controls animation playback speed'],
+        ['Palette',            'Default · Dark · NOAA'],
+        ['Station selector',   'Center the map on a chosen NEXRAD station’s coverage area'],
         ['Auto-refresh',       'Loads new radar data every 5 minutes automatically'],
         ['Reflectivity legend','Color scale overlay showing dBZ values and associated precip rates'],
     ], widths=[1.4*inch, CW-1.4*inch]))
     s.append(SP(6))
 
-    s.append(P('24.2  Fallback When Offline', H2))
+    s.append(P('25.2  Fallback When Offline', H2))
     s.append(P(
         'When the WAN connection is unavailable, the radar page displays an '
         '"Offline — radar unavailable" banner and shows the last successfully '
@@ -472,10 +476,10 @@ def ch26():
     s = chapter(26, 'High Frequency (HF) Propagation Tool',
                 'http://192.168.50.1/propagation.html')
     s.append(P(
-        'The HF Propagation tool retrieves current band conditions from the '
-        'Space Weather Prediction Center (SWPC) and displays a band-by-band '
-        'propagation forecast. It requires internet access to fetch current data '
-        'but displays the last retrieved forecast when offline.'))
+        'The HF Propagation tool retrieves current band conditions from '
+        'HamQSL (N0NBH, hamqsl.com) and displays a band-by-band '
+        'propagation summary. It requires internet access to fetch current data; '
+        'when offline it shows a model-based estimate rather than live solar data.'))
     s.append(SP(6))
     s.append(tbl(['BAND', 'TYPICAL USE IN Emergency Communications (EMCOMM)'], [
         ['160m / 80m',  'Regional night-time nets, 0–500 mile coverage'],
@@ -551,7 +555,7 @@ def ch28():
     s.append(P(
         'AMPRNet — Amateur Packet Radio Network — is the global amateur radio IP network '
         'operating on the 44.0.0.0/8 address block permanently assigned by IANA to ARRL '
-        'for amateur radio use. The <b>44Net Connect</b> service (connect.44net.cloud) '
+        'for amateur radio use. The ARDC gateway (<b>amprgw.ampr.org:51820</b>) '
         'provides a WireGuard-encrypted tunnel into that network over the internet. '
         'When configured on the dedicated gateway Raspberry Pi (192.168.50.2), '
         'every device on EMCOMM-NET gains access to AMPRNet resources — '
@@ -656,7 +660,7 @@ def ch28():
         'route advertisement, and verification checklist — are in '
         'Installation Guide Step 11. '
         'Portal registration: portal.ampr.org. '
-        'WireGuard tunnel service: connect.44net.cloud.',
+        'WireGuard gateway endpoint: amprgw.ampr.org:51820.',
         'note'))
     s.append(PB())
     return s
@@ -873,7 +877,7 @@ def ch32():
     s.append(SP(6))
     s.append(P(
         'Each channel entry stores: channel name, frequency/talk group, mode, '
-        'CTCSS tone, purpose, and agency assignment. '
+        'CTCSS tone, purpose, and Division / Group assignment. '
         'The library is pre-populated with common interoperability channels '
         'and can be customized for your jurisdiction\'s channel plan.'))
     s.append(SP(4))
@@ -942,8 +946,10 @@ def ch34():
         'The Cheat Sheets page (cheatsheets.html) provides quick-reference cards '
         'for common amateur radio and Incident Command System (ICS) procedures: '
         'phonetic alphabet, Q-codes, RST signal report scale, '
-        'ICS command structure, National Incident Management System (NIMS) resource typing, and common High Frequency (HF) calling frequencies. '
-        'All cards are printable and designed to fit on a single laminated sheet.'))
+        'ICS command structure, and common High Frequency (HF) calling frequencies. '
+        'All cards are printable and designed to fit on a single laminated sheet. '
+        '(National Incident Management System (NIMS) resource typing is not a cheat-sheet '
+        'card — it has its own dedicated page, resource_types.html.)'))
     s.append(SP(6))
 
     s.append(P('33.3  NIMS Resource Typing Library', H2))
@@ -967,9 +973,9 @@ def ch34():
     s.append(P(
         'The Print Center (printcenter.html) provides optimized print layouts for '
         'all ICS forms and documents. From any device on EMCOMM-NET, select the '
-        'document to print and click Print — the job routes to any printer '
-        'configured on the Pi via CUPS. Print jobs do not require the operator '
-        'to be physically at the printer.'))
+        'document and click Print — printing uses your device’s own browser print '
+        'dialog (you can print to any printer that device can reach, or save as PDF). '
+        'There is no server-side (CUPS/remote) print spooling.'))
     s.append(PB())
     return s
 
@@ -1061,7 +1067,8 @@ def ch_appendix():
         ('incident.html',          'Incident Management / Command Section'),
         ('incident_mgmt.html',     'Incident Archive, Restore, Delete, Beta Reset'),
         ('event_templates.html',   'Pre-Planned Event Templates'),
-        ('resources.html',         'T-Card Resource Board'),
+        ('resources.html',         'Resource Board (flat list)'),
+        ('ics/operations.html',    'T-Card Resource Board (drag-and-drop)'),
         ('resource_map.html',      'GPS-Tracked Resource Map'),
         ('resource_types.html',    'National Incident Management System (NIMS) Resource Typing Library'),
         ('checkin.html',           'Manual Check-In (ICS-211)'),
@@ -1113,23 +1120,29 @@ def ch_appendix():
 
     s.append(P('A.2  API Ports', H2))
     s.append(tbl(['PORT', 'SERVICE', 'FUNCTION'], [
-        ['5050',  'fcc_lookup_server.py',    'FCC lookups · incidents · roster · WAN config'],
-        ['5051',  'ics_platform_server.py',  'ICS forms · T-cards · check-ins · FEMA costs · Global Positioning System (GPS)'],
-        ['9000',  'amprgate_status.py',      '44Net status — public read-only on EMCOMM-NET'],
-        ['9001',  'amprgate_status.py',      'Tunnel control — localhost only'],
+        ['5050',  'fcc_lookup_server.py',    'FCC lookups · nets/roster · hospitals · repeaters · resource types · facilities · GPS/dead-man switch · WAN config'],
+        ['5051',  'health_monitor.py',       'System health — CPU/memory/disk, service states, connectivity roll-up'],
+        ['5055',  'ics_platform_server.py',  'ICS forms · incidents · T-cards · check-ins · IAP · FEMA costs'],
+        ['5056',  'reference_server.py',     'Offline reference library (renders PDFs)'],
+        ['8083',  'tile_server.py',          'Offline map tiles (MBTiles)'],
+        ['9000',  'amprgate_status.py',      '44Net status — read-only on EMCOMM-NET (gateway Pi, 192.168.50.2)'],
+        ['9001',  'amprgate_status.py',      'Tunnel control — localhost only (gateway Pi)'],
         ['80',    'nginx',                   'Serves all HTML pages and static assets'],
     ], widths=[0.5*inch, 2.2*inch, CW-2.7*inch]))
     s.append(SP(6))
 
     s.append(P('A.3  Background Services (systemd)', H2))
     s.append(tbl(['SERVICE FILE', 'FUNCTION'], [
-        ['fieldcommand-main.service',        'ICS platform server (port 5051)'],
-        ['fieldcommand-fcc.service',         'FCC lookup and config server (port 5050)'],
+        ['ics-platform.service',             'ICS platform server (port 5055)'],
+        ['fcc-lookup.service',               'FCC lookup and config server (port 5050)'],
+        ['health-monitor.service',           'System health monitor (port 5051)'],
+        ['fieldcommand-refs.service',        'Offline reference library server (port 5056)'],
+        ['fieldcommand-tiles.service',       'Offline map tile server (port 8083)'],
+        ['deadmans.service',                 'Per-net dead-man switch monitor'],
         ['wan-monitor.service',              'WAN source monitoring and failover'],
         ['aprs-rf.service',                  'RF APRS receive via direwolf or Terminal Node Controller (TNC)'],
-        ['amprgate-status.service',          '44Net status API (ports 9000/9001)'],
-        ['amprgate-poll.service',            '44Net tunnel keepalive and reconnect'],
-        ['kiwix-serve.service',              'Kiwix offline reference library server'],
+        ['amprgate-poll.service',            '44Net tunnel keepalive and reconnect (gateway Pi)'],
+        ['kiwix.service',                    'Kiwix offline reference library server'],
         ['backup.service / backup.timer',    'Nightly SQLite backup to Universal Serial Bus (USB) drive'],
     ], widths=[2.1*inch, CW-2.1*inch]))
     s.append(SP(6))

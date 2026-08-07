@@ -75,6 +75,25 @@ The recurring theme: the manual was written to an intended design; the code ofte
 
 # 🟡 Bucket 3 — Manual overstates / mislabels (fix the manual)
 
+> **STATUS 2026-08-07: ALL CORRECTED in the generator source** (`docs_generators/manual_ch_*.py`),
+> and a full test build of the Complete Manual renders cleanly with the fixes in place. Fixed:
+> radar source (RIDGE II → RadrView/IEM WMS) + speed/palette labels; HF prop source (SWPC → HamQSL);
+> appendix port table (5051→5055, added 5051-health/5056/8083, corrected 5050 scope) and service
+> names; Ch16 T-card board URL (resources.html → ics/operations.html); ICS-309 section (auto-309 is
+> on the Net Logger, ics309.html is manual-entry); FEMA 44→45 rates; dashboard mode names/order
+> (Amateur / Starcom / ICS) and WAN-as-card; incident types (six → ~32 categorized); net-logger
+> button labels (Create Net / LOG ENTRY — the rest of that walkthrough is now *accurate* post-Bucket-2);
+> template names/sections/no-auto-nav; QR Google-Charts-deprecated note; IAP variant (FEMA/USCG/NWCG);
+> cost projection (fixed horizons); Print Center (browser print, not CUPS); Channel Library
+> (Division/Group); cheat-sheets (NIMS typing is its own page); AMPRNet endpoint (amprgw.ampr.org:51820);
+> observer header; FCC lookup (Enter/button, weekly).
+>
+> **Still outstanding (separate, known):** the printed **Table of Contents + subsection numbering drift**
+> — `manual_build.py`'s hand-maintained `CHAPTERS` list and several `manual_ch_19_36.py` subsection
+> labels lag the real chapter numbers. Chapter *content* is correct; the TOC list needs a focused
+> rebuild from the real `chapter()` titles. **The PDF must be regenerated** (`manual_build.py`) on a
+> build host to pick up these source edits.
+
 **Wrong data source**
 - Radar (Ch 25) is **RadrView / IEM WMS**, not "NWS RIDGE II."
 - HF Propagation (Ch 26) is **HamQSL (N0NBH)**, not "SWPC/NOAA."

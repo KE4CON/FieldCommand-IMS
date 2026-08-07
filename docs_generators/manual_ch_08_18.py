@@ -58,8 +58,9 @@ def ch9():
         'The Uniform Resource Locator (URL) is copied to the clipboard. Share it via Winlink, JS8Call, in person, '
         'or announce it over the net.',
         'Any device on EMCOMM-NET opens the link in a browser. No login required.',
-        'The observer page shows: net name, frequency, mode, elapsed time, '
-        'current check-in list with callsigns/names/times, and the traffic log. '
+        'The observer page shows the net name, the current check-in list with '
+        'callsigns/names/times, and the traffic log. (The observer header does not '
+        'currently repeat the frequency/mode or a live elapsed timer.) '
         'It refreshes automatically every 15 seconds.',
     ])
     s.append(SP(6))
@@ -154,9 +155,9 @@ def ch11():
     s.append(P('11.1  Manual Lookup', H2))
     s += steps([
         'Navigate to <b>Callsign Lookup</b> from the dashboard.',
-        'Type any callsign in the search field. Results appear as you type.',
-        'The result shows: callsign, name, license class, expiration date, '
-        'grid square, and mailing address city/state.',
+        'Type a callsign and press <b>Enter</b> or click the lookup button — results are not live-as-you-type.',
+        'The result shows: callsign, name, license class, license status, '
+        'expiration date, and mailing address city/state.',
         'Click <b>Copy</b> to copy the callsign to the clipboard, or '
         '<b>Add to Roster</b> to create a roster entry from the FCC record.',
     ])
@@ -168,19 +169,19 @@ def ch11():
     s.append(SP(2))
     s.append(tbl(['WHERE', 'HOW IT WORKS'], [
         ['Net Control Logger',
-         'As you type a callsign in the check-in field, the name and license '
+         'When you enter a callsign in the check-in field, the name and license '
          'class fill automatically. A red border appears if the callsign is not '
          'found or the license is expired.'],
         ['Scan Check-In',
          'After a Quick Response (QR) code scan or manual entry, if the code is a callsign, '
-         'the FCC record is used to fill the name field.'],
-        ['ICS-213 / ICS-214',
-         'The "From" callsign field in the general message form validates '
-         'against the FCC database and fills the operator name.'],
+         'the FCC record is used to fill the name field (falling back to the roster).'],
+        ['ICS-213',
+         'The "From Callsign" field on the general message form fills the '
+         'operator name from the FCC database.'],
     ], widths=[1.6*inch, CW-1.6*inch]))
     s.append(SP(4))
     s.append(note(
-        'The FCC database is updated quarterly. To update, download the FCC '
+        'The FCC database is refreshed weekly. To update, download the FCC '
         'ULS database export from wireless.fcc.gov/uls and run the database '
         'import script as described in the Installation Guide.', 'note'))
     s.append(PB())
@@ -228,10 +229,17 @@ def ch13():
     s = chapter(13, 'Tactical Automatic Packet Reporting System (APRS) Map',
                 'http://192.168.50.1/tactical.html')
     s.append(P(
-        'The Tactical Map provides an offline-capable, Leaflet-based map showing APRS '
+        'The Tactical Map is a Leaflet-based map showing APRS '
         'station positions from both RF APRS (always available) and APRS-IS internet '
         'feed (when Wide Area Network (WAN) is up). It is the primary situational awareness tool for '
         'tracking field teams, vehicles, and mobile resources.'))
+    s.append(SP(3))
+    s.append(note(
+        'Offline caveat: the map is fully offline only when the Leaflet library and map tiles '
+        'are served locally from the Pi. In the current build, Leaflet and the default base tiles '
+        'load from the internet (a Content Delivery Network), so without a WAN the base map may not '
+        'draw — station markers and overlays still plot on whatever base is available. Vendor Leaflet '
+        'and pre-download tiles locally for a true no-internet map.', 'warn'))
     s.append(SP(6))
 
     s.append(P('13.1  Map Layers', H2))
@@ -355,7 +363,7 @@ def ch15():
          'Note: the Safety Officer (SOFR) and Public Information Officer (PIO) '
          'are Command Staff — they report directly to the Incident Commander (IC), not to a section.'],
         ['Operations',
-         'resources.html',
+         'ics/operations.html',
          'T-card resource board by type and status, assignment tracking, '
          'Global Positioning System (GPS) resource map, ICS-204 assignment lists. '
          'Note: ICS-204 is developed by the Resources Unit (Planning) '
@@ -500,7 +508,7 @@ def ch15():
 
 def ch16():
     s = chapter(16, 'Incident Command System (ICS) Operations Section — T-Card Resource Board',
-                'http://192.168.50.1/resources.html')
+                'http://192.168.50.1/ics/operations.html')
     s.append(P(
         'The T-Card Resource Board is the Operations Section\'s primary resource '
         'tracking tool. It mirrors the physical ICS T-card system used in traditional '
@@ -750,7 +758,7 @@ def ch17():
     s.append(SP(4))
     s += steps([
         'Navigate to <b>http://192.168.50.1/iap.html</b> or click IAP in the Planning section.',
-        'Select the operational period and variant (full/command/logistics).',
+        'Select the operational period and form variant (FEMA / USCG / NWCG).',
         'Check the forms to include. Required forms are pre-checked. '
         'Typically include ICS-202, 203, 204, 205, 205A, 206, 207, and 208.',
         '<b>To print on-site:</b> click <b>🖨 Print IAP</b>. '

@@ -121,7 +121,7 @@ def ch1():
          'section dividers. Print center for on-site IAP packages.'],
         ['Federal Emergency Management Agency (FEMA) Documentation',
          'FEMA Public Assistance (PA) cost tracking: Force Account Labor with fringe, Equipment with '
-         '2025 FEMA rate schedule (44 built-in rates), Materials, and Contracts. '
+         '2025 FEMA rate schedule (45 built-in rates), Materials, and Contracts. '
          'Real-time cost dashboard. ICS-214 import. Project Worksheet text export.'],
         ['Amateur Radio EMCOMM',
          'Net control logger with FCC callsign auto-fill from offline 800,000+ '
@@ -185,24 +185,24 @@ def ch2():
         'Switching modes does not affect any data — all tools remain accessible in every mode.'))
     s.append(SP(4))
     s.append(tbl(['MODE', 'TOOLS SHOWN PROMINENTLY', 'BEST FOR'], [
-        ['All-Hazards ICS',
-         'Full ICS platform, Incident Action Plan (IAP) forms, T-card resource board, personnel '
-         'check-in, Federal Emergency Management Agency (FEMA) cost documentation, event templates, cost dashboard',
-         'Any active incident requiring ICS structure'],
-        ['Amateur Radio EMCOMM',
+        ['Amateur Radio',
          'Net control logger, Federal Communications Commission (FCC) callsign lookup, Automatic Packet Reporting System (APRS) map, Winlink, '
          'JS8Call, Amateur Packet Radio Network (AMPRNet) gateway, High Frequency (HF) propagation, National Traffic System (NTS) radiogram',
          'Amateur radio net operations, ARES/RACES activations'],
-        ['Public Safety',
+        ['Starcom / Public Safety',
          'Starcom net logger, radio ID roster, resource map, Wide Area Network (WAN) status, '
          'weather radar, hospital directory, facilities',
          'Public safety radio nets, Starcom check-in operations'],
+        ['ICS',
+         'Full ICS platform, Incident Action Plan (IAP) forms, T-card resource board, personnel '
+         'check-in, Federal Emergency Management Agency (FEMA) cost documentation, event templates, cost dashboard',
+         'Any active incident requiring ICS structure'],
     ], widths=[1.3*inch, CW-3.1*inch, 1.8*inch]))
     s.append(SP(6))
 
     s.append(P('2.3  WAN Status Indicators', H2))
     s.append(P(
-        'The top of the dashboard always shows a live WAN status bar. It polls every '
+        'Each mode includes a live WAN status card (not a top-of-page bar). It polls every '
         '30 seconds and changes color automatically.'))
     s.append(SP(4))
     s.append(tbl(['INDICATOR', 'MEANING', 'CORE TOOLS AFFECTED?'], [
@@ -341,9 +341,10 @@ def ch4():
     s.append(SP(4))
     s += steps([
         'Click the <b>QR</b> button on any member card.',
-        'The modal shows the QR code. When internet is available, a true scannable '
-        'QR image is generated. When offline, the member ID is displayed in large '
-        'text as a manual entry fallback.',
+        'The modal shows the QR code. When internet is available, a scannable '
+        'QR image is generated (via the Google Charts image API — note this Google '
+        'service is deprecated and may not always render). When offline, the member '
+        'ID is displayed in large text as a manual-entry fallback.',
         'Click <b>🖨 Print</b> to open a clean print-ready page with the QR, '
         'the member\'s name, and the FieldCommand check-in Uniform Resource Locator (URL).',
         'Click <b>💾 Save PNG</b> to download the QR code image — members can '
@@ -423,27 +424,25 @@ def ch5():
 
     s.append(P('5.3  Incident Types', H2))
     s.append(P(
-        'When creating an incident, select the type that best matches the activation. '
-        'The type pre-selects recommended ICS forms, sets appropriate resource categories '
-        'on the T-card board, and labels the incident badge throughout the interface. '
+        'When creating an incident, pick the type that best matches the activation from a '
+        'large categorized dropdown (about 32 options grouped into seven categories). '
+        'The type labels the incident badge throughout the interface. '
         'All types use the same underlying ICS form set — the type is an organizational '
         'label, not a functional restriction.'))
     s.append(SP(4))
-    s.append(tbl(['TYPE', 'DESCRIPTION'], [
-        ['All-Hazards',      'General ICS incident — suitable for any event not specifically covered below. '
-                             'Default for most EMCOMM activations.'],
-        ['Search and Rescue','SAR-specific resource typing and form defaults. '
-                             'Enables tracking of search teams, medical, and air assets.'],
-        ['Severe Weather',   'Shelter operations, damage assessment, and utility coordination. '
-                             'Activates shelter capacity tracking and damage survey forms.'],
-        ['Mass Gathering',   'Large planned event with medical and crowd management focus. '
-                             'Pre-populates medical strike team and perimeter resource categories.'],
-        ['HazMat',           'Hazardous materials response with decon and zoning emphasis. '
-                             'Enables hot/warm/cold zone resource tracking.'],
-        ['Exercise',         'Training scenario — marked with 🧪 badge throughout the interface. '
-                             'Beta Reset (available under incident settings) wipes all exercise data '
-                             'while preserving roster, channel library, and repeater database.'],
+    s.append(tbl(['CATEGORY', 'EXAMPLE TYPES'], [
+        ['Natural Hazards',  'Winter Storm, Flooding, Tornado / Severe Weather, Earthquake, Wildfire, Heat Emergency, Drought'],
+        ['Technological',    'Hazmat / Chemical Spill, Transportation Accident, Structure Fire, Power Outage / Infrastructure, Dam Failure, Nuclear / Radiological'],
+        ['Human-Caused',     'Mass Casualty Incident, Active Threat, Civil Disturbance, Terrorism'],
+        ['Search & Rescue',  'Wilderness, Urban, Water, Missing Person — Dementia / Memory, Missing Person — Child'],
+        ['Public Health',    'Disease Outbreak / Pandemic, Mass Casualty — Medical, Public Health Emergency'],
+        ['Planned Events',   'Planned Event — Public Safety, Planned Event — EMCOMM Exercise, Drill / Training Exercise'],
+        ['Other',            'Mutual Aid Request, EOC Activation, Other / All-Hazards'],
     ], widths=[1.4*inch, CW-1.4*inch]))
+    s.append(SP(3))
+    s.append(P(
+        'Any incident can be flagged as a drill/exercise. Beta Reset (under incident settings) '
+        'wipes exercise data while preserving the roster, channel library, and repeater database.'))
     s.append(SP(6))
 
     s.append(P('5.4  Operational Periods', H2))
@@ -513,22 +512,22 @@ def ch6():
         'incident types. Each can be used as-is or edited to match your local protocols.'))
     s.append(SP(4))
     s.append(tbl(['TEMPLATE', 'PRE-CONFIGURED CONTENTS'], [
-        ['Emergency Shelter Operations',
+        ['Shelter Activation',
          'Shelter management objectives, cot and supply resource types, '
          'registration and medical channels, Red Cross coordination section'],
-        ['Search and Rescue',
+        ['Search & Rescue',
          'Search and Rescue (SAR) objectives, field team and K9 resource types, '
          'search sector channels, base camp and medical branches'],
-        ['Severe Weather Response',
+        ['Severe Weather',
          'Damage assessment objectives, utility and debris resource types, '
          'shelter and Emergency Operations Center (EOC) coordination channels, public information branch'],
-        ['Mass Gathering / Special Event',
+        ['Mass Gathering / Event',
          'Crowd management objectives, medical and security resource types, '
          'venue and dispatch channels, medical and operations branches'],
-        ['HazMat Response',
+        ['HazMat / Spill',
          'Decon and zoning objectives, HazMat team resource types, '
          'hot/warm/cold zone channels, safety officer emphasis'],
-        ['Exercise / Training Scenario',
+        ['Planned Exercise / Drill',
          'Training objectives, evaluator and observer resource types, '
          'exercise control channel, scenario-tagged (🧪)'],
     ], widths=[1.9*inch, CW-1.9*inch]))
@@ -543,14 +542,15 @@ def ch6():
         'to customize before activating.',
         'Click <b>Activate Template</b>. FieldCommand IMS creates a new incident '
         'pre-loaded with all objectives, resource types, channels, and ICS org '
-        'structure from the template. You are taken directly to the new incident.',
+        'structure from the template, then shows success links to open the new '
+        'incident (it does not navigate there automatically).',
     ])
     s.append(SP(6))
 
     s.append(P('6.3  Creating and Editing Templates', H2))
     s += steps([
         'Click the <b>Manage Templates</b> tab.',
-        'To edit a template, click its card. The edit modal opens with four tabs: '
+        'To edit a template, click its card. The edit modal opens with sections for '
         '<b>Objectives</b>, <b>Resources</b>, <b>Channels</b>, and <b>Organization</b>.',
         'Edit any field live. Objectives and resource types are listed — click '
         '<b>+ Add</b> to add items, click the × to remove them.',
@@ -580,7 +580,7 @@ def ch7():
         'Navigate to <b>Net Control Logger</b> from the dashboard.',
         'Enter the net name, frequency, and mode (SSB / FM / Digital / Other).',
         'Verify the date and time are correct — these become the net open timestamp.',
-        'Click <b>Open Net</b>. The status banner turns green and the elapsed timer starts.',
+        'Click <b>Create Net</b>. The net becomes active and the live elapsed timer starts.',
         'Share the <b>🔗 Observer Link</b> with section chiefs or served agencies '
         'so they can monitor the net in read-only view on their own devices. '
         'The observer page auto-refreshes every 15 seconds.',
@@ -596,9 +596,9 @@ def ch7():
         'member ID is filled as well. No internet required.'))
     s.append(SP(4))
     s += steps([
-        'Type the station\'s callsign. Name fills automatically as you type.',
+        'Type the station\'s callsign. The name fills automatically once you finish entering it.',
         'Enter location or remarks if desired.',
-        'Click <b>Check In</b> or press Enter. The entry appears with a timestamp.',
+        'Click <b>LOG ENTRY</b> or press Enter. The entry appears with a timestamp.',
         'To check a station out, click <b>Check Out</b> on their row. '
         'Checkout time and participation duration are recorded automatically, '
         'rounded up to the nearest quarter-hour for reimbursement documentation.',

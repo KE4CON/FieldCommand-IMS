@@ -32,7 +32,7 @@ FieldCommand started as a **communications** app (the legacy "FieldComms" brand 
 
 (Both editions run the same **servers**: two Raspberry Pi 5 (16 GB) units — the FieldCommand app server and the 44Net gateway. The Pi 500/500+ distinction is only the operator *workstations*.)
 
-Current state (needs reconciling — see `docs/MANUAL_VS_CODE.md`): the Complete Manual is the World edition but still has a stray `K9ESV` and still uses "Starcom"; the only ESV user doc is a shorter 27-chapter *User Guide* (not a full ESV twin of the 36-chapter manual); install guides exist in both editions; the single BOM is the ESV edition (no World BOM yet).
+Current state (needs reconciling — see `docs/MANUAL_VS_CODE.md`): the Complete Manual is the World edition but still has a stray `K9ESV` and still uses "Starcom" (**ESV twin still to do**); the only ESV user doc is a shorter 27-chapter *User Guide* (not a full ESV twin of the 36-chapter manual); install guides exist in both editions (ESV on Pi 500+, World on Pi 500). **BOM: done** — `bom_build.py` now emits both editions from one source (`FieldCommand_BOM.pdf` = ESV, `FieldCommand_BOM_World.pdf` = World).
 
 ## Related Programs — Do Not Merge
 - **APRS Command** — separate C#/Avalonia desktop APRS client (Jim's). Planned integration: it can replace YAAC as FieldCommand's APRS client/feed (see "Radio direction" below). No shared code; data integration only.

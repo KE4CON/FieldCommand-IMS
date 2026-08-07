@@ -138,7 +138,7 @@ function statBadge(status) {
 async function loadAll() {
   try {
     // Active incidents from main API
-    const r1 = await fetch(`${API}/api/incidents`);
+    const r1 = await fetch(`${ICS_API}/api/ics/incidents`);
     const all = r1.ok ? await r1.json() : [];
     allIncidents = all;
 
@@ -344,7 +344,7 @@ async function hardDelete(id, name, isArchived) {
 // ── Mark/unmark as scenario ───────────────────────────────────────
 async function markScenario(id, flag) {
   try {
-    await fetch(`${API}/api/incidents`, {
+    await fetch(`${ICS_API}/api/ics/incidents`, {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({ id, is_scenario: flag })
     });

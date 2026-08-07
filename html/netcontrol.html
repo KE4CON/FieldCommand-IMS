@@ -464,10 +464,10 @@ function renderNet() {
     [...traffic].reverse().map(t =>
       `<div class="traffic-item">
         <div style="display:flex;justify-content:space-between">
-          <span><strong>${t.from_call||"?"}</strong> → <strong>${t.to||"?"}</strong></span>
+          <span><strong>${t.from_call||"?"}</strong> → <strong>${t.to_call||"?"}</strong></span>
           <span style="font-size:11px;color:var(--muted)">${(t.timestamp||"").slice(11,19)} UTC</span>
         </div>
-        <div style="font-size:12px;color:var(--muted)">${t.type||""} · ${t.note||""}</div>
+        <div style="font-size:12px;color:var(--muted)">${t.handling||t.precedence||""} · ${t.text||""}</div>
       </div>`
     ).join("");
 
@@ -559,9 +559,9 @@ async function logTraffic() {
   if (!currentNetId) { alert("Select a net first"); return; }
   const msg = {
     from_call: document.getElementById("trafficFrom").value.trim().toUpperCase(),
-    to:        document.getElementById("trafficTo").value.trim(),
-    type:      document.getElementById("trafficType").value,
-    note:      document.getElementById("trafficNote").value.trim(),
+    to_call:   document.getElementById("trafficTo").value.trim(),
+    handling:  document.getElementById("trafficType").value,
+    text:      document.getElementById("trafficNote").value.trim(),
   };
   try {
     await fetch(`${API}/api/nets/${currentNetId}/traffic`, {
@@ -759,6 +759,17 @@ function exportICS309() {
     </tr>`;
   }).join("");
 
+  // ICS-309 is a Communications Log: its primary content is the MESSAGE TRAFFIC.
+  const traffic = currentNet.traffic || [];
+  const trafficRows = traffic.map((t,i) => `<tr>
+      <td>${i+1}</td>
+      <td>${(t.timestamp||"").slice(11,19)}</td>
+      <td>${t.from_call||""}</td>
+      <td>${t.to_call||""}</td>
+      <td>${t.handling||t.precedence||""}</td>
+      <td>${t.text||""}</td>
+    </tr>`).join("");
+
   const html = `<!DOCTYPE html><html><head><title>ICS-309 — ${currentNet.name}</title>
   <style>
     body{font-family:Arial,sans-serif;font-size:10px;margin:20px}
@@ -778,12 +789,22 @@ function exportICS309() {
   </div>
   <div class="meta">
     <div class="meta-box"><div class="meta-label">Net Type</div>${currentNet.type||"—"}</div>
+    <div class="meta-box"><div class="meta-label">Frequency / Mode</div>${currentNet.freq||"—"}</div>
     <div class="meta-box"><div class="meta-label">Net Opened</div>${fmtTime(opened)}</div>
     <div class="meta-box"><div class="meta-label">Net Closed</div>${closed?fmtTime(closed):"Still Open"}</div>
     <div class="meta-box"><div class="meta-label">Net Duration</div>${dur}</div>
     <div class="meta-box"><div class="meta-label">Total Check-Ins</div>${entries.length}</div>
+    <div class="meta-box"><div class="meta-label">Total Messages</div>${traffic.length}</div>
     <div class="meta-box"><div class="meta-label">Date</div>${new Date().toLocaleDateString()}</div>
   </div>
+  <div style="font-weight:bold;font-size:12px;margin:6px 0 4px">Message Traffic Log</div>
+  <table><thead><tr>
+    <th>#</th><th>Time (UTC)</th><th>From</th><th>To</th>
+    <th>Precedence / Type</th><th>Message</th>
+  </tr></thead>
+  <tbody>${trafficRows || '<tr><td colspan="6" style="text-align:center;color:#777">No message traffic logged</td></tr>'}</tbody></table>
+
+  <div style="font-weight:bold;font-size:12px;margin:14px 0 4px">Station Check-In Log</div>
   <table><thead><tr>
     <th>#</th><th>Time (UTC)</th><th>Callsign</th><th>Name</th>
     <th>Status</th><th>Location</th><th>Remarks</th>
@@ -798,6 +819,9 @@ function exportICS309() {
   <script src="/lib/identity.js"><\/script>
 </body></html>`;
 
+  const _dlName = `ICS-309_${(currentNet.name||"net").replace(/[^a-z0-9]+/gi,"_")}_${new Date().toISOString().slice(0,10)}.html`;
+  const _dlA = document.createElement("a");
+  _dlA.href = URL.createObjectURL(new Blob([html], {type:"text/html"})); _dlA.download = _dlName; _dlA.click();
   const win = window.open("","_blank");
   win.document.write(html);
   win.document.close();

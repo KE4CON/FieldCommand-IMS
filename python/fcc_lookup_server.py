@@ -13,7 +13,7 @@ FCC callsign lookup uses the separate fcc.db (read-only).
 """
 
 import json, sqlite3, time, threading, subprocess, socket
-import logging, sys
+import logging, sys, re
 from datetime import datetime, timezone
 from pathlib import Path
 from http.server import HTTPServer, BaseHTTPRequestHandler
@@ -33,6 +33,56 @@ DATA    = BASE / "data"
 FCC_DB  = DATA / "fcc.db"
 
 # ── FCC callsign lookup (separate read-only database) ────────────────────────
+def fcc_search(filters, limit=100):
+    """Search fcc.db by name/location/class for the callsign Advanced Search page."""
+    if not FCC_DB.exists():
+        return []
+    where = []; params = []
+    if filters.get("last_name"):
+        where.append("UPPER(e.last_name) LIKE ?"); params.append(filters["last_name"].upper() + "%")
+    if filters.get("first_name"):
+        where.append("UPPER(e.first_name) LIKE ?"); params.append(filters["first_name"].upper() + "%")
+    if filters.get("state"):
+        where.append("UPPER(e.state) = ?"); params.append(filters["state"].upper())
+    if filters.get("city"):
+        where.append("UPPER(e.city) LIKE ?"); params.append(filters["city"].upper() + "%")
+    if filters.get("license_class"):
+        where.append("a.operator_class = ?"); params.append(filters["license_class"].upper())
+    if not where:
+        return []
+    try:
+        lim = max(1, min(500, int(limit)))
+    except (ValueError, TypeError):
+        lim = 100
+    sql = (
+        "SELECT e.callsign, e.first_name, e.last_name, e.city, e.state, "
+        "h.license_status, h.expired_date, a.operator_class "
+        "FROM en e "
+        "LEFT JOIN hd h ON e.unique_system_id = h.unique_system_id "
+        "LEFT JOIN am a ON e.unique_system_id = a.unique_system_id "
+        "WHERE " + " AND ".join(where) + " ORDER BY e.last_name, e.first_name LIMIT ?"
+    )
+    try:
+        conn = sqlite3.connect(str(FCC_DB)); conn.row_factory = sqlite3.Row
+        rows = conn.execute(sql, params + [lim]).fetchall()
+        conn.close()
+        out = []
+        for r in rows:
+            nm = ((r['first_name'] or '') + ' ' + (r['last_name'] or '')).strip()
+            out.append({
+                "callsign": r["callsign"],
+                "name": nm,
+                "first_name": r["first_name"] or "", "last_name": r["last_name"] or "",
+                "city": r["city"] or "", "state": r["state"] or "",
+                "status": r["license_status"] or "",
+                "license_class": r["operator_class"] or "",
+                "expired_date": r["expired_date"] or "",
+            })
+        return out
+    except Exception:
+        return []
+
+
 def fcc_lookup(callsign):
     if not FCC_DB.exists():
         return None
@@ -134,12 +184,22 @@ CERT_COLS  = ["ics100","ics200","ics300","ics400","ics700","ics800",
               "emcomm1","emcomm2","cpr","first_aid","cert"]
 EQUIP_COLS = ["hf","vhf","digital","packet","pactor","vara_hf","vara_fm",
               "aprs","winlink","go_box","generator","battery","vehicle"]
+# UI labels <-> DB columns. The roster page speaks these labels; the DB uses the
+# columns above. Normalize at the API boundary so certs/equipment actually persist.
+CERT_LABELS  = {"ics100":"ICS-100","ics200":"ICS-200","ics300":"ICS-300","ics400":"ICS-400",
+                "ics700":"ICS-700","ics800":"ICS-800","emcomm1":"EmComm I","emcomm2":"EmComm II",
+                "cpr":"CPR/AED","first_aid":"First Aid","cert":"CERT"}
+EQUIP_LABELS = {"hf":"HF","vhf":"VHF","digital":"Digital","packet":"Packet","pactor":"PACTOR",
+                "vara_hf":"VARA HF","vara_fm":"VARA FM","aprs":"APRS","winlink":"Winlink",
+                "go_box":"Go-Box","generator":"Generator","battery":"Battery","vehicle":"Vehicle"}
 
 def member_to_dict(row):
     if row is None: return None
     d = dict(row)
-    d["certifications"] = {c: bool(d.pop(f"cert_{c}", 0))  for c in CERT_COLS}
-    d["equipment"]      = {e: bool(d.pop(f"equip_{e}", 0)) for e in EQUIP_COLS}
+    d["certifications"] = {CERT_LABELS[c]:  bool(d.pop(f"cert_{c}", 0))  for c in CERT_COLS}
+    d["equipment"]      = {EQUIP_LABELS[e]: bool(d.pop(f"equip_{e}", 0)) for e in EQUIP_COLS}
+    # role column stores one-or-more roles joined with "; "; expose as a list too
+    d["roles"] = [r.strip() for r in str(d.get("role") or "").split(";") if r.strip()]
     # Ensure member_id always present (may be missing on older rows)
     if not d.get("member_id"):
         d["member_id"] = d.get("id", "")
@@ -165,6 +225,15 @@ def member_upsert_sql():
 def member_vals(m, mid, now):
     certs = m.get("certifications",{}) or {}
     equip = m.get("equipment",{}) or {}
+    # Accept either the DB column key ("ics100") or the UI label ("ICS-100")
+    cflag = lambda col: int(bool(certs.get(col,  certs.get(CERT_LABELS[col]))))
+    eflag = lambda col: int(bool(equip.get(col, equip.get(EQUIP_LABELS[col]))))
+    # roles may arrive as a list (checkboxes) or a single "role" string; store joined
+    roles = m.get("roles")
+    if isinstance(roles, list) and roles:
+        role_val = "; ".join(str(r).strip() for r in roles if str(r).strip())
+    else:
+        role_val = m.get("role","Operator")
     # Generate member_id if not provided: ESV- + 4-digit sequence from id
     member_id = m.get("member_id","").strip()
     if not member_id:
@@ -176,10 +245,10 @@ def member_vals(m, mid, now):
             mtype,
             m.get("visitor_agency",""),
             m.get("first_name",""), m.get("last_name",""),
-            m.get("role","Operator"), m.get("phone",""), m.get("email",""),
+            role_val, m.get("phone",""), m.get("email",""),
             m.get("grid",""), m.get("lat"), m.get("lon"), m.get("notes",""),
-            *(int(bool(certs.get(c))) for c in CERT_COLS),
-            *(int(bool(equip.get(e))) for e in EQUIP_COLS),
+            *(cflag(c) for c in CERT_COLS),
+            *(eflag(e) for e in EQUIP_COLS),
             m.get("created", now), now]
 
 # ── HTTP Handler ──────────────────────────────────────────────────────────────
@@ -229,6 +298,15 @@ class Handler(BaseHTTPRequestHandler):
             if not call: return self.send_json({"error":"Missing call"},400)
             r = fcc_lookup(call)
             return self.send_json(r) if r else self.send_json({"error":"Not found"},404)
+
+        elif path == "/api/fcc/search":
+            return self.send_json(fcc_search({
+                "last_name":     qs.get("last_name",[""])[0],
+                "first_name":    qs.get("first_name",[""])[0],
+                "state":         qs.get("state",[""])[0],
+                "city":          qs.get("city",[""])[0],
+                "license_class": qs.get("license_class",[""])[0],
+            }, qs.get("limit",["100"])[0]))
 
         elif path == "/api/fcc/status":
             if FCC_DB.exists():
@@ -350,7 +428,26 @@ class Handler(BaseHTTPRequestHandler):
                     break
 
             if not row:
-                return self.send_json({"found":False,"error":f"No roster member found for code: {code}"})
+                # Not on the roster — if the scanned code is a callsign, fall back to
+                # the FCC database so a scanned ham still auto-fills a name.
+                if re.fullmatch(r"[A-Z0-9]{1,3}[0-9][A-Z]{1,3}", code):
+                    fcc = fcc_lookup(code)
+                    if fcc and fcc.get("name"):
+                        return self.send_json({
+                            "found":       True,
+                            "source":      "fcc",
+                            "on_roster":   False,
+                            "member_id":   "",
+                            "name":        fcc["name"],
+                            "callsign":    code,
+                            "radio_id":    "",
+                            "agency":      "",
+                            "role":        "",
+                            "member_type": "visitor",
+                            "license_class": fcc.get("operator_class",""),
+                            "suggested_position": "Amateur Radio Operator",
+                        })
+                return self.send_json({"found":False,"error":f"No roster member or FCC record for code: {code}"})
 
             r = dict(row)
             # Build pre-fill data for the check-in form
@@ -410,10 +507,20 @@ class Handler(BaseHTTPRequestHandler):
 
         elif path == "/api/dms":
             row = c.execute("SELECT * FROM dms_state WHERE id=1").fetchone()
-            if row:
-                d=dict(row); d["armed_nets"]=jload(d.get("armed_nets"),[])
-                return self.send_json(d)
-            return self.send_json({"state":"disarmed","armed_nets":[],"threshold_min":30})
+            armed = jload(dict(row).get("armed_nets") if row else None, {})
+            if not isinstance(armed, dict): armed = {}
+            nets = {}
+            for n in c.execute("SELECT id, name, net_opened FROM nets WHERE net_closed IS NULL OR net_closed=''").fetchall():
+                nid = str(n["id"]); a = armed.get(nid, {})
+                nets[nid] = {
+                    "name": n["name"],
+                    "threshold_minutes": a.get("threshold_min", 30),
+                    "state": a.get("state", "disarmed"),
+                    "armed_at": a.get("armed_at"),
+                    "triggered_at": a.get("triggered_at"),
+                    "last_activity": _net_last_activity(c, n["id"]) or n["net_opened"],
+                }
+            return self.send_json({"nets": nets})
 
         elif path == "/api/forms":
             ft = qs.get("type",["all"])[0]
@@ -855,20 +962,34 @@ class Handler(BaseHTTPRequestHandler):
             c.commit(); return self.send_json({"ok":True,"id":fid})
 
         elif path == "/api/dms/arm":
-            c.execute("""UPDATE dms_state SET state='armed',armed_at=?,
-                threshold_min=?,armed_nets=?,last_activity=? WHERE id=1""",
-                (now,body.get("threshold_min",30),jdump(body.get("nets",[])),now))
+            nid = str(body.get("net_id","")).strip()
+            if not nid: return self.send_json({"error":"net_id required"},400)
+            row = c.execute("SELECT armed_nets FROM dms_state WHERE id=1").fetchone()
+            armed = jload(row["armed_nets"] if row else None, {})
+            if not isinstance(armed, dict): armed = {}
+            try: thr = int(body.get("threshold", body.get("threshold_min", 30)) or 30)
+            except (ValueError, TypeError): thr = 30
+            armed[nid] = {"threshold_min": thr, "armed_at": now, "state": "armed", "triggered_at": None}
+            c.execute("UPDATE dms_state SET state='armed', armed_nets=?, last_activity=? WHERE id=1", (jdump(armed), now))
             c.commit(); return self.send_json({"ok":True})
 
         elif path == "/api/dms/reset":
-            row=c.execute("SELECT state FROM dms_state WHERE id=1").fetchone()
-            ns="armed" if row and row["state"]!="disarmed" else "disarmed"
-            c.execute("UPDATE dms_state SET state=?,triggered_at=NULL,last_activity=? WHERE id=1",(ns,now))
-            c.commit(); return self.send_json({"ok":True})
+            nid = str(body.get("net_id","")).strip()
+            row = c.execute("SELECT armed_nets FROM dms_state WHERE id=1").fetchone()
+            armed = jload(row["armed_nets"] if row else None, {})
+            if isinstance(armed, dict) and nid in armed:
+                armed[nid]["state"] = "armed"; armed[nid]["triggered_at"] = None
+                c.execute("UPDATE dms_state SET armed_nets=? WHERE id=1", (jdump(armed),)); c.commit()
+            return self.send_json({"ok":True})
 
         elif path == "/api/dms/disarm":
-            c.execute("UPDATE dms_state SET state='disarmed' WHERE id=1")
-            c.commit(); return self.send_json({"ok":True})
+            nid = str(body.get("net_id","")).strip()
+            row = c.execute("SELECT armed_nets FROM dms_state WHERE id=1").fetchone()
+            armed = jload(row["armed_nets"] if row else None, {})
+            if isinstance(armed, dict) and nid in armed:
+                del armed[nid]
+                c.execute("UPDATE dms_state SET armed_nets=?, state=? WHERE id=1", (jdump(armed), "armed" if armed else "disarmed")); c.commit()
+            return self.send_json({"ok":True})
 
         else:
             self.send_json({"error":"Not found"},404)
@@ -965,20 +1086,49 @@ class Handler(BaseHTTPRequestHandler):
         return {"verdict":verdict,"checks":results,"timestamp":now}
 
 
+def _net_last_activity(c, net_id):
+    """Latest check-in/traffic timestamp for a net (per-net dead-man's switch)."""
+    key = str(net_id); ts = None
+    for tbl in ("net_entries", "net_traffic"):
+        try:
+            r = c.execute(f"SELECT MAX(timestamp) FROM {tbl} WHERE CAST(net_id AS TEXT)=?", (key,)).fetchone()
+            if r and r[0] and (ts is None or str(r[0]) > str(ts)): ts = r[0]
+        except Exception:
+            pass
+    return ts
+
+
 def dms_monitor():
     while True:
         try:
-            c=get_conn()
-            row=c.execute("SELECT * FROM dms_state WHERE id=1").fetchone()
-            if row and row["state"]=="armed":
-                thr=(row["threshold_min"] or 30)*60; last=row["last_activity"]
-                if last:
-                    dt=datetime.fromisoformat(last.replace("Z","+00:00"))
-                    el=(datetime.now(timezone.utc)-dt).total_seconds()
-                    if el>thr:
-                        c.execute("UPDATE dms_state SET state='triggered',triggered_at=? WHERE id=1",(utcnow(),))
-                    elif el>thr*0.75:
-                        c.execute("UPDATE dms_state SET state='warning' WHERE id=1")
+            c = get_conn()
+            row = c.execute("SELECT armed_nets FROM dms_state WHERE id=1").fetchone()
+            armed = jload(row["armed_nets"] if row else None, {})
+            if isinstance(armed, dict) and armed:
+                changed = False
+                for nid, a in armed.items():
+                    if a.get("state") == "triggered":
+                        continue
+                    thr = (a.get("threshold_min") or 30) * 60
+                    last = _net_last_activity(c, nid)
+                    if not last:
+                        continue
+                    try:
+                        dt = datetime.fromisoformat(str(last).replace("Z", "+00:00"))
+                        if dt.tzinfo is None: dt = dt.replace(tzinfo=timezone.utc)
+                        el = (datetime.now(timezone.utc) - dt).total_seconds()
+                    except Exception:
+                        continue
+                    ns = "triggered" if el > thr else ("warning" if el > thr * 0.75 else "armed")
+                    if ns != a.get("state"):
+                        a["state"] = ns
+                        if ns == "triggered": a["triggered_at"] = utcnow()
+                        changed = True
+                if changed:
+                    gs = ("triggered" if any(x.get("state") == "triggered" for x in armed.values())
+                          else "warning" if any(x.get("state") == "warning" for x in armed.values())
+                          else "armed")
+                    c.execute("UPDATE dms_state SET armed_nets=?, state=? WHERE id=1", (jdump(armed), gs))
                     c.commit()
         except Exception as e: log.warning(f"DMS monitor: {e}")
         time.sleep(30)

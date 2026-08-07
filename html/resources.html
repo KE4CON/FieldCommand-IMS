@@ -276,7 +276,7 @@ setInterval(()=>{
 
 async function loadResources() {
   try {
-    const r = await fetch(`${API}/resources`);
+    const r = await fetch(`${API}/api/resources`);
     if(r.ok) resources = await r.json();
   } catch {
     const saved = localStorage.getItem('fc_resources');
@@ -287,7 +287,7 @@ async function loadResources() {
 
 function save() {
   localStorage.setItem('fc_resources', JSON.stringify(resources));
-  fetch(`${API}/resources`, {
+  fetch(`${API}/api/resources`, {
     method:'PUT', headers:{'Content-Type':'application/json'},
     body: JSON.stringify(resources)
   }).catch(()=>{});

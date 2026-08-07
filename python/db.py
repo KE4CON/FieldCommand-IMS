@@ -2130,6 +2130,7 @@ def _alter_existing_tables():
         ("hourly_rate",  "REAL DEFAULT 0"),
         ("cost_basis",   "TEXT DEFAULT ''"),
         ("hours_on_incident", "REAL DEFAULT 0"),
+        ("period",       "INTEGER DEFAULT 1"),
     ]
     for col, defn in tc_additions:
         if col not in tc_existing:

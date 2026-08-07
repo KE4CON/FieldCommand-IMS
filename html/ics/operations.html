@@ -278,19 +278,25 @@ function uid(){ return 'R' + Date.now().toString(36).toUpperCase(); }
 
 function load(){
   try{ resources = JSON.parse(localStorage.getItem(STORE) || '[]'); }catch(e){ resources=[]; }
-  if(!resources.length) loadFromServer();
-  else render();
+  render();                 // instant paint from the local cache
+  loadFromServer();         // then refresh from the server (authoritative)
 }
 
 async function loadFromServer(){
+  const incId = getIncidentId();
   try{
-    const res = await fetch(`${API}/resources`);
-    const data = await res.json();
-    if(Array.isArray(data.resources) && data.resources.length){
-      resources = data.resources;
+    // Read from the T-card store — the same table the board writes to, and where
+    // ICS-211 self-check-ins now land, so a check-in shows up here automatically.
+    const url = incId ? `${ICS_API}/api/ics/tcards?incident_id=${encodeURIComponent(incId)}`
+                      : `${ICS_API}/api/ics/tcards`;
+    const res = await fetch(url);
+    if(res.ok){
+      const data  = await res.json();
+      const cards = Array.isArray(data) ? data : (data.tcards || data.cards || []);
+      resources = cards.map(mapTCard);
       localStorage.setItem(STORE, JSON.stringify(resources));
     }
-  }catch(e){}
+  }catch(e){ /* offline — keep the local cache already rendered */ }
   render();
 }
 
@@ -512,6 +518,33 @@ const chipClass   = { available:'chip-av', staged:'chip-st', assigned:'chip-as',
 const statusLabel = { available:'Available', staged:'Staged', assigned:'Assigned', out_of_service:'Out of Service' };
 const typeIcons   = { engine:'🚒', crew:'👥', personnel:'👤', helicopter:'🚁', equipment:'🔧', other:'📦' };
 
+// The T-card board's single server source of truth is the ics_tcards table (/api/ics/tcards),
+// the same store the drag/personnel writes already use. Server cards use capitalized status
+// and a free-text resource_type / resource_name; the board uses lowercase status keys, a
+// short `type` icon key, and `name`. These helpers translate between the two.
+const STATUS_SERVER = { available:'Available', staged:'Staging', assigned:'Assigned', out_of_service:'Out of Service' };
+function statusKey(s){
+  s = (s||'').toString().toLowerCase();
+  if(s.startsWith('assign')) return 'assigned';
+  if(s.startsWith('stag'))   return 'staged';
+  if(s.includes('out'))      return 'out_of_service';
+  return 'available';
+}
+function typeKey(t){
+  t = (t||'').toString().toLowerCase();
+  for(const k of ['engine','crew','helicopter','personnel','equipment']){ if(t.includes(k)) return k; }
+  return 'other';
+}
+function mapTCard(tc){
+  return Object.assign({}, tc, {
+    name:          tc.resource_name || tc.name || '',
+    type:          typeKey(tc.resource_type || tc.type),
+    resource_type: tc.resource_type || tc.type || '',
+    status:        statusKey(tc.status),
+    resource_id:   tc.resource_id || tc.id,
+  });
+}
+
 function renderBoard(){
   ['available','staged','assigned','out_of_service'].forEach(s => {
     const count = resources.filter(r => r.status === s).length;
@@ -572,10 +605,10 @@ function renderAssignments(){
 function openAddResource(){ document.getElementById('addResModal').classList.add('open'); }
 function closeAddRes(){ document.getElementById('addResModal').classList.remove('open'); }
 
-function saveResource(){
+async function saveResource(){
   const name = document.getElementById('rName').value.trim();
   if(!name){ alert('Name required'); return; }
-  resources.push({
+  const rec = {
     id: uid(),
     resource_id: document.getElementById('rId').value.trim() || uid(),
     type: document.getElementById('rType').value,
@@ -584,9 +617,25 @@ function saveResource(){
     status: document.getElementById('rStatus').value,
     assignment: document.getElementById('rAssign').value.trim(),
     contact: document.getElementById('rContact').value.trim(),
-  });
+  };
+  resources.push(rec);
   ['rId','rName','rCap','rAssign','rContact'].forEach(id=>document.getElementById(id).value='');
   save(); closeAddRes(); render();
+  // Persist to the server T-card store (not localStorage-only) so it survives and
+  // shows on every device — incident data must always be saved server-side.
+  try{
+    await fetch(`${ICS_API}/api/ics/tcards`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        id: rec.id, incident_id: getIncidentId(),
+        resource_id: rec.resource_id, resource_name: rec.name,
+        resource_type: rec.type, type: rec.type,
+        status: STATUS_SERVER[rec.status] || 'Available',
+        assignment: rec.assignment, contact: rec.contact, leader: rec.contact,
+        period: 1,
+      })
+    });
+  }catch(e){ console.warn('Add resource → server save failed (kept locally):', e.message); }
 }
 
 function showResDetail(id){

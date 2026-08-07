@@ -245,7 +245,7 @@ const fmtH = h  => h >= 48 ? `${(h/24).toFixed(1)}d` : h >= 1 ? `${h.toFixed(1)}
 
 async function loadIncidents() {
   try {
-    const r = await fetch(`${API}/api/incidents`);
+    const r = await fetch(`${ICS_API}/api/ics/incidents`);
     const incs = r.ok ? await r.json() : [];
     const sel = document.getElementById('incidentSel');
     sel.innerHTML = '<option value="">Select incident...</option>' +

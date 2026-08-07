@@ -225,7 +225,7 @@ async function lookupCallsign() {
   card.scrollIntoView({behavior:'smooth'});
 
   try {
-    const r = await fetch(`${API}/fcc/${call}`);
+    const r = await fetch(`${API}/api/fcc?call=${encodeURIComponent(call)}`);
     const data = await r.json();
 
     if(!data || data.error || !data.callsign) {
@@ -241,12 +241,12 @@ async function lookupCallsign() {
     card.className = 'result-card show';
 
     const classLabels = {T:'Technician',G:'General',E:'Extra',N:'Novice',P:'Advanced','A':'Advanced'};
-    const cls = data.license_class||data.op_class||'';
+    const cls = data.operator_class||data.class_code||'';
     const clsLabel = classLabels[cls]||cls||'Unknown';
     const clsTag = cls ? `<span class="license-class class-${cls}">${clsLabel}</span>` : '';
 
-    const statusColor = data.status==='A' ? 'var(--green)' : 'var(--red)';
-    const statusLabel = data.status==='A' ? 'Active' : (data.status||'Unknown');
+    const statusColor = data.license_status==='A' ? 'var(--green)' : 'var(--red)';
+    const statusLabel = data.license_status==='A' ? 'Active' : (data.license_status||'Unknown');
 
     content.innerHTML = `
       <div class="call-display">${data.callsign}</div>
@@ -328,7 +328,7 @@ async function advSearch() {
   container.innerHTML = '<div class="loading">🔍 Searching FCC database…</div>';
 
   try {
-    const r = await fetch(`${API}/fcc/search?${params.toString()}&limit=100`);
+    const r = await fetch(`${API}/api/fcc/search?${params.toString()}&limit=100`);
     const results = await r.json();
 
     document.getElementById('result-count').textContent = `${results.length} result${results.length!==1?'s':''} found`;

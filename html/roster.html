@@ -514,7 +514,12 @@ async function importCSV(input) {
     const row={};hdrs.forEach((h,i)=>row[h]=(vals[i]||"").trim().replace(/^"|"$/g,""));
     // roles: support both 'role' (singular, guide v1) and 'roles' (plural, semicolon-sep)
     const rolesRaw = row.roles || row.role || "";
-    return {id:"m-"+Date.now()+Math.random().toString(36).slice(2),
+    // Stable id from a natural key (member_id → callsign → radio_id → name) so
+    // re-importing the same CSV UPDATES existing members instead of duplicating them.
+    const natKey = (row.member_id || row.callsign || row.radio_id ||
+                    ((row.first_name||"")+"_"+(row.last_name||""))).trim()
+                    .toUpperCase().replace(/[^A-Z0-9]+/g,"_").replace(/^_+|_+$/g,"");
+    return {id: natKey ? "m-"+natKey : "m-"+Date.now()+Math.random().toString(36).slice(2),
       member_id:(row.member_id||"").toUpperCase(),
       callsign:(row.callsign||"").toUpperCase(),
       radio_id:row.radio_id||"",

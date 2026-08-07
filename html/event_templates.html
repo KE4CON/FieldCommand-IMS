@@ -488,7 +488,7 @@ async function activateTemplate() {
 
   try {
     // 1. Create incident
-    const r1 = await fetch(`${API}/api/incidents`, {
+    const r1 = await fetch(`${ICS_API}/api/ics/incidents`, {
       method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({
         id:incId, name, type:t.type, status:'active',
@@ -577,7 +577,8 @@ function showEditModal(id) {
   const d   = t?.data || {};
 
   document.getElementById('editModalTitle').textContent = t ? '✏ EDIT TEMPLATE' : '+ CREATE TEMPLATE';
-  document.getElementById('e_delBtn').style.display     = t ? '' : 'none';
+  // Built-in templates are editable but cannot be deleted — hide Delete for them.
+  document.getElementById('e_delBtn').style.display     = (t && !t.is_builtin) ? '' : 'none';
 
   inp('e_name',    t?.name    || '');
   inp('e_type',    t?.type    || '');
@@ -753,7 +754,12 @@ async function saveTemplate() {
 // ── Delete ────────────────────────────────────────────────────────
 async function deleteTemplate() {
   if (!editingId) return;
-  await fetch(`${ICS_API}/api/ics/templates/${editingId}`, { method:'DELETE' });
+  const r = await fetch(`${ICS_API}/api/ics/templates/${editingId}`, { method:'DELETE' });
+  if (!r.ok) {
+    const e = await r.json().catch(()=>({}));
+    alert(e.error || 'Could not delete this template.');
+    return;
+  }
   closeEditModal();
   await loadTemplates();
   if (currentView === 'manage') renderManage();

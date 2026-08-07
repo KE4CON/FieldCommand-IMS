@@ -748,9 +748,11 @@ class ICSHandler(BaseHTTPRequestHandler):
                  "active",body.get("jurisdiction",""),
                  body.get("incident_commander",""),body.get("location",""),
                  body.get("summary",""),1,now))
-            # Create period 1
-            c.execute("INSERT INTO ics_periods(id,incident_id,period_num,started) VALUES(?,?,?,?)",
-                      (f"per-{inc_id}-1",inc_id,1,now))
+            # Create period 1 — persist the chosen Operational Period Duration
+            try: shift_hours = int(body.get("period_hours") or 12)
+            except (TypeError, ValueError): shift_hours = 12
+            c.execute("INSERT INTO ics_periods(id,incident_id,period_num,started,shift_hours) VALUES(?,?,?,?,?)",
+                      (f"per-{inc_id}-1",inc_id,1,now,shift_hours))
             c.commit()
             log_activity(inc_id,"Command","Incident Created",body.get("name",""))
             inc=row_to_dict(c.execute("SELECT * FROM incidents WHERE id=?",(inc_id,)).fetchone())
@@ -780,9 +782,14 @@ class ICSHandler(BaseHTTPRequestHandler):
                 new_period=row["current_period"]+1
                 c.execute("UPDATE incidents SET current_period=?,updated=? WHERE id=?",
                           (new_period,now,inc_id))
-                c.execute("INSERT INTO ics_periods(id,incident_id,period_num,started,objectives) VALUES(?,?,?,?,?)",
+                # Carry the incident's operational-period duration forward (body may override)
+                prev = c.execute("SELECT shift_hours FROM ics_periods WHERE incident_id=? "
+                                 "ORDER BY period_num DESC LIMIT 1",(inc_id,)).fetchone()
+                try: shift_hours = int(body.get("period_hours") or (prev["shift_hours"] if prev else 12) or 12)
+                except (TypeError, ValueError): shift_hours = 12
+                c.execute("INSERT INTO ics_periods(id,incident_id,period_num,started,shift_hours,objectives) VALUES(?,?,?,?,?,?)",
                           (f"per-{inc_id}-{new_period}",inc_id,new_period,now,
-                           body.get("objectives","")))
+                           shift_hours,body.get("objectives","")))
                 c.commit()
                 log_activity(inc_id,"Command","Period Advanced",f"Period {new_period}")
                 return self.send_json({"ok":True,"period":new_period})
@@ -821,19 +828,36 @@ class ICSHandler(BaseHTTPRequestHandler):
 
         elif path == "/api/ics/tcards":
             cid=body.get("id") or f"tc-{int(time.time()*1000)}"
-            c.execute("""INSERT OR REPLACE INTO ics_tcards
-                (id,incident_id,resource_id,resource_name,resource_type,category,type,
-                 status,assignment,leader,contact,num_personnel,eta,notes,
-                 order_number,home_agency,created,updated)
-                VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-                (cid,body.get("incident_id",""),body.get("resource_id",""),
-                 body.get("resource_name",""),body.get("resource_type",""),
-                 body.get("category",""),body.get("type",""),
-                 body.get("status","Available"),body.get("assignment",""),
-                 body.get("leader",""),body.get("contact",""),
-                 body.get("num_personnel",0),body.get("eta",""),
-                 body.get("notes",""),body.get("order_number",""),
-                 body.get("home_agency",""),body.get("created",now),now))
+            # Fixed whitelist of writable columns (safe to interpolate — not user input).
+            TC_COLS=["incident_id","resource_id","resource_name","resource_type","category",
+                     "type","status","assignment","leader","contact","num_personnel","eta",
+                     "notes","order_number","home_agency","period","daily_cost","hourly_rate",
+                     "cost_basis","hours_on_incident"]
+            if c.execute("SELECT 1 FROM ics_tcards WHERE id=?",(cid,)).fetchone():
+                # Partial update — only overwrite fields actually provided so a status-only
+                # move never wipes leader/contact/personnel/notes/cost on the card.
+                present=[k for k in TC_COLS if k in body]
+                sets=",".join(f"{k}=?" for k in present)+(", " if present else "")+"updated=?"
+                vals=[body[k] for k in present]+[now,cid]
+                c.execute(f"UPDATE ics_tcards SET {sets} WHERE id=?",vals)
+            else:
+                c.execute("""INSERT INTO ics_tcards
+                    (id,incident_id,resource_id,resource_name,resource_type,category,type,
+                     status,assignment,leader,contact,num_personnel,eta,notes,
+                     order_number,home_agency,period,daily_cost,hourly_rate,cost_basis,
+                     hours_on_incident,created,updated)
+                    VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                    (cid,body.get("incident_id",""),body.get("resource_id",""),
+                     body.get("resource_name",""),body.get("resource_type",""),
+                     body.get("category",""),body.get("type",""),
+                     body.get("status","Available"),body.get("assignment",""),
+                     body.get("leader",""),body.get("contact",""),
+                     body.get("num_personnel",0),body.get("eta",""),
+                     body.get("notes",""),body.get("order_number",""),
+                     body.get("home_agency",""),body.get("period",1),
+                     body.get("daily_cost",0),body.get("hourly_rate",0),
+                     body.get("cost_basis",""),body.get("hours_on_incident",0),
+                     body.get("created",now),now))
             c.commit()
             log_activity(body.get("incident_id",""),"Resources","T-Card Updated",
                          body.get("resource_name",""))
@@ -1567,8 +1591,34 @@ class ICSHandler(BaseHTTPRequestHandler):
                  body.get("status","Checked In"),
                  body.get("synced_to_211",0),
                  body.get("notes",""), now))
+            # Auto-populate the T-card board from the 211 sign-in (documented behavior:
+            # a check-in appears on BOTH the ICS-211 roster and the T-card board).
+            # Keyed to the check-in id so a re-check-in refreshes rather than duplicates,
+            # and any board movement already made (status/assignment) is preserved.
+            tc_id    = f"tc-ci-{ci_id}"
+            res_name = body.get("name","") or body.get("callsign_id","") or "Unknown"
+            home_agy = body.get("agency","") or body.get("home_unit","")
+            tc_notes = " · ".join(x for x in (body.get("equipment",""), body.get("notes","")) if x)
+            if c.execute("SELECT 1 FROM ics_tcards WHERE id=?",(tc_id,)).fetchone():
+                c.execute("""UPDATE ics_tcards SET incident_id=?, resource_name=?, resource_type=?,
+                             type=?, leader=?, contact=?, home_agency=?, period=?, updated=? WHERE id=?""",
+                          (body.get("incident_id",""), res_name, body.get("resource_type",""),
+                           body.get("resource_type",""), body.get("name",""), body.get("callsign_id",""),
+                           home_agy, body.get("period",1), now, tc_id))
+            else:
+                c.execute("""INSERT INTO ics_tcards
+                    (id,incident_id,resource_id,resource_name,resource_type,category,type,
+                     status,assignment,leader,contact,num_personnel,eta,notes,
+                     order_number,home_agency,period,daily_cost,hourly_rate,cost_basis,
+                     hours_on_incident,created,updated)
+                    VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                    (tc_id, body.get("incident_id",""), ci_id, res_name,
+                     body.get("resource_type",""), "", body.get("resource_type",""),
+                     "Available", "", body.get("name",""), body.get("callsign_id",""),
+                     1, "", tc_notes, "", home_agy, body.get("period",1),
+                     0, 0, "", 0, now, now))
             c.commit()
-            return self.send_json({"status":"ok","id":ci_id})
+            return self.send_json({"status":"ok","id":ci_id,"tcard_id":tc_id})
 
         # ── Mark check-in entries as synced to ICS-211 ─────────────────────
         elif path == "/api/ics/checkin/sync":
@@ -1622,6 +1672,12 @@ class ICSHandler(BaseHTTPRequestHandler):
             c.execute("DELETE FROM incidents WHERE id=?",(inc_id,))
         elif path.startswith("/api/ics/templates/"):
             tid = path.split("/api/ics/templates/")[1]
+            row = c.execute("SELECT is_builtin FROM incident_templates WHERE id=?", (tid,)).fetchone()
+            if row is None:
+                return self.send_json({"error":"Template not found"}, 404)
+            if row["is_builtin"]:
+                # Built-in templates cannot be deleted (documented behavior); they may only be edited.
+                return self.send_json({"error":"Built-in templates cannot be deleted"}, 403)
             c.execute("UPDATE incident_templates SET enabled=0 WHERE id=?", (tid,))
             c.commit()
             return self.send_json({"ok":True})

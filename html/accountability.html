@@ -329,7 +329,7 @@ async function init() {
 
 async function loadIncidents() {
   try {
-    const r = await fetch(`${API}/api/incidents`);
+    const r = await fetch(`${ICS_API}/api/ics/incidents`);
     const incs = r.ok ? await r.json() : [];
     const sel = document.getElementById('incidentSel');
     incs.forEach(i => {

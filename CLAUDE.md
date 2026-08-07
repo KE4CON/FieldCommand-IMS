@@ -24,7 +24,13 @@ FieldCommand started as a **communications** app (the legacy "FieldComms" brand 
 - **Offline-first:** the full tool set works with **zero internet**. Internet-dependent features (NEXRAD radar, some lookups) light up automatically when a WAN is present.
 - Any smartphone/tablet/laptop joins **EMCOMM-NET** Wi-Fi and reaches the whole dashboard at `http://192.168.50.1` — **no app install, no login, any OS.** Multi-user: every operator sees live data.
 
-Two BOMs live in `docs/`: one for **ESV** (the club) and one for **anyone else** who deploys it (e.g., GitHub downloaders).
+**Incident data is permanent — save everything.** Every incident is a durable record: **all** data an incident generates (nets, logs, ICS forms, T-cards, IAP, cost, resources, roster snapshots, attachments — *everything*) is saved on the server, **backed up to an external drive (the LaCie)**, and **archived**. Nothing an incident produces is treated as throwaway or session-only. When building or changing any incident feature, the default is *persist it and make sure it lands in the archive/backup path* — never in-memory-only or localStorage-only for incident data. (This is the opposite of the sibling Activation Planner, which is deliberately stateless.)
+
+**Two editions — ESV vs. World.** Every user-facing doc (manual, user guide, install guide, BOM) has, or should have, two variants that differ ONLY by:
+- **ESV edition** — keeps org names (McHenry County ESV / K9ESV / MCESV / MCEMA), names the specific gear (**InstyConnect** cellular primary, **Starlink** fallback), and calls the public-safety side **Starcom**.
+- **World edition** — strips all org names, drops the InstyConnect/Starlink specifics (say generic "cellular primary / satellite fallback"), and refers to the public-safety side generically as **"public service communications"** (never "Starcom").
+
+Current state (needs reconciling — see `docs/MANUAL_VS_CODE.md`): the Complete Manual is the World edition but still has a stray `K9ESV` and still uses "Starcom"; the only ESV user doc is a shorter 27-chapter *User Guide* (not a full ESV twin of the 36-chapter manual); install guides exist in both editions; the single BOM is the ESV edition (no World BOM yet).
 
 ## Related Programs — Do Not Merge
 - **APRS Command** — separate C#/Avalonia desktop APRS client (Jim's). Planned integration: it can replace YAAC as FieldCommand's APRS client/feed (see "Radio direction" below). No shared code; data integration only.

@@ -190,6 +190,27 @@ tr:nth-child(even) td { background: var(--bg); }
     </table>
   </div>
 
+  <!-- Connected peers -->
+  <div class="section-card">
+    <h2>Connected Peers</h2>
+    <table>
+      <thead>
+        <tr><th>PEER</th><th>ENDPOINT</th><th>ALLOWED IPs</th><th>LAST HANDSHAKE</th><th>STATUS</th></tr>
+      </thead>
+      <tbody id="peers">
+        <tr><td colspan="5" style="text-align:center;color:var(--dim)">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Access log -->
+  <div class="section-card">
+    <h2>Access Log <span style="font-size:11px;color:var(--dim);font-weight:normal">— recent gateway logins / station IDs (Part 97)</span></h2>
+    <div id="accessLog" style="font-family:var(--font-mono,monospace);font-size:11px;line-height:1.7;max-height:220px;overflow:auto">
+      <div style="color:var(--dim)">Loading...</div>
+    </div>
+  </div>
+
   <!-- Tunnel control -->
   <div class="section-card">
     <h2>Tunnel Control</h2>
@@ -310,6 +331,33 @@ function applyData(d) {
     ).join('');
   } else {
     tbody.innerHTML = '<tr><td colspan="3">No 44Net routes found — tunnel may be down</td></tr>';
+  }
+
+  // Connected peers
+  const pbody = document.getElementById('peers');
+  if (pbody) {
+    if (d.peers && d.peers.length) {
+      pbody.innerHTML = d.peers.map(p =>
+        `<tr>
+          <td><code>${p.public_key||'?'}</code></td>
+          <td><code>${p.endpoint||'—'}</code></td>
+          <td><code>${p.allowed_ips||'—'}</code></td>
+          <td>${p.last_handshake||'—'}</td>
+          <td><span class="dot dot-${p.connected ? 'green' : 'red'}"></span>${p.connected ? 'Connected' : 'Idle'}</td>
+        </tr>`
+      ).join('');
+    } else {
+      pbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--dim)">No peers configured (tunnel down or no peers).</td></tr>';
+    }
+  }
+
+  // Access log
+  const logEl = document.getElementById('accessLog');
+  if (logEl) {
+    const esc = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    logEl.innerHTML = (d.access_log && d.access_log.length)
+      ? d.access_log.map(l => `<div>${esc(l)}</div>`).join('')
+      : '<div style="color:var(--dim)">No access-log entries yet.</div>';
   }
 
   const polled = d.polled_at || d.timestamp || '—';

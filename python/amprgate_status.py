@@ -308,6 +308,55 @@ def get_routes():
     return routes
 
 
+def get_peers():
+    """Per-peer WireGuard status (connected peers list) from `wg show <if> dump`."""
+    out, rc = run(["sudo", "wg", "show", WG_INTERFACE, "dump"])
+    peers = []
+    if rc != 0 or not out.strip():
+        return peers
+    lines = [l.split("\t") for l in out.strip().splitlines()]
+    now = int(time.time())
+    for line in lines[1:]:            # line[0] is the interface itself
+        if len(line) < 7:
+            continue
+        pub = line[0] or ""
+        endpoint = line[2] if len(line) > 2 else ""
+        allowed  = line[3] if len(line) > 3 else ""
+        try: hs = int(line[4])
+        except (ValueError, IndexError): hs = 0
+        try: rx = int(line[5]); tx = int(line[6])
+        except (ValueError, IndexError): rx = tx = 0
+        if hs > 0:
+            age = now - hs
+            hs_disp = (f"{age}s ago" if age < 60 else
+                       f"{age // 60}m ago" if age < 3600 else
+                       datetime.fromtimestamp(hs, tz=timezone.utc).strftime("%H:%M UTC"))
+            connected = age < 300
+        else:
+            hs_disp = "Never"; connected = False
+        peers.append({
+            "public_key": (pub[:12] + "…") if pub else "?",
+            "endpoint": endpoint if endpoint and endpoint != "(none)" else "—",
+            "allowed_ips": allowed or "—",
+            "last_handshake": hs_disp,
+            "rx_bytes": rx, "tx_bytes": tx,
+            "connected": connected,
+        })
+    return peers
+
+
+def get_access_log(limit=25):
+    """Most-recent access-log lines (Part 97 station-ID log), newest first."""
+    try:
+        if LOG_FILE.exists():
+            with open(LOG_FILE, encoding="utf-8", errors="ignore") as fh:
+                lines = fh.read().splitlines()
+            return lines[-limit:][::-1]
+    except Exception:
+        pass
+    return []
+
+
 def build_status():
     wg = get_wg_status()
     mem_used, mem_total = get_mem()
@@ -321,6 +370,8 @@ def build_status():
         "uptime": get_uptime(),
         "ip_forward": get_ip_forward(),
         "routes": get_routes(),
+        "peers": get_peers(),
+        "access_log": get_access_log(),
     }
 
 

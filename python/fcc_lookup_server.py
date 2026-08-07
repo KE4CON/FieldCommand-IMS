@@ -478,6 +478,10 @@ class Handler(BaseHTTPRequestHandler):
             if srch: rows=[r for r in rows if srch in json.dumps(r).lower()]
             return self.send_json(rows)
 
+        elif path == "/api/facilities":
+            rows = rows_to_list(c.execute("SELECT * FROM facilities ORDER BY name").fetchall())
+            return self.send_json(rows)
+
         elif path == "/api/resource_types":
             cat    = qs.get("category",[None])[0]
             kind   = qs.get("kind",[None])[0]
@@ -684,6 +688,24 @@ class Handler(BaseHTTPRequestHandler):
                 c.commit()
                 new_id = c.execute("SELECT last_insert_rowid()").fetchone()[0]
                 return self.send_json({"ok":True,"id":new_id})
+
+        if path == "/api/facilities":
+            # Upsert a facility (id is a client-generated string key).
+            FAC_COLS = ['name','type','status','address','city','state_zip','lat','lon',
+                        'phone','phone2','freq','freq2','tone','capacity','contact',
+                        'callsign','generator','ada','notes']
+            fid = str(body.get("id") or f"fac-{int(time.time()*1000)}")
+            if c.execute("SELECT 1 FROM facilities WHERE id=?", (fid,)).fetchone():
+                present = [k for k in FAC_COLS if k in body]
+                sets = ",".join(f"{k}=?" for k in present) + (", " if present else "") + "updated=?"
+                vals = [body[k] for k in present] + [now, fid]
+                c.execute(f"UPDATE facilities SET {sets} WHERE id=?", vals)
+            else:
+                cols = ["id"] + FAC_COLS + ["updated"]
+                vals = [fid] + [body.get(k) for k in FAC_COLS] + [now]
+                c.execute(f"INSERT INTO facilities ({','.join(cols)}) VALUES ({','.join(['?']*len(cols))})", vals)
+            c.commit()
+            return self.send_json({"ok":True,"id":fid})
 
         if path == "/api/config":
             fields = ['callsign','personal_call','org_name','org_short',
@@ -1007,6 +1029,10 @@ class Handler(BaseHTTPRequestHandler):
         if path.startswith("/api/hospitals/"):
             hid = path.split("/api/hospitals/")[1]
             c.execute("UPDATE hospitals SET active=0 WHERE id=?", (hid,))
+            c.commit()
+            return self.send_json({"ok":True})
+        elif path.startswith("/api/facilities/"):
+            c.execute("DELETE FROM facilities WHERE id=?", (path.split("/api/facilities/")[1],))
             c.commit()
             return self.send_json({"ok":True})
         elif path.startswith("/api/nets/"):

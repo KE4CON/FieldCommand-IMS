@@ -146,6 +146,7 @@
       <option value="hospital">Hospital</option>
       <option value="shelter">Shelter</option>
       <option value="staging">Staging Area</option>
+      <option value="depot">Supply Depot</option>
       <option value="command">Command Post</option>
       <option value="other">Other</option>
     </select>
@@ -205,6 +206,7 @@
             <option value="hospital">Hospital</option>
             <option value="shelter">Shelter</option>
             <option value="staging">Staging Area</option>
+            <option value="depot">Supply Depot</option>
             <option value="command">Command Post</option>
             <option value="other">Other</option>
           </select>
@@ -309,11 +311,27 @@ const TYPE_META = {
   hospital: { label:'Hospital',     icon:'🏥', color:'var(--red)' },
   shelter:  { label:'Shelter',      icon:'🏠', color:'var(--green)' },
   staging:  { label:'Staging Area', icon:'🚛', color:'var(--blue)' },
+  depot:    { label:'Supply Depot',  icon:'📦', color:'var(--amber)' },
   command:  { label:'Command Post', icon:'⭐', color:'#c850ff' },
   other:    { label:'Other',        icon:'📍', color:'var(--muted)' },
 };
+const FAC_API = 'http://192.168.50.1:5050';
 
-function load() {
+async function load() {
+  // Server is the source of truth (persists across devices); localStorage is an offline cache.
+  try {
+    const r = await fetch(`${FAC_API}/api/facilities`);
+    if (r.ok) {
+      const rows = await r.json();
+      if (Array.isArray(rows)) {
+        facilities = rows;
+        localStorage.setItem(STORE_KEY, JSON.stringify(facilities));
+        if (facilities.length === 0) loadDefaults();
+        render();
+        return;
+      }
+    }
+  } catch(e) { /* offline — fall back to the local cache below */ }
   try {
     const d = localStorage.getItem(STORE_KEY);
     facilities = d ? JSON.parse(d) : [];
@@ -323,7 +341,15 @@ function load() {
 }
 
 function save() {
+  // Always cache locally; the server upsert is done per-facility in saveFacility()/loadDefaults().
   localStorage.setItem(STORE_KEY, JSON.stringify(facilities));
+}
+
+// Push one facility to the server (fire-and-forget; local cache already updated).
+function syncFacility(f) {
+  fetch(`${FAC_API}/api/facilities`, {
+    method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(f)
+  }).catch(()=>{});
 }
 
 function loadDefaults() {
@@ -334,6 +360,7 @@ function loadDefaults() {
     { id: uid(), name:'Westland Mall Staging Area', type:'staging', status:'standby', address:'2700 Westland Mall Dr', city:'Columbus', state_zip:'OH 43228', lat:39.9475, lon:-83.1077, phone:'', phone2:'', freq:'147.015', freq2:'', tone:'107.2', capacity:'', contact:'', callsign:'', generator:'no', ada:'yes', notes:'West-side staging. Large parking lot.' },
   ];
   save();
+  facilities.forEach(syncFacility);   // seed the server too (no-op if offline)
 }
 
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
@@ -442,7 +469,10 @@ function editCurrent() {
 function deleteCurrent() {
   if (currentIdx === null) return;
   if (!confirm(`Delete "${facilities[currentIdx].name}"?`)) return;
-  facilities.splice(currentIdx, 1);
+  const removed = facilities.splice(currentIdx, 1)[0];
+  if (removed && removed.id) {
+    fetch(`${FAC_API}/api/facilities/${encodeURIComponent(removed.id)}`, {method:'DELETE'}).catch(()=>{});
+  }
   save(); currentIdx = null;
   closeModal(); render();
 }
@@ -507,7 +537,7 @@ function saveFacility() {
   };
   if (isNew) facilities.push(obj);
   else facilities[parseInt(idxStr)] = obj;
-  save(); closeEdit(); render();
+  save(); syncFacility(obj); closeEdit(); render();
 }
 
 function exportCSV() {

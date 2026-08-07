@@ -282,7 +282,8 @@
     <div class="fg"><label>City</label><input type="text" id="f_city"></div>
     <div class="fg"><label>State</label><input type="text" id="f_state" maxlength="2" placeholder="IL"></div>
     <div class="fg"><label>County</label><input type="text" id="f_county"></div>
-    <div class="fg"><label>Phone</label><input type="text" id="f_phone" placeholder="(815) 555-0000"></div>
+    <div class="fg"><label>Switchboard Phone</label><input type="text" id="f_phone" placeholder="(815) 555-0000"></div>
+    <div class="fg"><label>Emergency Dept (ED) Phone</label><input type="text" id="f_phone2" placeholder="Direct ED line (optional)"></div>
     <div class="fg"><label>Latitude</label><input type="number" id="f_lat" step="0.0001" placeholder="42.3089"></div>
     <div class="fg"><label>Longitude</label><input type="number" id="f_lon" step="0.0001" placeholder="-88.4356"></div>
     <div class="fg">
@@ -555,10 +556,14 @@ function renderHospitals() {
           <div style="display:flex;gap:6px">
             <button onclick="showAddModal('${h.id}')"
               style="font-size:10px;padding:2px 8px">✏ Edit</button>
-            ${h.phone ? `<a href="tel:${h.phone}"
+            ${h.phone ? `<a href="tel:${h.phone}" title="Switchboard"
               style="font-size:10px;padding:2px 8px;background:var(--green-bg);
                      border:1px solid #86efac;color:var(--green);border-radius:var(--r-sm)">
               📞 ${h.phone}</a>` : ''}
+            ${h.phone2 ? `<a href="tel:${h.phone2}" title="Emergency Department direct line"
+              style="font-size:10px;padding:2px 8px;background:var(--red-bg);
+                     border:1px solid #fca5a5;color:var(--red);border-radius:var(--r-sm)">
+              🚑 ED ${h.phone2}</a>` : ''}
           </div>
         </div>
         <div class="hosp-meta">
@@ -630,7 +635,7 @@ document.getElementById('heloType').addEventListener('change', function() {
 
 // ── Add / Edit modal ───────────────────────────────────────────────
 function showAddModal(id) {
-  const fields = ['name','address','city','state','county','phone','lat','lon','notes'];
+  const fields = ['name','address','city','state','county','phone','phone2','lat','lon','notes'];
   const checks = ['burn','helipad','peds','stroke','cardiac'];
   if (id) {
     const h = hospitals.find(x => String(x.id) === String(id));
@@ -673,6 +678,7 @@ async function saveHospital() {
     state:         document.getElementById('f_state').value.trim().toUpperCase(),
     county:        document.getElementById('f_county').value.trim(),
     phone:         document.getElementById('f_phone').value.trim(),
+    phone2:        document.getElementById('f_phone2').value.trim(),
     lat:           parseFloat(document.getElementById('f_lat').value) || null,
     lon:           parseFloat(document.getElementById('f_lon').value) || null,
     trauma_level:  document.getElementById('f_trauma').value,

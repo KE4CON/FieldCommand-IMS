@@ -40,6 +40,17 @@ The recurring theme: the manual was written to an intended design; the code ofte
 
 # 🟠 Bucket 2 — Documented features not built (build, or drop from manual)
 
+> **STATUS 2026-08-07: ALL BUILT.** Per Jim's direction ("do all of them, top down"), every Bucket 2
+> feature below was implemented (preflight PASS, committed). Still needs on-Pi testing. Summary of what
+> was added: Setup grid/default-incident/SSID/server-addr/timezone fields; incident number + IC roster
+> picker; net-logger mode dropdown + open-time + live timer + Enter-key (also fixed NCS callsign being
+> dropped); ICS-213 Winlink/export + Reply-Requested + callsign→FCC autofill; ICS-214 FEMA-Labor export
+> + resources-involved; drawn signature capture on standalone ics213/ics214; radar NEXRAD station
+> selector + offline last-frame cache/30s re-poll; SARTopo overlay wired into the tactical map;
+> accountability Check-All-Out; repeater manual-entry workflow + reachable Map View button; NTS 25-word
+> enforcement; AMPRNet peers list + access-log; facilities server sync + supply-depot type; hospital
+> switchboard + ED phone numbers.
+
 **Setup & incidents**
 - **Setup (Ch 3):** 5 of 8 documented fields don't exist — **grid square (Maidenhead), default incident name, Wi-Fi SSID, server address, time zone.** (Setup uses decimal lat/lon and a hardcoded server URL.)
 - **Incident (Ch 5):** no **incident number** field; **IC is free text**, not a roster picker.

@@ -290,6 +290,13 @@ function processGeoJSON(parsed, filename) {
   geoData = parsed;
   const count = parsed.features.length;
 
+  // Persist the raw overlay so the tactical map can render it (Ch 13 SARTopo overlay).
+  try {
+    localStorage.setItem('fc_sartopo_overlay', JSON.stringify({
+      name: filename, saved_at: new Date().toISOString(), data: parsed
+    }));
+  } catch(e) {}
+
   const dz = document.getElementById('dropZone');
   dz.classList.add('has-file');
   dz.innerHTML = `

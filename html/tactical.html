@@ -180,6 +180,7 @@ body.picking #map { cursor:crosshair !important; }
     <button class="map-btn" id="btn-range" onclick="toggleLayer('range')" title="Range ring">◎ Range Ring</button>
     <button class="map-btn" id="btn-track" onclick="toggleTrack()" title="Track selected station">🛤 Track</button>
     <button class="map-btn" id="btn-rep" onclick="toggleRepeaters()" title="Repeater Database overlay (loads from FieldCommand server)">📡 Repeaters</button>
+    <button class="map-btn" id="btn-sartopo" onclick="toggleSartopo()" title="SARTopo / CalTopo GeoJSON overlay (imported on the SARTopo Import page)">🗺 SARTopo</button>
   </div>
 
   <!-- Sidebar -->
@@ -648,6 +649,7 @@ function initMap() {
   layers.me    = L.layerGroup().addTo(map);  // My station
   layers.range = L.layerGroup();             // Range ring (off by default)
   layers.rep   = L.layerGroup();             // Repeater overlay (off by default)
+  layers.sartopo = L.layerGroup();           // SARTopo GeoJSON overlay (off by default)
   layers.track = L.layerGroup().addTo(map);  // Track history
 
   // Set up tile layers via FC_TILES (offline + online sources)
@@ -1519,6 +1521,56 @@ async function toggleRepeaters() {
   }
   layers.rep.addTo(map);
   repOverlayOn = true;
+  btn && btn.classList.add('active');
+}
+
+// ── SARTopo / CalTopo GeoJSON overlay ─────────────────────────────
+// Renders the FeatureCollection imported on sartopo_import.html (saved to
+// localStorage as fc_sartopo_overlay). Toggle on/off from the toolbar.
+let sartopoLoaded = false;
+function toggleSartopo() {
+  const btn = document.getElementById('btn-sartopo');
+  if (map.hasLayer(layers.sartopo)) {
+    map.removeLayer(layers.sartopo);
+    btn && btn.classList.remove('active');
+    return;
+  }
+  if (!sartopoLoaded) {
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem('fc_sartopo_overlay') || 'null'); } catch(e) {}
+    const fc = saved && saved.data;
+    if (!fc || !Array.isArray(fc.features) || !fc.features.length) {
+      alert('No SARTopo overlay found.\n\nImport a GeoJSON file on the SARTopo Import page first — it will then appear here.');
+      return;
+    }
+    let plotted = 0;
+    const gj = L.geoJSON(fc, {
+      style: f => ({
+        color: (f.properties && (f.properties.stroke || f.properties.color)) || '#e040fb',
+        weight: (f.properties && f.properties['stroke-width']) || 3,
+        opacity: 0.9,
+        fillColor: (f.properties && (f.properties.fill || f.properties.color)) || '#e040fb',
+        fillOpacity: (f.properties && f.properties['fill-opacity'] != null) ? f.properties['fill-opacity'] : 0.15,
+      }),
+      pointToLayer: (f, latlng) => L.circleMarker(latlng, {
+        radius: 6, color: (f.properties && (f.properties['marker-color'] || f.properties.color)) || '#e040fb',
+        weight: 2, fillOpacity: 0.85,
+      }),
+      onEachFeature: (f, layer) => {
+        plotted++;
+        const p = f.properties || {};
+        const name = p.title || p.name || p.label || 'SARTopo feature';
+        const rows = Object.keys(p).filter(k => p[k] != null && String(p[k]).trim() && !/^(stroke|fill|marker-|color)/.test(k))
+          .slice(0, 8).map(k => `<div style="color:#aaa">${k}: <b style="color:#fff">${String(p[k]).slice(0,80)}</b></div>`).join('');
+        layer.bindPopup(`<div style="min-width:160px;font-size:12px"><div style="font-family:monospace;color:#e040fb;margin-bottom:4px">${name}</div>${rows}</div>`, { maxWidth: 260 });
+      },
+    });
+    gj.addTo(layers.sartopo);
+    sartopoLoaded = true;
+    btn && (btn.textContent = `🗺 SARTopo (${plotted})`);
+    try { map.fitBounds(gj.getBounds(), { padding: [40,40], maxZoom: 14 }); } catch(e) {}
+  }
+  layers.sartopo.addTo(map);
   btn && btn.classList.add('active');
 }
 

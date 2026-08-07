@@ -105,6 +105,10 @@ html, body { height:100%;margin:0;padding:0; }
                color:var(--eoc)">⛈ NEXRAD RADAR</span>
   <span style="font-size:10px;color:var(--dim)">· Requires internet connection</span>
   <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
+    <select id="stationSel" onchange="jumpToStation()" title="Center the map on a NEXRAD station"
+      style="font-size:11px;padding:4px 8px;background:var(--input-bg,#1a1a1a);color:var(--txt,#fff);border:1px solid var(--line);border-radius:4px;max-width:200px">
+      <option value="">Composite (National)</option>
+    </select>
     <button onclick="setLayer('reflectivity')" id="btn-reflectivity"
       class="ctrl-btn active" style="font-size:11px;padding:4px 10px">Reflectivity</button>
     <button onclick="setLayer('velocity')" id="btn-velocity"
@@ -215,7 +219,7 @@ async function checkWAN() {
     const d = await r.json();
     const src = d.active_source || 'none';
     if (src === 'none') {
-      showOffline();
+      showOfflineNote();
       return false;
     }
     return true;
@@ -225,7 +229,7 @@ async function checkWAN() {
       await fetch(`${RADAR_API}/frames?source=composite&limit=1`, {mode:'no-cors'});
       return true;
     } catch(e2) {
-      showOffline();
+      showOfflineNote();
       return false;
     }
   }
@@ -286,6 +290,8 @@ async function loadFrames() {
     document.getElementById('radarStatus').textContent = 'NEXRAD CONUS composite';
 
     showFrame(currentFrame);
+    markLastFrameCached();
+    document.getElementById('offlineBanner').style.display = 'none';
     if (playing) startAnimation();
     setLoading(false);
   } catch(e) {
@@ -455,6 +461,72 @@ function setLoading(on) {
   document.getElementById('loadDot').style.display = on ? '' : 'none';
 }
 
+// ── NEXRAD station selector ───────────────────────────────────────
+// Selecting a station centers the map on that radar's coverage. The imagery
+// stays the national composite; this is a "focus here" jump for the operator.
+const NEXRAD_STATIONS = [
+  ['KLOT','KLOT — Chicago, IL',41.60,-88.08],['KILX','KILX — Lincoln, IL',40.15,-89.34],
+  ['KDVN','KDVN — Quad Cities, IA',41.61,-90.58],['KMKX','KMKX — Milwaukee, WI',42.97,-88.55],
+  ['KGRR','KGRR — Grand Rapids, MI',42.89,-85.54],['KIND','KIND — Indianapolis, IN',39.71,-86.28],
+  ['KLSX','KLSX — St. Louis, MO',38.70,-90.68],['KDMX','KDMX — Des Moines, IA',41.73,-93.72],
+  ['KMPX','KMPX — Minneapolis, MN',44.85,-93.57],['KDTX','KDTX — Detroit, MI',42.70,-83.47],
+  ['KIWX','KIWX — N. Indiana',41.36,-85.70],['KLVX','KLVX — Louisville, KY',37.98,-85.94],
+  ['KEAX','KEAX — Kansas City, MO',38.81,-94.26],['KOAX','KOAX — Omaha, NE',41.32,-96.37],
+  ['KFWS','KFWS — Dallas/Ft Worth, TX',32.57,-97.30],['KHGX','KHGX — Houston, TX',29.47,-95.08],
+  ['KOKX','KOKX — New York, NY',40.87,-72.86],['KLWX','KLWX — Washington, DC',38.98,-77.48],
+  ['KATX','KATX — Seattle, WA',48.19,-122.50],['KMUX','KMUX — San Francisco, CA',37.16,-121.90],
+  ['KFTG','KFTG — Denver, CO',39.79,-104.55],['KEWX','KEWX — Austin/San Antonio, TX',29.70,-98.03],
+  ['KTLX','KTLX — Oklahoma City, OK',35.33,-97.28],['KMLB','KMLB — Melbourne, FL',28.11,-80.65],
+  ['KTBW','KTBW — Tampa, FL',27.71,-82.40],['KFFC','KFFC — Atlanta, GA',33.36,-84.57],
+];
+function populateStations() {
+  const sel = document.getElementById('stationSel');
+  NEXRAD_STATIONS.forEach(([id,label,lat,lon]) => {
+    const o = document.createElement('option');
+    o.value = `${lat},${lon}`; o.textContent = label; sel.appendChild(o);
+  });
+}
+function jumpToStation() {
+  const v = document.getElementById('stationSel').value;
+  if (!v) { map.setView([INITIAL_LAT, INITIAL_LON], INITIAL_ZOOM); return; }
+  const [lat,lon] = v.split(',').map(Number);
+  map.setView([lat,lon], 8);
+}
+
+// ── Offline handling: keep the last frame, re-poll every 30 s ─────
+let _offlineRepoll = null;
+function markLastFrameCached() {
+  if (frames.length) {
+    try { localStorage.setItem('fc_radar_last', JSON.stringify({
+      time: frames[frames.length-1].timestamp, cached_at: new Date().toISOString()
+    })); } catch(e) {}
+  }
+}
+function showOfflineNote() {
+  // Don't blank the map — the last radar tiles Leaflet already drew stay visible.
+  let last = null; try { last = JSON.parse(localStorage.getItem('fc_radar_last')||'null'); } catch(e){}
+  const when = last ? new Date(last.cached_at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}) : null;
+  document.getElementById('radarStatus').textContent =
+    (frames.length ? 'Showing last radar' : 'Radar offline') +
+    (when ? ` (from ${when})` : '') + ' — reconnecting every 30 s…';
+  document.getElementById('infoBar').style.display = '';
+  // No frame ever loaded → show the full explanatory banner; otherwise keep the map visible.
+  document.getElementById('offlineBanner').style.display = frames.length ? 'none' : 'flex';
+  startOfflineRepoll();
+}
+function startOfflineRepoll() {
+  if (_offlineRepoll) return;
+  _offlineRepoll = setInterval(async () => {
+    const online = await checkWAN();
+    if (online) {
+      clearInterval(_offlineRepoll); _offlineRepoll = null;
+      document.getElementById('offlineBanner').style.display = 'none';
+      await loadFrames();
+      if (playing) startAnimation();
+    }
+  }, 30 * 1000);
+}
+
 // ── Refresh every 5 minutes ───────────────────────────────────────
 setInterval(async () => {
   const wasPlaying = playing;
@@ -466,8 +538,10 @@ setInterval(async () => {
 // ── Init ──────────────────────────────────────────────────────────
 (async () => {
   initMap();
+  populateStations();
   const online = await checkWAN();
   if (online) await loadFrames();
+  else showOfflineNote();
 })();
 </script>
 </body>

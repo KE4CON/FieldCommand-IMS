@@ -310,7 +310,7 @@ def ch22():
         'FieldCommand IMS provides a fillable ICS-213 with digital signature capture, '
         'print output, and Winlink integration.'))
     s.append(SP(6))
-    s.append(P('21.1  Completing an ICS-213', H2))
+    s.append(P('22.1  Completing an ICS-213', H2))
     s += steps([
         'Navigate to <b>ICS-213 General Message</b> from the dashboard.',
         'Fill in: To, From (callsign auto-fills name from Federal Communications Commission (FCC) database), '
@@ -324,7 +324,7 @@ def ch22():
         'if a Winlink session is active.',
     ])
     s.append(SP(6))
-    s.append(P('21.2  Winlink Integration', H2))
+    s.append(P('22.2  Winlink Integration', H2))
     s.append(P(
         'A completed ICS-213 can be exported directly to Winlink Express or Pat '
         'as a formatted Winlink ICS-213 message. The recipient address, subject, '
@@ -343,7 +343,7 @@ def ch23():
         'cost documentation, bridging the gap between activity logging and '
         'reimbursement paperwork.'))
     s.append(SP(6))
-    s.append(P('22.1  ICS-214 Activity Log', H2))
+    s.append(P('23.1  ICS-214 Activity Log', H2))
     s += steps([
         'Navigate to <b>ICS-214</b> from the Planning section.',
         'Select the resource or section this log covers.',
@@ -356,7 +356,7 @@ def ch23():
         'the active incident.',
     ])
     s.append(SP(6))
-    s.append(P('22.2  ICS-309 Communications Log', H2))
+    s.append(P('23.2  ICS-309 Communications Log', H2))
     s.append(P(
         'There are two ways to produce an ICS-309. The <b>automatic</b> one lives on the '
         'Net Logger (netcontrol.html / starcom.html): its <b>Export ICS-309</b> button builds a '
@@ -386,7 +386,7 @@ def ch24():
         'any cellular modem, phone hotspot, satellite dish, or fixed broadband.'))
     s.append(SP(6))
 
-    s.append(P('23.1  WAN Source Configuration', H2))
+    s.append(P('24.1  WAN Source Configuration', H2))
     s.append(tbl(['FIELD', 'OPTIONS AND DESCRIPTION'], [
         ['Role',
          '<b>Preferred</b> — the primary WAN source. Used first when available.\n'
@@ -404,7 +404,7 @@ def ch24():
     ], widths=[1.6*inch, CW-1.6*inch]))
     s.append(SP(6))
 
-    s.append(P('23.2  Detection Methods', H2))
+    s.append(P('24.2  Detection Methods', H2))
     s.append(tbl(['METHOD', 'HOW IT WORKS', 'BEST FOR'], [
         ['internet_only',
          'Attempts an outbound internet connection. Succeeds if any internet '
@@ -421,7 +421,7 @@ def ch24():
     ], widths=[1.6*inch, CW-3.4*inch, 1.8*inch]))
     s.append(SP(6))
 
-    s.append(P('23.3  Swapping Preferred and Fallback', H2))
+    s.append(P('24.3  Swapping Preferred and Fallback', H2))
     s.append(P(
         'To swap which source is preferred and which is fallback, click the '
         '<b>⇄ Swap Roles</b> button on the WAN Settings page. '
@@ -508,7 +508,7 @@ def ch27():
         'and Pat (a cross-platform Winlink client) running alongside FieldCommand.'))
     s.append(SP(6))
 
-    s.append(P('26.1  Winlink Configuration Options', H2))
+    s.append(P('27.1  Winlink Configuration Options', H2))
     s.append(tbl(['CLIENT', 'PLATFORM', 'TRANSPORT'], [
         ['Winlink Express',  'Windows laptop',         'VARA High Frequency (HF), VARA FM, Telnet, Pactor'],
         ['Pat',              'Raspberry Pi / Linux',   'VARA FM (via Wine), Telnet, AX.25'],
@@ -516,7 +516,7 @@ def ch27():
     ], widths=[1.3*inch, 1.5*inch, CW-2.8*inch]))
     s.append(SP(6))
 
-    s.append(P('26.2  Winlink Form Import', H2))
+    s.append(P('27.2  Winlink Form Import', H2))
     s.append(P(
         'When Winlink messages arrive containing ICS forms (ICS-213, ICS-214, '
         'position reports), they can be imported directly into FieldCommand IMS '
@@ -676,7 +676,7 @@ def ch29():
         'Digirig or similar Universal Serial Bus (USB) audio interface) alongside the FieldCommand system '
         'on the same EMCOMM-NET network.'))
     s.append(SP(6))
-    s.append(P('28.1  JS8Call for Emergency Communications (EMCOMM)', H2))
+    s.append(P('29.1  JS8Call for Emergency Communications (EMCOMM)', H2))
     s.append(tbl(['CAPABILITY', 'DESCRIPTION'], [
         ['Keyboard messaging',   'Real-time chat-style messaging between stations — no callsign required to copy'],
         ['Store and forward',    'Messages are stored at relay stations and forwarded when the destination is heard'],
@@ -685,7 +685,7 @@ def ch29():
         ['SNR as low as -24dB', 'Copies signals far weaker than SSB voice or Winlink VARA'],
     ], widths=[1.5*inch, CW-1.5*inch]))
     s.append(SP(6))
-    s.append(P('28.2  Integration with FieldCommand', H2))
+    s.append(P('29.2  Integration with FieldCommand', H2))
     s.append(P(
         'JS8Call traffic is monitored on the EMCOMM-NET network. Incoming messages '
         'that match Incident Command System (ICS) message formats can be manually entered into the ICS-213 '
@@ -704,7 +704,7 @@ def ch30():
         'are the standard for health-and-welfare and priority traffic during '
         'disasters when telephone and internet are unavailable.'))
     s.append(SP(6))
-    s.append(P('29.1  Radiogram Fields', H2))
+    s.append(P('30.1  Radiogram Fields', H2))
     s.append(tbl(['FIELD', 'DESCRIPTION'], [
         ['Precedence',    'ROUTINE · WELFARE · PRIORITY · EMERGENCY'],
         ['Handling',      'HXG (delivery by mail), HXC (report delivery), others'],
@@ -898,7 +898,7 @@ def ch33():
         'and contact information for medical facilities, EOCs, staging areas, '
         'and other operational facilities used during incidents.'))
     s.append(SP(6))
-    s.append(P('32.1  Hospital Directory', H2))
+    s.append(P('33.1  Hospital Directory', H2))
     s.append(tbl(['FIELD', 'DESCRIPTION'], [
         ['Facility name',     'Official hospital or clinic name'],
         ['Address',           'Street address for navigation'],
@@ -909,7 +909,7 @@ def ch33():
         ['Notes',             'Diversion status, special capabilities, current capacity'],
     ], widths=[1.3*inch, CW-1.3*inch]))
     s.append(SP(6))
-    s.append(P('32.2  Facilities Directory', H2))
+    s.append(P('33.2  Facilities Directory', H2))
     s.append(P(
         'The Facilities Directory (facilities.html) stores staging areas, '
         'EOCs, shelters, supply depots, and other operational locations. '
@@ -927,7 +927,7 @@ def ch34():
         'throughout incident operations. All operate fully offline.'))
     s.append(SP(6))
 
-    s.append(P('33.1  Grid Square Calculator', H2))
+    s.append(P('34.1  Grid Square Calculator', H2))
     s.append(P(
         'The Grid Square Calculator (grid.html) converts between Maidenhead grid '
         'locators and decimal coordinates, and calculates distance and bearing '
@@ -941,7 +941,7 @@ def ch34():
     ], widths=[1.5*inch, CW*0.42, CW-1.5*inch-CW*0.42]))
     s.append(SP(6))
 
-    s.append(P('33.2  Radio Cheat Sheets', H2))
+    s.append(P('34.2  Radio Cheat Sheets', H2))
     s.append(P(
         'The Cheat Sheets page (cheatsheets.html) provides quick-reference cards '
         'for common amateur radio and Incident Command System (ICS) procedures: '
@@ -952,7 +952,7 @@ def ch34():
         'card — it has its own dedicated page, resource_types.html.)'))
     s.append(SP(6))
 
-    s.append(P('33.3  NIMS Resource Typing Library', H2))
+    s.append(P('34.3  NIMS Resource Typing Library', H2))
     s.append(P(
         'The NIMS Resource Typing Library (resource_types.html) contains '
         'the standard NIMS resource type definitions used to populate T-cards. '
@@ -960,7 +960,7 @@ def ch34():
         'and immediately become available on the T-card board.'))
     s.append(SP(6))
 
-    s.append(P('33.4  ICS Position Checklists', H2))
+    s.append(P('34.4  ICS Position Checklists', H2))
     s.append(P(
         'The Position Checklists page (position_checklists.html) provides '
         'NIMS-standard activation checklists for each ICS position: '
@@ -969,7 +969,7 @@ def ch34():
         'position activation and printed for the position binder.'))
     s.append(SP(6))
 
-    s.append(P('33.5  Print Center', H2))
+    s.append(P('34.5  Print Center', H2))
     s.append(P(
         'The Print Center (printcenter.html) provides optimized print layouts for '
         'all ICS forms and documents. From any device on EMCOMM-NET, select the '
@@ -990,7 +990,7 @@ def ch35():
         'hardware configuration and how to extend coverage using AiMesh nodes.'))
     s.append(SP(6))
 
-    s.append(P('34.1  Recommended Router — ASUS RT-BE58 Go', H2))
+    s.append(P('35.1  Recommended Router — ASUS RT-BE58 Go', H2))
     s.append(P(
         'The ASUS RT-BE58 Go is the recommended primary router for FieldCommand IMS. '
         'It is a compact, portable Wi-Fi 7 router designed for mobile deployments — '
@@ -1008,7 +1008,7 @@ def ch35():
     ], widths=[1.3*inch, CW-1.3*inch]))
     s.append(SP(6))
 
-    s.append(P('34.2  Extending Coverage with AiMesh', H2))
+    s.append(P('35.2  Extending Coverage with AiMesh', H2))
     s.append(P(
         'AiMesh is ASUS\'s mesh networking system. Additional ASUS RT-BE58 Go '
         'units can be added as AiMesh nodes to extend the EMCOMM-NET signal '
@@ -1029,7 +1029,7 @@ def ch35():
     ])
     s.append(SP(6))
 
-    s.append(P('34.3  UniFi Switch Lite 16 PoE', H2))
+    s.append(P('35.3  UniFi Switch Lite 16 PoE', H2))
     s.append(P(
         'The UniFi Switch Lite 16 PoE is the recommended wired backbone switch. '
         'It provides 16 ports with PoE+ on 8 ports — powering PoE devices '
@@ -1046,7 +1046,7 @@ def ch35():
     ], widths=[1.2*inch, CW-1.2*inch]))
     s.append(SP(6))
 
-    s.append(P('34.4  Power Considerations', H2))
+    s.append(P('35.4  Power Considerations', H2))
     s.append(P(
         'For field deployments without shore power, FieldCommand IMS can run from '
         'two Astron RS-35M-AP regulated linear power supplies (one per Pi cluster) '

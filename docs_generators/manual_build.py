@@ -80,7 +80,12 @@ def toc_page(chapters):
 
 
 # ── Chapter registry ──────────────────────────────────────────────────────────
-CHAPTERS = [
+# NOTE: The Table of Contents is NOT built from any hand-maintained list — it is
+# generated from SECTIONS, which every chapter() call populates with its real
+# (number, title, url). This eliminates the old drift where this list fell out of
+# sync with the actual chapter bodies. The list below is retained only as a
+# human-readable reference/outline and is not used by the build.
+_CHAPTERS_REFERENCE_ONLY = [
     (1,  'Introduction & System Overview',                    ''),
     (2,  'Getting Started — Connecting to FieldCommand',        'http://192.168.50.1/'),
     (3,  'The Main Dashboard',                                'http://192.168.50.1/'),
@@ -129,11 +134,18 @@ CHAPTER_FUNCS = [
 # ── Build ─────────────────────────────────────────────────────────────────────
 out = '/mnt/user-data/outputs/FieldCommand_Complete_User_Manual_v1.0.pdf'
 
+# Build chapter bodies FIRST — each chapter() call registers its real (num, title, url)
+# into SECTIONS, so the Table of Contents is generated from the actual chapter titles
+# (not the drift-prone hand list above). Then assemble cover + TOC + chapters.
+SECTIONS.clear()
+chapter_story = []
+for fn in CHAPTER_FUNCS:
+    chapter_story += fn()
+
 story = []
 story += cover()
-story += toc_page(CHAPTERS)
-for fn in CHAPTER_FUNCS:
-    story += fn()
+story += toc_page(SECTIONS)
+story += chapter_story
 
 doc = SimpleDocTemplate(
     out, pagesize=letter,

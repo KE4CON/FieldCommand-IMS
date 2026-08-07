@@ -233,7 +233,12 @@ def abbr_b(term):
 
 
 def chapter(num, title, url=''):
-    """Return a list of flowables opening a chapter."""
+    """Return a list of flowables opening a chapter.
+
+    Also registers (num, title, url) into SECTIONS so the Table of Contents can be
+    built from the REAL chapter titles rather than a hand-maintained list that drifts.
+    """
+    register_section(num, title, url)
     items = []
     # Chapter number badge — 0.70*inch fits two-digit numbers at 28pt
     # Use fontSize=22 so two-digit numbers (10-36) fit in 0.65*inch without wrapping

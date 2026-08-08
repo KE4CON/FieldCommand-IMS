@@ -28,11 +28,15 @@ It's about 7 MB. Everything you need is inside.
 
 **4. Put the software on the card.** After imaging, a small drive named **`bootfs`** appears on your computer. Copy the whole **`FieldCommand-IMS`** folder onto it.
 
-**5. Boot the Pi and run one command.** Put the card in the Pi 5, power on, open a terminal, and run:
-```bash
-sudo bash /boot/firmware/FieldCommand-IMS/scripts/fieldcommand-setup.sh
-```
-It builds the mirrored RAID 1 storage, copies the OS onto it, reboots, and installs and configures FieldCommand automatically. You answer a few short questions once. (Prefer to preview first? Add `--dry-run`. Pi already online and want the short way? `curl -fsSL https://raw.githubusercontent.com/KE4CON/FieldCommand-IMS/main/scripts/bootstrap.sh | sudo bash`.)
+**5. Boot the Pi and start the setup.** Put the card in the Pi 5, power on, and wait for the desktop. You do **not** have to type a long command — pick whichever is easiest:
+
+- **Easiest — double-click.** Open the **File Manager**, go to the boot drive → `FieldCommand-IMS` → `scripts` → `desktop`, and double-click **“FieldCommand Setup — 1. Preview (safe)”** to see what it will do without changing anything, then **“2. Install”** to do it for real. (Drag those two icons onto your Desktop to keep them handy. If the icon looks inactive, right-click it → *Allow Launching*.) It asks for your password itself — no `sudo` needed.
+- **Or a terminal.** Open a terminal and run (preview first, then without `--dry-run`):
+  ```bash
+  bash /boot/firmware/FieldCommand-IMS/scripts/fieldcommand-setup.sh --dry-run
+  ```
+
+Either way it builds the mirrored RAID 1 storage, copies the OS onto it, reboots, and installs and configures FieldCommand automatically. You answer a few short questions once. *(Pi already online and want the short way instead? `curl -fsSL https://raw.githubusercontent.com/KE4CON/FieldCommand-IMS/main/scripts/bootstrap.sh | sudo bash`.)*
 
 **6. Open it.** From any device on the FieldCommand Wi-Fi network, browse to **http://192.168.50.1/**.
 

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=FieldCommand Setup — 1. Preview (safe)
+Comment=Show exactly what the setup would do, without changing anything (dry run)
+Exec=x-terminal-emulator -e bash /boot/firmware/FieldCommand-IMS/scripts/desktop/fc-run.sh --dry-run
+Icon=utilities-terminal
+Terminal=false
+Categories=System;

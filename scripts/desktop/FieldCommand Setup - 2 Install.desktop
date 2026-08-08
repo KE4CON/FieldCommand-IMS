@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=FieldCommand Setup — 2. Install
+Comment=Build the mirrored storage and install FieldCommand IMS (erases both SSDs after you confirm)
+Exec=x-terminal-emulator -e bash /boot/firmware/FieldCommand-IMS/scripts/desktop/fc-run.sh
+Icon=utilities-terminal
+Terminal=false
+Categories=System;

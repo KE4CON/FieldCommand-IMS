@@ -55,6 +55,14 @@ else
     RED=""; GREEN=""; AMBER=""; BLUE=""; CYAN=""; BOLD=""; DIM=""; NC=""
 fi
 
+# ── Self-elevate ────────────────────────────────────────────────────────────
+# So it can be launched by double-clicking (no need to type "sudo"). If we are
+# not root, re-run ourselves through sudo, preserving all arguments.
+if [[ $EUID -ne 0 ]]; then
+    echo "FieldCommand setup needs administrator rights — you may be asked for your password."
+    exec sudo -- bash "$(readlink -f "${BASH_SOURCE[0]}")" "$@"
+fi
+
 # ── Options ─────────────────────────────────────────────────────────────────
 DRY_RUN=0
 ASSUME_YES="${FC_ASSUME_YES:-0}"
@@ -97,7 +105,8 @@ run() {
 trap 'err "Setup failed at line $LINENO. See $LOG. Your SD card still boots normally — nothing on it was changed by a failed NVMe step."' ERR
 
 # ── Root check ──────────────────────────────────────────────────────────────
-[[ $EUID -eq 0 ]] || die "Run as root:  sudo bash $(basename "$SCRIPT_PATH")"
+# (We normally self-elevate above; this is a backstop for odd sudo setups.)
+[[ $EUID -eq 0 ]] || die "Could not gain administrator rights. Try:  sudo bash $(basename "$SCRIPT_PATH")"
 
 mkdir -p "$STATE_DIR"
 

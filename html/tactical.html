@@ -155,7 +155,7 @@ body.picking #map { cursor:crosshair !important; }
 <div class="top-bar">
   <a href="index.html" style="color:var(--muted);text-decoration:none;font-size:12px">⌂</a>
   <h1>📡 TACTICAL MAP</h1>
-  <div style="font-size:11px;color:var(--muted)">APRS · Graywolf + YAAC · Auto-refresh</div>
+  <div style="font-size:11px;color:var(--muted)">APRS · Direwolf + YAAC · Auto-refresh</div>
   <div style="flex:1"></div>
   <div style="font-family:var(--font-hd);font-size:12px;color:var(--green)">
     Stations: <span id="stn-count" style="color:var(--green)">0</span>
@@ -172,7 +172,7 @@ body.picking #map { cursor:crosshair !important; }
 
   <!-- Layer toggles -->
   <div class="map-controls">
-    <button class="map-btn layer-gw active" id="btn-gw" onclick="toggleLayer('gw')" title="Graywolf APRS">🟢 Graywolf</button>
+    <button class="map-btn layer-gw active" id="btn-gw" onclick="toggleLayer('gw')" title="Direwolf APRS">🟢 Direwolf</button>
     <button class="map-btn layer-yc active" id="btn-yc" onclick="toggleLayer('yc')" title="YAAC APRS">🔵 YAAC</button>
     <button class="map-btn layer-is active" id="btn-is" onclick="toggleLayer('is')" title="APRS-IS (internet)">🟣 APRS-IS</button>
     <button class="map-btn active" id="btn-ov" onclick="toggleLayer('ov')" title="Manual overlays">📌 Overlays</button>
@@ -199,7 +199,7 @@ body.picking #map { cursor:crosshair !important; }
         <input type="text" id="stn-search" placeholder="Search callsign, comment…" oninput="renderStationList()">
         <select id="stn-filter-src" onchange="renderStationList()">
           <option value="">All sources</option>
-          <option value="gw">Graywolf</option>
+          <option value="gw">Direwolf</option>
           <option value="yc">YAAC</option>
           <option value="is">APRS-IS</option>
         </select>
@@ -228,7 +228,7 @@ body.picking #map { cursor:crosshair !important; }
         <textarea id="msg-body" placeholder="Message text (max 67 chars)" rows="2" maxlength="67" style="width:100%;box-sizing:border-box;resize:none;background:var(--input-bg);border:1px solid var(--line);border-radius:4px;color:var(--txt);padding:6px 8px;font-size:12px"></textarea>
         <div style="display:flex;gap:6px;margin-top:4px">
           <select id="msg-via" style="background:var(--input-bg);border:1px solid var(--line);border-radius:4px;color:var(--txt);padding:5px;font-size:11px;flex:1">
-            <option value="gw">Via Graywolf</option>
+            <option value="gw">Via Direwolf</option>
             <option value="yc">Via YAAC</option>
           </select>
           <button class="btn" onclick="sendMessage()" style="font-size:11px">Send</button>
@@ -280,15 +280,16 @@ body.picking #map { cursor:crosshair !important; }
     <!-- SOURCES TAB -->
     <div class="tab-content" id="tc-sources">
       <div style="padding:10px">
-        <!-- Graywolf -->
+        <!-- Direwolf -->
         <div class="settings-section" style="padding:0;margin-bottom:0">
           <div style="padding:8px 10px;background:rgba(57,255,20,0.06);border-bottom:1px solid rgba(57,255,20,0.2)">
-            <div style="font-family:var(--font-hd);font-size:11px;color:#39ff14;letter-spacing:0.1em">🟢 GRAYWOLF TNC</div>
+            <div style="font-family:var(--font-hd);font-size:11px;color:#39ff14;letter-spacing:0.1em">🟢 DIREWOLF RF — via APRS Command</div>
+            <div style="font-size:9px;color:var(--muted);margin-top:2px">Direwolf decodes APRS off the radio (KISS/AGW). APRS Command serves those stations here — set its address under Settings → APRS Sources.</div>
           </div>
           <div class="port-row">
             <div class="port-dot" id="gw-dot" style="background:var(--muted)"></div>
             <div style="flex:1">
-              <div style="font-size:11px;color:var(--txt)">REST API</div>
+              <div style="font-size:11px;color:var(--txt)">Station feed</div>
               <div style="font-size:10px;color:var(--muted)" id="gw-url">http://localhost:8080/api/stations</div>
             </div>
             <div style="font-family:var(--font-hd);font-size:12px;color:#39ff14" id="gw-count">—</div>
@@ -296,14 +297,13 @@ body.picking #map { cursor:crosshair !important; }
           <div class="port-row">
             <div class="port-dot" id="gw-ws-dot" style="background:var(--muted)"></div>
             <div style="flex:1">
-              <div style="font-size:11px;color:var(--txt)">WebSocket (live)</div>
+              <div style="font-size:11px;color:var(--txt)">Live (WebSocket, if served)</div>
               <div style="font-size:10px;color:var(--muted)" id="gw-ws-url">ws://localhost:8080/ws</div>
             </div>
             <div style="font-size:10px;color:var(--muted)" id="gw-ws-status">—</div>
           </div>
           <div style="padding:6px 10px;display:flex;gap:6px">
-            <button class="btn btn-sm" onclick="openGraywolf()" style="background:rgba(26,122,58,0.06);border-color:#39ff14;color:#39ff14;font-size:10px">Open UI ↗</button>
-            <button class="btn btn-sm" onclick="pollGraywolf()" style="font-size:10px;background:var(--panel2)">⟳ Poll</button>
+            <button class="btn btn-sm" onclick="pollDirewolf()" style="font-size:10px;background:var(--panel2)">⟳ Poll</button>
           </div>
         </div>
 
@@ -360,7 +360,7 @@ body.picking #map { cursor:crosshair !important; }
           <div style="font-size:11px;color:var(--muted);line-height:2">
             Total unique stations: <span style="color:var(--txt);font-family:var(--font-hd)" id="merge-total">0</span><br>
             Seen by both GW+YC: <span style="color:var(--txt);font-family:var(--font-hd)" id="merge-both">0</span><br>
-            Graywolf only: <span style="color:#39ff14;font-family:var(--font-hd)" id="merge-gw-only">0</span><br>
+            Direwolf only: <span style="color:#39ff14;font-family:var(--font-hd)" id="merge-gw-only">0</span><br>
             YAAC only: <span style="color:#60aaff;font-family:var(--font-hd)" id="merge-yc-only">0</span><br>
             APRS-IS only: <span style="color:#c850ff;font-family:var(--font-hd)" id="merge-is-only">0</span>
           </div>
@@ -378,8 +378,10 @@ body.picking #map { cursor:crosshair !important; }
         <button class="btn btn-sm" onclick="goToStation()" style="width:100%;margin-top:4px">📍 Center on Station</button>
       </div>
       <div class="settings-section">
-        <div class="settings-title">APRS Sources (Ports)</div>
-        <div class="setting-row"><label>Graywolf port</label><input type="number" id="s-gw-port" value="8080" oninput="saveSettings()"></div>
+        <div class="settings-title">APRS Sources</div>
+        <div class="setting-row"><label>RF source host</label><input type="text" id="s-gw-host" value="localhost" placeholder="APRS Command laptop IP" oninput="saveSettings()"></div>
+        <div class="setting-row"><label>RF source port</label><input type="number" id="s-gw-port" value="8080" oninput="saveSettings()"></div>
+        <div style="font-size:9px;color:var(--muted);padding:2px 0 6px">RF (Direwolf) stations are served by APRS Command — set its IP here (or a Pi-side KISS bridge on localhost).</div>
         <div class="setting-row"><label>YAAC port</label><input type="number" id="s-yc-port" value="8082" oninput="saveSettings()"></div>
       </div>
       <div class="settings-section">
@@ -433,7 +435,7 @@ body.picking #map { cursor:crosshair !important; }
         <div class="legend-row"><div class="leg-dot" style="background:#60aaff"></div>My station</div>
         <div class="legend-row"><div class="leg-dot" style="background:#e040fb"></div>Manual overlay</div>
         <div style="margin-top:6px;font-size:10px;color:var(--muted)">Border color = data source</div>
-        <div class="legend-row"><div style="width:10px;height:10px;border-radius:50%;background:var(--panel);border:2px solid #39ff14;flex-shrink:0"></div>Graywolf</div>
+        <div class="legend-row"><div style="width:10px;height:10px;border-radius:50%;background:var(--panel);border:2px solid #39ff14;flex-shrink:0"></div>Direwolf</div>
         <div class="legend-row"><div style="width:10px;height:10px;border-radius:50%;background:var(--panel);border:2px solid #60aaff;flex-shrink:0"></div>YAAC</div>
         <div class="legend-row"><div style="width:10px;height:10px;border-radius:50%;background:var(--panel);border:2px solid #c850ff;flex-shrink:0"></div>APRS-IS</div>
         <div class="legend-row"><div style="width:10px;height:10px;border-radius:50%;background:var(--panel);border:2px solid #fff;flex-shrink:0"></div>Multiple sources</div>
@@ -444,7 +446,7 @@ body.picking #map { cursor:crosshair !important; }
 
     <!-- Source strip at bottom of map -->
   <div class="src-strip">
-    <div class="src-pill gw" id="strip-gw" onclick="toggleLayer('gw')" title="Toggle Graywolf layer">
+    <div class="src-pill gw" id="strip-gw" onclick="toggleLayer('gw')" title="Toggle Direwolf layer">
       <div class="src-dot" id="strip-gw-dot" style="background:#39ff14"></div>
       GW: <span id="strip-gw-n">—</span>
     </div>
@@ -475,7 +477,7 @@ body.picking #map { cursor:crosshair !important; }
 
       <p><strong style="color:var(--eoc)">2. Configure YAAC web server port</strong><br>
       In YAAC: <em>File → Configure</em> → <em>Web Server</em> tab<br>
-      Set port to <strong style="color:#60aaff">8082</strong> (avoids conflict with Graywolf on 8080)<br>
+      Set port to <strong style="color:#60aaff">8082</strong><br>
       Enable: <em>Enable REST API</em> ✓ &nbsp; <em>Enable WebSocket</em> ✓</p>
 
       <p><strong style="color:var(--eoc)">3. Connect your TNC / radio</strong><br>
@@ -561,6 +563,7 @@ function loadSettings() {
 
   // Attempt to load live GPS position on startup
   loadGPSPosition();
+  d('s-gw-host', 'localhost');
   d('s-gw-port', 8080);
   d('s-yc-port', 8082);
   d('s-refresh', 30);
@@ -578,6 +581,7 @@ function saveSettings() {
     's-callsign': g('s-callsign'),
     's-lat': g('s-lat'),
     's-lon': g('s-lon'),
+    's-gw-host': g('s-gw-host'),
     's-gw-port': g('s-gw-port'),
     's-yc-port': g('s-yc-port'),
     's-refresh': g('s-refresh'),
@@ -593,11 +597,12 @@ function saveSettings() {
 }
 
 function gwPort() { return parseInt(document.getElementById('s-gw-port')?.value) || 8080; }
+function gwHost() { return (document.getElementById('s-gw-host')?.value || '').trim() || 'localhost'; }
 function ycPort() { return parseInt(document.getElementById('s-yc-port')?.value) || 8082; }
 
 function updateSourceURLs() {
-  document.getElementById('gw-url').textContent  = `http://localhost:${gwPort()}/api/stations`;
-  document.getElementById('gw-ws-url').textContent= `ws://localhost:${gwPort()}/ws`;
+  document.getElementById('gw-url').textContent  = `http://${gwHost()}:${gwPort()}/api/stations`;
+  document.getElementById('gw-ws-url').textContent= `ws://${gwHost()}:${gwPort()}/ws`;
   document.getElementById('yc-url').textContent  = `http://localhost:${ycPort()}/api/stations`;
   document.getElementById('yc-ws-url').textContent= `ws://localhost:${ycPort()}/ws/aprs`;
 }
@@ -642,7 +647,7 @@ function initMap() {
   map = L.map('map', { zoomControl:true }).setView([lat, lon], 11);
 
   // Create named layer groups
-  layers.gw    = L.layerGroup().addTo(map);  // Graywolf stations
+  layers.gw    = L.layerGroup().addTo(map);  // Direwolf stations
   layers.yc    = L.layerGroup().addTo(map);  // YAAC stations
   layers.is    = L.layerGroup().addTo(map);  // APRS-IS stations
   layers.ov    = L.layerGroup().addTo(map);  // Manual overlays
@@ -742,14 +747,14 @@ function stationTypeFromSymbol(symbolTable, symbolCode) {
 // Normalize station records from each source
 // ══════════════════════════════════════════════════
 function normalizeGW(r) {
-  // Graywolf uses: callsign, lat, lon, comment, last_seen/timestamp, speed, course, altitude
+  // Direwolf uses: callsign, lat, lon, comment, last_seen/timestamp, speed, course, altitude
   return {
     callsign:    r.callsign || r.call || '?',
     lat:         parseFloat(r.lat || r.latitude || 0),
     lon:         parseFloat(r.lon || r.longitude || 0),
     comment:     r.comment || r.status || '',
     lastHeard:   r.last_seen || r.timestamp || r.lastHeard || null,
-    speed:       r.speed || null,       // mph (Graywolf) or knots (YAAC)
+    speed:       r.speed || null,       // mph (Direwolf) or knots (YAAC)
     course:      r.course || null,
     altitude:    r.altitude || null,    // feet
     symbolTable: r.symbol_table || r.symbolTable || '/',
@@ -1045,7 +1050,7 @@ function updateTrackHistory() {
 // WebSocket — live APRS frame streaming
 // ══════════════════════════════════════════════════
 function connectWebSockets() {
-  connectWS('gw', `ws://localhost:${gwPort()}/ws`, 'gw-ws-dot', 'gw-ws-status');
+  connectWS('gw', `ws://${gwHost()}:${gwPort()}/ws`, 'gw-ws-dot', 'gw-ws-status');
   connectWS('yc', `ws://localhost:${ycPort()}/ws/aprs`, 'yc-ws-dot', 'yc-ws-status');
 }
 
@@ -1102,10 +1107,10 @@ function connectWS(name, url, dotId, statusId) {
 }
 
 // ══════════════════════════════════════════════════
-// REST poll — Graywolf
+// REST poll — Direwolf
 // ══════════════════════════════════════════════════
-async function pollGraywolf() {
-  const url = `http://localhost:${gwPort()}/api/stations`;
+async function pollDirewolf() {
+  const url = `http://${gwHost()}:${gwPort()}/api/stations`;
   try {
     const r = await fetch(url, { signal: AbortSignal.timeout(5000) });
     if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -1118,7 +1123,7 @@ async function pollGraywolf() {
 
     // Also try to fetch messages
     try {
-      const mr = await fetch(`http://localhost:${gwPort()}/api/messages`, { signal: AbortSignal.timeout(3000) });
+      const mr = await fetch(`http://${gwHost()}:${gwPort()}/api/messages`, { signal: AbortSignal.timeout(3000) });
       if (mr.ok) { const md = await mr.json(); (md.messages || md || []).forEach(m => ingestMessage(m, 'gw')); }
     } catch(e) {}
 
@@ -1193,7 +1198,7 @@ async function pollAPRSIS() {
 // Main refresh
 // ══════════════════════════════════════════════════
 async function refreshAll() {
-  await Promise.allSettled([pollGraywolf(), pollYAAC(), pollAPRSIS()]);
+  await Promise.allSettled([pollDirewolf(), pollYAAC(), pollAPRSIS()]);
   mergeStations();
   renderAPRS();
   renderStationList();
@@ -1255,6 +1260,7 @@ async function sendMessage() {
   const to   = document.getElementById('msg-to').value.trim().toUpperCase();
   const body = document.getElementById('msg-body').value.trim();
   const via  = document.getElementById('msg-via').value;
+  const host = via === 'gw' ? gwHost() : 'localhost';
   const port = via === 'gw' ? gwPort() : ycPort();
   const stat = document.getElementById('msg-status');
 
@@ -1263,14 +1269,14 @@ async function sendMessage() {
 
   stat.textContent = 'Sending…';
   try {
-    const r = await fetch(`http://localhost:${port}/api/messages`, {
+    const r = await fetch(`http://${host}:${port}/api/messages`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ to, message: body }),
       signal: AbortSignal.timeout(5000),
     });
     if (r.ok) {
-      stat.textContent = `✓ Sent via ${via === 'gw' ? 'Graywolf' : 'YAAC'}`;
+      stat.textContent = `✓ Sent via ${via === 'gw' ? 'Direwolf' : 'YAAC'}`;
       document.getElementById('msg-body').value = '';
       // Echo in our messages list
       ingestMessage({ from: document.getElementById('s-callsign').value || 'LOCAL', to, body, time: new Date().toISOString(), src: via }, via);
@@ -1278,7 +1284,7 @@ async function sendMessage() {
       stat.textContent = `Send failed (HTTP ${r.status})`;
     }
   } catch(e) {
-    stat.textContent = `Send error — is ${via === 'gw' ? 'Graywolf' : 'YAAC'} running?`;
+    stat.textContent = `Send error — is ${via === 'gw' ? 'Direwolf' : 'YAAC'} running?`;
   }
 }
 
@@ -1427,7 +1433,6 @@ function updateBadge(id, count) {
 
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-function openGraywolf() { window.open(`http://localhost:${gwPort()}`, '_blank'); }
 function openYAAC()     { window.open(`http://localhost:${ycPort()}`, '_blank'); }
 function showYAACSetup(){ document.getElementById('yaac-modal').style.display='flex'; }
 

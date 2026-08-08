@@ -354,7 +354,8 @@ if command -v ufw &>/dev/null; then
     ufw allow 5051/tcp  comment "Health Monitor"    2>>"$FC_LOG" || true
     ufw allow 5055/tcp  comment "ICS Platform API"  2>>"$FC_LOG" || true
     ufw allow 5056/tcp  comment "Reference Library" 2>>"$FC_LOG" || true
-    ufw allow 8080/tcp  comment "Graywolf APRS"     2>>"$FC_LOG" || true
+    ufw allow 8000/tcp  comment "Direwolf AGWPE TNC"  2>>"$FC_LOG" || true
+    ufw allow 8001/tcp  comment "Direwolf KISS TNC"   2>>"$FC_LOG" || true
     ufw allow 8081/tcp  comment "Kiwix Library"     2>>"$FC_LOG" || true
     ufw allow 8082/tcp  comment "YAAC APRS"         2>>"$FC_LOG" || true
     ufw allow 8083/tcp  comment "Tile Server"       2>>"$FC_LOG" || true
@@ -729,17 +730,17 @@ else
     info "Install manually: sudo apt install cups cups-bsd printer-driver-gutenprint avahi-daemon"
 fi
 
-# ── APRS Clients — YAAC and Graywolf ──────────────────────────────────────
+# ── APRS — YAAC client + Direwolf TNC ─────────────────────────────────────
 if [[ "${SKIP_APRS:-0}" != "1" ]]; then
-    step "Installing APRS Clients (YAAC + Graywolf)"
+    step "Installing APRS (YAAC client + Direwolf TNC)"
     info "Both are optional — skip with SKIP_APRS=1 if APRS is not needed"
 
-    # ── Java runtime (required by both YAAC and Graywolf) ──────────────────
-    info "Installing Java runtime (required by YAAC and Graywolf)..."
+    # ── Java runtime (required by YAAC; Direwolf does NOT need Java) ────────
+    info "Installing Java runtime (required by YAAC)..."
     if apt-get install -y default-jre 2>>"$FC_LOG"; then
         success "Java installed: $(java -version 2>&1 | head -1)"
     else
-        warn "Java install failed — YAAC and Graywolf will not run without it"
+        warn "Java install failed — YAAC will not run without it"
     fi
 
     # ── YAAC — Yet Another APRS Client ─────────────────────────────────────
@@ -785,83 +786,81 @@ if [[ "${SKIP_APRS:-0}" != "1" ]]; then
     info "  Set port to 8082 · Enable REST API · Enable WebSocket · Save"
     info "  After saving config, yaac.service will use these settings headlessly"
 
-    # ── Graywolf APRS ───────────────────────────────────────────────────────
-    # Graywolf is a TNC/APRS client with REST API (port 8080) and WebSocket.
-    # It is distributed as a self-contained JAR — check GitHub for latest release.
-    GRAY_DIR="/opt/graywolf"
-    GRAY_JAR="$GRAY_DIR/graywolf.jar"
-    # NOTE: Update this URL when a new Graywolf release is available
-    GRAY_URL="https://github.com/vk2tds/graywolf/releases/latest/download/graywolf.jar"
-
-    if [[ ! -f "$GRAY_JAR" ]]; then
-        info "Downloading Graywolf APRS client..."
-        mkdir -p "$GRAY_DIR"
-        if wget -q --show-progress -O "$GRAY_JAR" "$GRAY_URL" 2>>"$FC_LOG"; then
-            chown -R "$FC_USER:$FC_USER" "$GRAY_DIR"
-            success "Graywolf installed: $GRAY_JAR"
-
-            # Write Graywolf systemd service
-            cat > /etc/systemd/system/graywolf.service << 'GWSVC'
-[Unit]
-Description=Graywolf APRS Client (Port 8080)
-After=network.target
-
-[Service]
-Type=simple
-User=fieldcommand
-Group=fieldcommand
-WorkingDirectory=/opt/graywolf
-ExecStart=/usr/bin/java -jar /opt/graywolf/graywolf.jar --port 8080 --nogui
-Restart=always
-RestartSec=10
-StandardOutput=journal
-StandardError=journal
-SyslogIdentifier=graywolf
-
-[Install]
-WantedBy=multi-user.target
-GWSVC
-            systemctl daemon-reload
-            systemctl enable graywolf.service 2>>"$FC_LOG" \
-                && success "graywolf.service created and enabled" \
-                || warn "graywolf.service enable failed"
-        else
-            warn "Could not download Graywolf — install manually after deployment:"
-            warn "  See https://github.com/vk2tds/graywolf for the latest release"
-            warn "  Place graywolf.jar in /opt/graywolf/ and enable graywolf.service"
-            # Write service file anyway so it is ready when Graywolf is installed
-            cat > /etc/systemd/system/graywolf.service << 'GWSVC'
-[Unit]
-Description=Graywolf APRS Client (Port 8080)
-After=network.target
-
-[Service]
-Type=simple
-User=fieldcommand
-Group=fieldcommand
-WorkingDirectory=/opt/graywolf
-ExecStart=/usr/bin/java -jar /opt/graywolf/graywolf.jar --port 8080 --nogui
-Restart=always
-RestartSec=10
-StandardOutput=journal
-StandardError=journal
-SyslogIdentifier=graywolf
-
-[Install]
-WantedBy=multi-user.target
-GWSVC
-            systemctl daemon-reload
-        fi
+    # ── Direwolf — RF KISS/AGW TNC ──────────────────────────────────────────
+    # Direwolf is a software TNC that decodes APRS off the radio and exposes a
+    # KISS (8001) and AGWPE (8000) TCP interface. Unlike the old Graywolf, it has
+    # NO HTTP/REST API — the "serve stations to the tactical map" job now belongs
+    # to APRS Command (Windows laptop) or a Pi-side KISS bridge that connects to
+    # these ports. Direwolf itself is receive-only here unless PTT is configured.
+    info "Installing Direwolf software TNC..."
+    if apt-get install -y direwolf 2>>"$FC_LOG"; then
+        success "Direwolf installed: $(direwolf -h 2>&1 | head -1 || echo direwolf)"
     else
-        info "Graywolf already installed — skipping"
+        warn "Direwolf install failed — RF APRS will not decode. Install manually: apt install direwolf"
     fi
 
+    # Write a starter Direwolf config if one is not already present.
+    if [[ ! -f /etc/direwolf.conf ]]; then
+        info "Writing starter /etc/direwolf.conf (edit ADEVICE and MYCALL before use)..."
+        cat > /etc/direwolf.conf << 'DWCONF'
+# FieldCommand IMS — Direwolf starter config.
+# EDIT the two marked lines for your station, then: systemctl restart direwolf
+#
+# 1) Audio input device — run `arecord -l` and set the card,device (e.g. plughw:1,0).
+ADEVICE  plughw:1,0
+ACHANNELS 1
+CHANNEL 0
+# 2) Your station callsign-SSID (used only if you enable transmit/beacon).
+MYCALL   N0CALL
+MODEM 1200
+# Client interfaces for APRS Command / KISS bridge (listen on the LAN):
+AGWPORT 8000
+KISSPORT 8001
+# Receive-only by default. To transmit (iGate/digipeat), configure PTT below, e.g.:
+#   PTT GPIO 23        (or)   PTT CM108
+# and add IGSERVER / IGLOGIN for iGate. Leave commented for a listen-only TNC.
+DWCONF
+        chown "$FC_USER:$FC_USER" /etc/direwolf.conf 2>/dev/null || true
+        success "Wrote /etc/direwolf.conf (starter — edit ADEVICE + MYCALL)"
+    else
+        info "/etc/direwolf.conf already present — leaving it unchanged"
+    fi
+
+    # Write and enable direwolf.service (prefers the repo copy if present).
+    if [[ -f "$SCRIPT_DIR/../systemd/direwolf.service" ]]; then
+        cp "$SCRIPT_DIR/../systemd/direwolf.service" /etc/systemd/system/direwolf.service
+    else
+        cat > /etc/systemd/system/direwolf.service << 'DWSVC'
+[Unit]
+Description=Direwolf APRS KISS/AGW software TNC
+After=sound.target network.target
+
+[Service]
+Type=simple
+User=fieldcommand
+Group=fieldcommand
+ExecStart=/usr/bin/direwolf -t 0 -c /etc/direwolf.conf
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=direwolf
+
+[Install]
+WantedBy=multi-user.target
+DWSVC
+    fi
+    systemctl daemon-reload
+    systemctl enable direwolf.service 2>>"$FC_LOG" \
+        && success "direwolf.service created and enabled" \
+        || warn "direwolf.service enable failed — enable manually: systemctl enable direwolf"
+
 else
-    info "Skipping APRS client installation (SKIP_APRS=1)"
+    info "Skipping APRS installation (SKIP_APRS=1)"
     info "Install manually later:"
-    info "  sudo apt install default-jre"
-    info "  sudo mkdir /opt/yaac && wget http://www.ka2ddo.org/ka2ddo/YAAC.zip"
-    info "  sudo unzip YAAC.zip -d /opt/yaac/ && sudo systemctl enable yaac"
+    info "  Direwolf TNC:  sudo apt install direwolf   (edit /etc/direwolf.conf, then systemctl enable direwolf)"
+    info "  YAAC client:   sudo apt install default-jre && sudo mkdir /opt/yaac"
+    info "                 wget http://www.ka2ddo.org/ka2ddo/YAAC.zip && sudo unzip YAAC.zip -d /opt/yaac/"
 fi
 
 # ── Set permissions ────────────────────────────────────────────────

@@ -362,7 +362,7 @@
   <a class="op-card" href="http://192.168.50.1:8080" target="_blank" style="--card-color:var(--eoc)">
     <div class="card-icon">🗺️</div>
     <div class="card-name">APRS Live Map</div>
-    <div class="card-desc">Graywolf TNC — live stations, messaging, iGate</div>
+    <div class="card-desc">Direwolf TNC (RF) — live stations via APRS Command</div>
     <div class="card-port">GW:8080 · YC:8082 ↗</div>
   </a>
   <a class="op-card" href="http://192.168.50.1:8090" target="_blank" style="--card-color:var(--purple)">
@@ -919,13 +919,13 @@
 <div class="sec-label" style="margin-top:20px">📡 Live APRS Stations</div>
 <div class="aprs-table-wrap">
   <div class="table-hdr">
-    <span>REAL-TIME APRS STATIONS (GRAYWOLF)</span>
+    <span>REAL-TIME APRS STATIONS (DIREWOLF · APRS COMMAND)</span>
     <span id="aprsCount" style="color:var(--muted)">—</span>
   </div>
   <div style="overflow-x:auto">
     <table id="aprsTable">
       <thead><tr><th>Callsign</th><th>Distance</th><th>Course/Speed</th><th>Comment</th><th>Last Heard</th></tr></thead>
-      <tbody id="aprsBody"><tr><td colspan="5" style="color:var(--muted);text-align:center;padding:20px">Connecting to Graywolf…</td></tr></tbody>
+      <tbody id="aprsBody"><tr><td colspan="5" style="color:var(--muted);text-align:center;padding:20px">Connecting to APRS source…</td></tr></tbody>
     </table>
   </div>
 </div>
@@ -1085,7 +1085,7 @@ updateClock();
 
 // ── Health monitor poll ───────────────────────────────────────────────
 const SVC_LABELS = {
-  "nginx":"nginx","fcc-lookup":"FCC API","graywolf":"Graywolf","pat":"Pat",
+  "nginx":"nginx","fcc-lookup":"FCC API","direwolf":"Direwolf","pat":"Pat",
   "kiwix-serve":"Kiwix","gpsd":"gpsd","chrony":"Chrony",
   "deadmans":"DMS","tailscaled":"Tailscale","ics-platform":"ICS"
 };
@@ -1387,10 +1387,20 @@ async function pollWeather() {
 pollWeather();
 setInterval(pollWeather, 600000);
 
-// ── APRS Stations from Graywolf ───────────────────────────────────────
+// ── APRS Stations (RF via Direwolf → APRS Command) ────────────────────
+// Direwolf is a KISS/AGW TNC with no HTTP, so live stations come from APRS Command
+// (or a Pi-side KISS bridge). Reuse the address the operator set on the Tactical Map
+// (Settings → APRS Sources), falling back to localhost:8080.
+function aprsSource() {
+  let s = {};
+  try { s = JSON.parse(localStorage.getItem('fc_tactical_v2') || '{}'); } catch(e) {}
+  const host = (s['s-gw-host'] || '').trim() || 'localhost';
+  const port = parseInt(s['s-gw-port']) || 8080;
+  return `http://${host}:${port}`;
+}
 async function pollAPRS() {
   try {
-    const r = await fetch("http://192.168.50.1:8080/api/stations",{signal:AbortSignal.timeout(5000)});
+    const r = await fetch(`${aprsSource()}/api/stations`,{signal:AbortSignal.timeout(5000)});
     const stations = await r.json();
     const tbody = document.getElementById("aprsBody");
     document.getElementById("aprsCount").textContent = `${stations.length} stations`;
@@ -1413,7 +1423,7 @@ async function pollAPRS() {
     }).join("");
   } catch(e) {
     document.getElementById("aprsBody").innerHTML =
-      '<tr><td colspan="5" style="color:var(--muted);text-align:center;padding:16px">Graywolf unavailable — start Graywolf APRS service</td></tr>';
+      '<tr><td colspan="5" style="color:var(--muted);text-align:center;padding:16px">No APRS source — start APRS Command (or the KISS bridge) and set its address on the Tactical Map</td></tr>';
   }
 }
 

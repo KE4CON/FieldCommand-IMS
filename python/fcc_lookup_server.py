@@ -1057,7 +1057,7 @@ class Handler(BaseHTTPRequestHandler):
                 r=subprocess.run(["systemctl","is-active",n],capture_output=True,text=True,timeout=3)
                 return r.stdout.strip()=="active"
             except: return False
-        for n,lbl in [("nginx","Web Server"),("graywolf","Graywolf APRS"),
+        for n,lbl in [("nginx","Web Server"),("direwolf","Direwolf TNC"),
                       ("pat","Pat Winlink"),("fcc-lookup","FCC Lookup API"),
                       ("kiwix","Kiwix Library"),("gpsd","GPS Daemon"),
                       ("chrony","Time Sync"),("deadmans","Dead Man's Switch")]:
@@ -1108,7 +1108,7 @@ class Handler(BaseHTTPRequestHandler):
         dms=c.execute("SELECT state FROM dms_state WHERE id=1").fetchone()
         dms_s=dms["state"] if dms else "disarmed"
         results["dms_state"]={"ok":dms_s!="triggered","label":"Dead Man's Switch","state":dms_s}
-        critical=["nginx","fcc-lookup","wifi_ap","org_setup"]; important=["graywolf","pat","fcc_db","gps_fix","roster","repeater_db"]
+        critical=["nginx","fcc-lookup","wifi_ap","org_setup"]; important=["direwolf","pat","fcc_db","gps_fix","roster","repeater_db"]
         crit_ok=all(results[k]["ok"] for k in critical)
         imp_ok=all(results[k]["ok"] for k in important if k in results)
         verdict="GO" if (crit_ok and imp_ok) else "CAUTION" if crit_ok else "NO-GO"

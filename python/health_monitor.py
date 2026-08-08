@@ -26,7 +26,7 @@ SERVICES = [
     ("nginx",           "Web Server"),
     ("fcc-lookup",      "FCC Lookup API"),
     ("health-monitor",  "Health Monitor"),
-    ("graywolf",        "Graywolf APRS"),
+    ("direwolf",        "Direwolf TNC"),
     ("pat",             "Pat Winlink"),
     ("kiwix-serve",     "Kiwix"),
     ("gpsd",            "GPS Daemon"),

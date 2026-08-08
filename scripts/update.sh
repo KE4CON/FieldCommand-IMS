@@ -33,18 +33,18 @@ read -rp "Select [0-9]: " CHOICE
 case "$CHOICE" in
     1)
         echo -e "${CYAN}Restarting services...${NC}"
-        for svc in fcc-lookup health-monitor deadmans ics-platform fieldcommand-refs fieldcommand-tiles yaac graywolf nginx; do
+        for svc in fcc-lookup health-monitor deadmans ics-platform fieldcommand-refs fieldcommand-tiles yaac direwolf nginx; do
             sudo systemctl restart "$svc" && echo -e "${GREEN}✓ $svc${NC}" || echo -e "${RED}✗ $svc${NC}"
         done
         ;;
     2)
         echo -e "${CYAN}Stopping services...${NC}"
-        for svc in fcc-lookup health-monitor deadmans ics-platform fieldcommand-refs fieldcommand-tiles yaac graywolf; do
+        for svc in fcc-lookup health-monitor deadmans ics-platform fieldcommand-refs fieldcommand-tiles yaac direwolf; do
             sudo systemctl stop "$svc" && echo -e "${GREEN}✓ Stopped $svc${NC}" || true
         done
         ;;
     3)
-        for svc in fcc-lookup health-monitor deadmans ics-platform fieldcommand-refs fieldcommand-tiles yaac graywolf nginx; do
+        for svc in fcc-lookup health-monitor deadmans ics-platform fieldcommand-refs fieldcommand-tiles yaac direwolf nginx; do
             STATUS=$(systemctl is-active "$svc" 2>/dev/null || echo "unknown")
             if [[ "$STATUS" == "active" ]]; then
                 echo -e "  ${GREEN}●${NC} $svc — active"

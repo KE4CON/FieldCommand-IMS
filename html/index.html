@@ -1412,8 +1412,11 @@ async function pollAPRS() {
 
     tbody.innerHTML = stations.slice(0,20).map(s => {
       const dist = s.distance_km ? `${s.distance_km.toFixed(1)} km` : "—";
-      const cs   = s.course ? `${s.course}° / ${s.speed || 0} km/h` : "—";
-      const heard = s.last_heard ? new Date(s.last_heard).toUTCString().slice(17,22)+" UTC" : "—";
+      const cs   = s.course ? `${s.course}° / ${s.speed || 0} kt` : "—";
+      // APRS Command sends lastHeard as unix seconds; tolerate last_heard (ISO) too.
+      let heard = "—";
+      const lh = s.lastHeard ?? s.last_heard;
+      if (lh != null) { const d = typeof lh === "number" ? new Date(lh*1000) : new Date(lh); if(!isNaN(d)) heard = d.toUTCString().slice(17,22)+" UTC"; }
       return `<tr>
         <td><strong>${s.callsign || "?"}</strong></td>
         <td>${dist}</td><td>${cs}</td>

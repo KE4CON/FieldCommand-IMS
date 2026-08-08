@@ -747,20 +747,25 @@ function stationTypeFromSymbol(symbolTable, symbolCode) {
 // Normalize station records from each source
 // ══════════════════════════════════════════════════
 function normalizeGW(r) {
-  // Direwolf uses: callsign, lat, lon, comment, last_seen/timestamp, speed, course, altitude
+  // RF feed (APRS Command, fed by Direwolf). APRS Command sends: callsign, lat, lng, comment,
+  // symbol ("/>", table+code combined), lastHeard (unix seconds), speed (knots), course.
+  // Also tolerates older/other shapes (lon/longitude, symbol_table/symbol_code, last_seen).
+  const sym = (typeof r.symbol === 'string' && r.symbol.length >= 2) ? r.symbol : null;
+  const symTable = sym ? sym[0] : (r.symbol_table || r.symbolTable || '/');
+  const symCode  = sym ? sym[1] : (r.symbol_code  || r.symbolCode  || '>');
   return {
     callsign:    r.callsign || r.call || '?',
-    lat:         parseFloat(r.lat || r.latitude || 0),
-    lon:         parseFloat(r.lon || r.longitude || 0),
+    lat:         parseFloat(r.lat ?? r.latitude ?? 0),
+    lon:         parseFloat(r.lon ?? r.lng ?? r.longitude ?? 0),
     comment:     r.comment || r.status || '',
     lastHeard:   r.last_seen || r.timestamp || r.lastHeard || null,
-    speed:       r.speed || null,       // mph (Direwolf) or knots (YAAC)
-    course:      r.course || null,
-    altitude:    r.altitude || null,    // feet
-    symbolTable: r.symbol_table || r.symbolTable || '/',
-    symbolCode:  r.symbol_code  || r.symbolCode  || '>',
+    speed:       r.speed ?? null,       // knots (APRS Command)
+    course:      r.course ?? null,
+    altitude:    r.altitude ?? null,    // feet
+    symbolTable: symTable,
+    symbolCode:  symCode,
     path:        r.path || '',
-    type:        r.type || stationTypeFromSymbol(r.symbol_table || r.symbolTable, r.symbol_code || r.symbolCode),
+    type:        r.type || stationTypeFromSymbol(symTable, symCode),
     power:       r.power || null,
     source:      'gw',
     _sources:    new Set(['gw']),

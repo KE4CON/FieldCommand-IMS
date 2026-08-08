@@ -171,8 +171,11 @@ for edkey, override in MANUAL_EDITIONS.items():
         chapter_story += fn()
     story = cover() + toc_page(SECTIONS) + chapter_story
 
-    out = os.path.join(_OUTDIR,
+    # World edition is public (docs/guides); ESV edition is private (docs/internal).
+    _subdir = 'internal' if override["infix"] else 'guides'
+    out = os.path.join(_OUTDIR, _subdir,
         f'FieldCommand_Complete_User_Manual{override["infix"]}_v1.0.pdf')
+    os.makedirs(os.path.dirname(out), exist_ok=True)
     doc = SimpleDocTemplate(
         out, pagesize=letter,
         leftMargin=M, rightMargin=M,

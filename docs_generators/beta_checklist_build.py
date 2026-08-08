@@ -823,7 +823,7 @@ story.append(P(
 import os as _os
 out = _os.environ.get('FC_BETA_OUT') or ('/mnt/user-data/outputs/ESV_Beta_Test_Checklist.pdf'
     if _os.path.isdir('/mnt/user-data/outputs')
-    else _os.path.normpath(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)), '..', 'docs', 'ESV_Beta_Test_Checklist.pdf')))
+    else _os.path.normpath(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)), '..', 'docs', 'internal', 'ESV_Beta_Test_Checklist.pdf')))
 _os.makedirs(_os.path.dirname(out), exist_ok=True)
 doc = SimpleDocTemplate(
     out, pagesize=letter,

@@ -42,7 +42,7 @@ It's about 7 MB. Everything you need is inside.
 
 > **Do you need an amateur radio callsign?** No. If your group has no licensed amateur radio operators, **leave the callsign blank** during setup — the incident-management and public-safety features all work fully, and the amateur radio tools simply stay grayed out. Enter a callsign only if you have a properly licensed operator with privileges on the bands and modes you intend to use. You can add one later at any time.
 
-📖 **Full details, wiring, and the manual partitioning fallback:** [`docs/FieldCommand_Installation_Guide.pdf`](docs/FieldCommand_Installation_Guide.pdf) and the [Complete User Manual](docs/FieldCommand_Complete_User_Manual_v1.0.pdf).
+📖 **Full details, wiring, and the manual partitioning fallback:** [`docs/guides/FieldCommand_Installation_Guide.pdf`](docs/guides/FieldCommand_Installation_Guide.pdf) and the [Complete User Manual](docs/guides/FieldCommand_Complete_User_Manual_v1.0.pdf).
 
 ---
 

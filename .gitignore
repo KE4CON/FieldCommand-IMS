@@ -1,2 +1,6 @@
 __pycache__/
 *.pyc
+
+# Internal / private docs — org-specific (ESV), business/financial, and dev-only.
+# Kept locally, never published. Do NOT remove this line.
+docs/internal/

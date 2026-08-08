@@ -151,7 +151,7 @@ story.append(acc)
 import os as _os
 out = _os.environ.get('FC_OVERVIEW_OUT') or ('/mnt/user-data/outputs/IncidentManagement_Overview.pdf'
     if _os.path.isdir('/mnt/user-data/outputs')
-    else _os.path.normpath(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)), '..', 'docs', 'IncidentManagement_Overview.pdf')))
+    else _os.path.normpath(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)), '..', 'docs', 'guides', 'IncidentManagement_Overview.pdf')))
 _os.makedirs(_os.path.dirname(out), exist_ok=True)
 doc=SimpleDocTemplate(out,pagesize=letter,leftMargin=M,rightMargin=M,topMargin=0.62*inch,bottomMargin=0.37*inch,title='Incident Management System v1.0 — Overview',author='FieldCommand IMS')
 doc.build(story,canvasmaker=NC)

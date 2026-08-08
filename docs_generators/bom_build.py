@@ -274,7 +274,7 @@ def make_story(E):
 # ── Build both editions ───────────────────────────────────────────────────────
 OUTDIR = os.environ.get('FC_BOM_OUTDIR') or (
     '/mnt/user-data/outputs' if os.path.isdir('/mnt/user-data/outputs')
-    else os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'docs')))
+    else os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'docs', 'hardware')))
 os.makedirs(OUTDIR, exist_ok=True)
 
 for edkey, E in EDITIONS.items():

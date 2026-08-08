@@ -969,7 +969,10 @@ _UG_EDITIONS = {
 }
 for _edkey, _fname in _UG_EDITIONS.items():
     EDITION = _edkey
-    out = os.path.join(_OUTDIR, _fname)
+    # ESV edition names the real org -> private (docs/internal); World -> public (docs/guides).
+    _subdir = 'internal' if _edkey == 'ESV' else 'guides'
+    out = os.path.join(_OUTDIR, _subdir, _fname)
+    os.makedirs(os.path.dirname(out), exist_ok=True)
     doc = SimpleDocTemplate(
         out, pagesize=letter, leftMargin=M, rightMargin=M,
         topMargin=0.55*inch, bottomMargin=0.42*inch,

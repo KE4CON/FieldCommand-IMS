@@ -3351,7 +3351,7 @@ story.append(tbl(['ITEM', 'VALUE'], [
 ], [2.0*inch, CW-2.0*inch]))
 
 # ── Build ─────────────────────────────────────────────────────────────────────
-_DEFAULT_OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'docs',
+_DEFAULT_OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'docs', 'guides',
                             'FieldCommand_Installation_Guide.pdf')
 out = os.environ.get('FC_INSTALL_OUT') or (
     '/mnt/user-data/outputs/FieldCommand_Installation_Guide.pdf'

@@ -90,7 +90,7 @@ FieldCommand has **two** separate map displays with different data sources. They
 - **Starcom Resource Map (`resmap.html`)** — the **public-service (Starcom)** side. Objects are **hand-entered** on the map by the operator: "+ Add Unit" (with *Pick on Map*), "Draw Zone" (click corners), edit/remove — persisted server-side via `/api/resmap` (port 5050). It is **not** fed by APRS/RF and must never be wired to Direwolf. (`APRS Command mobile companion note`: APRS Command's own `MobileCompanionServer` already serves `/api/stations` etc., but behind a per-session token on a random port — see #16.)
 
 ## Known issues / consciously deferred
-Real but low-priority; listed so they aren't "rediscovered" as new bugs. See `docs/AUDIT_FINDINGS.md` for the full audit.
+Real but low-priority; listed so they aren't "rediscovered" as new bugs. See `docs/internal/AUDIT_FINDINGS.md` for the full audit (local/private — `docs/internal/` is gitignored, not published).
 - **Concurrency:** the Python servers are single-threaded `HTTPServer`; a slow request (e.g. a cold `/api/health`, RadioReference lookup) blocks other clients. Revisit `ThreadingHTTPServer` if it bites.
 - **`health_monitor.get_internet`** mutates the global socket default timeout (`socket.setdefaulttimeout`) — minor.
 - **udev:** an FTDI TNC (`0403:6001`) can collide with the GPS rule and not get `/dev/tnc0` — disambiguate by product string if it happens.
@@ -108,4 +108,5 @@ Real but low-priority; listed so they aren't "rediscovered" as new bugs. See `do
 - Do not point ICS UI calls at port 5051 (that's the health monitor; ICS is 5055).
 
 ## Reference
-Full audit: `docs/AUDIT_FINDINGS.md`. Vision/feature detail: the FieldCommand PDFs in `docs/` (User Manual, Installation Guide, Overview, the two BOMs).
+**Docs layout:** `docs/guides/` (public end-user: install guides, World user manual/guide, quick ref, overview), `docs/hardware/` (BOMs), `docs/beta/` (public beta package), and **`docs/internal/` (gitignored, NOT published)** for org-specific ESV editions, business/financial docs (grant, price, tax), and dev docs (audit, testing runbook, remaining-work). Generators route World/generic output to the public subfolders and ESV/business/dev output to `docs/internal/`.
+Full audit: `docs/internal/AUDIT_FINDINGS.md`. Vision/feature detail: the FieldCommand PDFs under `docs/guides/`.

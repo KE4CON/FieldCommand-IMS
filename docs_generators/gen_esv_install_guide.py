@@ -3354,7 +3354,7 @@ story.append(tbl(['ITEM', 'VALUE'], [
 
 # ── Build ─────────────────────────────────────────────────────────────────────
 # Portable output: FC_ESV_INSTALL_OUT overrides; otherwise write into the repo's docs/.
-_DEFAULT_OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'docs',
+_DEFAULT_OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'docs', 'internal',
                             'FieldCommand_ESV_Installation_Guide.pdf')
 out = os.environ.get('FC_ESV_INSTALL_OUT') or (
     '/mnt/user-data/outputs/FieldCommand_ESV_Installation_Guide.pdf'

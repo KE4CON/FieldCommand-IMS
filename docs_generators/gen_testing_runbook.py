@@ -370,7 +370,7 @@ story.append(P('Record results (date, which prepper, pass/fail at each phase, an
 
 # ── Emit ─────────────────────────────────────────────────────────────────────
 OUT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                   'docs', 'FieldCommand_Testing_Runbook.pdf')
+                   'docs', 'internal', 'FieldCommand_Testing_Runbook.pdf')
 doc = SimpleDocTemplate(OUT, pagesize=letter, topMargin=0.7*inch, bottomMargin=0.7*inch,
                         leftMargin=M, rightMargin=M, title='FieldCommand IMS — Testing Runbook',
                         author='James Rospopo KE4CON')

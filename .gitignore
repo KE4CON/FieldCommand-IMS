@@ -2,5 +2,8 @@ __pycache__/
 *.pyc
 
 # Internal / private docs — org-specific (ESV), business/financial, and dev-only.
-# Kept locally, never published. Do NOT remove this line.
-docs/internal/
+# Kept locally, never published. Do NOT remove these lines.
+# Ignore the folder's CONTENTS, but keep the explanatory README tracked so the
+# repo documents that this private area exists and how it's handled.
+docs/internal/*
+!docs/internal/README.md

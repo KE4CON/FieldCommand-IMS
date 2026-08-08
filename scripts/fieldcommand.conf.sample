@@ -1,0 +1,50 @@
+# ============================================================================
+# FieldCommand IMS — unattended setup answers  (SAMPLE)
+# ============================================================================
+#
+# Copy this file to  fieldcommand.conf  and fill in your values to run the
+# setup with NO on-screen questions at all.
+#
+# Where to put it (the setup script checks these, in order):
+#   * next to the FieldCommand-IMS folder on the SD card boot partition
+#     (e.g.  /boot/firmware/fieldcommand.conf ), OR
+#   * next to the setup script ( scripts/fieldcommand.conf ), OR
+#   * point at it explicitly:  sudo bash fieldcommand-setup.sh --config /path/to/fieldcommand.conf
+#
+# Any value you leave out is asked for on screen (or takes the default shown).
+# ----------------------------------------------------------------------------
+
+# Install profile: 1=Full (recommended), 2=Server only, 3=Web only
+PROFILE="1"
+
+# ── Station callsign — OPTIONAL ─────────────────────────────────────────────
+# Leave BLANK ("") if your group has no amateur radio operators. The program
+# works fully without it; only the Amateur Radio tools stay disabled. Enter a
+# callsign ONLY if you have a properly licensed operator with privileges on the
+# bands and modes you intend to use — transmitting otherwise is unlawful.
+CALLSIGN=""
+
+# Station location (decimal degrees). Used for weather, maps, sunrise/sunset.
+STATION_LAT="42.3153"
+STATION_LON="-88.4473"
+
+# WiFi network the field devices connect to (provided by the ASUS router).
+AP_SSID="EMCOMM-NET"
+AP_PASS="fieldcommand2026"
+
+# Static IP the Pi serves the app on.
+SERVER_IP="192.168.50.1"
+
+# Download the FCC amateur database during install? (~600 MB)  y or N
+DO_FCC="N"
+
+# Offline map tiles: 0=skip, 1=essential(~8MB), 2=standard(~180MB), 3=full(~1.6GB)
+TILE_PRESET="1"
+
+# Kiwix offline library: 0=skip, 1=essential(~2.5GB), 2=extended(~10GB), 3=full(~25GB)
+KIWIX_TIER="1"
+
+# ── Advanced (optional) ─────────────────────────────────────────────────────
+# Force which NVMe devices are the two mirror drives. Leave commented for auto.
+#FC_SSD_A="/dev/nvme0n1"
+#FC_SSD_B="/dev/nvme1n1"

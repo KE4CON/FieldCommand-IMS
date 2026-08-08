@@ -25,6 +25,46 @@ DIM='\033[2m'
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+# ── Non-interactive / config-file support ──────────────────────────
+# The one-command orchestrator (fieldcommand-setup.sh) runs this installer
+# unattended on the first boot from the SSD RAID. It passes the operator's
+# answers ahead of time so nothing is typed twice. Two ways in:
+#   * --config FILE / FC_CONFIG=FILE : a shell file that sets the vars below
+#   * --noninteractive / FC_NONINTERACTIVE=1 : never prompt; use presets/defaults
+# When neither is used, the installer prompts exactly as it always has.
+NONINTERACTIVE="${FC_NONINTERACTIVE:-0}"
+FC_CONFIG="${FC_CONFIG:-}"
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --config) FC_CONFIG="$2"; shift 2 ;;
+        --config=*) FC_CONFIG="${1#*=}"; shift ;;
+        --noninteractive|--unattended|-y) NONINTERACTIVE=1; shift ;;
+        *) shift ;;
+    esac
+done
+if [[ -n "$FC_CONFIG" ]]; then
+    if [[ -f "$FC_CONFIG" ]]; then
+        # shellcheck disable=SC1090
+        source "$FC_CONFIG"
+        NONINTERACTIVE=1   # a config file implies unattended
+    else
+        echo "Config file not found: $FC_CONFIG" >&2
+        exit 1
+    fi
+fi
+
+# ask VARNAME "prompt text" "default"
+# If VARNAME is already set (from config/env) it is kept. In non-interactive
+# mode the default is used without prompting. Otherwise it prompts, falling
+# back to the default on empty input or EOF (won't abort under `set -e`).
+ask() {
+    local __v="$1" __p="$2" __d="${3-}" __in=""
+    if [[ -n "${!__v-}" ]]; then return 0; fi
+    if [[ "$NONINTERACTIVE" == "1" ]]; then printf -v "$__v" '%s' "$__d"; return 0; fi
+    read -rp "$__p" __in || __in=""
+    printf -v "$__v" '%s' "${__in:-$__d}"
+}
+
 # ── Logging ────────────────────────────────────────────────────────
 log() { echo -e "$1" | tee -a "$FC_LOG"; }
 info()    { log "${CYAN}[INFO]${NC}  $1"; }
@@ -89,71 +129,66 @@ touch "$FC_LOG"
 # ── Interactive configuration ──────────────────────────────────────
 step "Installation Configuration"
 
-echo ""
-echo -e "${BOLD}Select installation profile:${NC}"
-echo "  1) Full installation (recommended) — all services, WiFi AP, FCC DB"
-echo "  2) Server only — Python APIs + web, no WiFi AP config"
-echo "  3) Web only — copy HTML files, no Python services"
-echo "  4) Update — update files in existing installation"
-echo ""
-read -rp "Profile [1-4, default=1]: " PROFILE
-PROFILE=${PROFILE:-1}
+if [[ "$NONINTERACTIVE" != "1" ]]; then
+    echo ""
+    echo -e "${BOLD}Select installation profile:${NC}"
+    echo "  1) Full installation (recommended) — all services, WiFi AP, FCC DB"
+    echo "  2) Server only — Python APIs + web, no WiFi AP config"
+    echo "  3) Web only — copy HTML files, no Python services"
+    echo "  4) Update — update files in existing installation"
+    echo ""
+fi
+ask PROFILE "Profile [1-4, default=1]: " 1
 
-echo ""
-read -rp "Station callsign (e.g. W8ABC): " CALLSIGN
-CALLSIGN=${CALLSIGN:-W8ABC}
+# Callsign is OPTIONAL. Leave it blank for a group with no amateur operators —
+# the app then keeps its Amateur Radio features grayed out (see setup wizard /
+# index.html gating). A callsign can be added later in the Setup wizard.
+echo "" 2>/dev/null || true
+ask CALLSIGN "Station callsign — leave blank if no amateur operators (e.g. W8ABC): " ""
 CALLSIGN="${CALLSIGN^^}"
 
-read -rp "Station latitude [42.3153]: " STATION_LAT
-STATION_LAT=${STATION_LAT:-42.3153}
-
-read -rp "Station longitude [-88.4473]: " STATION_LON
-STATION_LON=${STATION_LON:--88.4473}
-
-read -rp "WiFi AP SSID [EMCOMM-NET]: " AP_SSID
-AP_SSID=${AP_SSID:-EMCOMM-NET}
-
-read -rp "WiFi AP password [fieldcommand2026]: " AP_PASS
-AP_PASS=${AP_PASS:-fieldcommand2026}
-
-read -rp "Server IP address [192.168.50.1]: " SERVER_IP
-SERVER_IP=${SERVER_IP:-192.168.50.1}
+ask STATION_LAT "Station latitude [42.3153]: " 42.3153
+ask STATION_LON "Station longitude [-88.4473]: " -88.4473
+ask AP_SSID "WiFi AP SSID [EMCOMM-NET]: " EMCOMM-NET
+ask AP_PASS "WiFi AP password [fieldcommand2026]: " fieldcommand2026
+ask SERVER_IP "Server IP address [192.168.50.1]: " 192.168.50.1
 
 if [[ "$PROFILE" == "1" ]]; then
-    read -rp "Download FCC amateur database? (~600MB) [y/N]: " DO_FCC
-    DO_FCC=${DO_FCC:-N}
+    ask DO_FCC "Download FCC amateur database? (~600MB) [y/N]: " N
 fi
 
 if [[ "$PROFILE" == "1" || "$PROFILE" == "2" ]]; then
-    echo ""
-    echo -e "${BOLD}Offline Map Tiles${NC} (served on port 8083)"
-    echo -e "  Downloads map tiles for McHenry County so maps work with no internet."
-    echo -e "  Tiles are stored as MBTiles SQLite files on the Pi."
-    echo ""
-    echo -e "  ${GREEN}1 — Essential${NC}   Z8–Z14  ~8 MB   ~2 min    Overview to street level"
-    echo -e "  ${AMBER}2 — Standard${NC}    Z8–Z16  ~180 MB ~25 min   Full street + block detail"
-    echo -e "  ${CYAN}3 — Full${NC}         Z8–Z17  ~1.6 GB ~4 hr     Building-level detail"
-    echo -e "  ${DIM}0 — Skip (maps use online tiles when available)${NC}"
-    echo ""
-    read -rp "Map tile preset [0-3, default=1]: " TILE_PRESET
-    TILE_PRESET=${TILE_PRESET:-1}
+    if [[ "$NONINTERACTIVE" != "1" ]]; then
+        echo ""
+        echo -e "${BOLD}Offline Map Tiles${NC} (served on port 8083)"
+        echo -e "  Downloads map tiles for McHenry County so maps work with no internet."
+        echo -e "  Tiles are stored as MBTiles SQLite files on the Pi."
+        echo ""
+        echo -e "  ${GREEN}1 — Essential${NC}   Z8–Z14  ~8 MB   ~2 min    Overview to street level"
+        echo -e "  ${AMBER}2 — Standard${NC}    Z8–Z16  ~180 MB ~25 min   Full street + block detail"
+        echo -e "  ${CYAN}3 — Full${NC}         Z8–Z17  ~1.6 GB ~4 hr     Building-level detail"
+        echo -e "  ${DIM}0 — Skip (maps use online tiles when available)${NC}"
+        echo ""
+    fi
+    ask TILE_PRESET "Map tile preset [0-3, default=1]: " 1
 else
     TILE_PRESET=0
 fi
 
 if [[ "$PROFILE" == "1" || "$PROFILE" == "2" ]]; then
-    echo ""
-    echo -e "${BOLD}Kiwix Offline Library${NC} (served on port 8081)"
-    echo -e "  Provides offline reference docs to all devices on EMCOMM-NET."
-    echo -e "  Requires internet at install time. Downloads can be resumed."
-    echo ""
-    echo -e "  ${GREEN}1 — Tier 1 Essential${NC}   ~2.5 GB   WikiMed + Wikipedia Mini + Wikivoyage"
-    echo -e "  ${AMBER}2 — Tier 2 Extended${NC}    ~10 GB    + Wikibooks + iFixit repair manuals"
-    echo -e "  ${CYAN}3 — Tier 3 Full suite${NC}  ~25 GB    + Medical Wikipedia + Wikiversity + Electronics SE"
-    echo -e "  ${DIM}0 — Skip downloads (install Kiwix service only, add ZIMs later)${NC}"
-    echo ""
-    read -rp "Kiwix content tier [0-3, default=1]: " KIWIX_TIER
-    KIWIX_TIER=${KIWIX_TIER:-1}
+    if [[ "$NONINTERACTIVE" != "1" ]]; then
+        echo ""
+        echo -e "${BOLD}Kiwix Offline Library${NC} (served on port 8081)"
+        echo -e "  Provides offline reference docs to all devices on EMCOMM-NET."
+        echo -e "  Requires internet at install time. Downloads can be resumed."
+        echo ""
+        echo -e "  ${GREEN}1 — Tier 1 Essential${NC}   ~2.5 GB   WikiMed + Wikipedia Mini + Wikivoyage"
+        echo -e "  ${AMBER}2 — Tier 2 Extended${NC}    ~10 GB    + Wikibooks + iFixit repair manuals"
+        echo -e "  ${CYAN}3 — Tier 3 Full suite${NC}  ~25 GB    + Medical Wikipedia + Wikiversity + Electronics SE"
+        echo -e "  ${DIM}0 — Skip downloads (install Kiwix service only, add ZIMs later)${NC}"
+        echo ""
+    fi
+    ask KIWIX_TIER "Kiwix content tier [0-3, default=1]: " 1
 else
     KIWIX_TIER=0
 fi
@@ -161,7 +196,11 @@ fi
 echo ""
 echo -e "${BOLD}Configuration summary:${NC}"
 echo -e "  Profile:     ${AMBER}$PROFILE${NC}"
-echo -e "  Callsign:    ${AMBER}$CALLSIGN${NC}"
+if [[ -n "$CALLSIGN" ]]; then
+    echo -e "  Callsign:    ${AMBER}$CALLSIGN${NC}"
+else
+    echo -e "  Callsign:    ${DIM}none — amateur radio features stay disabled${NC}"
+fi
 echo -e "  Coordinates: ${AMBER}$STATION_LAT, $STATION_LON${NC}"
 echo -e "  WiFi SSID:   ${AMBER}$AP_SSID${NC}"
 echo -e "  Server IP:   ${AMBER}$SERVER_IP${NC}"
@@ -176,9 +215,13 @@ else
     echo -e "  Map tiles:   ${DIM}online only (no offline download)${NC}"
 fi
 echo ""
-read -rp "Proceed with installation? [Y/n]: " CONFIRM
-CONFIRM=${CONFIRM:-Y}
-[[ "$CONFIRM" =~ ^[Yy] ]] || { echo "Installation cancelled."; exit 0; }
+if [[ "$NONINTERACTIVE" == "1" ]]; then
+    info "Non-interactive mode — proceeding with the configuration above."
+else
+    read -rp "Proceed with installation? [Y/n]: " CONFIRM
+    CONFIRM=${CONFIRM:-Y}
+    [[ "$CONFIRM" =~ ^[Yy] ]] || { echo "Installation cancelled."; exit 0; }
+fi
 
 # ── Package installation ───────────────────────────────────────────
 step "Installing System Packages"
@@ -302,9 +345,16 @@ info "Patching station configuration into HTML files..."
 find "$FC_WEB" -name "*.html" | while read -r f; do
     sed -i "s/STATION_LAT *= *42\.3153/STATION_LAT = $STATION_LAT/g" "$f"
     sed -i "s/STATION_LON *= *-88\.4473/STATION_LON = $STATION_LON/g" "$f"
-    sed -i "s/W8ABC/$CALLSIGN/g" "$f"
+    # Only substitute the callsign placeholder when a callsign was provided.
+    # Blank = a non-amateur group; leave the placeholder so nothing renders empty
+    # (the UI reads the live callsign from /api/config and gates amateur features).
+    [[ -n "$CALLSIGN" ]] && sed -i "s/W8ABC/$CALLSIGN/g" "$f"
 done
-success "Station configuration patched (callsign: $CALLSIGN, lat/lon: $STATION_LAT/$STATION_LON)"
+if [[ -n "$CALLSIGN" ]]; then
+    success "Station configuration patched (callsign: $CALLSIGN, lat/lon: $STATION_LAT/$STATION_LON)"
+else
+    success "Station configuration patched (no callsign — amateur features disabled; lat/lon: $STATION_LAT/$STATION_LON)"
+fi
 
 # ── Systemd services ───────────────────────────────────────────────
 if [[ "$PROFILE" != "3" ]]; then

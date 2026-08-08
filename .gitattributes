@@ -1,0 +1,9 @@
+# Shell scripts run on Linux (Raspberry Pi) — they MUST keep LF line endings.
+# A CRLF shebang line (#!/usr/bin/env bash\r) breaks execution on the Pi.
+*.sh text eol=lf
+
+# Python doc generators and services also run on Linux.
+*.py text eol=lf
+
+# Treat PDFs as binary so git never mangles them.
+*.pdf binary

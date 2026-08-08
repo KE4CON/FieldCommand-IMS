@@ -88,6 +88,14 @@
   color: #fff;
 }
 .mode-btn.active:hover { background: var(--eoc-lt); }
+/* Disabled mode (e.g. Amateur Radio when no callsign is configured) */
+.mode-btn.disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  filter: grayscale(1);
+}
+.mode-btn.disabled:hover { background: transparent; color: var(--muted); }
+.mode-btn .mb-lock { font-size: 10px; color: var(--muted); display: block; margin-top: 2px; font-family: var(--font-hd); letter-spacing: 0.03em; }
 .mb-icon { font-size: 22px; line-height: 1; flex-shrink: 0; }
 .mb-label { font-family: var(--font-hd); font-size: 13px; letter-spacing: 0.05em; }
 .mb-sub {
@@ -1012,6 +1020,18 @@ async function loadStationConfig() {
     }
     if (cfg.lat) STATION_LAT = cfg.lat;
     if (cfg.lon) STATION_LON = cfg.lon;
+
+    // ── Amateur Radio gating ──────────────────────────────────────────
+    // Ham features require a configured callsign. A group with no licensed
+    // operators leaves it blank and the Amateur Radio mode stays grayed out.
+    // Only gate once setup is complete, so an unconfigured Pi still shows
+    // everything (plus the "run setup" prompt below).
+    const hasCall = !!(cfg.callsign && String(cfg.callsign).trim());
+    let mods = {};
+    try { mods = cfg.active_modules ? JSON.parse(cfg.active_modules) : {}; } catch(e) {}
+    const hamEnabled = hasCall && mods.amateur !== false;
+    window.FC_HAM_ENABLED = cfg.setup_complete ? hamEnabled : true;
+    if (window.applyModeGating) window.applyModeGating();
     // Show org name under callsign if set
     if (cfg.org_name) {
       let orgEl = document.getElementById("orgName");
@@ -1473,6 +1493,13 @@ function openJS8Call(e) {
   const MODE_KEY = 'fc_dashboard_mode';
 
   function setMode(mode) {
+    // Amateur Radio mode requires a configured callsign. When it's disabled the
+    // button is grayed out; ignore clicks on it. (applyModeGating handles moving
+    // an already-selected amateur mode to a usable one.)
+    if (mode === 'amateur' && window.FC_HAM_ENABLED === false) {
+      return;
+    }
+
     // Save preference
     localStorage.setItem(MODE_KEY, mode);
 
@@ -1511,14 +1538,49 @@ function openJS8Call(e) {
     updateClock();
   }
 
+  // Apply gating for the Amateur Radio mode button based on config
+  // (window.FC_HAM_ENABLED is set by loadStationConfig once /api/config loads).
+  function applyModeGating() {
+    const btn = document.getElementById('modeBtn-amateur');
+    if (!btn) return;
+    const disabled = window.FC_HAM_ENABLED === false;
+    btn.classList.toggle('disabled', disabled);
+    if (disabled) {
+      btn.setAttribute('aria-disabled', 'true');
+      btn.title = 'Add a station callsign in Setup to enable amateur radio features';
+      // Add a small inline hint under the label (once)
+      const label = btn.querySelector('.mb-label');
+      if (label && !label.querySelector('.mb-lock')) {
+        const lock = document.createElement('span');
+        lock.className = 'mb-lock';
+        lock.textContent = '🔒 Add a callsign in Setup to enable';
+        label.appendChild(lock);
+      }
+      // If we're currently sitting in amateur mode, bounce out of it.
+      if ((localStorage.getItem(MODE_KEY) || 'amateur') === 'amateur' ||
+          document.body.dataset.mode === 'amateur') {
+        setMode('ics');
+      }
+    } else {
+      btn.removeAttribute('aria-disabled');
+      btn.title = '';
+      const lock = btn.querySelector('.mb-lock');
+      if (lock) lock.remove();
+    }
+  }
+
   // Expose globally
   window.setMode = setMode;
+  window.applyModeGating = applyModeGating;
 
-  // Restore saved mode on load — also check URL param
+  // Restore saved mode on load — also check URL param.
+  // Default to ICS (universal) rather than amateur so non-ham groups aren't
+  // dropped into a mode they can't use; loadStationConfig re-applies gating.
   window.addEventListener('DOMContentLoaded', () => {
     const urlMode = new URLSearchParams(location.search).get('mode');
     const saved = urlMode || localStorage.getItem(MODE_KEY) || 'amateur';
     setMode(saved);
+    applyModeGating();
     initJS8Card();
   });
 })();

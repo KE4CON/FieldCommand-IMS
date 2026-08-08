@@ -742,6 +742,72 @@ story.append(P(
     'If you are using a single NVMe drive (no RAID), flash the OS to it directly '
     'and skip the RAID build section.'))
 story.append(SP(6))
+
+# ── Recommended automated path ──────────────────────────────────────────────
+story.append(H2('Recommended:  Automated One-Command Setup'))
+story.append(P(
+    'The easiest and least error-prone way to build a field server is the automated setup script. '
+    'From a single command it does everything the manual Sections 1B and Steps 3–4 describe: it '
+    'builds the boot-from-RAID-1 mirror across both SSDs, copies the operating system onto it, reboots '
+    'into the mirror, and then installs and configures FieldCommand IMS for you. You answer a few short '
+    'questions once at the start (or none at all, if you prepare a configuration file). The step-by-step '
+    'manual sections that follow are kept as a reference and a fallback — you do not need them if you '
+    'use the automated setup.'))
+story.append(SP(4))
+story.append(P('<b>What you do, start to finish:</b>'))
+story.append(tbl(['STEP', 'WHAT YOU DO'], [
+    ['1.  Flash the card',
+     'With Raspberry Pi Imager, flash <b>Raspberry Pi OS (64-bit, Desktop)</b> to a microSD card. '
+     'Set the hostname and username as shown in the Imager table in Section 1A below '
+     '(username <b>fieldcommand</b>).'],
+    ['2.  Copy the software onto the card',
+     'After imaging, a small drive named <b>bootfs</b> appears on your computer (it is the card’s boot '
+     'partition). Copy the whole <b>FieldCommand-IMS</b> folder onto it. '
+     '(Optional: also copy a filled-in <b>fieldcommand.conf</b> — see the sample in the scripts folder '
+     '— to skip all on-screen questions and run completely unattended.)'],
+    ['3.  Boot and run one command',
+     'Put the card in the Pi 5, connect a monitor and keyboard, power on, open a terminal, and run:'],
+    ['4.  Answer the questions once',
+     'Enter your callsign (or leave it blank — see the note below), location, Wi-Fi name, and a few '
+     'options. The script shows you the two SSDs and asks you to type <b>YES</b> before it erases them, '
+     'then builds the mirror, reboots into it, and finishes the FieldCommand install by itself.'],
+    ['5.  Do the pull-a-drive test',
+     'When it finishes, perform the pull-a-drive failover test described at the end of Section 1B. '
+     'This is the one step only you can do by hand, and it is the whole point of the mirror.'],
+    ], [1.7*inch, CW-1.7*inch]))
+story.append(SP(4))
+story.append(CodeBlock([
+    '# Step 3 — the one command (run on the Pi after first boot):',
+    'sudo bash /boot/firmware/FieldCommand-IMS/scripts/fieldcommand-setup.sh',
+    '',
+    '# See exactly what it would do first, changing nothing:',
+    'sudo bash /boot/firmware/FieldCommand-IMS/scripts/fieldcommand-setup.sh --dry-run',
+]))
+story.append(SP(4))
+story.append(NoteBox(
+    'Callsign is OPTIONAL. Leave it blank if your group has no amateur radio operators — the program '
+    'works fully without it and simply keeps the Amateur Radio tools grayed out. Enter a callsign ONLY if '
+    'you have a properly licensed amateur radio operator with operating privileges on the specific bands '
+    'and modes you intend to use; transmitting on the amateur bands without such a licensed operator is '
+    'unlawful. You can add a callsign later in the Setup wizard at any time to turn these features on.',
+    'note'))
+story.append(SP(4))
+story.append(NoteBox(
+    'The setup script ERASES BOTH NVMe SSDs (it confirms the exact drives with you first). Booting a '
+    'Raspberry Pi 5 from a RAID array goes slightly beyond SunFounder’s own documented single-drive '
+    'boot, so bench-test the whole flow — including the pull-a-drive test — on your actual hardware '
+    'before relying on it in the field. Run with --dry-run first to preview every action.',
+    'warn'))
+story.append(SP(4))
+story.append(P(
+    '<b>Alternative — download on the Pi instead of copying to the card.</b> If the Pi has internet, you '
+    'can skip copying the folder and instead run the bootstrap one-liner, which downloads FieldCommand and '
+    'launches the same setup:'))
+story.append(CodeBlock([
+    'curl -fsSL https://raw.githubusercontent.com/KE4CON/FieldCommand-IMS/main/scripts/bootstrap.sh | sudo bash',
+]))
+story.append(SP(8))
+
 story.append(H2('1A  Flash the Operating System'))
 story.append(tbl(['OS EDITION', 'PROS', 'CONS'], [
     ['Raspberry Pi OS Lite (64-bit)  —  Recommended for production',

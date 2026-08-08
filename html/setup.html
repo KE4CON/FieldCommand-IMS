@@ -50,6 +50,18 @@
 .form-group .hint {
   font-size: 10px; color: var(--dim); margin-top: 2px;
 }
+.ham-notice {
+  margin-top: 12px; padding: 14px 16px; border-radius: 8px;
+  background: rgba(37,99,235,0.08); border: 1px solid rgba(37,99,235,0.35);
+  font-size: 12px; line-height: 1.55; color: var(--txt);
+}
+.ham-notice.enabled {
+  background: rgba(22,163,74,0.10); border-color: rgba(22,163,74,0.45);
+}
+.ham-notice-title { font-weight: 700; margin-bottom: 6px; font-size: 13px; }
+.ham-notice p { margin: 6px 0; }
+.ham-notice ul { margin: 6px 0 6px 18px; padding: 0; }
+.ham-notice li { margin: 2px 0; }
 .logo-preview {
   width: 120px; height: 120px; border: 2px dashed var(--line);
   border-radius: 8px; display: flex; align-items: center;
@@ -149,11 +161,25 @@
   <div class="setup-section">
     <h2>📡 Callsign &amp; Identity</h2>
     <div class="form-grid">
-      <div class="form-group">
-        <label>Club / Station Callsign *</label>
-        <input type="text" id="callsign" placeholder="K9ESV" maxlength="10"
-               style="font-family:var(--font-hd);font-size:18px;letter-spacing:3px;text-transform:uppercase">
-        <span class="hint">Primary callsign displayed on dashboard and all documents</span>
+      <div class="form-group" style="grid-column:1/-1">
+        <label>Club / Station Callsign <span style="color:var(--muted);font-weight:normal">(optional)</span></label>
+        <input type="text" id="callsign" placeholder="K9ESV — or leave blank" maxlength="10"
+               style="font-family:var(--font-hd);font-size:18px;letter-spacing:3px;text-transform:uppercase"
+               oninput="updateHamNotice()">
+        <span class="hint">Primary callsign shown on the dashboard and on documents. <strong>Leave this blank if your group has no amateur radio operators</strong> — the program works fully without it; only the amateur radio tools are set aside.</span>
+        <div id="hamNotice" class="ham-notice">
+          <div class="ham-notice-title">📻 What the callsign turns on — and the license it requires</div>
+          <p><strong>Enter a callsign only if your group has a properly licensed amateur radio operator.</strong> The callsign switches on the program's <em>Amateur Radio</em> section, which includes:</p>
+          <ul>
+            <li>Amateur Net Control &amp; multi-net logging (ARES / RACES / NTS)</li>
+            <li>APRS live map &amp; tactical map (RF via Direwolf TNC)</li>
+            <li>Winlink (Pat) radio email</li>
+            <li>FCC callsign lookup, HF propagation, and the repeater database</li>
+            <li>NTS radiograms and AMPRNet / 44Net gateway features</li>
+          </ul>
+          <p><strong style="color:var(--amber)">Important — this is a legal requirement, not just a setting.</strong> Transmitting on the amateur radio bands is only lawful when done by, or under the direct control of, a person holding a valid FCC (or your country's) amateur radio license <strong>with operating privileges on the specific bands and modes you intend to use</strong>. Turning these tools on does not grant any authority to transmit. If your group does not have such an operator, leave the callsign blank and use the rest of the program (ICS / Incident Command and Public Safety) normally.</p>
+          <p style="margin-bottom:0"><span style="color:var(--muted)">You can add a callsign here later at any time to enable these features — nothing is lost by starting without one.</span></p>
+        </div>
       </div>
       <div class="form-group">
         <label>Personal Callsign (Operator/Developer)</label>
@@ -495,7 +521,29 @@ const modules = {
   amateur: false, pubsafety: false, winlink: false, aprs: false, '44net': false
 };
 
+// Modules that transmit on the amateur bands — they require a callsign AND a
+// properly licensed operator. They cannot be enabled without a callsign.
+const HAM_MODULES = ['amateur', 'winlink', 'aprs', '44net'];
+
+function hasCallsign() {
+  const el = document.getElementById('callsign');
+  return !!(el && el.value.trim());
+}
+
 function toggleModule(mod) {
+  // Block turning on any amateur-radio module unless a callsign is set.
+  if (HAM_MODULES.includes(mod) && !modules[mod] && !hasCallsign()) {
+    alert('This is an amateur radio feature.\n\n' +
+          'Enter a Club / Station Callsign at the top of this page first — and only ' +
+          'if your group has a properly licensed amateur radio operator with ' +
+          'privileges on the bands and modes you intend to use.\n\n' +
+          'If you have no licensed operator, leave the callsign blank and use the ' +
+          'ICS / Incident Command and Public Safety features instead.');
+    const cb = document.getElementById(`mod_${mod.replace('-','')}`);
+    if (cb) cb.checked = false;
+    document.getElementById('callsign')?.focus();
+    return;
+  }
   modules[mod] = !modules[mod];
   const cb = document.getElementById(`mod_${mod.replace('-','')}`);
   const card = document.getElementById(`mod-${mod}-card`);
@@ -505,6 +553,31 @@ function toggleModule(mod) {
   if (mod === 'pubsafety') {
     document.getElementById('pubsafety-config').style.display =
       modules.pubsafety ? '' : 'none';
+  }
+}
+
+// Reflect callsign state in the notice, and if the callsign is cleared, turn
+// off every amateur-radio module so a blank callsign can't leave them on.
+function updateHamNotice() {
+  const on = hasCallsign();
+  const notice = document.getElementById('hamNotice');
+  if (notice) {
+    notice.classList.toggle('enabled', on);
+    const title = notice.querySelector('.ham-notice-title');
+    if (title) title.textContent = on
+      ? '📻 Amateur radio features will be ENABLED for this callsign'
+      : '📻 What the callsign turns on — and the license it requires';
+  }
+  if (!on) {
+    HAM_MODULES.forEach(m => {
+      if (modules[m]) {
+        modules[m] = false;
+        const cb = document.getElementById(`mod_${m.replace('-','')}`);
+        const card = document.getElementById(`mod-${m}-card`);
+        if (cb) cb.checked = false;
+        if (card) card.classList.remove('active');
+      }
+    });
   }
 }
 
@@ -573,6 +646,9 @@ async function saveConfig() {
 
   // Callsign not required — IAP-only deployments may not have one
   if (!orgName) { showStatus('Organization name is required', false); return; }
+
+  // Safety net: no callsign means no amateur-radio transmit features, ever.
+  if (!callsign) HAM_MODULES.forEach(m => { modules[m] = false; });
 
   const payload = {
     callsign:         callsign,
@@ -675,6 +751,7 @@ async function loadConfig() {
       if (cfg.active_modules) setModules(cfg);
     } catch(e2) {}
   }
+  updateHamNotice();
 }
 
 function showStatus(msg, ok) {

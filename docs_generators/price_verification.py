@@ -423,7 +423,13 @@ story.append(P(
     '<b>Recurring costs:</b> the cellular antenna $5/mo standby / $79–99/mo active  ·  the satellite dish ~$120/mo (or Roam plan, pausable).',
     S('gn', fontSize=8, leading=11, textColor=DGRAY, spaceBefore=2)))
 
-doc = SimpleDocTemplate('/mnt/user-data/outputs/FieldCommand_Price_Verification.pdf',
+import os as _os
+_OUT = _os.environ.get('FC_PRICE_OUT') or ('/mnt/user-data/outputs/FieldCommand_Price_Verification.pdf'
+    if _os.path.isdir('/mnt/user-data/outputs')
+    else _os.path.normpath(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)),
+                                         '..', 'docs', 'internal', 'FieldCommand_Price_Verification.pdf')))
+_os.makedirs(_os.path.dirname(_OUT), exist_ok=True)
+doc = SimpleDocTemplate(_OUT,
     pagesize=landscape(letter), leftMargin=M, rightMargin=M,
     topMargin=0.72*inch, bottomMargin=0.40*inch,
     title='FieldCommand IMS Component Price Verification July 2026',
@@ -431,5 +437,5 @@ doc = SimpleDocTemplate('/mnt/user-data/outputs/FieldCommand_Price_Verification.
 doc.build(story, canvasmaker=VCanvas)
 
 from pypdf import PdfReader
-r2 = PdfReader('/mnt/user-data/outputs/FieldCommand_Price_Verification.pdf')
-print(f"BUILT: {len(r2.pages)} pages")
+r2 = PdfReader(_OUT)
+print(f"BUILT: {_OUT} ({len(r2.pages)} pages)")

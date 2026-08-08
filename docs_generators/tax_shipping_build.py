@@ -240,7 +240,13 @@ story.append(P(
     f'(7) Chameleon USA250 25%-off sale through ~July 14, 2026 could reduce MPAS 2.0 to ~$495, saving ~$137 + tax.',
     S('gn', fontSize=7.5, leading=11, textColor=DGRAY)))
 
-doc = SimpleDocTemplate('/mnt/user-data/outputs/FieldCommand_Tax_Shipping.pdf',
+import os as _os
+_OUT = _os.environ.get('FC_TAX_OUT') or ('/mnt/user-data/outputs/FieldCommand_Tax_Shipping.pdf'
+    if _os.path.isdir('/mnt/user-data/outputs')
+    else _os.path.normpath(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)),
+                                         '..', 'docs', 'internal', 'FieldCommand_Tax_Shipping.pdf')))
+_os.makedirs(_os.path.dirname(_OUT), exist_ok=True)
+doc = SimpleDocTemplate(_OUT,
     pagesize=landscape(letter), leftMargin=M, rightMargin=M,
     topMargin=0.72*inch, bottomMargin=0.40*inch,
     title='FieldCommand IMS Tax and Shipping — Woodstock IL 60098',
@@ -248,6 +254,6 @@ doc = SimpleDocTemplate('/mnt/user-data/outputs/FieldCommand_Tax_Shipping.pdf',
 doc.build(story, canvasmaker=TCanvas)
 
 from pypdf import PdfReader
-pages = len(PdfReader('/mnt/user-data/outputs/FieldCommand_Tax_Shipping.pdf').pages)
-print(f"BUILT: {pages} pages")
+pages = len(PdfReader(_OUT).pages)
+print(f"BUILT: {_OUT} ({pages} pages)")
 print(f"Subtotal: ${grand_sub:,.2f} | Tax: ${grand_tax:,.2f} | Ship: ${grand_ship:,.2f} | TOTAL: ${grand_total:,.2f}")

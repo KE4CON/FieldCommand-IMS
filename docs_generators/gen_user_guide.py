@@ -407,7 +407,7 @@ def build_story():
     story.append(P(
         'The dashboard at http://192.168.50.1 is your central hub for every activation. '
         'It shows live NWS weather alerts color-coded by severity, a real-time APRS station table '
-        'fed by Graywolf and YAAC, system health indicators, Dead Man Switch state for any active net, '
+        'fed by Direwolf and YAAC, system health indicators, Dead Man Switch state for any active net, '
         'and quick-launch cards for every tool in the system. '
         'Select a mode from the three-button mode bar to reorganize the cards for the task at hand.'))
     story.append(SP(6))
@@ -524,12 +524,12 @@ def build_story():
 
     # Section 8 — Tactical APRS Map
     story += [SB(8,'Tactical APRS Map','http://192.168.50.1/tactical.html'), SP(8)]
-    story.append(P('Displays live APRS station positions on an interactive Leaflet map. Pulls data from Graywolf '
+    story.append(P('Displays live APRS station positions on an interactive Leaflet map. Pulls data from Direwolf '
                    'TNC (port 8080) and YAAC (port 8082), merging them into a unified picture. Works completely offline.'))
     story.append(SP(6))
     story.append(tbl([['SIDEBAR TAB','CONTENTS'],
         ['Stations','All heard APRS stations sorted by most recent. Filter by source or search by callsign. Click any station to pan the map.'],
-        ['Messages','Incoming and outgoing APRS messages. Send a message to any callsign via Graywolf or YAAC.'],
+        ['Messages','Incoming and outgoing APRS messages. Send a message to any callsign via Direwolf or YAAC.'],
         ['Markers','Place manual overlay markers on the map. Add labels, colors, and notes.'],
         ], [1.3*inch, CW-1.3*inch]))
     story.append(SP(4))

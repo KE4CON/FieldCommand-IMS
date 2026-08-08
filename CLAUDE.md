@@ -78,9 +78,9 @@ FieldCommand is deliberately a **no-login, open-LAN** tool ("any device, no logi
 - If auth is ever added, it must not break the "no login" field UX — discuss before adding.
 - Fixed so far: SQL-identifier injection (reference library + archive restore), forgeable `X-Forwarded-For` in the 44Net log, and the committed default Wi-Fi PSK (now a placeholder in `udev/hostapd.conf`).
 
-## Radio direction (planned, not yet done)
-- **Graywolf → Direwolf** as the RF TNC. Direwolf is a KISS/AGW TNC only (no HTTP `/api/stations`), so the "serve stations to the tactical map" job moves off Graywolf.
-- **YAAC → APRS Command** as the operator's APRS client on a Windows laptop (also runs Winlink). APRS Command connects to Direwolf and can serve the tactical map's station feed. For Pi-standalone resilience, consider a tiny Pi-side KISS→`/api/stations` bridge so the map works without the laptop.
+## Radio direction
+- **Graywolf → Direwolf — DONE (Pi side).** Direwolf is the RF TNC now (KISS :8001 / AGW :8000, no HTTP). `install.sh` apt-installs it, writes a starter `/etc/direwolf.conf`, enables `direwolf.service`; `update.sh`, nginx (the dead `/aprs/` :8080 proxy is gone), `health_monitor`, the `fcc_lookup` preflight, and `preflight.html` all reference `direwolf`; docs regenerated. Because Direwolf has no HTTP, the tactical map + dashboard no longer poll a local APRS server — they read a **configurable RF-source host:port** (Tactical → Settings → APRS Sources), defaulting to `localhost:8080`.
+- **YAAC → APRS Command (planned, #16).** APRS Command (Windows laptop) connects to Direwolf's KISS/AGW port and serves the map's station feed; point the map's RF-source host at the laptop's IP. For Pi-standalone resilience, a tiny Pi-side KISS→`/api/stations` bridge (localhost:8080) can serve the same feed without the laptop. The map/dashboard code + the install guide's Part 2C already describe this; the APRS Command app-side work lives in that separate repo and needs the Pi+radio to test.
 
 ## Known issues / consciously deferred
 Real but low-priority; listed so they aren't "rediscovered" as new bugs. See `docs/AUDIT_FINDINGS.md` for the full audit.

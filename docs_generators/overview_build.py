@@ -222,7 +222,7 @@ amateur_items = [
     'Net Control Logger — FCC auto-fill',
     'Callsign Lookup — 800K licensees offline',
     'Observer Mode — read-only agency view',
-    'APRS Tactical Map — Graywolf + YAAC',
+    'APRS Tactical Map — Direwolf + YAAC',
     'HF Propagation — band conditions live',
     'Repeater Database — ARES/band filters',
     'Dead Man\'s Switch — net inactivity alert',

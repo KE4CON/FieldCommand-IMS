@@ -469,7 +469,7 @@ def ch15():
          'Winlink, JS8Call'],
         ['💻 Computing & Software',
          'Server boot, FCC database, nginx, API server, health monitor, '
-         'Graywolf APRS, Kiwix, Wi-Fi AP'],
+         'Direwolf APRS, Kiwix, Wi-Fi AP'],
         ['👤 Personnel & Staffing',
          'Net Control operator, alternate NCS, agency liaison, operator briefing, '
          'roster check-in'],

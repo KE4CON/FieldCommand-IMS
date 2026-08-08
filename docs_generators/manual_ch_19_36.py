@@ -615,7 +615,7 @@ def ch28():
          'Reach Winlink RMS gateways at 44.x.x.x addresses without using the '
          'commercial internet — keeps message handling within the amateur radio network.'],
         ['APRS-IS via AMPRNet',
-         'APRS-IS servers are reachable on 44.x.x.x. Configure Graywolf or YAAC '
+         'APRS-IS servers are reachable on 44.x.x.x. Configure Direwolf or YAAC '
          'to use the AMPRNet path instead of the public internet.'],
         ['Inter-node FieldCommand',
          'Two FieldCommand deployments with 44Net gateways can share net log data and '

@@ -346,7 +346,7 @@ story.append(KeepTogether([subsection('1.3  Dashboard Health Monitor (port 5051)
     ('Dashboard health panel shows memory usage', ''),
     ('Dashboard health panel shows disk usage', ''),
     ('Service status shown for: nginx, FCC Lookup API, Health Monitor', ''),
-    ('Service status shown for: Graywolf APRS, Pat Winlink, Kiwix', ''),
+    ('Service status shown for: Direwolf APRS, Pat Winlink, Kiwix', ''),
     ('Service status shown for: GPS Daemon, NTP/Chrony, Dead Man\'s Switch, ICS Platform', ''),
     ('Internet connectivity indicator shown', ''),
     ('GPS status shown (fix / no fix)', 'Requires USB GPS'),
@@ -444,7 +444,7 @@ story.append(KeepTogether([section('4 · Maps & Tactical Display', ''), SP(6)]))
 
 story.append(KeepTogether([subsection('4.1  APRS Tactical Map (http://192.168.50.1/tactical.html)'), SP(2), rows_table([
     ('Map loads with offline tile layer (USGS Imagery+Topo)', ''),
-    ('APRS stations appear as markers from Graywolf', 'Requires TNC/radio'),
+    ('APRS stations appear as markers (via APRS Command / Direwolf)', 'Requires TNC/radio'),
     ('Clicking a station marker shows callsign and details', ''),
     ('Resource overlays from Resource Board appear on the map', ''),
     ('Draw marker, polygon, circle, and route overlays', ''),
@@ -731,7 +731,7 @@ story.append(KeepTogether([subsection('12.1  Service Status'), SP(2), rows_table
     ('kiwix.service — Kiwix library running on port 8081', ''),
     ('pat.service — Pat Winlink running on port 8090', ''),
     ('yaac.service — YAAC APRS client running on port 8082', 'If APRS installed'),
-    ('graywolf.service — Graywolf APRS running on port 8080', 'If APRS installed'),
+    ('direwolf.service — Direwolf software TNC (KISS 8001 / AGW 8000)', 'If APRS installed'),
     ('cups.service — CUPS print server running on port 631', 'If printer installed'),
     ('avahi-daemon.service — mDNS/Bonjour running', ''),
     ('gpsd.service — GPS daemon running (if USB GPS connected)', 'If GPS installed'),
@@ -820,7 +820,11 @@ story.append(P(
     S('fn', fontSize=8, textColor=HexColor('#445566'), leading=12)))
 
 # ── Build ─────────────────────────────────────────────────────────────────────
-out = '/mnt/user-data/outputs/ESV_Beta_Test_Checklist.pdf'
+import os as _os
+out = _os.environ.get('FC_BETA_OUT') or ('/mnt/user-data/outputs/ESV_Beta_Test_Checklist.pdf'
+    if _os.path.isdir('/mnt/user-data/outputs')
+    else _os.path.normpath(_os.path.join(_os.path.dirname(_os.path.abspath(__file__)), '..', 'docs', 'ESV_Beta_Test_Checklist.pdf')))
+_os.makedirs(_os.path.dirname(out), exist_ok=True)
 doc = SimpleDocTemplate(
     out, pagesize=letter,
     leftMargin=M, rightMargin=M,

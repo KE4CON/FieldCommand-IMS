@@ -342,7 +342,7 @@ TOC = [
     ('',     '- PART 2: AMATEUR RADIO GROUP SETUP -',         ''),
     ('2A.',  'AMPRNet / 44Net Gateway Setup',                  '42'),
     ('2B.',  'FCC Amateur Database',                           '49'),
-    ('2C.',  'APRS Setup — Graywolf + YAAC',                  '50'),
+    ('2C.',  'APRS Setup — Direwolf + YAAC',                  '50'),
     ('2D.',  'Pat Winlink — Verify & Configure',               '55'),
     ('2E.',  'Windows Laptop — Winlink Express + JS8Call',     '57'),
     ('2F.',  'SCS PACTOR Modem Setup',                        '59'),
@@ -395,7 +395,7 @@ story.append(tbl(['COMPONENT', 'DESCRIPTION', 'COMPONENT', 'DESCRIPTION'], [
      'Pre-Flight Checklist', 'GO/CAUTION/NO-GO deployment readiness check'],
     ['ICS Platform', 'Command, Operations, Planning, Logistics, Finance sections',
      'HF Propagation', 'Solar indices, band conditions, A/K-index'],
-    ['APRS Tactical Map', 'Graywolf + YAAC merged, offline tiles, overlays',
+    ['APRS Tactical Map', 'Direwolf + YAAC merged, offline tiles, overlays',
      'Repeater Database', 'RepeaterBook CSV, filter by band, mode, ARES affiliation'],
     ['Member Roster', 'your organization directory with certs, equipment, activations',
      'Reference Library', 'Upload and serve field reference docs across EMCOMM-NET'],
@@ -493,7 +493,7 @@ amr_data = [
     ['USB TNC — Digirig Mobile', 'If using APRS',
      'USB soundcard + serial CAT interface in one unit. '
      'Connects to any radio with a 3.5mm audio port. '
-     'Enables APRS transmit/receive via Graywolf and YAAC. '
+     'Enables APRS transmit/receive via Direwolf and YAAC. '
      'FieldCommand assigns stable /dev/tnc0 device name via udev rule.'],
     ['USB TNC — SignaLink USB  (alternative to Digirig)', 'If using APRS',
      'Tigertronics SignaLink USB — USB audio interface, requires rig-specific '
@@ -533,10 +533,10 @@ hub_data = [['DEVICE', 'STABLE NAME', 'HOW ASSIGNED', 'SERVICE'],
     ['USB GPS receiver', '/dev/gps0', 'udev rule matches by USB vendor/product ID', 'gpsd → tactical map'],
     ['Digirig Mobile TNC', '/dev/tnc0\n/dev/digirig',
      'udev rule matches by vendor ID + product string "Digirig Mobile". Distinguished from GPS even though both use CP2102 chip.',
-     'YAAC / Graywolf APRS'],
+     'YAAC / Direwolf APRS'],
     ['SignaLink USB TNC', '/dev/tnc0\n/dev/signalink',
      'udev rule matches by Texas Instruments PCM2904 chip. No conflict with GPS.',
-     'YAAC / Graywolf APRS'],
+     'YAAC / Direwolf APRS'],
     ['LaCie / USB backup drive (labeled FIELDCOMMAND)', '/dev/sdX (auto-mounted)',
      'udev backup rule triggers on label FIELDCOMMAND. Drive letter assigned dynamically.',
      'fieldcommand-backup@.service'],
@@ -621,7 +621,7 @@ bom_rows = [
     ['Powered USB hub  (optional)', 'Anker 7-Port USB 3.0 with AC power adapter — must be powered hub, not bus-powered', 'Amazon · Best Buy'],
     ['Avery 5371 business card sheets  (operator access cards)', 'Avery 5371 — 10 cards per sheet, laser or inkjet — for printed operator access cards', 'Office Depot · Amazon · Staples'],
     cat_row('Amateur Radio Equipment  (K9ESV — see Radio & Comms category for full ESV list)'),
-    ['USB TNC — Digirig Mobile', 'Digirig Mobile v1.x — USB soundcard + serial CAT in one compact unit — enables APRS transmit/receive via Graywolf/YAAC and Winlink VHF packet via Pat', 'digirig.net · Amazon'],
+    ['USB TNC — Digirig Mobile', 'Digirig Mobile v1.x — USB soundcard + serial CAT in one compact unit — enables APRS transmit/receive via Direwolf/YAAC and Winlink VHF packet via Pat', 'digirig.net · Amazon'],
     ['USB TNC — SignaLink USB  (alternative)', 'Tigertronics SignaLink USB — USB audio interface — requires rig-specific audio cable — widely used and well-supported', 'tigertronics.com · Ham Radio Outlet · Amazon'],
     ['Mobilinkd TNC4  (Bluetooth alternative)', 'Bluetooth APRS TNC — pairs with YAAC on the Pi or APRSdroid on a phone — useful when a USB port is not available', 'mobilinkd.com · Amazon'],
     ['Rig interface cable  (for TNC)', 'Radio-specific audio + PTT cable connecting TNC to transceiver — Digirig: cables at digirig.net by radio model — SignaLink: Tigertronics cable for each rig', 'digirig.net · tigertronics.com · HRO'],
@@ -1241,7 +1241,7 @@ for item in [
     '<b>Does NOT configure a Wi-Fi access point</b> — Wi-Fi is handled by the ASUS RT-BE58 Go router. The Pi connects as a wired client only.',
     'Configures the Pi static IP (192.168.50.1/24) on the Ethernet interface (eth0) via NetworkManager',
     'Configures the firewall (ufw) — opens all required ports',
-    'Downloads and installs YAAC (Java APRS client) and Graywolf to /opt/yaac/ and /opt/graywolf/',
+    'Installs Direwolf (via apt) as the software TNC and YAAC (Java APRS client, /opt/yaac/)',
     'Installs the USB backup udev rule (plug in a USB drive labeled FIELDCOMMAND to trigger auto-backup)',
     'Downloads and installs Pat Winlink (browser-based Winlink backup client, port 8090)',
     'Runs the Kiwix ZIM downloader for the selected content tier',
@@ -1777,9 +1777,9 @@ story.append(tbl(['PART 2 SECTION', 'WHAT IT INSTALLS / CONFIGURES', 'SKIP IF...
      'Offline SQLite database of 800K+ US amateur licensees. '
      'Enables callsign lookup in net loggers, check-in, and AMPRNet auth.',
      'No amateur radio net logging or callsign validation needed'],
-    ['C — APRS Setup  (Graywolf + YAAC)',
+    ['C — APRS Setup  (Direwolf + YAAC)',
      'APRS receive/transmit via TNC or radio interface. '
-     'Graywolf RF receive daemon + YAAC tactical display. '
+     'Direwolf software TNC + YAAC tactical display. '
      'Digirig, SignaLink, or other USB TNC required.',
      'No APRS capability needed or no TNC available'],
     ['D — Pat Winlink',
@@ -1918,7 +1918,7 @@ story.append(tbl(['CAPABILITY', 'DESCRIPTION', 'REQUIRES WAN?'], [
      'Winlink sessions travel over the 44-net tunnel'],
     ['APRS-IS via AMPRNet',
      'APRS-IS network servers are reachable on 44.x.x.x addresses. '
-     'Configure Graywolf or YAAC to use the AMPRNet path instead of the public internet.',
+     'Configure Direwolf or YAAC to use the AMPRNet path instead of the public internet.',
      'Yes — same tunnel dependency'],
     ['Inter-node FieldCommand',
      'Two FieldCommand systems with 44Net gateways can share net log data, '
@@ -2326,9 +2326,9 @@ story.append(tbl(['APPLICATION', 'HOW IT USES 44NET', 'ACCESS FROM EMCOMM-NET'],
      'Pat Winlink at http://192.168.50.1:8090  Add AMPRNet RMS in Pat settings'],
     ['APRS-IS via AMPRNet',
      'The APRS-IS network has servers reachable on 44.x.x.x. '
-     'Graywolf and YAAC can connect to APRS-IS via the AMPRNet path, '
+     'Direwolf and YAAC can connect to APRS-IS via the AMPRNet path, '
      'keeping APRS traffic within the amateur radio network.',
-     'Configure APRS-IS server address in Graywolf or YAAC settings'],
+     'Configure APRS-IS server address in Direwolf or YAAC settings'],
     ['Inter-node FieldCommand',
      'If another your organization station runs a second FieldCommand system with its own 44Net gateway, '
      'the two systems can share net data and resource boards over AMPRNet '
@@ -2425,17 +2425,18 @@ story.append(PB())
 
 # ── STEP 7 — APRS ────────────────────────────────────────────────────────────
 
-story.append(StepBox('C', 'APRS Setup — Graywolf + YAAC  (Part 2C)'))
+story.append(StepBox('C', 'APRS Setup — Direwolf TNC + YAAC  (Part 2C)'))
 story.append(SP(8))
-story.append(H1('Part 2C — APRS Setup (Graywolf + YAAC)'))
+story.append(H1('Part 2C — APRS Setup (Direwolf TNC + YAAC)'))
 story.append(HR(EOC_LT, 0.5))
 story.append(SP(4))
 story.append(P(
-    'FieldCommand integrates two APRS client applications: '
-    'Graywolf TNC (accessible on port 8080) and YAAC — Yet Another APRS Client (port 8082). '
-    'Both run as background services and feed live station data to the Tactical APRS Map '
-    'on the dashboard. The map merges data from both sources, deduplicates by callsign, '
-    'and maintains a live WebSocket feed to all connected browsers simultaneously.'))
+    'Direwolf is the software TNC that decodes APRS off the radio. It exposes a KISS interface '
+    '(TCP port 8001) and an AGWPE interface (TCP port 8000) — but it has NO web or REST '
+    'interface of its own. Live stations reach the Tactical APRS Map from APRS Command (on the '
+    'Windows laptop), which connects to Direwolf and serves the map its station feed; a small '
+    'Pi-side KISS bridge can serve the same feed if you want the map to work without the laptop. '
+    'YAAC (port 8082) is an optional on-Pi APRS client.'))
 story.append(SP(4))
 story.append(P(
     'APRS is entirely optional. FieldCommand runs fully without it — '
@@ -2443,68 +2444,61 @@ story.append(P(
     'If you are not planning to use a TNC or radio interface, skip this step entirely '
     'and proceed to Step 8 (Printer Setup).'))
 story.append(SP(4))
-story.append(NoteBox('The FieldCommand installer attempts to download and install both YAAC and Graywolf automatically. '
-                     'If internet was available during installation, they should already be present. '
-                     'Skip to Section 9.3 (YAAC port configuration) if the installer succeeded.', 'info'))
+story.append(NoteBox('The FieldCommand installer installs Direwolf (via apt) and YAAC automatically, '
+                     'writes a starter /etc/direwolf.conf, and enables direwolf.service. '
+                     'If the installer succeeded, you only need to edit the config (Section 9.3).', 'info'))
 story.append(SP(6))
 story.append(H2('9.1  Verify Automatic Installation'))
 story.append(CodeBlock([
-    '# Check if Java is installed',
+    '# Direwolf — software TNC (no jar; installed via apt)',
+    'which direwolf && direwolf -h | head -1',
+    'sudo systemctl status direwolf',
+    '# YAAC — optional Java client',
     'java -version',
-    '# Check if YAAC was installed',
     'ls -lh /opt/yaac/YAAC.jar',
-    '# Check if Graywolf was installed',
-    'ls -lh /opt/graywolf/graywolf.jar',
-    '# Check service status',
     'sudo systemctl status yaac',
-    'sudo systemctl status graywolf',
 ]))
 story.append(SP(6))
 story.append(H2('9.2  Manual Install — If Automatic Install Failed'))
 story.append(CodeBlock([
-    '# Step 1 — Install Java runtime (required by both clients)',
+    '# Direwolf — software TNC',
+    'sudo apt install -y direwolf',
+    'sudo systemctl enable --now direwolf',
+    '# YAAC (optional) — needs Java',
     'sudo apt install -y default-jre',
-    '# Step 2 — Install YAAC',
     'sudo mkdir -p /opt/yaac',
     'cd /tmp && wget http://www.ka2ddo.org/ka2ddo/YAAC.zip',
     'sudo unzip YAAC.zip "*.jar" -d /opt/yaac/',
     'sudo mv /opt/yaac/YAAC*.jar /opt/yaac/YAAC.jar 2>/dev/null || true',
     'sudo chown -R fieldcommand:fieldcommand /opt/yaac',
-    '# Step 3 — Install Graywolf',
-    'sudo mkdir -p /opt/graywolf',
-    'sudo wget -O /opt/graywolf/graywolf.jar \\',
-    '  https://github.com/vk2tds/graywolf/releases/latest/download/graywolf.jar',
-    'sudo chown -R fieldcommand:fieldcommand /opt/graywolf',
-    '# Step 4 — Enable services',
     'sudo systemctl enable --now yaac',
-    'sudo systemctl enable --now graywolf',
 ]))
 story.append(SP(6))
-story.append(H2('9.3  YAAC Port Configuration (Required — First Run)'))
+story.append(H2('9.3  Configure Direwolf (Required — First Run)'))
 story.append(steps([
-    'Run YAAC once on a desktop/monitor: <font face="Courier">java -jar /opt/yaac/YAAC.jar</font>',
-    'Go to <b>File → Configure → Web Server</b> tab.',
-    'Set <b>Port: 8082</b> · Check <b>Enable REST API</b> · Check <b>Enable WebSocket</b> · Click Save.',
-    'Close YAAC. The yaac.service will use these settings when running headlessly.',
+    'Find your audio interface: <font face="Courier">arecord -l</font> (note the card,device numbers).',
+    'Edit <font face="Courier">sudo nano /etc/direwolf.conf</font>: set <b>ADEVICE</b> (e.g. plughw:1,0) and <b>MYCALL</b> (your callsign-SSID).',
+    'Restart: <font face="Courier">sudo systemctl restart direwolf</font>.',
+    'Direwolf is receive-only by default. To transmit (iGate / digipeat), configure PTT in the config (GPIO / CM108 / rig control).',
 ]))
 story.append(SP(6))
-story.append(H2('9.4  Connect a TNC or Radio Interface'))
-story.append(tbl(['INTERFACE TYPE', 'PORT TYPE IN YAAC', 'SETTINGS'], [
-    ['USB TNC (Digirig, SignaLink, etc.)', 'Serial TNC', '/dev/tnc0, baud rate 9600 or 1200'],
-    ['KISS TNC over TCP (Direwolf)', 'KISS TNC (TCP)', 'Host: localhost, Port: 8001'],
-    ['AGW packet engine (Direwolf)', 'AGW', 'Host: localhost, Port: 8000'],
-    ['APRS-IS internet (if WAN connected)', 'APRS-IS', 'Server: noam.aprs2.net:14580, Filter: r/42.31/-88.44/50'],
-    ], [2.2*inch, 1.5*inch, CW-3.7*inch]))
+story.append(H2('9.4  Feed the Map — APRS Command or a KISS Bridge'))
+story.append(P(
+    'Direwolf itself does not serve the map. Point the map (Tactical → Settings → APRS Sources) '
+    'at whatever reads Direwolf\'s KISS/AGW output and serves stations:'))
+story.append(tbl(['SOURCE', 'CONNECTS TO DIREWOLF VIA', 'MAP SETTING'], [
+    ['APRS Command (Windows laptop)', 'KISS TCP :8001 or AGW :8000 over EMCOMM-NET', 'RF source host = laptop IP'],
+    ['Pi-side KISS bridge (optional)', 'KISS TCP localhost:8001', 'RF source host = localhost'],
+    ['APRS-IS internet (if WAN up)', 'internet APRS-IS', 'enable the APRS-IS layer on the map'],
+    ], [1.9*inch, 2.0*inch, CW-3.9*inch]))
 story.append(SP(6))
 story.append(H2('9.5  Verify APRS is Working'))
 story.append(CodeBlock([
-    '# Test YAAC REST API (should return JSON list of heard stations)',
-    'curl http://localhost:8082/api/stations',
-    '# Test Graywolf REST API',
-    'curl http://localhost:8080/api/stations',
-    '# Check service logs if no stations appear',
-    'journalctl -u yaac -n 30',
-    'journalctl -u graywolf -n 30',
+    '# Watch Direwolf decode frames off the radio:',
+    'journalctl -u direwolf -f',
+    '# Confirm the KISS/AGW ports are listening (for APRS Command):',
+    'ss -tlnp | grep -E "8000|8001"',
+    '# Stations appear on the Tactical Map once APRS Command (or the bridge) is running.',
 ]))
 story.append(PB())
 
@@ -3148,7 +3142,7 @@ story.append(ref_tbl_2col(['SYMPTOM', 'LIKELY CAUSE / FIX'], [
     ['Dashboard loads but cards give errors', 'Not connected to EMCOMM-NET — device is on a different network. Check Wi-Fi — must show EMCOMM-NET.'],
     ['FCC lookup returns no results', 'FCC database not yet built. Run: sudo systemctl start fcc-refresh.service (needs internet)'],
     ['Repeater database is empty', 'No repeater data loaded yet. On any EMCOMM-NET device, open repeaters.html → Offline File tab → download a CSV from repeaterbook.com (free account, no API token needed) → drag the CSV onto the drop zone.'],
-    ['APRS map shows no stations', 'Graywolf or YAAC not running, or no RF received yet. Check Health Monitor for service status. Confirm antenna connected.'],
+    ['APRS map shows no stations', 'Direwolf or YAAC not running, or no RF received yet. Check Health Monitor for service status. Confirm antenna connected.'],
     ['Winlink form import fails', 'Wrong file type — must be the XML attachment, not the message body. In Winlink Express, right-click .xml attachment → Save As → then import.'],
     ['Service dot is red on Health Monitor', 'Background service has stopped. SSH to Pi: sudo systemctl restart <service-name>'],
     ['Pat Winlink not accessible at port 8090', 'pat.service not running. Run: sudo systemctl start pat && sudo systemctl enable pat'],

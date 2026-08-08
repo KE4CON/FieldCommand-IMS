@@ -335,10 +335,20 @@ class ManualCanvas(canvas.Canvas):
         self.setFont('Helvetica', 9.5)
         self.drawCentredString(PAGE_W/2, PAGE_H*0.30,
             'ICS/NIMS All-Hazards  ·  Amateur Radio EMCOMM  ·  Public Safety')
+        # Deploying org + served agency (ESV edition only — blank in World)
+        if ed('org') or ed('served'):
+            self.setFillColor(HexColor('#8090c0'))
+            self.setFont('Helvetica', 9)
+            if ed('org'):
+                self.drawCentredString(PAGE_W/2, PAGE_H*0.265, ed('org'))
+            if ed('served'):
+                self.setFont('Helvetica-Oblique', 8.5)
+                self.drawCentredString(PAGE_W/2, PAGE_H*0.243,
+                    f"Serving {ed('served')}")
         # Date
         self.setFillColor(HexColor('#6070a0'))
         self.setFont('Helvetica', 9)
-        self.drawCentredString(PAGE_W/2, PAGE_H*0.25, TODAY)
+        self.drawCentredString(PAGE_W/2, PAGE_H*0.205, TODAY)
         # Footer text
         self.setFillColor(EOC)
         self.setFont('Helvetica', 7)
@@ -347,7 +357,7 @@ class ManualCanvas(canvas.Canvas):
 
     def _draw_chrome(self):
         n = self._pageNumber
-        LOGO = Path('/home/claude/esv-logo.png')
+        LOGO = Path(ed('logo')) if ed('logo') else None
 
         if n > 1:
             # Header bar
@@ -355,7 +365,7 @@ class ManualCanvas(canvas.Canvas):
             self.rect(0, PAGE_H-0.42*inch, PAGE_W, 0.42*inch, fill=1, stroke=0)
             self.setFillColor(GOLD)
             self.rect(0, PAGE_H-0.44*inch, PAGE_W, 0.02*inch, fill=1, stroke=0)
-            if LOGO.exists():
+            if LOGO and LOGO.exists():
                 try:
                     self.drawImage(str(LOGO), M, PAGE_H-0.39*inch,
                                    width=0.85*inch, height=0.32*inch,
@@ -385,6 +395,27 @@ class ManualCanvas(canvas.Canvas):
             self.drawCentredString(PAGE_W/2, 0.12*inch,
                 f'FieldCommand IMS v1.0  ·  {ORG}  ·  {TODAY}  ·  CC BY-SA 4.0')
 
+
+# ── Edition tokens (ESV vs World) ─────────────────────────────────────────────
+# The manual is one source that renders as either edition. Chapter code references
+# ed('token'); the build loop sets ED per edition. Defaults below are the ESV values;
+# the World edition overrides them (build script). Author copyright stays in BOTH
+# editions (authorship / license requirement) — only deploying-org branding differs.
+_ED_DEFAULTS = {
+    'ps_mode':   'Starcom / Public Safety',
+    'ps_logger': 'Starcom net logger',
+    'ps_checkin':'Starcom check-in',
+    'ps_paren':  ' (Starcom)',
+    'mid':       'ESV-042',
+    'club':      'K9ESV',
+    'logo':      '/home/claude/esv-logo.png',
+    # Deploying organization + served agency. ESV names them; World leaves them blank
+    # (an org-neutral line is shown instead). Rendered only where non-empty.
+    'org':       'McHenry County Emergency Services Volunteers (ESV)',
+    'served':    'McHenry County Emergency Management Agency (MCEMA)',
+}
+ED = dict(_ED_DEFAULTS)
+def ed(k): return ED.get(k, _ED_DEFAULTS.get(k, ''))
 
 # Track sections for TOC
 SECTIONS = []

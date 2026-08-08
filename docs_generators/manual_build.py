@@ -8,6 +8,7 @@ import sys, os, io
 sys.path.insert(0, os.path.dirname(__file__))
 
 from manual_framework import *
+from manual_framework import ED, _ED_DEFAULTS, ed   # underscore name needs explicit import
 from manual_ch_01_07 import ch1, ch2, ch3, ch4, ch5, ch6, ch7
 from manual_ch_08_18 import ch8, ch9, ch10, ch11, ch12, ch13, ch14, ch15, ch16, ch17, ch18
 from manual_ch_19_36 import (ch19, ch20, ch21, ch22, ch23, ch24, ch25, ch26,
@@ -131,59 +132,71 @@ CHAPTER_FUNCS = [
     ch29, ch30, ch31, ch32, ch33, ch34, ch35, ch_appendix,
 ]
 
-# ── Build ─────────────────────────────────────────────────────────────────────
-# Output path is portable: set FC_MANUAL_OUT to override; otherwise write into the
-# repo's docs/ folder (works on any OS). The legacy sandbox path is used only if it exists.
-_DEFAULT_OUT = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'docs',
-                            'FieldCommand_Complete_User_Manual_v1.0.pdf')
-out = os.environ.get('FC_MANUAL_OUT') or (
-    '/mnt/user-data/outputs/FieldCommand_Complete_User_Manual_v1.0.pdf'
-    if os.path.isdir('/mnt/user-data/outputs') else os.path.normpath(_DEFAULT_OUT))
-os.makedirs(os.path.dirname(out), exist_ok=True)
+# ── Build both editions ───────────────────────────────────────────────────────
+# One source, two editions. ESV keeps org names (McHenry County ESV, served agency
+# MCEMA), the Starcom public-safety branding, and the ESV member-ID/club-callsign
+# examples. World strips all of that to generic wording. Author copyright stays in
+# BOTH (authorship / license requirement). FC_MANUAL_OUTDIR overrides the directory.
+_OUTDIR = os.environ.get('FC_MANUAL_OUTDIR') or (
+    '/mnt/user-data/outputs' if os.path.isdir('/mnt/user-data/outputs')
+    else os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'docs')))
+os.makedirs(_OUTDIR, exist_ok=True)
 
-# Build chapter bodies FIRST — each chapter() call registers its real (num, title, url)
-# into SECTIONS, so the Table of Contents is generated from the actual chapter titles
-# (not the drift-prone hand list above). Then assemble cover + TOC + chapters.
-SECTIONS.clear()
-chapter_story = []
-for fn in CHAPTER_FUNCS:
-    chapter_story += fn()
+# The plain filename is the World edition; ESV gets an _ESV infix. ESV uses the token
+# defaults (see manual_framework._ED_DEFAULTS); World overrides them.
+MANUAL_EDITIONS = {
+    'World': {
+        'infix':   '',
+        'ps_mode':   'Public Safety',
+        'ps_logger': 'public-safety net logger',
+        'ps_checkin':'public-service check-in',
+        'ps_paren':  '',
+        'mid':       'MEM-042',
+        'club':      'your club callsign',
+        'logo':      None,
+        'org':       '',
+        'served':    '',
+    },
+    'ESV': {'infix': '_ESV'},   # {} → uses the ESV defaults
+}
 
-story = []
-story += cover()
-story += toc_page(SECTIONS)
-story += chapter_story
+for edkey, override in MANUAL_EDITIONS.items():
+    ED.clear(); ED.update(_ED_DEFAULTS); ED.update(override)
 
-doc = SimpleDocTemplate(
-    out, pagesize=letter,
-    leftMargin=M, rightMargin=M,
-    topMargin=0.60*inch, bottomMargin=0.48*inch,
-    title='FieldCommand IMS v1.0 — Complete User Manual',
-    author='FieldCommand IMS and Open-Source · Offline-First · Field-Deployable')
-doc.build(story, canvasmaker=ManualCanvas)
+    # Build chapter bodies FIRST — each chapter() registers its (num,title,url) into
+    # SECTIONS, so the TOC is generated from the real titles. Then cover + TOC + body.
+    SECTIONS.clear()
+    chapter_story = []
+    for fn in CHAPTER_FUNCS:
+        chapter_story += fn()
+    story = cover() + toc_page(SECTIONS) + chapter_story
 
-# Append Pi 500 addendum (optional — needs pypdf and the addendum PDF; skipped if absent)
-try:
-    from pypdf import PdfReader, PdfWriter
-    addendum = os.path.join(os.path.dirname(__file__), '../../..', 'pi500_addendum.pdf')
-    # Also try /home/claude/pi500_addendum.pdf
-    for apath in [addendum, '/home/claude/pi500_addendum.pdf']:
-        if os.path.exists(apath):
-            base = PdfReader(out)
-            add  = PdfReader(apath)
-            w = PdfWriter()
-            for p in base.pages: w.add_page(p)
-            for p in add.pages:  w.add_page(p)
-            buf = io.BytesIO()
-            w.write(buf)
-            with open(out, 'wb') as f: f.write(buf.getvalue())
-            break
-    pages = len(PdfReader(out).pages)
-except ModuleNotFoundError:
-    print('(pypdf not installed — skipped Pi-500 addendum merge and page count)')
+    out = os.path.join(_OUTDIR,
+        f'FieldCommand_Complete_User_Manual{override["infix"]}_v1.0.pdf')
+    doc = SimpleDocTemplate(
+        out, pagesize=letter,
+        leftMargin=M, rightMargin=M,
+        topMargin=0.60*inch, bottomMargin=0.48*inch,
+        title=f'FieldCommand IMS v1.0 — Complete User Manual ({edkey})',
+        author='FieldCommand IMS and Open-Source · Offline-First · Field-Deployable')
+    doc.build(story, canvasmaker=ManualCanvas)
+
+    # Optional Pi-500 addendum merge (needs pypdf + the addendum PDF; skipped if absent)
     pages = None
+    try:
+        from pypdf import PdfReader, PdfWriter
+        for apath in [os.path.join(os.path.dirname(__file__), '../../..', 'pi500_addendum.pdf'),
+                      '/home/claude/pi500_addendum.pdf']:
+            if os.path.exists(apath):
+                w = PdfWriter()
+                for p in PdfReader(out).pages: w.add_page(p)
+                for p in PdfReader(apath).pages: w.add_page(p)
+                buf = io.BytesIO(); w.write(buf)
+                with open(out, 'wb') as f: f.write(buf.getvalue())
+                break
+        pages = len(PdfReader(out).pages)
+    except ModuleNotFoundError:
+        pass
 
-print(f'BUILT: {out}')
-if pages is not None:
-    print(f'Pages: {pages}')
+    print(f'BUILT [{edkey}]: {out}' + (f'  ({pages} pages)' if pages else ''))
 print(f'Chapters: {len(CHAPTER_FUNCS)}')

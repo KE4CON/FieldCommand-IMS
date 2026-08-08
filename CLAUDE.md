@@ -32,7 +32,11 @@ FieldCommand started as a **communications** app (the legacy "FieldComms" brand 
 
 (Both editions run the same **servers**: two Raspberry Pi 5 (16 GB) units — the FieldCommand app server and the 44Net gateway. The Pi 500/500+ distinction is only the operator *workstations*.)
 
-Current state (needs reconciling — see `docs/MANUAL_VS_CODE.md`): the Complete Manual is the World edition but still has a stray `K9ESV` and still uses "Starcom" (**ESV twin still to do**); the only ESV user doc is a shorter 27-chapter *User Guide* (not a full ESV twin of the 36-chapter manual); install guides exist in both editions (ESV on Pi 500+, World on Pi 500). **BOM: done** — `bom_build.py` now emits both editions from one source (`FieldCommand_BOM.pdf` = ESV, `FieldCommand_BOM_World.pdf` = World).
+Current state — the dual-edition pipeline is mostly built (one source → both editions via edition tokens):
+- **Complete Manual: done** — `manual_build.py` emits both from one source. `FieldCommand_Complete_User_Manual_v1.0.pdf` = **World** (generic; org/Starcom/ESV-isms stripped); `FieldCommand_Complete_User_Manual_ESV_v1.0.pdf` = **ESV** (names McHenry County ESV, served agency **MCEMA**, Starcom, ESV member-ID/club-callsign examples). Edition tokens live in `manual_framework._ED_DEFAULTS`; World overrides in `manual_build.MANUAL_EDITIONS`. The one residual "starcom" in the World manual is the literal `starcom.html` **page URL** (a real filename in the code) — fully removing it needs the app page renamed, an app change.
+- **BOM: done** — `bom_build.py` emits both (`FieldCommand_BOM.pdf` = ESV, `FieldCommand_BOM_World.pdf` = World).
+- **Install guides:** both editions exist (ESV on Pi 500+, World on Pi 500).
+- **Still to do:** the shorter 27-chapter ESV *User Guide* is separate from the Manual; author copyright (James Rospopo KE4CON) intentionally stays in BOTH editions (authorship / license requirement) — only deploying-org branding differs.
 
 ## Related Programs — Do Not Merge
 - **APRS Command** — separate C#/Avalonia desktop APRS client (Jim's). Planned integration: it can replace YAAC as FieldCommand's APRS client/feed (see "Radio direction" below). No shared code; data integration only.

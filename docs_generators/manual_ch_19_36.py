@@ -573,8 +573,8 @@ def ch28():
          '✓ Yes — Winlink via AMPRNet path, APRS-IS, inter-node data. '
          'Licensed operators handle the registration under their callsign.'],
         ['Amateur radio club operates the EOC comms section',
-         '✓ Yes — same benefits. Club callsign (e.g. K9ESV) is preferable '
-         'for organizational deployments.'],
+         f"✓ Yes — same benefits. Club callsign (e.g. {ed('club')}) is preferable "
+         "for organizational deployments."],
         ['Licensed amateurs are supporting partners with the served agency',
          '△ Consider — only if the licensed operators take full ownership '
          'of the AMPRNet registration and ongoing maintenance.'],
@@ -1092,7 +1092,7 @@ def ch_appendix():
         ('radar.html',             'Animated Next Generation Radar (NEXRAD) Radar'),
         ('propagation.html',       'High Frequency (HF) Propagation Data'),
         ('tactical.html',          'Tactical Automatic Packet Reporting System (APRS) Map'),
-        ('resmap.html',            'Public Safety Resource Map (Starcom)'),
+        ('resmap.html',            f"Public Safety Resource Map{ed('ps_paren')}"),
         ('callsign.html',          'Federal Communications Commission (FCC) Callsign Lookup'),
         ('amprgate.html',          'Amateur Packet Radio Network (AMPRNet) (44Net) Gateway Status'),
         ('nts.html',               'National Traffic System (NTS) Radiogram Generator'),

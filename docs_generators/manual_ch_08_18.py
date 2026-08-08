@@ -126,8 +126,8 @@ def ch10():
         'the roster in this order until a match is found:'))
     s.append(SP(2))
     s.append(tbl(['SEARCH ORDER', 'FIELD SEARCHED', 'EXAMPLE VALUE'], [
-        ['1st', 'barcode_id',  'ESV-042  (or badge number if overridden)'],
-        ['2nd', 'member_id',   'ESV-042'],
+        ['1st', 'barcode_id',  f"{ed('mid')}  (or badge number if overridden)"],
+        ['2nd', 'member_id',   ed('mid')],
         ['3rd', 'callsign',    'KE4CON'],
         ['4th', 'radio_id',    '412'],
     ], widths=[0.9*inch, 1.3*inch, CW-2.2*inch]))

@@ -22,6 +22,14 @@ def ch1():
         'internet is gone, and you are running on a generator in a parking lot. '
         'That is exactly when you need incident management software most — and that is '
         'exactly when FieldCommand IMS is designed to perform.'))
+    # Deploying-org / served-agency line — ESV edition only (blank in World).
+    if ed('org'):
+        line = f"This edition is prepared for <b>{ed('org')}</b>"
+        if ed('served'):
+            line += f", the amateur-radio emergency-communications group serving the <b>{ed('served')}</b>"
+        line += '.'
+        s.append(SP(4))
+        s.append(P(line))
     s.append(SP(6))
 
     s.append(P('1.1  What FieldCommand IMS Is', H2))
@@ -189,10 +197,10 @@ def ch2():
          'Net control logger, Federal Communications Commission (FCC) callsign lookup, Automatic Packet Reporting System (APRS) map, Winlink, '
          'JS8Call, Amateur Packet Radio Network (AMPRNet) gateway, High Frequency (HF) propagation, National Traffic System (NTS) radiogram',
          'Amateur radio net operations, ARES/RACES activations'],
-        ['Starcom / Public Safety',
-         'Starcom net logger, radio ID roster, resource map, Wide Area Network (WAN) status, '
-         'weather radar, hospital directory, facilities',
-         'Public safety radio nets, Starcom check-in operations'],
+        [ed('ps_mode'),
+         f"{ed('ps_logger')}, radio ID roster, resource map, Wide Area Network (WAN) status, "
+         "weather radar, hospital directory, facilities",
+         f"Public safety radio nets, {ed('ps_checkin')} operations"],
         ['ICS',
          'Full ICS platform, Incident Action Plan (IAP) forms, T-card resource board, personnel '
          'check-in, Federal Emergency Management Agency (FEMA) cost documentation, event templates, cost dashboard',
@@ -292,7 +300,7 @@ def ch4():
 
     s.append(P('4.1  Roster Fields', H2))
     s.append(tbl(['FIELD', 'PURPOSE'], [
-        ['Member ID',        'Your organization\'s internal identifier (e.g. ESV-042). Primary key.'],
+        ['Member ID',        f"Your organization's internal identifier (e.g. {ed('mid')}). Primary key."],
         ['Barcode ID',       'QR/barcode check-in code — defaults to Member ID on first import. '
                              'Can be overridden with a facility badge number or any custom code.'],
         ['Callsign',         'Federal Communications Commission (FCC) amateur radio callsign. Leave blank for non-licensed members.'],

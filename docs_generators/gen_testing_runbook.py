@@ -164,6 +164,26 @@ story.append(Note('The first-boot auto-run relies on a Raspberry Pi boot mechani
                   'before shipping. Treat this whole run as the first real validation. Use the <b>--dry-run</b> '
                   'previews where offered, and keep this sheet handy to record what happens.', 'warn'))
 
+story.append(P('About the SD card and &ldquo;bootfs&rdquo;', H3S))
+story.append(P('When Raspberry Pi Imager flashes the OS, it creates TWO partitions on the SD card:', BODY))
+story.append(tbl(['PARTITION', 'WHAT IT IS', 'SHOWS ON YOUR COMPUTER?'], [
+    ['bootfs',
+     'Small (~512 MB) FAT32 boot partition &mdash; holds config.txt, cmdline.txt, the kernel/firmware, and '
+     '(after prep) your FieldCommand-IMS folder.',
+     'Yes &mdash; a drive named bootfs'],
+    ['rootfs',
+     'Large ext4 Linux system partition.',
+     'No &mdash; Windows/Mac can&rsquo;t read ext4'],
+], [0.9*inch, CW-2.9*inch, 2.0*inch]))
+story.append(P('So <b>bootfs is on the SD card</b> &mdash; it is the drive the prepper writes to. Once the card is '
+               'booted in the Pi, that same partition is mounted at the path <b>/boot/firmware</b> (which is why '
+               'the setup command references /boot/firmware/FieldCommand-IMS/...). The two SSDs get their own '
+               'separate boot partitions built during setup; you never touch those by hand.', BODY))
+story.append(Note('On Windows, inserting the freshly-flashed card may pop up &ldquo;You need to format the disk.&rdquo; '
+                  'That is Windows seeing the ext4 rootfs it cannot read &mdash; click <b>Cancel</b> and do NOT '
+                  'format it. Use the drive named <b>bootfs</b>.', 'stop'))
+story.append(SP(4))
+
 story.append(P('What you need on hand', H3S))
 story.append(checks([
     'Raspberry Pi 5 (16 GB) in the Pironman 5 MAX, with BOTH NVMe SSDs installed and the SunFounder ribbon cable seated.',

@@ -68,12 +68,14 @@ DRY_RUN=0
 ASSUME_YES="${FC_ASSUME_YES:-0}"
 FORCE=0
 FC_CONFIG="${FC_CONFIG:-}"
+SKIP_EEPROM="${FC_SKIP_EEPROM:-0}"
 
 while [[ $# -gt 0 ]]; do
     case "$1" in
         --dry-run)   DRY_RUN=1; shift ;;
         --yes|-y)    ASSUME_YES=1; shift ;;
         --force)     FORCE=1; shift ;;
+        --no-eeprom) SKIP_EEPROM=1; shift ;;
         --config)    FC_CONFIG="$2"; shift 2 ;;
         --config=*)  FC_CONFIG="${1#*=}"; shift ;;
         -h|--help)
@@ -233,6 +235,38 @@ ensure_pcie_lines() {
 count_nvme() { lsblk -dn -o NAME 2>/dev/null | grep -c '^nvme' || true; }
 
 list_nvme() { lsblk -dn -o NAME,SIZE,MODEL 2>/dev/null | grep '^nvme' || true; }
+
+# =============================================================================
+#  Bootloader (EEPROM) — bring every unit to the same known-good firmware
+# =============================================================================
+# Dual-NVMe boot on the Pi 5 depends on the bootloader firmware version. Staging
+# the latest stable EEPROM here means every field server built from this script
+# runs the same firmware, which removes one big source of per-unit variance in
+# whether both drives are seen and boot-from-RAID works. The update is written
+# now and applied automatically at the next reboot (which setup does anyway).
+update_bootloader() {
+    if [[ "$SKIP_EEPROM" == "1" ]]; then
+        info "Skipping bootloader update (--no-eeprom / FC_SKIP_EEPROM=1)."
+        return 0
+    fi
+    if ! command -v rpi-eeprom-update >/dev/null 2>&1; then
+        info "rpi-eeprom-update not found — skipping bootloader step (not Raspberry Pi OS?)."
+        return 0
+    fi
+    step "Bootloader (EEPROM) check"
+    info "Current bootloader status:"
+    rpi-eeprom-update 2>&1 | sed 's/^/    /' | tee -a "$LOG" >&2 || true
+    if [[ "$DRY_RUN" == "1" ]]; then
+        info "[dry-run] would run: rpi-eeprom-update -a  (stage latest stable, applies next reboot)"
+        return 0
+    fi
+    info "Staging the latest stable bootloader (applies on the next reboot)…"
+    if rpi-eeprom-update -a >>"$LOG" 2>&1; then
+        ok "Bootloader is current, or an update was staged for the next reboot."
+    else
+        warn "Could not stage a bootloader update — continuing. You can run 'sudo rpi-eeprom-update -a' by hand."
+    fi
+}
 
 stage0_pcie() {
     step "Stage 0 — Detect both NVMe SSDs"
@@ -515,6 +549,9 @@ finish_and_reboot() {
 # =============================================================================
 main() {
     gather_config
+
+    # Bring the bootloader to a known-good version (staged; applies at next reboot).
+    update_bootloader
 
     # Stage 0: ensure both SSDs are visible (may reboot once and auto-resume).
     if [[ ! -f "$STATE_DIR/pcie_done" ]] || [[ "$(count_nvme)" -lt 2 ]]; then

@@ -26,6 +26,8 @@ It's about 7 MB. Everything you need is inside.
 
 **3. Flash Raspberry Pi OS.** With the [Raspberry Pi Imager](https://www.raspberrypi.com/software/), flash **Raspberry Pi OS (64-bit, Desktop)** to the microSD card. Set the username to `fieldcommand` in the Imager's advanced options.
 
+> 💾 **About `bootfs`:** flashing creates two partitions on the SD card — **`bootfs`** (a small FAT boot partition, which shows up as a drive on your computer) and `rootfs` (the large Linux partition, which Windows/Mac can't read). You interact with **`bootfs`**; once the card is in the Pi it's mounted at `/boot/firmware`. **On Windows**, if a "You need to format the disk" popup appears, that's it seeing the `rootfs` it can't read — click **Cancel**, do *not* format.
+
 **4. Make the card "insert-and-go" (one double-click on your computer).** After imaging, a small drive named **`bootfs`** appears on your computer. Open the downloaded `FieldCommand-IMS` folder, go into **`scripts`**, and double-click the prep tool for your computer:
 > - **Windows:** `prep-sd-card.bat`
 > - **Mac:** `prep-sd-card.command` *(if macOS blocks it the first time, right-click it → Open → Open)*

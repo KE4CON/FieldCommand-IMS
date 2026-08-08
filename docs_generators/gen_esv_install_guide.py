@@ -858,6 +858,14 @@ story.append(tbl(['IMAGER OPTION', 'VALUE  /  REASON'], [
     ['Wi-Fi',             'Set your home or lab Wi-Fi during initial OS setup.  EMCOMM-NET comes later.'],
     ['Locale / Timezone', 'US/Central for local operations'],
     ], [2.6*inch, CW-2.6*inch]))
+story.append(SP(6))
+story.append(NoteBox(
+    'Flashing creates TWO partitions on the microSD card. <b>bootfs</b> is a small FAT boot partition that '
+    'appears as a drive on your computer — this is where you copy the FieldCommand-IMS folder, and on the Pi '
+    'it is mounted at <b>/boot/firmware</b>. <b>rootfs</b> is the large ext4 Linux partition, which Windows and '
+    'macOS cannot read. On Windows, if a "You need to format the disk" message appears when you insert the '
+    'card, that is Windows seeing the ext4 partition it cannot read: click <b>Cancel</b> and do NOT format it.',
+    'note'))
 story.append(SP(8))
 
 story.append(H2('1B  Build the Boot-Mirror  (Pironman 5 MAX — Dual NVMe RAID 1)'))
@@ -1016,6 +1024,17 @@ story.append(NoteBox(
     'include NVMe. Fix it and re-test until BOTH single-drive cases boot on their own. A mirror you have '
     'not tested by pulling a drive is a mirror you cannot rely on in the field.',
     'warn'))
+story.append(SP(4))
+story.append(NoteBox(
+    '<b>One-time commissioning check (per build, not per activation).</b> Do the pull-a-drive test once for '
+    'EACH physical server you build. The setup procedure is identical on identical hardware, but whether a '
+    'given unit actually fails over also depends on per-unit physical facts the software cannot guarantee — '
+    'how firmly the SunFounder ribbon cable and the two M.2 SSDs are seated, the exact SSD models, and the '
+    'Pi 5 bootloader (EEPROM) version. The automated setup updates the bootloader to a known-good version to '
+    'reduce this variance, and building to the same bill of materials makes success very likely — but confirm '
+    'it once on each assembled unit before trusting it in the field. You do NOT need to repeat it before every '
+    'activation.',
+    'note'))
 story.append(SP(6))
 story.append(tbl(['RAID STATUS', 'MEANING', 'ACTION REQUIRED'], [
     ['[UU]  (both drives active)',

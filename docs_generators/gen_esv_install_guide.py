@@ -781,6 +781,8 @@ story.append(tbl(['STEP', 'WHAT YOU DO'], [
     ['2.  Copy the software onto the card',
      'After imaging, a small drive named <b>bootfs</b> appears on your computer (it is the card’s boot '
      'partition). Copy the whole <b>FieldCommand-IMS</b> folder onto it. '
+     '<b>If you downloaded the ZIP from GitHub</b>, it unzips as <b>FieldCommand-IMS-main</b> — rename it '
+     'to <b>FieldCommand-IMS</b> (drop the “-main”) so the command in Step 3 matches. '
      '(Optional: also copy a filled-in <b>fieldcommand.conf</b> — see the sample in the scripts folder '
      '— to skip all on-screen questions and run completely unattended.)'],
     ['3.  Boot and run one command',
@@ -811,6 +813,8 @@ story.append(NoteBox(
     'note'))
 story.append(SP(4))
 story.append(NoteBox(
+    'Install BOTH NVMe SSDs in the Pironman before you begin — the setup builds a mirror across the two '
+    'drives and will stop if it finds only one. '
     'The setup script ERASES BOTH NVMe SSDs (it confirms the exact drives with you first). Booting a '
     'Raspberry Pi 5 from a RAID array goes slightly beyond SunFounder’s own documented single-drive '
     'boot, so bench-test the whole flow — including the pull-a-drive test — on your actual hardware '

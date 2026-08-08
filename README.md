@@ -14,11 +14,15 @@ New here? This is the whole path from nothing to a running field server.
 
 **1. Get the hardware.** At minimum, a **Raspberry Pi 5 (16 GB)** with a **Pironman 5 MAX** carrying **two NVMe SSDs** (mirrored for reliability), a microSD card for the initial flash, and a monitor + keyboard. The full recommended kit — router, switch, radios, cases — is in [Hardware](#hardware) below and priced out in the Bill of Materials PDFs in [`docs/`](docs/).
 
+> ⚠️ **Install BOTH NVMe SSDs in the Pironman before you start.** The setup builds a RAID 1 mirror across the two drives and will stop if it finds only one. Seat both SSDs and the SunFounder FFC ribbon cable firmly.
+
 **2. Get the software.** Download this repository — click **Code → Download ZIP** on GitHub, or clone it:
 ```bash
 git clone https://github.com/KE4CON/FieldCommand-IMS.git
 ```
 It's about 7 MB. Everything you need is inside.
+
+> 📁 **If you downloaded the ZIP,** it unzips to a folder named **`FieldCommand-IMS-main`**. **Rename it to `FieldCommand-IMS`** (drop the `-main`) so the command path below matches. Cloning with `git` already gives the correct name.
 
 **3. Flash Raspberry Pi OS.** With the [Raspberry Pi Imager](https://www.raspberrypi.com/software/), flash **Raspberry Pi OS (64-bit, Desktop)** to the microSD card. Set the username to `fieldcommand` in the Imager's advanced options.
 

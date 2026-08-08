@@ -206,6 +206,14 @@ def ch2():
          'check-in, Federal Emergency Management Agency (FEMA) cost documentation, event templates, cost dashboard',
          'Any active incident requiring ICS structure'],
     ], widths=[1.3*inch, CW-3.1*inch, 1.8*inch]))
+    s.append(SP(4))
+    s.append(note(
+        'The Amateur Radio mode appears only when a station callsign has been configured. A group with no '
+        'licensed amateur radio operators leaves the callsign blank during setup, and this mode stays '
+        'grayed out — every incident-management and public-safety tool still works. A callsign, and the '
+        'amateur radio features it unlocks, must only be used by a properly licensed operator with '
+        'privileges on the bands and modes in use; one can be added later in the Setup wizard at any time.',
+        'note'))
     s.append(SP(6))
 
     s.append(P('2.3  WAN Status Indicators', H2))

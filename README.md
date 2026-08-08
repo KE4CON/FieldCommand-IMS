@@ -8,6 +8,36 @@ FieldCommand IMS is a complete offline incident management platform built on a R
 
 ---
 
+## Get Started
+
+New here? This is the whole path from nothing to a running field server.
+
+**1. Get the hardware.** At minimum, a **Raspberry Pi 5 (16 GB)** with a **Pironman 5 MAX** carrying **two NVMe SSDs** (mirrored for reliability), a microSD card for the initial flash, and a monitor + keyboard. The full recommended kit — router, switch, radios, cases — is in [Hardware](#hardware) below and priced out in the Bill of Materials PDFs in [`docs/`](docs/).
+
+**2. Get the software.** Download this repository — click **Code → Download ZIP** on GitHub, or clone it:
+```bash
+git clone https://github.com/KE4CON/FieldCommand-IMS.git
+```
+It's about 7 MB. Everything you need is inside.
+
+**3. Flash Raspberry Pi OS.** With the [Raspberry Pi Imager](https://www.raspberrypi.com/software/), flash **Raspberry Pi OS (64-bit, Desktop)** to the microSD card. Set the username to `fieldcommand` in the Imager's advanced options.
+
+**4. Put the software on the card.** After imaging, a small drive named **`bootfs`** appears on your computer. Copy the whole **`FieldCommand-IMS`** folder onto it.
+
+**5. Boot the Pi and run one command.** Put the card in the Pi 5, power on, open a terminal, and run:
+```bash
+sudo bash /boot/firmware/FieldCommand-IMS/scripts/fieldcommand-setup.sh
+```
+It builds the mirrored RAID 1 storage, copies the OS onto it, reboots, and installs and configures FieldCommand automatically. You answer a few short questions once. (Prefer to preview first? Add `--dry-run`. Pi already online and want the short way? `curl -fsSL https://raw.githubusercontent.com/KE4CON/FieldCommand-IMS/main/scripts/bootstrap.sh | sudo bash`.)
+
+**6. Open it.** From any device on the FieldCommand Wi-Fi network, browse to **http://192.168.50.1/**.
+
+> **Do you need an amateur radio callsign?** No. If your group has no licensed amateur radio operators, **leave the callsign blank** during setup — the incident-management and public-safety features all work fully, and the amateur radio tools simply stay grayed out. Enter a callsign only if you have a properly licensed operator with privileges on the bands and modes you intend to use. You can add one later at any time.
+
+📖 **Full details, wiring, and the manual partitioning fallback:** [`docs/FieldCommand_Installation_Guide.pdf`](docs/FieldCommand_Installation_Guide.pdf) and the [Complete User Manual](docs/FieldCommand_Complete_User_Manual_v1.0.pdf).
+
+---
+
 ## Vision & Scope
 
 FieldCommand IMS is a **complete ICS/NIMS all-hazards incident management system** — not just an EMCOMM tool. It is designed to manage the full lifecycle of any incident from initial response through demobilization, using standard ICS forms and workflows, while adding a native amateur radio and public safety communications capability that no other ICS platform provides.

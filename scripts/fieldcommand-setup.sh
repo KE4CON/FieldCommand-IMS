@@ -257,10 +257,19 @@ update_bootloader() {
     info "Current bootloader status:"
     rpi-eeprom-update 2>&1 | sed 's/^/    /' | tee -a "$LOG" >&2 || true
     if [[ "$DRY_RUN" == "1" ]]; then
-        info "[dry-run] would run: rpi-eeprom-update -a  (stage latest stable, applies next reboot)"
+        info "[dry-run] would refresh the rpi-eeprom package, then run: rpi-eeprom-update -a"
         return 0
     fi
-    info "Staging the latest stable bootloader (applies on the next reboot)…"
+    # Best-effort: pull the newest available bootloader package so we stage the
+    # latest firmware. Needs internet; if offline we fall back to whatever the
+    # image already ships (still deterministic per OS image).
+    info "Refreshing the bootloader package (needs internet; skipped if offline)…"
+    if apt-get update -qq >>"$LOG" 2>&1 && apt-get install -y --only-upgrade rpi-eeprom >>"$LOG" 2>&1; then
+        ok "Bootloader package is up to date."
+    else
+        warn "Couldn't refresh the bootloader package (offline?) — using the version already installed."
+    fi
+    info "Staging the latest available bootloader (applies on the next reboot)…"
     if rpi-eeprom-update -a >>"$LOG" 2>&1; then
         ok "Bootloader is current, or an update was staged for the next reboot."
     else

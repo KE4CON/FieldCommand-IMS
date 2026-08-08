@@ -790,62 +790,162 @@ story.append(tbl(['IMAGER OPTION', 'VALUE  /  REASON'], [
     ], [2.6*inch, CW-2.6*inch]))
 story.append(SP(8))
 
-story.append(H2('1B  Build the RAID 1 Array  (Pironman MAX 5 — Dual NVMe)'))
+story.append(H2('1B  Build the Boot-Mirror  (Pironman 5 MAX — Dual NVMe RAID 1)'))
 story.append(P(
-    'The Pironman MAX 5 enclosure has two M.2 NVMe slots. '
-    'Configuring them as a RAID 1 mirror means both drives always contain identical data. '
-    'If one SSD fails, the Pi keeps running on the surviving drive with no data loss '
-    'and no operator action required. '
-    'Skip this section entirely if you are using a single NVMe drive.'))
+    'The Pironman 5 MAX carries two M.2 NVMe slots on a SunFounder Dual NVMe PIP board. That board uses '
+    'an ASMedia ASM1182e PCIe switch to split the Pi 5\'s single PCIe Gen 2 x1 lane into two independent '
+    'Gen 2 x1 lanes — one per slot. Both slots are electrically equivalent: there is no dedicated "boot '
+    'slot," and the boot drive is chosen by firmware boot order and the PARTUUID in cmdline.txt, not by '
+    'which slot a drive sits in. We mirror the two drives as a RAID 1 array so that if one SSD dies the Pi '
+    'keeps running on the survivor with the live incident data intact. '
+    'Skip this whole section if you are using a single NVMe drive.'))
 story.append(SP(4))
 story.append(NoteBox(
-    'Complete the RAID build BEFORE running the FieldCommand installer. '
-    'The installer must be run on the final storage configuration. '
-    'If your OS is already running from a single drive, back it up before proceeding.',
+    'This is boot-from-RAID, not just a data mirror: the goal is that the Pi boots AND keeps running on '
+    'EITHER drive alone. That means the boot files must live on BOTH drives, not only the mirrored root. '
+    'SunFounder\'s own docs cover single-NVMe boot and two independent bootable NVMe systems, but not a '
+    'booting RAID 1 — so follow every sub-step here, and do NOT skip the pull-a-drive test at the end. '
+    'That test is the only proof the mirror actually fails over on your hardware.',
+    'warn'))
+story.append(SP(4))
+story.append(NoteBox(
+    'Complete the mirror BEFORE running the FieldCommand installer — the installer must run on the final '
+    'storage configuration. If your OS is already running from a single drive, back it up before proceeding.',
     'warn'))
 story.append(SP(6))
+
+story.append(H3('Pironman / PCIe Prerequisite  (do this first — both drives must be visible)'))
+story.append(P(
+    'Before the Pi will see BOTH NVMe drives through the PCIe switch, the firmware must be told the PCIe '
+    'port is present and given time to bring the switch up. Boot the microSD OS, then edit '
+    '<b>/boot/firmware/config.txt</b> and add the two SunFounder-required lines:'))
+story.append(CodeBlock([
+    'sudo nano /boot/firmware/config.txt',
+    '',
+    '# --- Pironman 5 MAX Dual NVMe PIP (ASM1182e PCIe switch) ---',
+    'dtparam=pciex1              # enable the Pi 5 PCIe x1 port  (alias: dtparam=nvme)',
+    'dtparam=pciex1_no_10s=on    # disable the PCIe boot delay so BOTH drives behind the',
+    '                            # switch are detected at startup  (required for dual NVMe)',
+    '#',
+    '# Do NOT force Gen 3 — the ASM1182e is a Gen 2 switch. Leave the link at Gen 2.',
+    '# (No pciex1_gen=3 line. Gen 3 is not supported on this board.)',
+]))
+story.append(P('Reboot, then confirm BOTH drives are present before going any further:'))
+story.append(CodeBlock([
+    'lsblk -d -o NAME,SIZE,MODEL | grep nvme',
+    '# Expected: BOTH nvme0n1 and nvme1n1 listed, each ~1 TB.',
+    '# If only one appears, STOP — recheck the two config.txt lines and the FFC cable seating.',
+]))
+story.append(SP(6))
+
 story.append(H3('Physical Installation'))
 story.append(tbl(['SLOT', 'DRIVE', 'LINUX DEVICE NAME'], [
-    ['M.2 Slot 1  (primary)',    '1 TB NVMe SSD  (e.g. WD Blue SN580)',  '/dev/nvme0n1'],
-    ['M.2 Slot 2  (mirror)',     '1 TB NVMe SSD  —  identical model recommended',  '/dev/nvme1n1'],
-    ], [1.5*inch, 2.8*inch, CW-4.3*inch]))
+    ['M.2 Slot A  (either slot)', '1 TB NVMe SSD  (e.g. WD Blue SN580)', '/dev/nvme0n1'],
+    ['M.2 Slot B  (either slot)', '1 TB NVMe SSD  —  identical model recommended', '/dev/nvme1n1'],
+    ], [1.7*inch, 2.6*inch, CW-4.3*inch]))
+story.append(P(
+    'The two slots are interchangeable — which physical drive becomes nvme0n1 vs nvme1n1 does not matter '
+    'for a mirror. Use identical drives so the array is balanced and rebuilds cleanly.'))
 story.append(SP(6))
-story.append(P('Boot from a microSD card with Raspberry Pi OS Lite to perform the initial RAID setup. '
-               'After the array is built and the OS copied to it, the SD card is removed.'))
-story.append(SP(4))
-story.append(H3('Build the Array'))
+
+story.append(H3('Partition Both Drives Identically'))
+story.append(P(
+    'Boot from a Raspberry Pi OS Lite microSD to do the setup. Each NVMe drive gets a small FAT boot '
+    'partition — firmware reads that directly, because firmware CANNOT read a RAID array — plus a large '
+    'Linux partition for the mirrored root. Do this to BOTH drives:'))
 story.append(CodeBlock([
-    '# Install mdadm (RAID management tool)',
-    'sudo apt-get update && sudo apt-get install -y mdadm',
+    '# Repeat for /dev/nvme0n1 AND /dev/nvme1n1',
+    'sudo parted /dev/nvme0n1 --script mklabel gpt',
+    'sudo parted /dev/nvme0n1 --script mkpart primary fat32 1MiB 513MiB',
+    'sudo parted /dev/nvme0n1 --script set 1 boot on',
+    'sudo parted /dev/nvme0n1 --script mkpart primary 513MiB 100%',
+    '#   p1 = 512 MB FAT boot partition    p2 = rest of the drive (Linux RAID)',
     '',
-    '# Create the RAID 1 array  (--run skips the "all zeroes" check for speed)',
-    'sudo mdadm --create --verbose /dev/md0  \\',
-    '    --level=1 --raid-devices=2  \\',
-    '    /dev/nvme0n1 /dev/nvme1n1',
+    '# ...then the same four commands again for /dev/nvme1n1',
+]))
+story.append(SP(6))
+
+story.append(H3('Build the RAID 1 Root and Mirror the Boot Files'))
+story.append(CodeBlock([
+    '# Install the tools',
+    'sudo apt-get update && sudo apt-get install -y mdadm rsync dosfstools',
     '',
-    '# Check build progress  (shows resync percentage — takes ~15 min for 1 TB)',
-    'cat /proc/mdstat',
+    '# Mirror the two large partitions as the root array',
+    'sudo mdadm --create --verbose /dev/md0 --level=1 --raid-devices=2 \\',
+    '    /dev/nvme0n1p2 /dev/nvme1n1p2',
+    'cat /proc/mdstat            # watch the resync (~15 min for 1 TB)',
     '',
-    '# Create a filesystem on the array',
-    'sudo mkfs.ext4 -L fieldcommand-raid /dev/md0',
+    '# Root filesystem on the array; FAT on EACH boot partition',
+    'sudo mkfs.ext4 -L fc-root /dev/md0',
+    'sudo mkfs.vfat -F 32 /dev/nvme0n1p1',
+    'sudo mkfs.vfat -F 32 /dev/nvme1n1p1',
     '',
-    '# Mount and copy the running OS to the RAID array',
-    'sudo mkdir -p /mnt/raid',
-    'sudo mount /dev/md0 /mnt/raid',
-    'sudo apt-get install -y rsync',
-    'sudo rsync -axv --progress / /mnt/raid/',
+    '# Copy the running OS root onto the array',
+    'sudo mkdir -p /mnt/root && sudo mount /dev/md0 /mnt/root',
+    'sudo rsync -axHAX --info=progress2 / /mnt/root/',
     '',
-    '# Save the RAID config so it survives reboots',
-    'sudo mdadm --detail --scan | sudo tee -a /mnt/raid/etc/mdadm/mdadm.conf',
+    '# Copy the boot files onto BOTH drives\' FAT partitions',
+    'sudo mkdir -p /mnt/boot0 /mnt/boot1',
+    'sudo mount /dev/nvme0n1p1 /mnt/boot0',
+    'sudo mount /dev/nvme1n1p1 /mnt/boot1',
+    'sudo cp -a /boot/firmware/. /mnt/boot0/',
+    'sudo cp -a /boot/firmware/. /mnt/boot1/',
+    '',
+    '# Make the array assemble automatically at boot',
+    'sudo mkdir -p /mnt/root/etc/mdadm',
+    'sudo mdadm --detail --scan | sudo tee /mnt/root/etc/mdadm/mdadm.conf',
+]))
+story.append(SP(6))
+
+story.append(H3('Point the Boot Files at the Array'))
+story.append(P(
+    'On BOTH boot partitions (/mnt/boot0 and /mnt/boot1) edit two files so either drive can boot the mirror:'))
+story.append(tbl(['FILE  (on each boot partition)', 'CHANGE'], [
+    ['cmdline.txt',
+     'Point root at the array and allow it time to assemble:  replace the existing root=PARTUUID=... '
+     'with  root=/dev/md0 rootdelay=10  — keep the rest of the line intact.'],
+    ['config.txt',
+     'Keep the two Pironman PCIe lines from the prerequisite step, and add  auto_initramfs=1  so the '
+     'initramfs that assembles the RAID is built and loaded at boot.'],
+    ], [2.4*inch, CW-2.4*inch]))
+story.append(SP(4))
+story.append(P(
+    'In the array\'s /etc/fstab, mount /boot/firmware with the <b>nofail</b> option so a missing drive '
+    'never blocks boot. Then rebuild the initramfs and set the firmware to boot from NVMe:'))
+story.append(CodeBlock([
     'sudo update-initramfs -u -k all',
     '',
-    '# Update /boot/cmdline.txt to boot from the RAID array instead of the SD',
-    'sudo nano /boot/cmdline.txt',
-    '# Change:  root=PARTUUID=xxxx   →   root=/dev/md0',
-    '# Then reboot — Pi boots from RAID.  Verify with:',
-    'cat /proc/mdstat',
-    '# Expected:  md0 : active raid1 nvme0n1[0] nvme1n1[1]  [UU]',
+    '# Set the Pi 5 bootloader to try NVMe  (applies to both slots)',
+    'sudo raspi-config    # Advanced Options > Boot Order > NVMe/USB Boot',
+    '',
+    'sudo poweroff        # remove the microSD card, then power back on',
 ]))
+story.append(SP(6))
+
+story.append(H3('Verify — Then PULL A DRIVE  (do not skip)'))
+story.append(P(
+    'After the Pi boots from NVMe with the SD card removed, confirm the mirror is healthy, then prove it '
+    'actually fails over. For a keep-going server, this test is the whole point of the mirror:'))
+story.append(CodeBlock([
+    'cat /proc/mdstat',
+    '# Expected:  md0 : active raid1 nvme0n1p2[0] nvme1n1p2[1]  [UU]',
+    '',
+    '# --- Pull-a-drive failover test ---',
+    '# 1. sudo poweroff.  Remove drive A.  Power on.',
+    '#      -> Pi MUST boot and FieldCommand MUST come up on drive B alone.',
+    '# 2. sudo poweroff.  Re-insert A, remove drive B instead.  Power on.',
+    '#      -> Pi MUST boot on drive A alone.',
+    '# 3. sudo poweroff.  Re-insert both.  Power on.  Re-add the drive that was out:',
+    '#      sudo mdadm /dev/md0 --add /dev/nvme1n1p2   (whichever shows missing)',
+    '#      cat /proc/mdstat   -> watch it resync back to [UU].',
+]))
+story.append(SP(4))
+story.append(NoteBox(
+    'If the Pi does NOT boot with one drive removed, the mirror is not truly redundant yet — usually the '
+    'boot files were not copied to that drive\'s FAT partition, or the bootloader boot order does not '
+    'include NVMe. Fix it and re-test until BOTH single-drive cases boot on their own. A mirror you have '
+    'not tested by pulling a drive is a mirror you cannot rely on in the field.',
+    'warn'))
 story.append(SP(6))
 story.append(tbl(['RAID STATUS', 'MEANING', 'ACTION REQUIRED'], [
     ['[UU]  (both drives active)',
@@ -1263,47 +1363,26 @@ story.append(SP(8))
 story.append(H1('Step 4b:  RAID 1 NVMe Setup — Pironman MAX 5'))
 story.append(HR(EOC_LT, 0.5))
 story.append(SP(4))
-story.append(P('The Pironman MAX 5 enclosure has two M.2 NVMe slots. Configure them as a RAID 1 mirror so '
-               'both drives contain identical data. If one drive fails, the system continues running on the '
-               'surviving drive with no data loss and no operator action required.'))
+story.append(P('The Pironman 5 MAX enclosure has two M.2 NVMe slots. We configure them as a RAID 1 mirror so '
+               'both drives contain identical data in real time; if one drive fails, the system keeps running '
+               'on the survivor with the live incident data intact.'))
 story.append(SP(4))
-story.append(NoteBox('Complete this step before running the FieldCommand installer. The RAID array must be '
-                     'assembled and the OS installed on it before FieldCommand is deployed. If your Pi OS is '
-                     'already on a single drive, back it up first.', 'warn'))
-story.append(SP(6))
-story.append(H2('Physical Installation'))
-story.append(steps([
-    'Install both 1 TB NVMe SSDs into the Pironman MAX 5 M.2 slots. Slot 1 (primary) → /dev/nvme0n1 · Slot 2 (mirror) → /dev/nvme1n1',
-    'Boot from a Raspberry Pi OS microSD card for the initial RAID setup. After RAID is built and OS is installed, the SD card is removed.',
-]))
-story.append(SP(6))
-story.append(H2('Build the RAID 1 Array'))
-story.append(CodeBlock([
-    '# Install mdadm (RAID management tool)',
-    'sudo apt-get install -y mdadm',
-    '# Create RAID 1 array from the two NVMe drives',
-    'sudo mdadm --create --verbose /dev/md0 --level=1 --raid-devices=2 \\',
-    '  /dev/nvme0n1 /dev/nvme1n1',
-    '# Confirm array is building (will show [=>...............] resync progress)',
-    'cat /proc/mdstat',
-    '# Create a filesystem on the RAID array',
-    'sudo mkfs.ext4 -L fieldcommand-raid /dev/md0',
-    '# Mount it',
-    'sudo mkdir -p /mnt/raid',
-    'sudo mount /dev/md0 /mnt/raid',
-    '# Copy running OS to RAID array',
-    'sudo apt-get install -y rsync',
-    'sudo rsync -axv --progress / /mnt/raid/',
-    '# Save RAID configuration so it persists across reboots',
-    'sudo mdadm --detail --scan | sudo tee -a /mnt/raid/etc/mdadm/mdadm.conf',
-]))
+story.append(NoteBox(
+    'The full, authoritative boot-mirror procedure is in STEP 1, Section 1B — and it must be completed BEFORE '
+    'the FieldCommand installer runs, so it is done first. Do NOT follow a shorter RAID recipe here: booting '
+    'from RAID on the Pi 5 requires a FAT boot partition on BOTH drives, the two Pironman PCIe lines in '
+    'config.txt (dtparam=pciex1 and dtparam=pciex1_no_10s=on), an initramfs that assembles the array, and the '
+    'pull-a-drive failover test. All of that is in Section 1B. This step is a quick reference back to it plus '
+    'the RAID health table below.',
+    'warn'))
 story.append(SP(6))
 story.append(H2('RAID Health Reference'))
 story.append(ref_tbl_2col(['SITUATION', 'WHAT TO DO'], [
     ['Both drives show [UU]', 'Normal healthy state. No action needed.'],
     ['One drive fails — [_U] or [U_]',
-     '1. Power down. 2. Remove failed drive. 3. Insert new 1 TB NVMe. 4. Power on. '
-     '5. Run: sudo mdadm /dev/md0 --add /dev/nvme1n1. 6. Array rebuilds automatically (~30 min).'],
+     '1. Power down. 2. Replace the failed NVMe. 3. Power on. 4. Re-create its two partitions (p1 FAT '
+     'boot, p2 RAID) as in Section 1B and copy the boot files onto the new p1. 5. Run: sudo mdadm /dev/md0 '
+     '--add /dev/nvmeXn1p2 (the new drive). 6. Array rebuilds automatically (~30 min).'],
     ['Check RAID health anytime', 'cat /proc/mdstat  or  sudo mdadm --detail /dev/md0'],
 ], [1.8*inch, CW-1.8*inch]))
 story.append(SP(4))

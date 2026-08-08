@@ -5,5 +5,12 @@
 # Python doc generators and services also run on Linux.
 *.py text eol=lf
 
+# macOS double-click card prepper runs on Linux/macOS shells - keep LF.
+*.command text eol=lf
+
+# Windows helpers - native CRLF.
+*.bat text eol=crlf
+*.ps1 text eol=crlf
+
 # Treat PDFs as binary so git never mangles them.
 *.pdf binary

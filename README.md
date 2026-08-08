@@ -22,23 +22,21 @@ git clone https://github.com/KE4CON/FieldCommand-IMS.git
 ```
 It's about 7 MB. Everything you need is inside.
 
-> 📁 **If you downloaded the ZIP,** it unzips to a folder named **`FieldCommand-IMS-main`**. **Rename it to `FieldCommand-IMS`** (drop the `-main`) so the command path below matches. Cloning with `git` already gives the correct name.
+> 📁 **A GitHub ZIP unzips to a folder named `FieldCommand-IMS-main`.** The prep tool in Step 4 handles that name automatically. (Only if you skip the prep tool and copy the folder onto the card by hand do you need to rename it to `FieldCommand-IMS`.)
 
 **3. Flash Raspberry Pi OS.** With the [Raspberry Pi Imager](https://www.raspberrypi.com/software/), flash **Raspberry Pi OS (64-bit, Desktop)** to the microSD card. Set the username to `fieldcommand` in the Imager's advanced options.
 
-**4. Put the software on the card.** After imaging, a small drive named **`bootfs`** appears on your computer. Copy the whole **`FieldCommand-IMS`** folder onto it.
+**4. Make the card "insert-and-go" (one double-click on your computer).** After imaging, a small drive named **`bootfs`** appears on your computer. Open the downloaded `FieldCommand-IMS` folder, go into **`scripts`**, and double-click the prep tool for your computer:
+> - **Windows:** `prep-sd-card.bat`
+> - **Mac:** `prep-sd-card.command` *(if macOS blocks it the first time, right-click it → Open → Open)*
+>
+> It copies the software onto the card and sets it to run the setup automatically on first boot. That's the only "computer" step — no command line, no editing files by hand.
 
-**5. Boot the Pi and start the setup.** Put the card in the Pi 5, power on, and wait for the desktop. You do **not** have to type a long command — pick whichever is easiest:
+> *Prefer to do it by hand instead of the prep tool? Just copy the whole `FieldCommand-IMS` folder onto the `bootfs` drive. You'll then start the setup on the Pi from the desktop icon (File Manager → `FieldCommand-IMS` → `scripts` → `desktop` → double-click "1. Preview" then "2. Install"), or from a terminal with `bash /boot/firmware/FieldCommand-IMS/scripts/fieldcommand-setup.sh`.*
 
-- **Easiest — double-click.** Open the **File Manager**, go to the boot drive → `FieldCommand-IMS` → `scripts` → `desktop`, and double-click **“FieldCommand Setup — 1. Preview (safe)”** to see what it will do without changing anything, then **“2. Install”** to do it for real. (Drag those two icons onto your Desktop to keep them handy. If the icon looks inactive, right-click it → *Allow Launching*.) It asks for your password itself — no `sudo` needed.
-- **Or a terminal.** Open a terminal and run (preview first, then without `--dry-run`):
-  ```bash
-  bash /boot/firmware/FieldCommand-IMS/scripts/fieldcommand-setup.sh --dry-run
-  ```
+**5. Insert and go.** Put the card in the Pi 5 (**both SSDs installed**), connect a monitor and keyboard, and power on. The FieldCommand setup **opens by itself**. Answer a few short questions on screen, and type **`YES`** once to confirm erasing the two SSDs. From there it's hands-off — it builds the mirrored RAID 1 storage, copies the OS, reboots, and installs and configures FieldCommand automatically.
 
-Either way it builds the mirrored RAID 1 storage, copies the OS onto it, reboots, and installs and configures FieldCommand automatically. You answer a few short questions once. *(Pi already online and want the short way instead? `curl -fsSL https://raw.githubusercontent.com/KE4CON/FieldCommand-IMS/main/scripts/bootstrap.sh | sudo bash`.)*
-
-**6. Open it.** From any device on the FieldCommand Wi-Fi network, browse to **http://192.168.50.1/**.
+**6. Open it.** When it finishes, from any device on the FieldCommand Wi-Fi network, browse to **http://192.168.50.1/**.
 
 > **Do you need an amateur radio callsign?** No. If your group has no licensed amateur radio operators, **leave the callsign blank** during setup — the incident-management and public-safety features all work fully, and the amateur radio tools simply stay grayed out. Enter a callsign only if you have a properly licensed operator with privileges on the bands and modes you intend to use. You can add one later at any time.
 

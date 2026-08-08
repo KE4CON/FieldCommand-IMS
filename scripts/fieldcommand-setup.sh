@@ -264,10 +264,12 @@ stage0_pcie() {
     write_config_file "$STATE_DIR/fieldcommand.conf"   # preserve answers so the re-run won't re-ask
     [[ "$DRY_RUN" == "1" ]] || touch "$STATE_DIR/pcie_pending"
     log ""
-    log "${BOLD}Next step:${NC} after the Pi reboots, run the SAME command again:"
+    log "${BOLD}What happens next:${NC} the Pi will reboot so it can see both SSDs."
+    log "If you started from the desktop icon or an insert-and-go card, the setup"
+    log "re-opens by itself after the reboot. Otherwise, run the same command again:"
     log "  ${CYAN}sudo bash $SCRIPT_PATH${NC}"
-    log "Your earlier answers were saved, so it will pick up where it left off and"
-    log "then ask you to confirm erasing the two SSDs."
+    log "Either way your earlier answers were saved, so it picks up where it left"
+    log "off and then asks you to confirm erasing the two SSDs."
     log ""
     if [[ "$DRY_RUN" == "1" ]]; then
         info "[dry-run] would reboot now; you would re-run the command after boot."
@@ -414,6 +416,11 @@ build_mirror() {
     run rsync -a --exclude='.git' "$REPO_ROOT/" "/mnt/root$ARRAY_SRC/"
     write_config_file "/mnt/root$ARRAY_SRC/fieldcommand.conf"
     install_firstboot_service   # writes into /mnt/root
+
+    # The migrated system boots from the mirror and finishes via the first-boot
+    # installer service — it must NOT also carry the desktop auto-start launcher,
+    # or the setup would try to re-run there. Remove it from the array copy.
+    run rm -f /mnt/root/etc/xdg/autostart/fieldcommand-setup.desktop
 
     # ── Unmount everything ──────────────────────────────────────────────────
     info "Unmounting"

@@ -135,6 +135,22 @@ These apply to **every** user-facing document (installation guide, user manual, 
 - Include dedicated **reference chapters**: Troubleshooting & FAQ, Glossary, Keyboard Shortcuts, Menu/Navigation Reference (and Licenses & Credits where relevant).
 - **Ground every step in the real application UI / source** — read the actual screens; never guess a label.
 
+### Installation guides — standard (the OpenTrack Installation Guide is the model)
+- Lead with a short **"In a nutshell"** summary of the whole install (download → run → answer prompts → done).
+- **Spell out every click**, name exact buttons/menus, and say **what the reader will see** after each step.
+- **Automate first:** the primary path is a **one-command setup script** with **interactive prompts** (Enter accepts each default); keep by-hand steps only as a clearly-marked fallback.
+- Never use a literal placeholder (e.g. `SERVER-IP`) in a step — tell the reader to use their real value with a concrete example (`http://192.168.1.50:5035`).
+- Remove tricks that cause failures (e.g. "drag the folder into the window" instead of typing a path); use the real folder/file names.
+- Cover **every operating system** the product supports (e.g. Windows and macOS), each spelled out.
+- End with a **Troubleshooting** section (symptom → fix) and a backups / keeping-it-running note where relevant.
+
+### Programming guides — standard (the APRS-Command / OpenTrack Programming Guide is the model)
+- A developer / maintainer book that explains **how AND why** the code works — plain enough for a curious non-programmer to follow, deep enough for a maintainer.
+- Every section answers **What it does → Why it was built this way → How it works**.
+- **Define jargon inline** with a "Jargon, in plain words" callout; open each chapter with a "What This Is / What It Is For" and a one-sentence-version callout; close with "Why It Matters / Design Takeaways" and a **maintainer's rule** callout.
+- **Ground every claim in the real source** — read the actual files and quote exact code excerpts; never invent class names, methods, or paths.
+- Built on the same per-chapter-JSON pipeline (Markdown is the living source of truth). No screenshots — it is a code book.
+
 ### Installers / setup
 - **Automate as much as possible**: a **one-command setup script** with **interactive prompts** whose defaults are accepted by pressing **Enter**. The fewer chances to fail installing, the better.
 

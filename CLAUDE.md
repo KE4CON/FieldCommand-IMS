@@ -110,3 +110,34 @@ Real but low-priority; listed so they aren't "rediscovered" as new bugs. See `do
 ## Reference
 **Docs layout:** `docs/guides/` (public end-user: install guides, World user manual/guide, quick ref, overview), `docs/hardware/` (BOMs), `docs/beta/` (public beta package), and **`docs/internal/` (gitignored, NOT published)** for org-specific ESV editions, business/financial docs (grant, price, tax), and dev docs (audit, testing runbook, remaining-work). Generators route World/generic output to the public subfolders and ESV/business/dev output to `docs/internal/`.
 Full audit: `docs/internal/AUDIT_FINDINGS.md`. Vision/feature detail: the FieldCommand PDFs under `docs/guides/`.
+
+---
+
+## Documentation & Installer Standards
+
+These apply to **every** user-facing document (installation guide, user manual, programming guide, README) and **every** installer / setup script in this repo. Locked house standards.
+
+### Audience & voice
+- Assume a **lazy, non-technical reader**: does the least effort, won't read ahead, copy-pastes literally.
+- **Plain, simple, layman's language**; short sentences. Detailed but easy to follow.
+- **Spell out every step and click**; name the exact button/menu/field label. Say **what the reader will see** after each action.
+- **Front-load a short "In a nutshell" / "Quick version" summary** at the top of each document and each chapter, so a skimmer still succeeds.
+- **Define every acronym in full on first use** — e.g. "Application Programming Interface (API)" — then use the short form.
+- **Never use a placeholder a reader might type literally** (e.g. `SERVER-IP`). Tell them to substitute their real value and give a concrete example.
+- **Anticipate common errors** and say exactly what to do about each.
+- **Length is not a concern — thoroughness is.** Never trade completeness for brevity.
+- **American English spelling** (color, center, meters).
+
+### User manuals — depth standard (the APRS-Command User Manual is the benchmark)
+- Roughly **1,500–1,800 words and ~33 content blocks per chapter**.
+- **Name every UI element exactly**; **tabulate every field / column / option** with a plain-language "what it means".
+- Use sub-sections for variations/edge cases; **end every feature chapter with a Troubleshooting section** (symptom → fix).
+- Include dedicated **reference chapters**: Troubleshooting & FAQ, Glossary, Keyboard Shortcuts, Menu/Navigation Reference (and Licenses & Credits where relevant).
+- **Ground every step in the real application UI / source** — read the actual screens; never guess a label.
+
+### Installers / setup
+- **Automate as much as possible**: a **one-command setup script** with **interactive prompts** whose defaults are accepted by pressing **Enter**. The fewer chances to fail installing, the better.
+
+### House doc pipeline
+- Navy + gold python-docx house style (`style.py`). **Markdown is the living source of truth**; the styled `.docx` / PDF is generated from **per-chapter JSON** (`chapters/*.json` + a `build.py`) — the same pipeline as the APRS-Command manual and the OpenTrack guides.
+- Each project ships three core documents: **Installation Guide, User Manual, Programming Guide.**

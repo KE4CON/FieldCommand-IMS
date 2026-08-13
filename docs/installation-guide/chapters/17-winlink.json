@@ -1,0 +1,153 @@
+{
+  "order": 17,
+  "title": "Winlink — Pat, Winlink Express & JS8Call (Optional)",
+  "subtitle": "Email over the radio, for when the internet is down — the browser-based Pat client built into the Pi, and the Windows-laptop station running Winlink Express, VARA HF, and JS8Call.",
+  "in_this_chapter": [
+    "What Winlink is and why a group would want it",
+    "Who this chapter is for (and who can skip it)",
+    "The Pi's built-in browser Winlink client (Pat, on port 8090) — reaching it and adding your password",
+    "Why the Windows laptop is the primary HF digital station",
+    "Connecting the laptop to an HF radio (IC-7300) over USB",
+    "Installing Winlink Express + VARA HF",
+    "Installing JS8Call and wiring it to the FieldCommand dashboard",
+    "Verifying a Winlink connection actually works",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "Winlink is **email carried over the radio** when the internet is gone. Two paths come with FieldCommand. **On the Pi:** a browser Winlink client called **Pat** is already installed — reach it at **http://192.168.50.1:8090**, add your Winlink password, done. It's the backup. **On a Windows laptop (the primary HF station):** install **Winlink Express + VARA HF** and **JS8Call**, plug an HF radio like an **IC-7300** in with one Universal Serial Bus (USB) cable, and the FieldCommand dashboard's JS8Call card opens the laptop's JS8Call screen. Then send one test message to prove it works."}},
+
+    {"callout": {"kind": "important", "label": "THIS WHOLE CHAPTER IS OPTIONAL — HAM GROUPS ONLY",
+      "text": "Part 2 of this guide is only for groups that include a **licensed amateur-radio operator**. If nobody in {{org}} holds an amateur-radio license, **skip this chapter entirely** — FieldCommand runs fully without it. Transmitting on the amateur bands is **against the law without a proper license**, and every mode here (Winlink over radio, VARA HF, JS8Call) must be operated by someone licensed with privileges on the bands and modes being used. Nothing in this chapter changes that."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "**Winlink** is a worldwide system that sends and receives email **over amateur radio** instead of over the internet. When the power grid is up and the internet is working, email is easy. During the exact emergencies FieldCommand is built for — a hurricane, an ice storm, a wide-area outage — the internet is often the first thing to fail. Winlink keeps a real email path alive by carrying those messages on radio waves, from your station to a **Radio Message Server (RMS)** gateway that is still on the internet, and out to the normal email world from there."},
+    {"p": "For an incident, that means you can still get a formal Incident Command System (ICS) message, a resource request, or a health-and-welfare note out of the disaster area even when cell towers and broadband are dead. It is slower than broadband and it is text-first, but it works when nothing else does — which is the whole point."},
+    {"p": "FieldCommand gives you Winlink **two** ways, and they back each other up:"},
+    {"bullets": [
+      "__Pat, on the Pi.__ A small Winlink program called **Pat** is already installed on the FieldCommand server. You use it from any web browser on the field Wi-Fi — there is nothing to install. It is the **backup** path, and it is handy for Very High Frequency (VHF) Packet when a modem is plugged straight into the Pi.",
+      "__A Windows laptop.__ A separate Windows laptop running **Winlink Express** (the standard Winlink program most operators know) plus the **VARA HF** modem and **JS8Call**. This is the **primary** High Frequency (HF) digital station, connected to an HF radio such as an Icom IC-7300."
+    ]},
+    {"callout": {"kind": "note", "label": "WHO DOES THIS",
+      "text": "This is set up once, by the licensed operator who owns the radio gear, before the equipment goes to the field. Everyone else just uses the finished station. You do **not** need to touch this to use the rest of FieldCommand."}},
+
+    {"h1": "The Pi's Built-in Winlink Client — Pat on Port 8090"},
+    {"p": "**Pat** is an open-source Winlink program that runs directly on the FieldCommand Pi. Because it lives on the server, you reach it from a browser on any device joined to the field Wi-Fi — no software to load on your laptop or phone. The FieldCommand installer downloads and configures Pat for you, so this section is mostly about **checking that it is running** and **adding your personal Winlink password** so you can log in to the Winlink system."},
+    {"p": "Pat is served on **port 8090**. A \"port\" is just a numbered doorway on the server; you reach a specific program by adding the port number after a colon at the end of the address. So the full address for Pat is the normal server address with **`:8090`** on the end."},
+    {"callout": {"kind": "note", "label": "WHY PAT IS THE BACKUP, NOT THE MAIN STATION",
+      "text": "For most groups the **Windows laptop** (next section) is the primary Winlink station, because Winlink Express plus VARA HF is the combination the wider Winlink community uses and supports. Pat on the Pi is the **fallback** — for when the laptop is unavailable, or for VHF Packet with a modem wired straight to the Pi. Set both up; lean on the laptop."}},
+    {"h2": "Reaching Pat and Adding Your Password"},
+    {"steps": [
+      "On any device joined to the field Wi-Fi, open a web browser.",
+      "Go to **http://192.168.50.1:8090** — type it exactly, including the `http://` and the `:8090` on the end. The Pat inbox screen opens.",
+      "If the page does not open, the Pat program may not be running. On the Pi, open a Terminal and check it with the commands below, then try the address again.",
+      "Add your Winlink account password so Pat can log in. On the Pi, open Pat's configuration file with the editor command shown below, type your Winlink password into the `secure_login_password` line, save, and restart Pat."
+    ]},
+    {"code": [
+      "# On the Pi — check that Pat is running and listening on port 8090:",
+      "sudo systemctl status pat",
+      "# If it is not running, start it and set it to start on every boot:",
+      "sudo systemctl start pat && sudo systemctl enable pat",
+      "# Confirm the port is open:",
+      "ss -tlnp | grep 8090",
+      "",
+      "# Add your Winlink password (opens the config file in a simple editor):",
+      "sudo nano /opt/fieldcommand/.config/pat/config.json",
+      "#   \"secure_login_password\": \"xxxxx\"   <- put your Winlink password here",
+      "#   \"http_addr\": \"0.0.0.0:8090\"        <- leave as 0.0.0.0 so the field Wi-Fi can reach it",
+      "# Save (Ctrl+O, Enter) and exit (Ctrl+X), then restart Pat:",
+      "sudo systemctl restart pat"
+    ]},
+    {"callout": {"kind": "warning", "label": "THE ADDRESS MUST STAY 0.0.0.0, NOT 127.0.0.1",
+      "text": "In Pat's config, the `http_addr` line must read **`0.0.0.0:8090`**. The `0.0.0.0` part means \"let other devices on the Wi-Fi reach me.\" If it is ever changed to `127.0.0.1`, Pat will only answer on the Pi itself and the browser page at `http://192.168.50.1:8090` will fail to load from anywhere else. Leave it as `0.0.0.0`."}},
+
+    {"h1": "The Windows Laptop — Why It's the Primary HF Station"},
+    {"p": "The primary High Frequency (HF) digital station is a **Windows laptop** connected to an HF transceiver — in the reference build, an **Icom IC-7300**. Why a Windows laptop instead of doing everything on the Pi? Because the two programs most Winlink HF operators rely on — **Winlink Express** and the **VARA HF** modem — are Windows programs, widely used and well-supported across the amateur community. Running them on the platform they were built for is the least-surprising, most-reliable path, so FieldCommand treats the laptop as the main station and Pat on the Pi as the backup."},
+    {"p": "The laptop joins the same field network as everything else — either on the **EMCOMM-NET** Wi-Fi or plugged into the network switch with an Ethernet cable. That shared network is what lets the FieldCommand dashboard reach the laptop's JS8Call program later on."},
+    {"h2": "Connecting the Laptop to the Radio (One USB Cable)"},
+    {"p": "The IC-7300 connects to the laptop with a **single USB cable**. That one cable carries both the radio's audio (so the computer can hear and speak the digital tones) and the radio's control channel (so the computer can set the frequency and key the transmitter). Before the software will work, set a handful of one-time options in the radio's menus:"},
+    {"table": {
+      "headers": ["IC-7300 menu path", "Setting", "What it does"],
+      "rows": [
+        ["SET → Connectors → CI-V Baud Rate", "115200", "How fast the laptop talks to the radio's control channel. Must match the software."],
+        ["SET → Connectors → CI-V Transceive", "ON", "Lets the radio and software keep each other in step on frequency and mode."],
+        ["SET → Connectors → USB Send/Keying → USB Send", "RTS", "Chooses which control line keys the transmitter (Push To Talk, or PTT) over USB."],
+        ["SET → Connectors → MOD Input → USB MOD Level", "40–50%", "How loud the computer's audio is fed into the radio. Too high causes distortion."],
+        ["COMP button (speech compression)", "OFF", "Compression is for voice; it garbles digital tones. Turn it off for data."],
+        ["Mode (for digital operation)", "USB-D", "The correct sideband/data mode for Winlink and JS8Call."]
+      ],
+      "widths": [3.0, 1.4, 2.1]
+    }},
+
+    {"h1": "Install Winlink Express + VARA HF"},
+    {"p": "**Winlink Express** is the standard Windows program for sending and receiving Winlink email. **VARA HF** is the **modem** — the software that turns your message into the warble of tones the radio transmits, and turns received tones back into text. You need both. Install Winlink Express first, then VARA HF."},
+    {"steps": [
+      "Download Winlink Express from **winlink.org/client-software**. Run the installer and accept the defaults.",
+      "On first launch, enter your **callsign**, your **Winlink password**, and your **grid square** (a short location code for your county).",
+      "Go to **Settings → Radio Setup**. Set **Radio = IC-7300**, **Control Port =** the COM port shown for the radio (check Windows Device Manager if unsure), **Baud Rate = 115200**, and tick **PTT via CAT**.",
+      "Go to **Settings → Sound Card**. Set both **Input** and **Output** to **USB Audio CODEC (IC-7300)** — that is the radio's built-in sound device.",
+      "Download and install **VARA HF** from **winlink.org → VARA → VARA HF Modem**. In VARA HF's own Settings, choose the **same** audio devices you set above.",
+      "Test it: open a **VARA HF session** in Winlink Express and connect to any Winlink RMS gateway on the 40-meter band to confirm the audio and radio control are working (see \"Verifying a Connection\" below)."
+    ]},
+    {"callout": {"kind": "note", "label": "WHAT'S A 'COM PORT'?",
+      "text": "When you plug the radio in, Windows gives its control channel a name like **COM5**. That is the \"Control Port\" the software asks for. If you are not sure which one it is, open **Device Manager**, expand **Ports (COM & LPT)**, and look for the Silicon Labs or IC-7300 entry — the number in parentheses is your COM port. Use the **same** COM port in Winlink Express and in JS8Call."}},
+
+    {"h1": "Install JS8Call and Wire It to the Dashboard"},
+    {"p": "**JS8Call** is a keyboard-to-keyboard HF messaging program — think of it as slow, extremely weak-signal text chat that gets through when voice cannot. FieldCommand's dashboard has a **JS8Call card** that opens the laptop's JS8Call screen in a browser, so operators at the command post can watch traffic without sitting at the radio. To make that work, JS8Call has to be told to accept a network connection, and the dashboard card has to be told the laptop's address."},
+    {"steps": [
+      "Download JS8Call from **js8call.com → Windows installer**. Run it and accept the defaults.",
+      "Launch JS8Call, then open **File → Settings** (or press F2). On the **General** tab set **My Call =** your callsign and **My Grid =** your grid square.",
+      "On the **Audio** tab, set both **Input** and **Output** to **USB Audio CODEC (IC-7300)**.",
+      "On the **Radio** tab, set **Rig = IC-7300**, **PTT Method = CAT**, **Serial Port =** the same COM port you used for Winlink, and **Baud Rate = 115200**.",
+      "On the **Reporting** tab (this is the important one): set **TCP Server Hostname = 0.0.0.0** (you MUST change it from 127.0.0.1), tick **Enable TCP Server API**, set **TCP Server Port = 2442**, and tick **Accept TCP Requests**.",
+      "Click **OK**, then **restart JS8Call** so the network settings take effect.",
+      "Allow JS8Call through the Windows firewall so the dashboard can reach it (steps below).",
+      "Find the laptop's address and enter it into the dashboard's JS8Call card (steps below)."
+    ]},
+    {"callout": {"kind": "warning", "label": "THE JS8CALL CARD ONLY WORKS IF HOSTNAME IS 0.0.0.0",
+      "text": "On JS8Call's **Reporting** tab, **TCP Server Hostname** ships as `127.0.0.1`, which means \"talk to myself only.\" You **must** change it to **`0.0.0.0`** so the FieldCommand dashboard on the Pi can reach JS8Call across the network. If you skip this, the dashboard's JS8Call card will not open — this is the single most common reason it fails."}},
+    {"code": [
+      "# 1) Let JS8Call through the Windows firewall (once):",
+      "#    Search \"Windows Defender Firewall\" -> Advanced Settings",
+      "#    Inbound Rules -> New Rule -> Port -> TCP -> Specific port: 2442 -> Allow -> All profiles",
+      "#    Name the rule: JS8Call API",
+      "",
+      "# 2) Find the laptop's address on the field network:",
+      "#    Open Command Prompt and run:",
+      "ipconfig",
+      "#    Note the IPv4 Address for the EMCOMM-NET adapter, e.g. 192.168.50.105",
+      "",
+      "# 3) Point the dashboard's JS8Call card at the laptop:",
+      "#    Connect to EMCOMM-NET, open http://192.168.50.1",
+      "#    Find the JS8Call card (purple) in the Amateur Radio section",
+      "#    Click the card, enter the laptop IP (e.g. 192.168.50.105)",
+      "#    The card saves it and opens http://192.168.50.105:2442"
+    ]},
+    {"callout": {"kind": "tip", "label": "GIVE THE LAPTOP A FIXED ADDRESS",
+      "text": "So the JS8Call card keeps working after a reboot, give the laptop a **fixed** address on the network. In the router's admin page, find the DHCP (Dynamic Host Configuration Protocol) reservation list, and tie the laptop's hardware (MAC) address to a set number such as **192.168.50.2**. Then the address never changes and you never have to re-enter it in the card."}},
+
+    {"h1": "Verifying a Connection"},
+    {"p": "Do not assume it works — prove it. A quick round trip confirms the audio levels, the radio control, and your Winlink login are all correct before you ever need them for real."},
+    {"steps": [
+      "On the laptop, open **Winlink Express** and start a new message to your own everyday email address. Type a short test line and click **Post to Outbox**.",
+      "Open a **VARA HF Winlink** session. Set the IC-7300 to a known Winlink RMS gateway frequency in the 40-meter band for your region.",
+      "Click **Start**. Winlink Express scans and connects to the nearest gateway; you will hear the tones and see the connection progress in the session window.",
+      "Watch the session complete and disconnect on its own. Your outgoing message is now on its way, and any waiting mail is pulled down.",
+      "Check your normal email inbox — your test message should arrive within a few minutes, proving the whole radio-to-internet path works.",
+      "To confirm the Pi's backup path, open **http://192.168.50.1:8090** in a browser and check that the **Pat** inbox loads and shows your callsign."
+    ]},
+    {"callout": {"kind": "note", "label": "SHARING ONE RADIO BETWEEN VARA AND JS8CALL",
+      "text": "Winlink Express (via VARA HF) and JS8Call both want the same radio's audio and COM port, so only run **one at a time**. To switch from JS8Call to Winlink: click **Disconnect** in JS8Call, open **VARA HF** (it reclaims the audio device), then use Winlink Express. To switch back: finish any Winlink transmission, close VARA HF, then open JS8Call and click **Connect**. Running both at once needs a **second** radio and interface."}},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__The Pat page won't open at http://192.168.50.1:8090.__ The Pat program is probably not running. On the Pi, run `sudo systemctl start pat && sudo systemctl enable pat`, then reload the page. Confirm the port is listening with `ss -tlnp | grep 8090`. Also make sure your device is on the field Wi-Fi and that you typed the `:8090` on the end of the address.",
+      "__Pat opens but I can't log in / start a session.__ You most likely haven't added your Winlink password. Edit `/opt/fieldcommand/.config/pat/config.json`, put your password on the `secure_login_password` line, save, and run `sudo systemctl restart pat`. Confirm `http_addr` still reads `0.0.0.0:8090`.",
+      "__Winlink Express or VARA won't connect — the radio isn't keying (won't transmit).__ Check the IC-7300 one-time settings: **CI-V Baud Rate = 115200**, **USB Send = RTS**, and in Winlink's Radio Setup make sure **PTT via CAT** is ticked and the **Control Port** is the radio's real COM port (verify it in Device Manager). If the COM port is wrong, nothing keys.",
+      "__It connects but the other station can't decode me / audio sounds distorted.__ Your transmit audio is too loud. Lower the IC-7300 **USB MOD Level** toward 40%, and make sure **speech compression (COMP) is OFF** — compression garbles digital tones. On receive, if levels look pinned, lower the input in VARA HF or JS8Call.",
+      "__The dashboard's JS8Call card won't open.__ In JS8Call, open **File → Settings → Reporting** and confirm **Enable TCP Server API** is ticked, **Port = 2442**, and **Hostname = 0.0.0.0** (not 127.0.0.1). Restart JS8Call. Confirm the Windows firewall has the inbound rule allowing TCP port 2442, and that the IP you typed into the card is the laptop's current EMCOMM-NET address.",
+      "__The JS8Call card worked yesterday but not today.__ The laptop's address probably changed. Either re-enter the current address (run `ipconfig` on the laptop to find it) into the card, or give the laptop a fixed DHCP reservation in the router so the address never moves.",
+      "__A Winlink form import fails on the Pi.__ You must import the form's **.xml attachment**, not the message body. In Winlink Express, right-click the `.xml` attachment, choose **Save As**, then import the saved file."
+    ]}
+  ]
+}

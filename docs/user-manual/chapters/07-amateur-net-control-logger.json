@@ -1,0 +1,153 @@
+{
+  "order": 7,
+  "title": "Amateur Radio Net Control Logger",
+  "subtitle": "The live digital net log — check stations in and out, record traffic, run a check-in timer, and print an ICS-309 communications log when the net closes.",
+  "in_this_chapter": [
+    "What the Net Control Logger is and what it replaces",
+    "Opening the page and reading the screen",
+    "Creating a new net (and back-dating one that already started)",
+    "Logging check-ins, with automatic FCC callsign lookup",
+    "The precedence, status, and ICS-position fields explained",
+    "Checking stations out and how participation time is counted",
+    "The Traffic Log and Roster Chips tabs",
+    "Drill Mode, the Observer Link, and JSON backup",
+    "Closing the net and exporting the ICS-309",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "Open **Net Control** from the dashboard. Click **+ New Net**, give it a name and frequency, and **Create Net**. As stations call in, type each **callsign** — the name fills in by itself — and press **Enter** to log them. Click **Check Out** when a station leaves. When you're done, click **Close Net**, then **📄 ICS-309** to print the official communications log."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "The **Amateur Radio Net Control Logger** is the live, on-screen replacement for the paper net log that a net control station (the operator running the net) has always kept by hand. It is built for licensed amateur-radio nets — Amateur Radio Emergency Service (ARES), Radio Amateur Civil Emergency Service (RACES), Auxiliary Communications (AUXCOMM), SKYWARN weather nets, traffic nets, and training nets. As each station calls in, you type their callsign and the page records who checked in, when, from where, and for how long. Everything you log rolls straight into a printable **ICS-309 Communications Log** — the standard Incident Command System (ICS) form for radio activity — so there is no recopying at the end of the night."},
+    {"p": "The whole point is to make logging a net faster and cleaner than pencil and paper, while producing paperwork that a served agency or Emergency Operations Center (EOC) will accept without you having to type it a second time. It also keeps a running clock on how long each operator was on the net, which matters when volunteer hours have to be documented for reimbursement or credit."},
+    {"callout": {"kind": "note", "label": "YOU CAN RUN MORE THAN ONE NET AT ONCE",
+      "text": "FieldCommand keeps every net you open as a separate **tab** across the top of the page. That lets one station log a VHF (Very High Frequency) net and an HF (High Frequency) net side by side, or keep last week's closed net around for reference, without mixing their check-ins together."}},
+
+    {"h1": "Opening the Net Control Logger"},
+    {"steps": [
+      "On a device connected to the FieldCommand Wi-Fi, open the dashboard (default **http://192.168.50.1**).",
+      "Click **Net Control** (the 📻 NET CONTROL logger).",
+      "The Net Control Logger opens. Across the top you'll see the navigation bar, then a **NET TABS** strip, and below that a two-column layout: the working area on the left and a summary sidebar on the right."
+    ]},
+    {"screenshot": "The Net Control Logger with the NET TABS strip, the main logging column, and the NET SUMMARY sidebar"},
+    {"p": "Before you create or select a net, most of the screen is quiet: the header reads **No Net Selected**, and the working area says *Select a net to begin logging*. That is normal — you pick a net first, and the form and lists wake up."},
+
+    {"h1": "Creating a New Net"},
+    {"p": "Click the green **+ New Net** button at the left of the NET TABS strip. A **Create New Net** box pops up. Fill it in:"},
+    {"table": {
+      "headers": ["Field", "What to type", "Notes"],
+      "rows": [
+        ["**Net Name**", "A plain name for the net (example: `Thursday Evening Net`)", "Required — this is the only field you must fill in."],
+        ["**Net Type**", "Pick from the list: ARES Net, RACES Net, SKYWARN Net, EmComm Net, Traffic Net, Training Net, HF Net, VHF/UHF Net, or Digital Net", "Labels the net; also prints on the ICS-309."],
+        ["**Frequency / Mode**", "The working frequency (example: `146.520 FM`)", "You can type it, or click **📡 Pick** to choose from your saved channels (the ICS-205 / Channel Library)."],
+        ["**Mode**", "Operating mode — SSB, FM, AM, CW, Digital, FT8, Winlink, or Other", "Optional."],
+        ["**Opened** (date/time)", "When the net opened", "Optional. **Leave it blank to mean *right now*.** Fill it in only to back-date a net that already started before you opened the logger."],
+        ["**Net Control Callsign**", "The callsign of the station running the net (example: `{{club}}`)", "Optional."]
+      ],
+      "widths": [2.2, 3.2, 2.1]
+    }},
+    {"steps": [
+      "Type at least a **Net Name**.",
+      "Click **Create Net**.",
+      "The net becomes active, a tab for it appears in the NET TABS strip, and a live **elapsed-time clock** starts ticking in the header. The check-in form is now ready."
+    ]},
+    {"callout": {"kind": "tip", "label": "THE 📡 PICK BUTTON SAVES TYPING FREQUENCIES",
+      "text": "If you've set up a Channel Library or an ICS-205 Communications Plan for the incident, the **📡 Pick** button next to the frequency field lets you choose a channel by name — its frequency, mode, and tone fill in for you, so you don't fat-finger a frequency at 0200."}},
+
+    {"h1": "The Net Header — Reading the Net at a Glance"},
+    {"p": "Once a net is selected, the header panel at the top of the working column shows the net's vital signs:"},
+    {"bullets": [
+      "**Net name** in large type, with the **type · mode · net ID** underneath.",
+      "**Opened** — the time the net started.",
+      "**Closed** — the time it closed, or *Net open* while it's still running.",
+      "**Duration** — a live count of how long the net has been open, updating every second.",
+      "A **Drill Mode** checkbox and, while the net is open, a red **Close Net** button."
+    ]},
+
+    {"h1": "Logging a Check-In"},
+    {"p": "This is the heart of the page. When a station calls in, you work the **Log Station Check-In / Traffic** form. The fastest path is: type the callsign, glance at the auto-filled name, press **Enter**. Here is every field:"},
+    {"table": {
+      "headers": ["Field", "What it's for"],
+      "rows": [
+        ["**Callsign**", "The station's callsign. Type it and it forces itself to uppercase. This is the only field you truly need."],
+        ["**Name**", "The operator's name. **Fills in by itself** from the callsign lookup — you rarely type it."],
+        ["**Status**", "What kind of contact this is: Check-In, Traffic, Priority, Emergency, Net Control, Check-Out, Mobile, or Portable."],
+        ["**Location / Grid**", "Where the station is — a town, an address, or a Maidenhead grid square."],
+        ["**Precedence**", "How urgent the entry is: Routine, Welfare, Priority, or Emergency. This color-codes the row (see below)."],
+        ["**Remarks / Traffic**", "A short free-text note — anything worth recording about this station or its message."],
+        ["**ICS Position**", "Optional. If this operator is filling a role on an incident, pick it from the grouped list (Incident Commander, Section Chiefs, unit leaders, and so on)."],
+        ["**Incident ID**", "Optional. Ties this check-in to a specific incident; once filled, a **📋 ICS-211 →** link appears to jump to that incident's check-in list."]
+      ],
+      "widths": [2.1, 4.4]
+    }},
+    {"p": "When you finish typing a callsign, FieldCommand looks it up instantly in the **offline Federal Communications Commission (FCC) database** — over 800,000 amateur licensees stored right on the Pi, no internet needed — and a blue **FCC card** slides open above the form showing the operator's **Name**, license **Class**, license **Status**, **Location**, and license **Expires** date. The **Name** field fills automatically. The checkbox at the bottom of the form, **Auto FCC lookup**, is on by default; uncheck it if you'd rather not look callsigns up."},
+    {"steps": [
+      "Type the station's **callsign**. The name (and the FCC card) appear once you finish.",
+      "Add **location**, **remarks**, **precedence**, or an **ICS position** if you want them — all optional.",
+      "Click the green **LOG ENTRY** button, or just press **Enter**.",
+      "The entry drops into the **Stations Logged** list below, newest at the top, stamped with the time.",
+      "Use **Clear** to wipe the form without logging if you mis-typed."
+    ]},
+    {"callout": {"kind": "note", "label": "WHAT THE ROW COLORS MEAN",
+      "text": "Each logged station carries a colored left edge set by its **precedence**: **Emergency** is red, **Priority** is amber, **Welfare** is green, and **Routine** is plain. A station typed in with no callsign but a name is tagged **WALK-IN** in amber, so you can see at a glance who isn't a licensed check-in."}},
+
+    {"h1": "Checking a Station Out — and How Time Is Counted"},
+    {"p": "Every logged station shows a running **Duration** and, on the right of its row, a **Check Out** button. Click it when the operator leaves the net. The button changes to **✓ Out**, the checkout time is stamped, and the operator's total time on the net is frozen."},
+    {"p": "FieldCommand rounds each operator's participation time **up to the nearest quarter-hour**. So a station on the net for 20 minutes is credited 30 minutes, and one on for 5 minutes is credited 15. This is deliberate — it matches how volunteer time is documented for reimbursement and mutual-aid credit. You do not have to do this math; the page does it and prints it on the ICS-309."},
+    {"p": "Two more per-row buttons may appear: **+ Roster** (adds a station that isn't already on your permanent roster, so you don't retype them next time) and a small **✕** to remove an entry you logged by mistake (it asks you to confirm first)."},
+
+    {"h1": "The Traffic Log Tab"},
+    {"p": "Above the station list are three tabs: **✅ Stations Logged**, **📨 Traffic Log**, and **👥 Roster Chips**. The **Traffic Log** is where you record actual messages that pass on the net — radiograms, health-and-welfare messages, and the like — as opposed to simple check-ins."},
+    {"table": {
+      "headers": ["Field", "What to type"],
+      "rows": [
+        ["**From callsign**", "The station the message came from"],
+        ["**To callsign / address**", "Where the message is going"],
+        ["**Type**", "Radiogram, Health & Welfare, Official, Priority, or Emergency"],
+        ["**Message summary**", "A short description of the message"]
+      ],
+      "widths": [2.4, 4.1]
+    }},
+    {"p": "Click **Log Traffic** and the message drops into the traffic list with a timestamp. This matters because the **ICS-309 is a communications log** — its primary content is the message traffic. Logging traffic here fills the top table of that printed form."},
+
+    {"h1": "The Roster Chips Tab"},
+    {"p": "The **Roster Chips** tab lets you preload the operators you expect, so checking them in is one click instead of a typed callsign. Click the dashed **import** area (or drag a file onto it) to load a roster from a **CSV** (comma-separated values) or **JSON** file. Each imported person becomes a small **chip** showing their callsign and name. During the net, click a chip and it drops that callsign and name straight into the check-in form — press Enter and they're logged."},
+
+    {"h1": "The Sidebar — Live Net Summary"},
+    {"p": "The right-hand sidebar keeps a running tally you can watch without scrolling: **NET SUMMARY** (net name, check-in count, traffic count, duration, and an OPEN/closed status badge), **ACTIVE NETS** (every net currently open), and **LAST 5 ENTRIES** (the five most recent check-ins). It refreshes on its own as you log."},
+
+    {"h1": "Drill Mode"},
+    {"p": "The **Drill Mode** checkbox in the header marks the net as an exercise, not a real emergency. When it's on, a bright banner — **⚠ DRILL / EXERCISE — NOT ACTUAL EMERGENCY ⚠** — appears across the top, and the exported ICS-309 is stamped **DRILL / EXERCISE** with a watermark. Always turn this on for training so no one mistakes exercise traffic for the real thing."},
+
+    {"h1": "Sharing and Backing Up the Net"},
+    {"p": "Three buttons sit at the right end of the NET TABS strip:"},
+    {"bullets": [
+      "**🔗 Observer Link** — copies a read-only web link to the current net. Hand it to a section chief, a served-agency liaison, or an EOC duty officer and they can watch the net update live on their own device without touching your log. See Chapter 9 for Observer Mode.",
+      "**📄 ICS-309** — builds and downloads the official communications log for the current net (covered below).",
+      "**💾 Backup JSON** — saves the entire net (check-ins, traffic, everything) as a JSON file on your device, a simple safety copy you can keep or re-import."
+    ]},
+
+    {"h1": "Closing the Net and Exporting the ICS-309"},
+    {"steps": [
+      "Click the red **Close Net** button in the header.",
+      "Confirm when asked. **Every station still checked in is automatically checked out** at the net-close time, so no one is left with an open clock.",
+      "The header now shows the net's open time, close time, and total duration.",
+      "Click **📄 ICS-309**. FieldCommand builds the complete communications log and both downloads it as a file and opens it in a new tab ready to print.",
+      "The printed ICS-309 carries the net name, type, frequency and mode, open/close times, total duration, totals for check-ins and messages, a **Message Traffic Log** table, and a full **Station Check-In Log** with each operator's participation duration rounded up to the quarter-hour."
+    ]},
+    {"callout": {"kind": "note", "label": "THE DEAD MAN'S SWITCH WATCHES FOR SILENCE",
+      "text": "A companion tool, the **Dead Man's Switch**, watches net activity and sounds an alert if no check-in is logged within a time window you set. It's meant for safety monitoring during Search and Rescue (SAR) and field operations, where sudden radio silence may signal trouble. See Chapter 12."}},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__The net tabs area says *Cannot reach API server*.__ The logger talks to the FieldCommand service on the Pi. Confirm your device is on the FieldCommand Wi-Fi and the server is running, then reload the page.",
+      "__I typed a callsign but no name appeared.__ The **Auto FCC lookup** checkbox may be off — turn it back on. Also, the lookup needs at least three characters and a moment to respond; give it a second after you finish typing. If the callsign simply isn't in the offline database, type the name by hand.",
+      "__I clicked LOG ENTRY and nothing happened / it said to enter a callsign.__ A check-in needs a callsign. Type one in the Callsign field and log again.",
+      "__I clicked Log Traffic / Check Out but it said to select a net first.__ You must have a net selected. Click a net tab (or create one with **+ New Net**) before logging anything.",
+      "__I imported a roster but no chips showed up.__ Select a net first, then import — chips attach to the current net. Make sure your file has a **callsign** column (CSV) or a callsign field (JSON).",
+      "__The ICS-309 button did nothing.__ You need a net selected before exporting. Select the net, then click **📄 ICS-309** again. If a pop-up was blocked, the file still downloads — check your downloads.",
+      "__A station's participation time looks too high.__ That's the quarter-hour round-up working as designed: any part of a quarter-hour counts as a full quarter-hour, matching how volunteer time is documented."
+    ]}
+  ]
+}

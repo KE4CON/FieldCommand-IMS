@@ -1,0 +1,84 @@
+{
+  "order": 37,
+  "title": "Glossary",
+  "subtitle": "Plain-language definitions of every term, acronym, and bit of jargon used across FieldCommand and this manual — the incident-command words, the radio words, and the network words, all in one place.",
+  "in_this_chapter": [
+    "What this glossary is for and how to use it",
+    "Incident-command terms: ICS, NIMS, IAP, operational period, accountability",
+    "The ICS forms you'll actually fill out: ICS-211, 213, 214, 309",
+    "Radio and net terms: net, net control, check-in, repeater, talkgroup",
+    "Digital modes and networks: APRS, Winlink, JS8Call, 44Net, NTS",
+    "Location and identity: callsign, grid square, tactical map",
+    "System and network terms: WAN, dead man's switch, T-card"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "Ran into a word you don't know — on a screen, in a chapter, or over the radio? It's almost certainly here. Terms are listed **alphabetically** in two plain-language tables. You don't have to read it through; just look up the one word that's bugging you and move on."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "Emergency management and amateur radio each come with a wall of abbreviations, and FieldCommand sits right where the two overlap — so its screens use both. This glossary exists so you never have to guess what a label means. Skim it once to get your bearings, then come back whenever a term in another chapter, or on a button in the app, leaves you unsure."},
+    {"p": "Definitions here are short and practical — what the word means when you're actually operating, not textbook-perfect wording. Where a term names something FieldCommand can __do__, the entry says so, and points you at the chapter that covers it in depth."},
+    {"callout": {"kind": "note", "label": "HOW TERMS ARE WRITTEN",
+      "text": "The first time any acronym appears in a chapter, it's spelled out in full with the short form in parentheses — for example __Incident Command System (ICS)__ — and then the short form is used after that. This glossary gives you the same spelled-out form plus a plain-language explanation of what it actually means."}},
+
+    {"h1": "Terms A through I"},
+    {"table": {
+      "headers": ["Term", "Meaning"],
+      "rows": [
+        ["**44Net (AMPRNet)**", "The **Amateur Packet Radio Network** — a large block of internet addresses (the `44.x.x.x` range) set aside for amateur radio. FieldCommand can show the status of a 44Net gateway that links your local network to this amateur internet. Ham feature; requires a licensed operator."],
+        ["**Accountability**", "Knowing who is on scene, where they are, and that they're safe. In FieldCommand, check-ins and the roster feed accountability so a leader can produce a headcount on demand."],
+        ["**APRS**", "**Automatic Packet Reporting System** — an amateur-radio system for sharing positions, short messages, and objects over the air and the internet. FieldCommand's tactical map plots APRS stations. Ham feature."],
+        ["**Callsign**", "The unique station identifier the government issues to a licensed radio operator — for example `KE4CON`. FieldCommand uses it to identify operators, look them up in the FCC database, and stamp records. If your group has no licensed operators, the callsign is left blank and the ham features stay off."],
+        ["**Check-in**", "The act of an operator or resource reporting in — to a net, or to an incident — so they're logged as present and accounted for. FieldCommand records check-ins by hand (ICS-211 screen) or by scanning a QR code."],
+        ["**Dead man's switch**", "A safety timer that watches a net for activity. If nothing is logged for a set number of minutes, it raises an alert — the assumption being that a silent net control station may need help. Named after the railroad brake that stops the train if the operator lets go."],
+        ["**EMCOMM**", "**Emergency Communications** — amateur radio operators providing communications support during emergencies and drills. `EMCOMM-NET` is also the default name of FieldCommand's own Wi-Fi network."],
+        ["**EOC**", "**Emergency Operations Center** — the physical or virtual room where an agency coordinates its response. Your group may support an EOC or check in with one."],
+        ["**FCC**", "**Federal Communications Commission** — the U.S. agency that licenses amateur radio operators. FieldCommand carries an offline copy of the FCC license database so you can look up any callsign without internet."],
+        ["**FEMA**", "**Federal Emergency Management Agency** — the federal disaster agency. FieldCommand can document costs in the format FEMA's Public Assistance grant program expects, in case your effort is later reimbursed."],
+        ["**Grid square (Maidenhead)**", "A short code such as `EN52wa` that names a rectangle on the globe — the Maidenhead locator system hams use as a compact way to state location. FieldCommand has a calculator to convert between grid squares and latitude/longitude."],
+        ["**IAP**", "**Incident Action Plan** — the document that says what the response will do during the next operational period: objectives, assignments, communications, and safety notes. FieldCommand's Planning tools assemble an IAP from ICS forms and compile it to a single PDF."],
+        ["**ICS**", "**Incident Command System** — the standard, scalable way the United States organizes any emergency response, from a small event to a disaster. It defines roles (Command, Operations, Planning, Logistics, Finance) and a common set of forms. FieldCommand is built around ICS."],
+        ["**ICS-211**", "The ICS **check-in** form — the running list of everyone and everything that arrived at the incident. FieldCommand's Check-In screen produces it."],
+        ["**ICS-213**", "The ICS **General Message** form — a simple, standard way to send a written message and get a written reply. FieldCommand has a fill-in-the-blanks ICS-213 screen."],
+        ["**ICS-214**", "The ICS **Activity Log** — a time-stamped diary of what a person or unit did during their shift. Kept for the record and for after-action review."],
+        ["**ICS-309**", "The ICS **Communications Log** — the official record of radio traffic on a net: who called whom, when, and about what. FieldCommand's net loggers export directly to ICS-309."],
+        ["**Incident**", "Any event that needs a coordinated response — a storm, a search, a public-service event, or a drill. In FieldCommand, an **incident** is the container that ties together the nets, forms, resources, and logs for one activation."]
+      ]
+    }},
+
+    {"h1": "Terms J through Z"},
+    {"table": {
+      "headers": ["Term", "Meaning"],
+      "rows": [
+        ["**JS8Call**", "A digital mode and program that sends short keyboard messages over long-distance HF radio, even when signals are too weak for voice. Reachable from FieldCommand as an amateur-radio tool. Ham feature."],
+        ["**Net**", "A scheduled on-air meeting of radio operators run to a set procedure — for example a check-in net or a traffic net. FieldCommand logs nets so there's a written record of who participated and what was passed."],
+        ["**Net control (NCS)**", "The **Net Control Station** — the operator who runs a net: recognizes stations, keeps order, and logs traffic. FieldCommand's net loggers are the tools that operator uses."],
+        ["**NIMS**", "**National Incident Management System** — the nationwide framework that ICS is part of, including standard ways to **type** (categorize by capability) resources. FieldCommand includes a NIMS resource-typing library."],
+        ["**NTS radiogram**", "A message formatted to the **National Traffic System** standard — the long-running amateur relay network's fixed format for passing written messages accurately from station to station. FieldCommand generates properly formatted radiograms. Ham feature."],
+        ["**Operational period**", "The block of time an IAP covers — often 12 or 24 hours. At the end of each period, planners write a fresh plan for the next one."],
+        ["**{{ps_mode}}**", "FieldCommand's **{{ps_short}}** dashboard mode and net logger — the tools for logging a {{ps_short}} radio net, with radio IDs and unit tracking, alongside the amateur and ICS tools. Selected from the mode switcher at the top of the dashboard."],
+        ["**QR code**", "**Quick Response code** — the square barcode you scan with a camera. FieldCommand can put a member's details in a QR code so check-in is a quick scan instead of typing."],
+        ["**Repeater**", "A radio station, usually on a hilltop or tower, that receives on one frequency and re-transmits on another to extend the range of handheld and mobile radios. FieldCommand keeps a searchable database of local repeaters."],
+        ["**Roster**", "The list of your group's members — names, callsigns, certifications, and equipment. FieldCommand's roster also generates each member's check-in QR code."],
+        ["**T-card**", "A physical or on-screen card, shaped like a **T**, that represents one resource (a person, a team, a vehicle) and slots into a status board. FieldCommand's T-Card board lets you drag resources between columns to track their status at a glance."],
+        ["**Tactical map**", "FieldCommand's live operations map — it plots APRS stations, GPS-tracked resources, and shapes you draw, over offline map tiles so it works with no internet."],
+        ["**Talkgroup**", "On a digital or trunked radio system, a virtual channel that a group of radios shares — the digital equivalent of a channel. Relevant when your group works alongside a {{ps_short}} system."],
+        ["**TNC**", "**Terminal Node Controller** — the hardware (or software) modem that turns radio tones into data and back, so a computer can send and receive packet radio such as APRS. FieldCommand receives RF APRS through a TNC. Ham feature."],
+        ["**WAN**", "**Wide Area Network** — in plain terms, the internet connection. FieldCommand is offline-first, but when a WAN source (cellular, satellite, or wired) is available it unlocks online extras like live weather radar. FieldCommand can monitor and fail over between WAN sources."],
+        ["**Winlink**", "A system for sending and receiving email over radio when the internet is down, using amateur or government stations as relays. FieldCommand links to Winlink and can import Winlink forms. Ham feature."]
+      ]
+    }},
+
+    {"callout": {"kind": "tip", "label": "ICS FORMS AT A GLANCE",
+      "text": "Four form numbers cover most of what you'll touch: **ICS-211** is the check-in list (who's here), **ICS-213** is a message (say something, get a reply), **ICS-214** is an activity log (what I did on my shift), and **ICS-309** is the communications log (what crossed the net). Learn those four and the rest follow the same pattern."}},
+
+    {"h1": "Where to Learn More"},
+    {"bullets": [
+      "For how the dashboard, modes, and cards fit together, see the Appendix (Quick Reference) and Chapter 1 (System Overview).",
+      "For the amateur-radio features — APRS, Winlink, JS8Call, 44Net, NTS — see their dedicated chapters; all of them require a licensed operator and a callsign entered in Setup.",
+      "For running a net and producing an ICS-309, see the Net Control Logger chapter.",
+      "For check-ins, the roster, and accountability, see the roster and check-in chapters.",
+      "Any term marked **Ham feature** stays grayed out unless a callsign is set during Organization Setup (Chapter 3) — that's by design, because those features legally require a licensed operator."
+    ]}
+  ]
+}

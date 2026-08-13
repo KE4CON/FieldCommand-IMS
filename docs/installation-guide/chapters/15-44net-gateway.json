@@ -1,0 +1,136 @@
+{
+  "order": 15,
+  "title": "AMPRNet / 44Net Gateway (Optional)",
+  "subtitle": "How to set up the optional second Raspberry Pi that connects your whole field network to the worldwide amateur-radio internet — the Amateur Packet Radio Network — and how to check that the tunnel is up.",
+  "in_this_chapter": [
+    "Who this chapter is for (and who can skip it entirely)",
+    "What the gateway Pi is and what it does",
+    "Getting your 44Net address allocation first",
+    "What the setup script asks for and what it configures",
+    "Running the setup on the gateway Pi",
+    "The manual finishing steps (credentials, tunnel, router route)",
+    "Checking the tunnel and routing are up",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "On the **separate gateway Pi** (not the FieldCommand server), run **`sudo bash setup_44net.sh`**. Answer a few questions — the gateway's address (`192.168.50.2`), your router's address, and the three values you copied from the AMPRNet portal (your assigned `44.x.x.x/29` address, your WireGuard private key, and the gateway public key). It installs everything, then tells you to finish three short steps: paste your credentials into the config, run **`sudo wg-quick up ampr0`**, and add one route on your router. Check the **AMPRNet Gateway** page in FieldCommand to see a green **TUNNEL UP**."}},
+
+    {"callout": {"kind": "important", "label": "THIS ENTIRE CHAPTER IS OPTIONAL — AND FOR LICENSED HAMS ONLY",
+      "text": "Everything in Part 2, including this chapter, is **completely optional**. If your group is a public-safety agency, a served agency, or any team **without a licensed amateur-radio operator**, you can **skip all of Part 2** — FieldCommand runs fully without it. The AMPRNet gateway connects your network to the amateur-radio internet, and that is only lawful for a properly licensed operator. Getting a 44Net address is tied to a valid **Federal Communications Commission (FCC)** amateur license. If nobody in your group holds one, stop here and move on to the rest of the guide."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "The **Amateur Packet Radio Network (AMPRNet, also called 44Net)** is a worldwide internet built by and for licensed amateur-radio operators. It uses its own block of internet addresses — everything that begins with **44** (written `44.0.0.0/8`, meaning every address from 44.0.0.0 through 44.255.255.255). Stations on this network can reach each other directly for things like Winlink email over radio paths, the **Automatic Packet Reporting System (APRS)** position network, and data links between field sites — all inside the amateur-radio community rather than over the ordinary commercial internet."},
+    {"p": "By itself, a FieldCommand server does not touch AMPRNet. This chapter adds an **optional second Raspberry Pi** — a dedicated **gateway** — whose only job is to build a secure tunnel out to the AMPRNet and pass traffic back and forth. Once it is running, **every device on your EMCOMM-NET Wi-Fi** can reach any 44Net address in the world, without each device needing its own setup."},
+    {"callout": {"kind": "note", "label": "THE GATEWAY PI IS A SEPARATE COMPUTER FROM THE SERVER",
+      "text": "This is the single most important thing to understand in this chapter. The **44Net gateway runs on its own Raspberry Pi 5**, with its own address **192.168.50.2**. It is **not** the FieldCommand server (that is a different Pi at **192.168.50.1**). The two never share software. The gateway Pi runs only three things — the tunnel, the routing between the two networks, and a small status page. If the gateway Pi is switched off, FieldCommand keeps working exactly as before; you simply lose the 44Net connection until it comes back."}},
+
+    {"h1": "How the Gateway Works, in Plain Words"},
+    {"p": "The gateway does three jobs, and it helps to picture each one:"},
+    {"table": {
+      "headers": ["Job", "What it means", "Why it matters"],
+      "rows": [
+        ["**The tunnel**", "A private, encrypted pipe (built with software called **WireGuard**) runs from the gateway Pi out across the ordinary internet to the AMPRNet's own gateway server, `amprgw.ampr.org`. Inside FieldCommand this pipe is the network interface named **`ampr0`**.", "It is how a Pi sitting on your local network becomes a real, addressable member of the worldwide 44Net."],
+        ["**The routing**", "The gateway passes traffic between your local **EMCOMM-NET** side and the **44Net** side, so a laptop on your Wi-Fi can talk to a 44 address and the replies find their way back.", "Without routing, the tunnel would exist but only the gateway Pi itself could use it. Routing shares it with everyone."],
+        ["**The status page**", "A small web page on the gateway (at **http://192.168.50.2:9000**) shows whether the tunnel is up, your assigned address, data moving through, and the gateway Pi's health. FieldCommand also mirrors this on its own **AMPRNet Gateway** page.", "It is how you confirm — at a glance, with no typing of commands — that everything is working."]
+      ],
+      "widths": [1.6, 3.3, 1.7]
+    }},
+    {"callout": {"kind": "note", "label": "\"WIREGUARD\" AND \"TUNNEL\" MEAN THE SAME THING HERE",
+      "text": "**WireGuard** is just the name of the modern, well-regarded software that builds the encrypted tunnel. When this chapter says \"bring the tunnel up\" or mentions **`ampr0`**, it is talking about the WireGuard connection to AMPRNet. You do not need to understand how it works to use it — you paste in three values from the portal and start it."}},
+
+    {"h1": "Before You Start — Get Your 44Net Allocation"},
+    {"p": "You cannot build the tunnel until the AMPRNet administrators have assigned you a small block of 44 addresses. This is a one-time registration and it is **not instant** — plan for it to take **two to four weeks**, so start it well before you need it. Do this part first; the software setup below takes only minutes once you have your numbers in hand."},
+    {"steps": [
+      "Have your licensed operator go to the AMPRNet portal at **https://portal.ampr.org** and sign in using their **FCC callsign** as the username. The portal checks the license automatically against the FCC's records.",
+      "Contact your **regional AMPRNet coordinator** first — allocations are handled region by region. Your operator can find the right contact through their ARRL Section or the AMPRNet mailing list.",
+      "Request a small allocation (a `44.x.x.x/29` block is typical — that is a handful of addresses, plenty for one field site).",
+      "Wait for approval. When it comes, open the portal and go to **Subnets → My Subnets**, click your allocation, then open its **WireGuard Config**.",
+      "From that page, copy down **three things** and keep them safe: your assigned **`44.x.x.x/29` address**, your **WireGuard private key**, and the **AMPRNet gateway public key**. You will type all three into the setup below."
+    ]},
+    {"callout": {"kind": "warning", "label": "TREAT THE PRIVATE KEY LIKE A PASSWORD",
+      "text": "The **WireGuard private key** is the secret that proves your gateway is really yours. Do not email it around, post it, or store it where others can read it. Keep a printed copy with your station papers, and only type it into the gateway Pi during setup. If it is ever exposed, the portal can generate a new one."}},
+
+    {"h1": "What the Setup Script Configures"},
+    {"p": "All of the gateway software is installed by a single script named **`setup_44net.sh`**. You run it **on the gateway Pi**, and it works through everything for you. So you know exactly what it is doing, here is the full list — you do not have to act on any of it, it happens automatically:"},
+    {"bullets": [
+      "Installs the needed software: **WireGuard** (the tunnel), **Python** with **Flask** (for the status page), **iptables** (the routing rules), and a few small helpers.",
+      "Creates a dedicated, limited system user named **`amprgate`** to run the status service safely.",
+      "Turns on **IP forwarding** — the switch that lets the Pi pass traffic between your two networks (this is what makes the routing work).",
+      "Writes the WireGuard tunnel configuration file at **`/etc/wireguard/ampr0.conf`**, filling in your portal values and the rules that route `44.0.0.0/8` through the tunnel.",
+      "Sets the gateway Pi's fixed address to **192.168.50.2** on the wired network.",
+      "Installs the **status page** and sets it to start automatically, reachable at **http://192.168.50.2:9000**.",
+      "Sets up the firewall so the status page is reachable from your local network, while the sensitive tunnel-control port stays locked to the gateway Pi itself.",
+      "Sets the tunnel and the status page to start again on their own every time the gateway Pi reboots."
+    ]},
+    {"callout": {"kind": "note", "label": "WHAT THE SCRIPT ASKS YOU",
+      "text": "The setup pauses to ask five short questions. Each shows a sensible default in brackets — press Enter to accept it — except the three portal values, which only you have."}},
+    {"table": {
+      "headers": ["It asks for", "What to type", "Default"],
+      "rows": [
+        ["**Gateway Pi static IP**", "Leave as the default unless your network is unusual.", "`192.168.50.2`"],
+        ["**EMCOMM-NET gateway (router IP)**", "Your router's address. Leave as the default for a standard FieldCommand kit.", "`192.168.50.254`"],
+        ["**Your 44.x.x.x/29 allocated address**", "The address block the AMPRNet portal assigned you.", "(none — from portal)"],
+        ["**Your WireGuard private key**", "The private key from the portal's WireGuard Config page.", "(none — from portal)"],
+        ["**AMPRNet gateway public key**", "The gateway public key from the same portal page.", "(none — from portal)"]
+      ],
+      "widths": [2.3, 3.1, 1.2]
+    }},
+    {"callout": {"kind": "tip", "label": "YOU CAN RUN THE SCRIPT BEFORE YOUR ALLOCATION ARRIVES",
+      "text": "If your `44` block has not come through yet, you can still run the setup to install everything — just leave the three portal fields blank. The script writes the config with placeholders and clearly warns you to fill them in later. When your allocation arrives, edit the config file (the last section of this chapter shows how) and bring the tunnel up. Nothing is wasted."}},
+
+    {"h1": "Running the Setup"},
+    {"p": "Sit down at the **gateway Pi** — the second Pi, not the FieldCommand server — with a monitor and keyboard connected. Open a **Terminal** window, and from the folder that holds the script, type this one line and press Enter:"},
+    {"code": ["sudo bash setup_44net.sh"]},
+    {"p": "The word **`sudo`** means \"do this as the administrator\"; it may ask for the Pi's password the first time. A banner appears, then the five questions above. Answer them, review the short summary it prints, and type **`Y`** to proceed. From there it installs and configures everything, printing each labeled step as it goes. When it finishes, it prints a list of manual finishing steps — covered next — and offers to reboot."},
+    {"callout": {"kind": "warning", "label": "RUN THIS ON THE RIGHT PI",
+      "text": "This script is for the **dedicated gateway Pi only**. Do **not** run it on the FieldCommand server Pi (192.168.50.1). The script itself checks and expects to be the gateway, but the surest safeguard is simply to confirm you are sitting at the second Pi before you type the command."}},
+
+    {"h1": "The Manual Finishing Steps"},
+    {"p": "The script does the heavy lifting, but a few final steps need a human — mostly because they involve your secret credentials and your router. The script prints these on screen when it finishes; they are repeated here so you can follow along."},
+    {"h2": "1. Add your credentials (only if you left them blank)"},
+    {"p": "If you already typed your three portal values during setup, skip to step 2. Otherwise, open the config file and paste them in:"},
+    {"code": ["sudo nano /etc/wireguard/ampr0.conf"]},
+    {"p": "Replace the placeholder text on the **`PrivateKey`**, **`Address`**, and **`PublicKey`** lines with your real portal values. Save the file (in the `nano` editor, press **Ctrl+O** then Enter, then **Ctrl+X** to exit)."},
+    {"h2": "2. Start the tunnel"},
+    {"p": "Bring the WireGuard tunnel up, then check it:"},
+    {"code": ["sudo wg-quick up ampr0", "sudo wg show ampr0"]},
+    {"p": "The second command should show a recent **latest handshake** and some **transfer** figures — proof the gateway has reached the AMPRNet server. Because you enabled the tunnel to start at boot during setup, you only run `wg-quick up` by hand this one time; after a reboot it comes up on its own."},
+    {"h2": "3. Tell your router about the 44Net route"},
+    {"p": "One setting on your router lets every other device on EMCOMM-NET use the gateway automatically. On the standard FieldCommand ASUS router:"},
+    {"steps": [
+      "Open a browser to your router's admin page — **http://192.168.50.254** — and sign in.",
+      "Go to **LAN → Route → Add**.",
+      "Set **Network/Host IP** to **44.0.0.0**.",
+      "Set **Netmask** to **255.0.0.0**.",
+      "Set **Gateway** to **192.168.50.2** (the gateway Pi).",
+      "Set **Interface** to **LAN**, then click **Apply**."
+    ]},
+    {"callout": {"kind": "note", "label": "WHAT THIS ROUTE DOES",
+      "text": "This single line tells the router, \"any traffic headed for a 44 address, hand it to the gateway Pi at 192.168.50.2.\" Without it, only the gateway Pi itself could reach 44Net; with it, every laptop, tablet, and phone on your Wi-Fi can."}},
+
+    {"h1": "Checking the Tunnel and Routing Are Up"},
+    {"p": "You have three easy ways to confirm everything is working — pick whichever is handy."},
+    {"bullets": [
+      "__From the gateway Pi itself:__ run **`sudo wg show ampr0`**. A recent handshake and transfer numbers mean the tunnel is live.",
+      "__From the FieldCommand server Pi:__ run **`ping 44.0.0.1 -c 4`**. Replies from `44.0.0.1` (the AMPRNet gateway) mean traffic is routing all the way through.",
+      "__From any device on EMCOMM-NET:__ open FieldCommand's **AMPRNet Gateway** page in a browser. This is the easiest check and needs no commands."
+    ]},
+    {"p": "The **AMPRNet Gateway** page in FieldCommand is the friendliest of the three. At the top it shows a big banner: a green **TUNNEL UP — AMPRNet Connected** when all is well, a red **TUNNEL DOWN** if the tunnel dropped, or an amber **Gateway Unreachable** if the gateway Pi is not responding at all (usually because it is switched off). Below the banner, cards show your assigned **AMPRNet address**, the **last handshake** time, **data received and sent**, and the gateway Pi's **temperature, memory, IP forwarding**, and **uptime**. Further down, an **Active Routes** table and a **Connected Peers** table confirm the routing, and an **Access Log** lists recent station identifications for your records. The page refreshes itself every 30 seconds."},
+    {"callout": {"kind": "important", "label": "THE TUNNEL CONTROL BUTTONS ONLY WORK AT THE GATEWAY PI",
+      "text": "The AMPRNet Gateway page shows **Bring Tunnel UP / DOWN / Restart** buttons, but for safety they only work when the page is opened **in the browser on the gateway Pi itself** (at `http://localhost:9001`), and only after a valid callsign login. From an operator's laptop or phone the page is **read-only** — you can watch the status but not change it. This is deliberate: it keeps a station-controlling function under the physical control of a licensed operator at the equipment. To restart the tunnel, sit at the gateway Pi, open its browser, log in with your callsign, and use the buttons there."}},
+    {"callout": {"kind": "note", "label": "STAY WITHIN THE RULES (PART 97)",
+      "text": "Everything crossing the 44Net is amateur-radio traffic and is governed by the FCC's amateur rules (Part 97): no encryption of the **content** of messages, station identification as required, and amateur purposes only. (The tunnel's own encryption is fine — it protects the transport, not the message content, which is expressly allowed.) The licensed operator who owns the allocation is responsible for what passes through the gateway."}},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__The tunnel won't come up / `wg show` shows no handshake.__ First, the three portal values are the usual cause — open `sudo nano /etc/wireguard/ampr0.conf` and confirm the **PrivateKey**, **Address**, and **PublicKey** lines hold your real values, not the `REPLACE_WITH...` placeholders. Save, then run `sudo wg-quick down ampr0` followed by `sudo wg-quick up ampr0`. Second, the gateway Pi needs a working internet path to reach `amprgw.ampr.org` — confirm the Pi can reach the internet at all.",
+      "__The tunnel is up but nothing on the network can reach 44 addresses.__ This is almost always the router route. Re-check **LAN → Route** on the router (http://192.168.50.254): Network **44.0.0.0**, Netmask **255.0.0.0**, Gateway **192.168.50.2**, Interface **LAN**. Also confirm IP forwarding is on — the FieldCommand AMPRNet Gateway page shows **IP Forwarding: ✓ Enabled** when it is; if it reads disabled, the setup did not finish cleanly, so re-run `setup_44net.sh`.",
+      "__`ping 44.0.0.1` from the server Pi times out.__ Work outward: is the tunnel up on the gateway (`sudo wg show ampr0`)? Is the router route in place? Is the gateway Pi's IP forwarding enabled? Each of the three must be true for traffic to reach 44Net.",
+      "__The AMPRNet Gateway page shows amber \"Gateway Unreachable.\"__ The FieldCommand server cannot see the gateway Pi. Make sure the gateway Pi is **powered on** and plugged into the network (it is a separate computer and can be off even when the server is running). Confirm it holds address **192.168.50.2**.",
+      "__The status page at http://192.168.50.2:9000 won't load.__ The status service may not be running. On the gateway Pi, check it with `sudo systemctl status amprgate-status` and restart it with `sudo systemctl restart amprgate-status`. Also confirm you typed the gateway address (`.2`), not the server address (`.1`).",
+      "__The tunnel keeps dropping after a while.__ This is usually the internet link the tunnel rides on going up and down. The config already sends a keepalive every 25 seconds to hold the tunnel open through most home and cellular connections; if the underlying internet is genuinely unstable, the tunnel will follow it. It comes back on its own when the link returns.",
+      "__I can't press the tunnel buttons from my laptop.__ That is expected — the controls only work in the browser on the gateway Pi itself, after a callsign login. See the note above. Read-only status is available everywhere."
+    ]}
+  ]
+}

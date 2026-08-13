@@ -1,0 +1,118 @@
+{
+  "order": 14,
+  "title": "Troubleshooting the Installation",
+  "subtitle": "One place to look when something in the build doesn't go to plan — organized by symptom, from won't-boot to no-Wi-Fi to printing, with the log locations that tell you what really happened.",
+  "in_this_chapter": [
+    "Boot problems (boots to the card instead of the drives, wrong boot order)",
+    "Drive problems (only one drive seen, mirror degraded or rebuilding)",
+    "Can't reach the dashboard at 192.168.50.1 (network, static IP)",
+    "No Wi-Fi, or a mesh node that won't pair",
+    "Printing problems (CUPS)",
+    "Offline data missing (map tiles and Kiwix)",
+    "The first-boot installer didn't run",
+    "Where to find the logs"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "Find your symptom below and try the fixes in order — most install problems are one of a handful of well-known things: a boot order pointing at the wrong drive, a loose second drive, a network cable or static-IP mismatch, or a service that just needs a restart. When a fix isn't obvious, jump to the last section, **Where to Find the Logs**, capture the two log files it names, and you'll have exactly what's needed to get help."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "Building the server usually goes smoothly, but hardware is hardware and networks are networks — sometimes a drive doesn't seat, a cable is loose, or a setting doesn't take on the first try. This chapter gathers the problems people actually hit during an install into one scannable place, grouped by what you're seeing on screen. Each group is a short list of \"if this, then try that\" fixes, ordered from the most likely cause to the least."},
+    {"p": "Work top to bottom within your symptom group: the first fix listed is the most common cause, so trying them in order usually gets you there fastest. If nothing here solves it, the final section tells you exactly which log files to capture — those are what turn a frustrating guess into a quick diagnosis."},
+    {"callout": {"kind": "note", "label": "THIS CHAPTER IS ALL TROUBLESHOOTING",
+      "text": "Every other chapter ends with its own short Troubleshooting list for that chapter's task. This chapter is the opposite — it's *all* troubleshooting, pulled together across the whole install, so you have a single page to scan when you're not sure which step the problem belongs to. It ends not with a Troubleshooting section but with **Where to Find the Logs**."}},
+
+    {"h1": "Boot Problems"},
+    {"h2": "The Pi boots to the microSD card instead of the drives"},
+    {"bullets": [
+      "This is normal *during* the build — the card is what runs the setup that creates the mirror. It's only a problem *after* the build, when the Pi should be booting from the mirrored solid-state drives (SSDs) but keeps coming up on the card.",
+      "__First, check the boot order.__ The Pi 5 tries devices in a set order. After the mirror is built you want it to prefer the drives. If the card is still inserted and takes priority, the simplest fix is to shut down, remove the microSD card, and power back on — with no card present, the Pi boots the drives.",
+      "__If it still won't boot without the card,__ the mirror's boot files may not have been put in place. Re-insert the card, boot it, and re-run the one-command setup; it detects the existing mirror and repairs the boot configuration rather than rebuilding from scratch.",
+      "__Confirm which device you actually booted.__ If you're unsure whether you're on the card or the drives, the setup script itself will tell you — it refuses to build a mirror while running from the drives, and says so plainly."
+    ]},
+    {"h2": "The Pi won't boot at all (no dashboard, no display activity)"},
+    {"bullets": [
+      "__Give it time.__ The very first boot after the install does extra work (it finishes installing and configuring FieldCommand). Allow several minutes before deciding it's stuck.",
+      "__Check power.__ The Pi 5 needs its official 27-watt USB-C power supply. An underpowered supply or a thin cable causes random failures to boot. Use the recommended supply.",
+      "__Re-seat the microSD card__ (if you're booting from it) — a card not fully home is a common no-boot cause.",
+      "__Try a monitor and keyboard.__ Connecting a display shows you where it stops. If you see boot text that halts, note the last lines — they point at the failing step and match an entry in the logs."
+    ]},
+
+    {"h1": "Drive Problems"},
+    {"h2": "Only one drive is seen"},
+    {"bullets": [
+      "__On the first setup run this is expected.__ The setup switches on the setting that lets the Pi see both drives behind the expansion board, then reboots once. Run the same command again after that reboot and it should see both.",
+      "__If it still sees only one after that reboot, it's hardware seating, not software.__ Power off completely, then firmly re-seat both SSDs in their slots and check that the enclosure's PCIe (Peripheral Component Interconnect Express — the internal expansion connection) ribbon or board is fully home. Loose seating is the number-one cause of a missing second drive.",
+      "__Swap slots to isolate a bad drive.__ If one drive is never seen no matter which fixes you try, move it to the other slot. If the fault follows the drive, that drive (or its slot connector) is suspect; if it stays with the slot, the slot or cable is suspect."
+    ]},
+    {"h2": "The mirror is degraded, or rebuilding"},
+    {"bullets": [
+      "__\"Degraded\" means the mirror is running on one drive.__ That's the mirror doing its job — the server keeps working — but you've lost the redundancy until it's repaired. This is exactly the state you saw on purpose during the pull-a-drive test.",
+      "__\"Rebuilding\" (or \"resyncing\") means it's copying data back onto a returned or replaced drive__ to restore the two-identical-copies state. This happens automatically after you re-insert a drive. Let it finish — it can take a while on large drives, and the server stays usable throughout.",
+      "__If a drive genuinely failed,__ power off, replace it with a same-size (or larger) blank SSD, power back on, and the mirror rebuilds onto the new drive on its own. Don't remove the *good* drive — that's the one holding all your data.",
+      "__Don't panic at a degraded state after a power loss.__ A hard power-off can leave the mirror briefly out of step; it re-syncs on its own at the next boot."
+    ]},
+
+    {"h1": "Can't Reach the Dashboard at 192.168.50.1"},
+    {"bullets": [
+      "__Confirm you're on the right Wi-Fi.__ Your device must be joined to the FieldCommand network named **EMCOMM-NET**, not your home or phone network. Check the Wi-Fi indicator and reconnect if needed.",
+      "__Type the address exactly, with `http://`.__ Use **http://192.168.50.1** — not `https://`, and no `www`. Some browsers hide the `http://` or try to search instead; type the full address into the address bar.",
+      "__Check your device got an address.__ When properly connected, your phone or laptop should have an address starting `192.168.50.` If it has something else, it isn't really on the FieldCommand network — forget the network and rejoin.",
+      "__The server's static IP may not be set.__ The FieldCommand Pi must hold the fixed address **192.168.50.1**. If the dashboard is unreachable from a device that *is* on EMCOMM-NET, the Pi may not have taken its static address — reboot the Pi, and if it persists, re-check the network configuration step from the earlier chapters.",
+      "__Try a different device.__ If one laptop can't reach it but a phone can, the problem is that laptop's network settings, not the server.",
+      "__Restart the web service.__ If devices are on the network and addressed correctly but still get nothing, the web server may be down. On the Pi, run `sudo bash /opt/fieldcommand/scripts/update.sh` and choose **3) Check service status**, then **1) Restart all services**."
+    ]},
+
+    {"h1": "No Wi-Fi, or a Mesh Node Won't Pair"},
+    {"bullets": [
+      "__No EMCOMM-NET network appears at all.__ The Wi-Fi access point service may not have started. On the Pi, check service status from the maintenance menu (`update.sh`, choice 3) and restart services (choice 1). Confirm the router/access-point hardware is powered.",
+      "__Wrong Wi-Fi password.__ The default access-point password is set during install. If devices see EMCOMM-NET but can't join, you're likely typing the wrong password — re-check what was set during setup.",
+      "__A mesh node won't pair or link.__ The standard deployment uses wired backhaul between the main router and its nodes through the network switch. First confirm the CAT-6 cable from the switch to each node's LAN port is fully seated at both ends and the node is powered.",
+      "__Pair the node the manufacturer's way.__ Mesh nodes link to the primary router via the router's own pairing process (its app or web page), not through FieldCommand. If a node won't join, follow the router maker's pairing steps, then confirm the node hands out addresses in the `192.168.50.x` range.",
+      "__Move the node closer for the first link,__ then place it where you need it. An initial pairing sometimes needs the node near the primary router even when the final position is farther away."
+    ]},
+
+    {"h1": "Printing Problems (CUPS)"},
+    {"p": "FieldCommand prints ICS forms and maps through **CUPS** (the *Common UNIX Printing System*), the standard Linux printing service. Most printing issues are the printer not being added yet or not being reachable on the network."},
+    {"bullets": [
+      "__Add the printer first.__ Open the CUPS admin page in a browser on the server at **http://192.168.50.1:631**, choose to add a printer, and pick your model. Until a printer is added, nothing will print.",
+      "__Confirm the printer is on the network.__ A Wi-Fi or Ethernet printer must be on the same network the server can reach. Print a test page from CUPS once it's added.",
+      "__Use a network or USB connection the Pi supports.__ Recommended printers have full Linux/CUPS support; confirm yours is connected by USB to the Pi or reachable over the network.",
+      "__Restart the printing service.__ If a previously working printer stops, restart CUPS on the Pi and try the test page again. Check that the printer has paper and isn't showing its own error.",
+      "__Discovery not finding the printer.__ Network printer auto-discovery uses a service called Avahi; if the printer doesn't appear automatically, add it by its address in the CUPS page instead of waiting for discovery."
+    ]},
+
+    {"h1": "Offline Data Missing (Map Tiles and Kiwix)"},
+    {"bullets": [
+      "__Maps are blank or gray.__ The offline map tiles (served on port **8083**) may not have been downloaded during setup, or the tile service isn't running. These downloads are optional and large, so they're sometimes skipped. Confirm the tile service is running (maintenance menu, choice 3) and that tiles were downloaded for your area.",
+      "__The offline library (Wikipedia, medical, reference) won't open.__ That's Kiwix, served on port **8081**. If **http://192.168.50.1:8081** doesn't load, either the Kiwix service is down or no offline books (ZIM files) were downloaded. The installer can add the service without the downloads, so an empty library means the books still need fetching.",
+      "__Re-run the specific downloader.__ Map tiles and Kiwix books each have their own setup step you can run later, on your own schedule, when the server has internet — these don't require rebuilding anything.",
+      "__Remember these are optional.__ If your group doesn't use offline maps or the reference library, these services being empty or off is expected and harmless — it does not mean the install failed."
+    ]},
+
+    {"h1": "The First-Boot Installer Didn't Run"},
+    {"bullets": [
+      "__Symptom: the mirror was built and the Pi rebooted, but FieldCommand isn't installed__ (the dashboard doesn't come up even though you're on the network and addressed correctly).",
+      "__Give it time on that first boot.__ The automatic install runs *on the first boot into the mirror* and takes several minutes. Watch a connected monitor — you should see it working through the install. Don't power it off mid-install.",
+      "__Re-run the installer by hand.__ If the first-boot install truly didn't fire, you can run it directly on the Pi: `sudo bash /opt/fieldcommand/scripts/install.sh`. It installs the services, web server, and configuration the same way the automatic run would.",
+      "__Check the setup log for where it stopped.__ The one-command build writes a log (see the next section). Its last lines show which stage it reached, so you can tell whether the mirror finished but the install didn't start."
+    ]},
+
+    {"h1": "Where to Find the Logs"},
+    {"p": "When a fix above doesn't solve it, the logs tell you what really happened — which step ran, which failed, and the exact error. Capturing these two files (and, for a specific service, its journal) gives whoever helps you everything they need. There's no guessing once you have the log."},
+    {"table": {
+      "headers": ["Log", "Where it is", "What it covers"],
+      "rows": [
+        ["**Setup log**", "`/var/log/fieldcommand-setup.log`", "The one-command build: bootloader update, seeing both drives, building the mirror, copying the OS, and kicking off the first-boot install. Start here for boot and drive problems."],
+        ["**Install log**", "`/var/log/fieldcommand-install.log`", "The FieldCommand installer itself: services, web server, Wi-Fi access point, FCC database, printing, and optional data. Start here for service, network, and printing problems."],
+        ["**Per-service journal**", "`journalctl -u <service> -n 50`", "The recent output of one specific service. Swap in the service name — for example `journalctl -u fcc-lookup -n 50`, `journalctl -u nginx -n 50`, or `journalctl -u direwolf -n 50`."]
+      ],
+      "widths": [1.5, 2.4, 3.0]
+    }},
+    {"p": "To read a log on the Pi, use `sudo tail -n 50 /var/log/fieldcommand-setup.log` (shows the last 50 lines) or `sudo less /var/log/fieldcommand-setup.log` (scroll with the arrow keys, press `q` to quit). Two more specialized logs exist if you're chasing those specific downloads: **`/var/log/fieldcommand-tiles.log`** for offline map tiles and **`/var/log/fieldcommand-kiwix.log`** for the offline library."},
+    {"callout": {"kind": "tip", "label": "GETTING MORE HELP — CAPTURE THESE FIRST",
+      "text": "Before you reach out for help, grab the **last 50 lines** of both **`/var/log/fieldcommand-setup.log`** and **`/var/log/fieldcommand-install.log`**, plus the status list from the maintenance menu (`sudo bash /opt/fieldcommand/scripts/update.sh`, choice **3) Check service status**). Note your symptom in one plain sentence — what you did, what you expected, what you saw. That small bundle usually turns a hard-to-describe install problem into a quick, specific answer."}},
+    {"callout": {"kind": "note", "label": "A SERVICE THAT WON'T STAY UP",
+      "text": "If the status list shows a service that keeps stopping, its journal is the fastest way to see why: run `journalctl -u <service> -n 50` with that service's name. The last lines almost always name the actual cause — a missing file, a permission problem, or low disk space (check free space with `df -h /`). Fix that root cause rather than just restarting in a loop."}}
+  ]
+}

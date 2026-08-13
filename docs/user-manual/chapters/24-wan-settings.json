@@ -1,0 +1,116 @@
+{
+  "order": 24,
+  "title": "Wide Area Network (WAN) Settings & Dual-Source Internet Configuration",
+  "subtitle": "Set up your two internet sources — a preferred one and a fallback — so FieldCommand switches over automatically when the first one drops, and watch which one is live on the WAN Status page.",
+  "in_this_chapter": [
+    "What a Wide Area Network (WAN) is and why FieldCommand cares",
+    "The two pages: WAN Settings (where you configure) and WAN Status (where you watch)",
+    "Filling in Source A and Source B — name, role, type, provider",
+    "Choosing a Detection Method so the Pi knows when a source is up",
+    "Swapping which source is preferred and which is fallback",
+    "Dashboard Display switches and the USB Backup Drive",
+    "Saving, and how long changes take to apply",
+    "Reading the WAN Status page — the live hero banner, source cards, and connectivity tests",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "Open **WAN Settings** from the dashboard. Fill in **Source A** (your main internet — typically {{cell_primary}}) and, if you have one, **Source B** (your backup — typically {{sat_fallback}}). For each, tick **Enabled**, pick a **Role** (Preferred or Fallback) and a **Detection Method**, then click **Save Settings**. Changes go live within about 30 seconds. To see which source is carrying traffic right now, open **WAN Status**."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "A **Wide Area Network (WAN)** is just a plain-language term for *your connection to the internet* — the path out of the FieldCommand Raspberry Pi to the wider world. FieldCommand is built to run completely offline, so it never *needs* a WAN. But a handful of features light up when internet is present: live weather radar, National Weather Service (NWS) alerts, solar-propagation data, and pulling hospital lists from public databases. This is where you tell FieldCommand what internet sources you have and how to use them."},
+    {"p": "The whole point of this page is **automatic failover**. You can define two internet sources — a **preferred** one that gets used first, and a **fallback** that takes over the moment the preferred source goes down. A common field setup is {{cell_primary}} as the preferred source and {{sat_fallback}} as the fallback, but nothing is locked to a brand: either source can be cellular, satellite, a phone hotspot, or a fixed office connection. **The role is what matters, not the hardware.**"},
+    {"callout": {"kind": "note", "label": "TWO PAGES, TWO JOBS",
+      "text": "**WAN Settings** (`wan_settings.html`) is where you *configure* your sources — an administrator task, done once. **WAN Status** (`wan-status.html`) is the *live monitor* everyone watches during an incident to see which source is up. This chapter covers both."}},
+
+    {"h1": "Opening the WAN Settings Page"},
+    {"steps": [
+      "From the dashboard, open **WAN / Internet Settings** (marked with an **ADMIN** badge in the page header).",
+      "The page opens with a short blue explainer box at the top reminding you how preferred and fallback work.",
+      "Below it are two source cards — **Source A** and **Source B** — a **Dashboard Display** box, and a **USB Backup Drive** box.",
+      "Fill them in top to bottom, then click **Save Settings** at the bottom."
+    ]},
+    {"screenshot": "The WAN Settings page: Source A card (green left edge, Preferred), the Swap Roles button, and Source B card (amber left edge, Fallback)"},
+
+    {"h1": "Setting Up a Source (A and B)"},
+    {"p": "Each source is a card. **Source A** starts as your **Preferred** source (green left edge); **Source B** starts as the **Fallback** (amber left edge). A disabled card fades to gray. The colored badge in the top corner always tells you what that card is doing right now — **Preferred**, **Fallback**, or **Disabled** — and it updates live as you change the fields. Fill in both cards the same way:"},
+    {"table": {
+      "headers": ["Field", "What to type", "Plain meaning"],
+      "rows": [
+        ["**Enabled** *(checkbox)*", "Tick it to turn this source on", "An unticked source is ignored completely — a handy way to park a backup you're not using today without erasing its setup."],
+        ["**Display Name**", "A short name — `Cellular`, `Satellite`, `Office Wi-Fi`", "What shows on the dashboard status bar. If you leave it blank it just reads `Source A` / `Source B`."],
+        ["**Role**", "**Preferred** or **Fallback**", "**Preferred** is tried first. **Fallback** is used only when the preferred source is down. Two sources should not both be Preferred — use the Swap button instead."],
+        ["**Type**", "Cellular · Phone/mobile hotspot · Satellite · Fixed ISP · Other", "Picks the little icon (📡 cellular, 📱 hotspot, 🛰 satellite, 🌐 fixed). Cosmetic — it does not change how detection works."],
+        ["**Provider / Carrier** *(optional)*", "Free text — `T-Mobile`, `Starlink`, `Comcast`", "Just a label for your own reference. Leave blank if you like."],
+        ["**Detection Method**", "One of three choices (see next section)", "*How* the Pi decides whether this source is up. This one matters — pick the one that fits your hardware."]
+      ],
+      "widths": [2.2, 2.6, 2.7]
+    }},
+
+    {"h1": "Detection Method — How the Pi Knows a Source Is Up"},
+    {"p": "The **Detection Method** dropdown is the one field worth getting right. It tells FieldCommand how to test whether a source is actually carrying traffic. Picking the method also reveals a helper box under the dropdown with example addresses, and — for two of the choices — an extra field to fill in."},
+    {"table": {
+      "headers": ["Method", "What it does", "Best for"],
+      "rows": [
+        ["**Internet reachable — no device check**", "Simplest option. Just checks that *some* internet is reachable, with no attempt to talk to a specific modem or router.", "A phone hotspot, a Universal Serial Bus (USB) cellular dongle with no admin page, or any setup where you only have one source and just want up/down."],
+        ["**Ping a gateway IP**", "Pings one IP address that only answers when this exact path is live (usually the modem or hotspot gateway). Reveals a **Gateway IP to Ping** field.", "Sources with a known gateway. The helper lists common ones — Android hotspot `192.168.43.1`, iPhone `172.20.10.1`, Starlink `192.168.100.1`, HughesNet `192.168.0.1`."],
+        ["**Modem admin page responds**", "Checks that the modem or router's own web page answers. Reveals an **Admin URL** field. Bonus: carrier name and signal strength may be picked up automatically.", "Cellular modems and routers with a local admin page — for example `http://10.1.1.1` for a generic modem, or `http://192.168.0.1` for a Cradlepoint or Pepwave."]
+      ],
+      "widths": [2.4, 3.4, 2.0]
+    }},
+    {"callout": {"kind": "tip", "label": "WHEN IN DOUBT, USE THE SIMPLE ONE",
+      "text": "If you are not sure, choose **Internet reachable — no device check**. It works with almost anything and needs no IP address. You can always switch to a smarter method later once you know your modem's gateway address."}},
+
+    {"h1": "Swapping Preferred and Fallback"},
+    {"p": "Between the two cards is a dashed button: **⇅ Swap preferred ↔ fallback roles between the two sources**. Click it and the two roles trade places instantly — whatever was Preferred becomes Fallback and vice-versa. Use this when you want to *manually* favor one source without touching any cables. For example, if {{sat_fallback}} is giving you a cleaner signal than {{cell_primary}} on a given day, swap the roles so satellite is tried first. The change takes effect on the next Save."},
+
+    {"h1": "Dashboard Display and the USB Backup Drive"},
+    {"p": "Below the source cards, the **Dashboard Display** box has three checkboxes that control which status cards appear on the main dashboard. Turn off the ones you don't care to see."},
+    {"table": {
+      "headers": ["Checkbox", "What it shows on the dashboard"],
+      "rows": [
+        ["**Show Source A card on dashboard**", "The live status of your first (usually preferred) internet source"],
+        ["**Show Source B card on dashboard**", "The live status of your second (usually fallback) source — off by default"],
+        ["**Show AMPRNet / 44Net status card**", "The status of the amateur-radio 44Net gateway, if your group uses one"]
+      ],
+      "widths": [3.3, 3.9]
+    }},
+    {"p": "The **USB Backup Drive** box handles automatic backups. Any USB drive **formatted and labeled `FIELDCOMMAND`** (all caps) triggers a backup the moment you plug it in — any brand, any size, formatted ext4 or exFAT. Two fields let you rename things: **Drive Label** is the exact label the Pi watches for (leave it `FIELDCOMMAND` unless you have a reason), and **Display Name** is just a friendly name like `WD Passport` shown in the app."},
+    {"callout": {"kind": "warning", "label": "CHANGING THE DRIVE LABEL TAKES AN EXTRA STEP",
+      "text": "If you change the **Drive Label** away from `FIELDCOMMAND`, you must also edit the matching rule on the Pi itself (`/etc/udev/rules.d/99-fieldcommand-backup.rules`) and reload it, or plugging in the drive won't trigger a backup. For almost everyone, leaving the label as `FIELDCOMMAND` is the right move."}},
+
+    {"h1": "Saving Your Settings"},
+    {"steps": [
+      "Scroll to the bottom and click **Save Settings**.",
+      "A confirmation appears: **✓ Saved — changes active within 30s**.",
+      "The **↺ Reload** button next to it reloads the saved settings from the server, throwing away any unsaved edits — handy if you want to start over."
+    ]},
+    {"p": "The WAN monitor runs quietly in the background and re-reads its configuration on its next poll cycle, so allow up to about **30 seconds** (and no more than a minute) for a change to take hold. You do not need to restart anything."},
+
+    {"h1": "Watching the WAN Status Page"},
+    {"p": "The companion page, **WAN Status** (`wan-status.html`), is the live monitor. It refreshes itself every 30 seconds and is the page to keep open during an activation. It has several parts, top to bottom:"},
+    {"table": {
+      "headers": ["Part of the page", "What it tells you"],
+      "rows": [
+        ["**Active WAN hero banner**", "The big banner at the top. Green with a 📶 icon means cellular is carrying traffic; blue with 🛰 means it has failed over to satellite; red with ⚠ means **NO WAN — Operating Offline** (local features still work)."],
+        ["**Source cards** (two)", "One card per source, showing whether it is **Active**, on **Standby**, or **Down**, plus live stats — carrier, signal, and technology for cellular; latency, throughput, obstruction, and uptime for satellite."],
+        ["**Connectivity Test**", "A table that checks reachability of key outside services (NWS weather, Cloudflare DNS, the 44Net gateway) over whatever WAN is active, re-running about every 60 seconds. Each row shows **Reachable** or **Unreachable** and the response time."],
+        ["**WAN Event Log**", "A running list of failover and failback events with timestamps in Coordinated Universal Time (UTC) — for example, *Failover to satellite* — so you can see when the connection switched."],
+        ["**Antenna Quick-Reference & Plan Management**", "Reference tables for swapping antennas and managing the cellular data plan. These are informational cards for the field team."]
+      ],
+      "widths": [2.5, 4.7]
+    }},
+    {"callout": {"kind": "note", "label": "LOSING INTERNET IS NOT LOSING FIELDCOMMAND",
+      "text": "When the hero banner turns red and reads **NO WAN — Operating Offline**, that only means the internet-dependent extras (radar, live weather, propagation data) are paused. Every core FieldCommand feature — forms, the map, T-cards, the log — keeps running perfectly on the local Wi-Fi. Internet is a bonus, never a requirement."}},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__I saved my WAN settings but nothing changed on the dashboard.__ Give it up to a minute — the background monitor only picks up changes on its next poll cycle. If it still hasn't updated, reopen WAN Settings and confirm the source is **Enabled** and you clicked **Save Settings** (watch for the green *✓ Saved* message).",
+      "__The WAN Status page says NO WAN even though I have internet.__ Check the **Detection Method**. If you chose *Ping a gateway IP* or *Modem admin page responds*, the address you entered may be wrong or unreachable — switch that source to **Internet reachable — no device check** and Save, then see if it comes up.",
+      "__It never fails over to my backup source.__ Make sure **Source B** is ticked **Enabled** and its **Role** is **Fallback**. A fallback that is disabled will never be used. Confirm on the WAN Status page that Source B shows at least **Standby** (not **Down**).",
+      "__Both sources show as Preferred.__ Only one should be preferred at a time. Use the **⇅ Swap** button to trade roles, or set one card's **Role** dropdown to **Fallback**, then Save.",
+      "__I plugged in my backup USB drive and no backup happened.__ The drive must be labeled exactly `FIELDCOMMAND` in all caps and formatted ext4 or exFAT. If you renamed the trigger label in WAN Settings, the matching rule on the Pi must be updated too — otherwise set the label back to `FIELDCOMMAND`.",
+      "__Cannot reach server / the page won't load.__ Confirm your device is on the FieldCommand Wi-Fi and that the Pi is powered up. The WAN Settings and Status pages talk to the server directly, so they need the same local connection as every other page."
+    ]}
+  ]
+}

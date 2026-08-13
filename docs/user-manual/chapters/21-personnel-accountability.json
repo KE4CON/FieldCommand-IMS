@@ -1,0 +1,121 @@
+{
+  "order": 21,
+  "title": "Personnel Accountability",
+  "subtitle": "The Safety Officer's one screen for answering, at any moment, the two questions that keep responders alive: who is on this incident, and is every one of them accounted for right now?",
+  "in_this_chapter": [
+    "Why personnel accountability is a life-safety requirement",
+    "The two levels of accountability and how this page joins them",
+    "Opening the page and reading the summary tiles",
+    "The four tabs: ICS-211 Check-In, T-Card Personnel, Unaccounted, Cross-Reference",
+    "Conducting a Personnel Accountability Report (PAR)",
+    "Recording last known location and checking people out",
+    "Closing the gap with the Cross-Reference view",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "Open **Personnel Accountability**, pick the incident and period. To take a head count, click **🔴 Conduct PAR**, then click **✓ PAR** on each person as their supervisor confirms them by radio. Watch the **⚠ UNACCOUNTED** tab — if anyone is still there after everyone has reported, escalate to the Incident Commander. Click **↺ Reset PAR** to start a fresh count."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "**Personnel accountability** is a core life-safety rule of the National Incident Management System (NIMS) and the Incident Command System (ICS). At any moment during an incident, the Incident Commander (IC) and the Safety Officer must be able to answer two questions with certainty: **Who is on this incident?** and **Where is each person right now?** When conditions change fast — a building starts to collapse, the wind shifts a fire — not being able to locate someone in seconds is how responders get hurt or killed. This page exists so that answer is always one glance away."},
+    {"p": "FieldCommand tracks accountability at **two levels**, and this page brings both onto one screen for the Safety Officer. The first level is **incident-wide** (the ICS-211 check-in list — everyone who came onto the incident). The second is **per-resource** (the T-card personnel rosters — who is assigned to which crew or unit). Neither alone is enough; together they tell you both that a person is on the incident and exactly where they should be."},
+    {"table": {
+      "headers": ["Level", "The tool", "What it answers"],
+      "rows": [
+        ["**Incident level**", "ICS-211 Check-In List", "Who has formally checked in? When did they arrive? Have they left? Everyone must have a check-in entry."],
+        ["**Resource level**", "T-Card Personnel roster", "Who is assigned to each specific resource, and where should each crew member be right now?"]
+      ],
+      "widths": [1.8, 2.0, 2.7]
+    }},
+    {"callout": {"kind": "warning", "label": "BOTH LISTS, ALWAYS",
+      "text": "The ICS-211 tells you everyone on the incident. The T-card roster tells you which resource each person is on and where they should be. The **Cross-Reference** view on this page catches gaps in both directions — people who checked in but were never assigned, and people on a T-card who never formally checked in. A person missing from either list is an accountability hole."}},
+
+    {"h1": "Opening the Page and Reading the Tiles"},
+    {"steps": [
+      "From the dashboard, open **Personnel Accountability** (the red 🔴 Safety Officer tool).",
+      "Choose the incident from the **Select incident...** dropdown and the operational period from the **Period** dropdown next to it.",
+      "The **summary tiles** fill in, and the tabbed lists below become active."
+    ]},
+    {"p": "The colored **summary tiles** across the top are the whole page in six numbers. They refresh whenever you load or act on the page (and every 60 seconds if you tick **Auto 60s**)."},
+    {"table": {
+      "headers": ["Tile", "What it counts"],
+      "rows": [
+        ["**Total Personnel**", "Everyone associated with this incident and period"],
+        ["**Checked In**", "People currently checked in and active on the incident"],
+        ["**Checked Out**", "People who have left and been checked out"],
+        ["**PAR Confirmed**", "People confirmed accounted for in the current PAR cycle"],
+        ["**Unaccounted**", "Checked-in people **not** yet confirmed in this PAR — the number to drive to zero"],
+        ["**On T-Cards**", "People listed on resource T-cards"]
+      ],
+      "widths": [2.1, 4.4]
+    }},
+    {"screenshot": "The Personnel Accountability page: red header with the PAR badge, six summary tiles, the controls bar, and the four tabs"},
+
+    {"h1": "The Four Tabs"},
+    {"p": "Below the controls are four tabs, each a different view of the same people:"},
+    {"bullets": [
+      "**ICS-211 CHECK-IN LIST** — everyone who has checked into the incident. During a PAR, unconfirmed people sort to the top. Each row offers **✓ PAR**, **📍 Location**, and **Check Out** buttons.",
+      "**T-CARD PERSONNEL** — the same accountability, but grouped by resource (Engine 12, Team Alpha…). Each resource group shows its own PAR tally, e.g. \"3/4 PAR,\" so a supervisor can confirm a whole crew at once.",
+      "**⚠ UNACCOUNTED** — only the people who are checked in but not yet PAR-confirmed. This is the tab you watch during an emergency roll call. When it's empty it shows \"✓ All personnel accounted for.\"",
+      "**CROSS-REFERENCE** — compares the two lists and flags anyone in one but not the other (covered below)."
+    ]},
+
+    {"h1": "Conducting a Personnel Accountability Report (PAR)"},
+    {"p": "A **Personnel Accountability Report (PAR)** is a formal, time-stamped roll call that confirms every person on the incident is accounted for. Conduct one at regular intervals, at every shift or operational-period change, whenever a hazard escalates, and immediately any time someone can't be located."},
+    {"steps": [
+      "Click **🔴 Conduct PAR** in the controls bar. The time is stamped in the **PAR badge** at the top right, and the page jumps to the **ICS-211 CHECK-IN LIST** with unconfirmed people sorted to the top.",
+      "Call each supervisor or crew boss by radio and have them confirm their people. As each person is confirmed, click **✓ PAR** on their row — the tile counts update in real time and the row turns green.",
+      "For a crew-by-crew count, switch to the **T-CARD PERSONNEL** tab and confirm by resource; each group shows its own running PAR tally.",
+      "Watch the **⚠ UNACCOUNTED** tab. If anyone remains after all supervisors have reported, transmit their name and last known assignment.",
+      "When the **Unaccounted** tile reaches 0, the PAR badge turns green and reads \"✓ All accounted for.\"",
+      "To begin a new roll call later, click **↺ Reset PAR**. All confirmations clear and a fresh cycle begins."
+    ]},
+    {"callout": {"kind": "important", "label": "IF SOMEONE CAN'T BE LOCATED",
+      "text": "If a person cannot be accounted for after you've exhausted radio contact, escalate **immediately** to the Incident Commander — do not wait for the rest of the count. On a search-and-rescue or high-risk operation, the Dead Man's Switch (Chapter 12) should already be running as an independent backstop that alerts if net check-ins stop."}},
+
+    {"h1": "Last Known Location"},
+    {"p": "Knowing someone is accounted for is good; knowing **where** they are is better. On any person's row, click **📍 Location** to open the **UPDATE LAST KNOWN LOCATION** window. Type a plain description — \"Division Alpha, east perimeter\" or \"Base Camp medical tent\" — and click **Save**. The location is stamped with a time and shown on the person's row (and feeds the resource map). During a PAR, having supervisors report each crew's location as they confirm it turns the roll call into a live picture of where everyone is."},
+
+    {"h1": "Checking People Out"},
+    {"p": "Check-out matters as much as check-in. When a person leaves the incident for any reason, check them out so the accountability count reflects who is **actually** still there. People who leave without being checked out create false positives — they show as unaccounted in a PAR and can trigger a needless search."},
+    {"steps": [
+      "Find the person in the **ICS-211 CHECK-IN LIST** and click **Check Out** on their row; confirm.",
+      "Their check-out time is stamped automatically and they drop out of the active accountability count. Their record isn't deleted — it stays for documentation, shown dimmed as **Checked Out**.",
+      "At the end of the operation, use **⏹ Check All Out** (top of the ICS-211 tab) to check out everyone still shown as checked in — a fast demobilization sweep. It asks you to confirm the count first."
+    ]},
+
+    {"h1": "Cross-Reference — Closing the Gap"},
+    {"p": "The **CROSS-REFERENCE** tab compares the ICS-211 check-in list against the T-card personnel rosters and flags two specific mismatches. Run it at the start of each operational period and whenever new people arrive."},
+    {"table": {
+      "headers": ["Flag", "What it means", "What to do"],
+      "rows": [
+        ["**Checked in — not on any T-card**", "The person checked in but isn't assigned to any resource. They may be floating staff, a late assignment, or the T-card wasn't updated.", "Assign them to a resource and add them to its T-card, or confirm they're intentionally unassigned (e.g. Safety Officer) and note their location."],
+        ["**On T-card — not checked in via ICS-211**", "The person is on a resource T-card but has no check-in entry. This is a **safety gap** — they may be deployed to a hazardous area but aren't in the formal accountability system.", "Direct them to complete ICS-211 check-in immediately. If they can't be located, escalate to the IC."]
+      ],
+      "widths": [1.9, 2.6, 2.0]
+    }},
+    {"callout": {"kind": "note", "label": "A CLEAN CROSS-REFERENCE",
+      "text": "When neither flag appears, the tab reads \"✓ All personnel cross-reference OK\" — everyone on a T-card has checked in, and everyone checked in is on a T-card. That's the state you want at the start of every operational period."}},
+
+    {"h1": "Accountability When Conditions Deteriorate Fast"},
+    {"p": "When something changes suddenly — a structure turning unstable, a fire run, a hazardous-materials release — run an emergency PAR without waiting for the schedule."},
+    {"steps": [
+      "Click **🔴 Conduct PAR** at once — the timestamp marks the start of the check.",
+      "Transmit on the command channel: \"__All supervisors, this is Safety, emergency PAR — report personnel count by division/group immediately.__\"",
+      "As each supervisor reports, click **✓ PAR** for their people on the **T-CARD PERSONNEL** tab.",
+      "Check the **⚠ UNACCOUNTED** tab after each supervisor. Transmit the name and last known assignment of anyone still unaccounted.",
+      "If a person can't be located within about five minutes, treat it as a missing-responder emergency — notify the IC, halt operations in the affected area, and start a search."
+    ]},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__The tiles and lists are blank.__ Select an incident from the **Select incident...** dropdown (and a period). The page needs to know which incident to account for.",
+      "__The Unaccounted tab says \"Conduct a PAR first.\"__ Unaccounted only means something during a PAR cycle. Click **🔴 Conduct PAR** to start one, then work the list.",
+      "__Everyone shows as unaccounted right after I started the PAR.__ That's expected — a fresh PAR marks everyone unconfirmed until you click **✓ PAR** on each person as they're confirmed.",
+      "__Someone is listed but already went home.__ They were never checked out. Click **Check Out** on their row so they leave the active count; their record is kept, just dimmed.",
+      "__A crew member is on a T-card but flagged in Cross-Reference.__ They haven't completed ICS-211 check-in. Direct them to check in; if they can't be reached, escalate to the IC — this is a real safety gap, not a data glitch.",
+      "__I need to start a new head count.__ Click **↺ Reset PAR** and confirm. All PAR confirmations clear and a new cycle begins from zero.",
+      "__The page isn't picking up recent check-ins.__ Click **↺ Refresh**, or tick **Auto 60s** to refresh automatically. If it still lags, confirm you're on the FieldCommand Wi-Fi and the server is running."
+    ]}
+  ]
+}

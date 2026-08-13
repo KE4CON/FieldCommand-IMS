@@ -1,0 +1,187 @@
+{
+  "order": 9,
+  "title": "The Health Monitor — health_monitor.py",
+  "subtitle": "A tiny always-on service, python/health_monitor.py, answers one question over and over: is this appliance healthy and ready to run an incident? It reads the Raspberry Pi's temperature, memory, disks, and each system service, checks the internet and the Global Positioning System (GPS), and feeds the dashboard and the pre-flight readiness screen.",
+  "in_this_chapter": [
+    "What the health monitor is and why it runs as its own service",
+    "How it is reached — localhost only, through nginx at /svc/5051",
+    "How it probes the machine (temperature, memory, disk, services)",
+    "How it checks services with systemctl and the internet with a real request",
+    "How the endpoints are shaped, including the cached quick check",
+    "Why /api/preflight is delegated to the main API on port 5050",
+    "How the dashboard and readiness screen consume it",
+    "Design takeaways and the maintainer's rule"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "IN ONE SENTENCE",
+      "text": "`python/health_monitor.py` is a small read-only Hypertext Transfer Protocol (HTTP) service on port 5051 that gathers the appliance's vital signs — temperature, memory, disk, service status, internet, GPS — caches them briefly, and serves them as JavaScript Object Notation (JSON) so the dashboard and the pre-flight screen can show a green or red light."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "Before an operator keys up a radio or opens the Incident Command System (ICS) forms, they want one honest answer: **is this box working?** The health monitor exists to give that answer. It is [python/health_monitor.py](python/health_monitor.py), a standalone service that reports, in its own words, \"CPU temp, memory, disk, service status, internet connectivity, GPS status, Dead Man's Switch state, preflight results.\" It does not store anything, it does not change anything, and it does not know about incidents or forms. It only looks at the machine and tells you what it sees."},
+    {"p": "It is a **separate service** on purpose. If the main Federal Communications Commission (FCC) lookup Application Programming Interface (API) on port 5050 hangs, or the ICS platform on port 5055 crashes, the health monitor is a different process and keeps answering — so the dashboard can still tell you *that* one of the others is down. A monitor that shared a process with the thing it watches would die with it. Keeping it small and independent is what lets it be trusted."},
+    {"callout": {"kind": "note", "label": "JARGON, IN PLAIN WORDS",
+      "text": "A **service** here is a background program managed by the operating system (started at boot, restarted if it dies). **systemd** is Linux's service manager, and **systemctl** is the command you use to ask it about a service. **localhost** (address `127.0.0.1`) means \"this same machine\" — a localhost-only server cannot be reached from the network directly. **nginx** is the web server that sits in front and forwards browser requests to the right internal service."}},
+
+    {"h1": "How It Is Reached — localhost Only, Through nginx"},
+    {"p": "The service binds to `127.0.0.1` (localhost) and nothing else. The last lines of the file make that explicit, and the comment says exactly why:"},
+    {"code": [
+      "if __name__ == \"__main__\":",
+      "    print(\"[health-monitor] Starting on port 5051\")",
+      "    # Pre-warm cache in background",
+      "    threading.Thread(target=collect_health, daemon=True).start()",
+      "    # Localhost only — reached via nginx at /svc/5051 over HTTPS.",
+      "    server = HTTPServer((\"127.0.0.1\", 5051), HealthHandler)",
+      "    server.serve_forever()"
+    ]},
+    {"p": "Because it binds to localhost, the only way a browser can reach it is through nginx, which forwards a same-origin path to it. The nginx configuration maps `/svc/5051/` to the service and gives it a deliberately short read timeout — a health check that cannot answer in ten seconds is itself a symptom:"},
+    {"code": [
+      "location /svc/5051/ {   # health monitor",
+      "    proxy_pass         http://127.0.0.1:5051/;",
+      "    proxy_set_header   Host $host;",
+      "    proxy_read_timeout 10;",
+      "}"
+    ]},
+    {"p": "So when the dashboard asks for `\/svc\/5051\/api\/health\/quick`, nginx strips the `/svc/5051/` prefix and the service sees `\/api\/health\/quick`. This is the same same-origin pattern every FieldCommand service uses, which is why the front end works identically over plain HTTP in development and Hypertext Transfer Protocol Secure (HTTPS) in production, with no mixed-content warnings."},
+
+    {"h1": "How It Works — Probing the Machine"},
+    {"p": "The heart of the file is a set of small, single-purpose functions, each of which reads one aspect of the machine and returns a plain dictionary. None of them throw: every one is wrapped so that a failure returns an empty or safe default instead of crashing the whole health report. That is the guiding rule of the whole file — **a monitor must never fail louder than the thing it is monitoring.**"},
+    {"p": "Everything that shells out to a command goes through one tiny helper, `run()`, which enforces a timeout and swallows failure into an empty string. A hung command can never hang the health check:"},
+    {"code": [
+      "def run(cmd, timeout=3):",
+      "    try:",
+      "        r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)",
+      "        return r.stdout.strip()",
+      "    except Exception:",
+      "        return \"\""
+    ]},
+    {"p": "Temperature is read the cheap way first (a kernel file), then a Pi-specific fallback. Note the sanity range: a plausible reading is 10–100 °C, and anything outside that is ignored rather than reported as a false alarm:"},
+    {"code": [
+      "def get_cpu_temp():",
+      "    \"\"\"Read CPU temperature in Celsius\"\"\"",
+      "    # Try thermal zone (Linux)",
+      "    for tz in Path(\"/sys/class/thermal\").glob(\"thermal_zone*/temp\"):",
+      "        try:",
+      "            v = int(tz.read_text().strip())",
+      "            if 10000 < v < 100000:  # sanity: 10–100°C",
+      "                return round(v / 1000, 1)",
+      "        except Exception:",
+      "            pass",
+      "    # Try vcgencmd (Pi-specific)",
+      "    out = run([\"vcgencmd\", \"measure_temp\"])",
+      "    ..."
+    ]},
+    {"p": "Memory is parsed straight from `/proc/meminfo`, and disk usage is gathered for each mount point that actually exists (`/`, `/opt`, and the optional Non-Volatile Memory express (NVMe) or Solid State Drive (SSD) mounts). Both convert raw numbers into the megabytes, gigabytes, and percentages the dashboard shows, and both fall back to a zeroed structure on error so the shape of the JSON never changes."},
+    {"callout": {"kind": "note", "label": "JARGON, IN PLAIN WORDS",
+      "text": "`/proc/meminfo` and `/sys/class/thermal` are not real files on a disk — they are windows the Linux kernel exposes as if they were files, so a program can read live memory and temperature just by reading text. **statvfs** is the system call behind free-space numbers. **TPV** (Time-Position-Velocity) is the GPS daemon's report line that carries the current fix, latitude, and longitude."}},
+
+    {"h1": "How It Works — Services and Connectivity"},
+    {"p": "The list of services the monitor watches is a plain table at the top of the file — a system name paired with a friendly label the dashboard can print. Adding a new service to the readiness view is a one-line change here:"},
+    {"code": [
+      "SERVICES = [",
+      "    (\"nginx\",           \"Web Server\"),",
+      "    (\"fcc-lookup\",      \"FCC Lookup API\"),",
+      "    (\"health-monitor\",  \"Health Monitor\"),",
+      "    (\"direwolf\",        \"Direwolf TNC\"),",
+      "    (\"pat\",             \"Pat Winlink\"),",
+      "    (\"ics-platform\",    \"ICS Platform\"),",
+      "    # ... more",
+      "]"
+    ]},
+    {"p": "Checking whether each one is up is exactly what `systemctl is-active` answers, so `get_services()` simply asks the operating system service by service and normalizes the reply into a boolean plus the raw status text:"},
+    {"code": [
+      "def get_services():",
+      "    results = {}",
+      "    for svc_name, label in SERVICES:",
+      "        out = run([\"systemctl\", \"is-active\", svc_name])",
+      "        results[svc_name] = {\"label\": label, \"active\": out == \"active\",",
+      "                             \"status\": out or \"inactive\"}",
+      "    return results"
+    ]},
+    {"p": "The internet check is deliberately two-sided. It is easy to fool a naive check — a captive portal will answer HTTP but real name resolution may be broken, and vice versa — so the monitor only reports `connected` when **both** a Domain Name System (DNS) lookup and a real HTTP request to a known 204-no-content endpoint succeed:"},
+    {"code": [
+      "def get_internet():",
+      "    \"\"\"Check internet via DNS and HTTP\"\"\"",
+      "    dns_ok = False; http_ok = False",
+      "    try:",
+      "        socket.setdefaulttimeout(3)",
+      "        socket.getaddrinfo(\"dns.google\", 443)",
+      "        dns_ok = True",
+      "    except Exception: pass",
+      "    try:",
+      "        urllib.request.urlopen(\"http://connectivitycheck.gstatic.com/generate_204\", timeout=4)",
+      "        http_ok = True",
+      "    except Exception: pass",
+      "    return {\"connected\": dns_ok and http_ok, \"dns\": dns_ok, \"http\": http_ok}"
+    ]},
+    {"p": "GPS is read by talking to the GPS daemon (`gpsd`) directly on its local port 2947, sending a `?POLL;` and parsing the first Time-Position-Velocity line back. A `mode` of 2 or higher means a real position fix. As everywhere else, an unreachable daemon returns a safe \"no fix\" dictionary rather than an exception."},
+
+    {"h1": "How It Works — The Endpoints and the Cache"},
+    {"p": "Collecting everything means shelling out several times, so the full report is **cached for ten seconds**. Many dashboard tiles can refresh at once and only the first one in each ten-second window pays the cost; the rest get the cached copy. The cache is guarded by a lock so two threads never rebuild it at the same time:"},
+    {"code": [
+      "_cache = {}",
+      "_cache_lock = threading.Lock()",
+      "_CACHE_TTL = 10  # seconds",
+      "",
+      "def collect_health():",
+      "    with _cache_lock:",
+      "        now = time.time()",
+      "        if _cache.get(\"ts\", 0) + _CACHE_TTL > now:",
+      "            return _cache.get(\"data\")",
+      "    data = { \"timestamp\": utcnow(), \"cpu_temp\": get_cpu_temp(),",
+      "             \"memory\": get_memory(), \"disk\": get_disk(),",
+      "             \"services\": get_services(), \"internet\": get_internet(),",
+      "             \"gps\": get_gps(), ... }",
+      "    with _cache_lock:",
+      "        _cache[\"data\"] = data; _cache[\"ts\"] = time.time()",
+      "    return data"
+    ]},
+    {"p": "The request handler routes a handful of read-only paths. The full report lives at `/api/health`; a trimmed, cache-only summary lives at `/api/health/quick` for tiles that just need a green light and a count; and individual aspects (`/services`, `/gps`, `/internet`) are exposed for pages that only care about one thing. The quick check never triggers a fresh collection of its own — it reads whatever is already cached:"},
+    {"code": [
+      "elif path == \"/api/health/quick\":",
+      "    # Lightweight check — cached only",
+      "    d = _cache.get(\"data\") or collect_health()",
+      "    svcs = d.get(\"services\", {})",
+      "    return self.send_json({",
+      "        \"cpu_temp\":  d.get(\"cpu_temp\"),",
+      "        \"internet\": d.get(\"internet\", {}).get(\"connected\"),",
+      "        \"gps_fix\":  d.get(\"gps\", {}).get(\"fix\"),",
+      "        \"services_ok\": sum(1 for v in svcs.values() if v.get(\"active\")),",
+      "        \"services_total\": len(svcs),",
+      "    })"
+    ]},
+
+    {"h1": "How It Works — Delegating Pre-flight to the Main API"},
+    {"p": "There is one endpoint the health monitor does **not** answer itself. The full pre-flight readiness verdict (the GO / NO-GO decision) is computed by the main API on port 5050, because that is where the incident and configuration data lives. The health monitor exposes `/api/preflight` only as a convenience passthrough, calling the real one over localhost and forwarding its answer:"},
+    {"code": [
+      "elif path == \"/api/preflight\":",
+      "    # Delegate to fcc_lookup_server's preflight",
+      "    try:",
+      "        req = urllib.request.urlopen(\"http://127.0.0.1:5050/api/preflight\", timeout=10)",
+      "        return self.send_json(json.loads(req.read()))",
+      "    except Exception as e:",
+      "        return self.send_json({\"error\": str(e), \"verdict\": \"NO-GO\"}, 503)"
+    ]},
+    {"callout": {"kind": "important", "label": "WHY A FAILURE HERE RETURNS NO-GO",
+      "text": "If the main API cannot be reached, the passthrough does not return \"unknown\" — it returns an explicit `\"verdict\": \"NO-GO\"` with a 503 status. That is the safe default for a readiness check: when the system cannot prove it is ready, it must say it is **not** ready. Never soften this to a neutral or optimistic answer; a green light nobody earned is worse than a red one."}},
+    {"p": "This is also why the pre-flight *screen* itself talks straight to the main API — `preflight.html` sets `const API = '/svc/5050';` and fetches `\/api\/preflight` there. The health monitor's copy of the route exists for callers that are already talking to 5051 and want everything from one place, not as the authority on the verdict."},
+
+    {"h1": "How the Dashboard Consumes It"},
+    {"p": "The home dashboard is the main consumer. It fetches the quick summary and the service list from the monitor through nginx, each with its own timeout so a slow health check degrades one tile instead of freezing the page:"},
+    {"code": [
+      "const r  = await fetch(\"/svc/5051/api/health/quick\",  {signal: AbortSignal.timeout(5000)});",
+      "const r2 = await fetch(\"/svc/5051/api/health/services\",{signal: AbortSignal.timeout(5000)});"
+    ]},
+    {"p": "Because the responses are plain JSON with a stable shape, the front end only has to read fields like `services_ok`, `services_total`, `internet`, and `gps_fix` and turn them into lights and counters. The ten-second server-side cache means the dashboard can poll freely without ever overloading the Pi with `systemctl` calls."},
+
+    {"h1": "Why It Matters / Design Takeaways"},
+    {"bullets": [
+      "__Independent by design.__ The monitor is its own process on its own port, so it survives the failure of any service it watches and can still report that failure.",
+      "__Read-only and crash-proof.__ Every probe is wrapped to return a safe default, timeouts bound every external call, and nothing is ever written — a monitor must not become a new source of failure.",
+      "__Cheap to poll.__ A ten-second cache behind a lock means many dashboard tiles refreshing at once cost the machine almost nothing.",
+      "__Honest defaults.__ Two-sided internet checks avoid captive-portal false positives, and the pre-flight passthrough returns NO-GO when it cannot prove otherwise.",
+      "__One authority per fact.__ The readiness verdict is computed once, in the main API, and only forwarded here — the monitor never invents a second opinion."
+    ]},
+    {"callout": {"kind": "important", "label": "MAINTAINER'S RULE",
+      "text": "Keep the health monitor read-only, bounded, and un-crashable. Every new probe must wrap its work in `try/except` and return a safe default, must use `run()` (or an explicit timeout) for anything external, and must keep the JSON shape stable so the dashboard never sees a missing key. To watch a new service, add one `(name, label)` line to `SERVICES` — nothing else. And never let this service become the authority on a fact another service owns: if a value is computed elsewhere (like the pre-flight verdict), forward it, do not recompute it."}}
+  ]
+}

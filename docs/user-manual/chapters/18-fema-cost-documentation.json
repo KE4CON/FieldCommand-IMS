@@ -1,0 +1,135 @@
+{
+  "order": 18,
+  "title": "Federal Emergency Management Agency (FEMA) Public Assistance (PA) Cost Documentation",
+  "subtitle": "Track every reimbursable dollar — labor, equipment, materials, and contracts — tied to the active incident, and roll it into a Project Worksheet summary you can hand to your state emergency management agency.",
+  "in_this_chapter": [
+    "What FEMA Public Assistance cost tracking is and why it matters",
+    "Opening the page and reading the totals bar",
+    "The four tabs: Labor, Equipment, Materials/Contracts, Project Worksheet",
+    "Recording Force Account Labor (and importing hours from an ICS-214)",
+    "Recording Equipment and using the FEMA rate lookup",
+    "Recording Materials and Contracts",
+    "Building and exporting the Project Worksheet summary",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "Open **FEMA Costs**, pick your **incident**, then log costs under the four tabs: **Force Account Labor**, **Force Account Equipment**, **Materials / Contracts**, and **Project Worksheet**. Each entry's total is figured for you and rolled into the totals bar at the top. When the incident is over, fill in the Project Worksheet details and click **📄 Export PW** to get a summary for your state emergency management agency."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "When a disaster is federally declared, the **Federal Emergency Management Agency (FEMA)** can reimburse eligible responders for money they spent responding — through a grant program called **Public Assistance (PA)**. But FEMA only pays back costs you can **document**: who worked and for how long, what equipment ran and at what rate, and what you bought and from whom. This page is where {{org}} keeps that record while the incident is happening, so the money isn't lost to fuzzy memory weeks later."},
+    {"p": "FEMA sorts eligible costs into a few buckets, and this page mirrors them exactly: **Force Account Labor** (your own people's time), **Force Account Equipment** (your own vehicles and gear), and **Materials and Contracts** (things you bought or hired). Every entry you make is tied to the **active incident**, and the page adds everything up into a **Project Worksheet (PW)** summary — the document your state passes to FEMA."},
+    {"callout": {"kind": "important", "label": "THIS IS A WORKSHEET, NOT THE OFFICIAL FILING",
+      "text": "FieldCommand helps you organize and total your costs — it does **not** replace the official FEMA Project Worksheet (Form FF-104-FY-21-112), and it does not submit anything. Real filings go through your state or territorial emergency management agency with supporting receipts and records. Review every entry with your Finance Section Chief before submission, and remember costs must be tied to the disaster and not already covered by insurance."}},
+
+    {"h1": "Opening the Page and Reading the Totals Bar"},
+    {"steps": [
+      "From the dashboard, open **FEMA Costs** (the FEMA PA Cost Documentation page).",
+      "At the top right, choose your incident from the **Select incident...** dropdown. All costs you enter are stored against that incident.",
+      "The **totals bar** across the top fills in, and the four tabs become active."
+    ]},
+    {"p": "The **totals bar** is a live running tab of the whole incident. It shows four numbers, recalculated every time you add or edit an entry:"},
+    {"table": {
+      "headers": ["Total", "What it sums"],
+      "rows": [
+        ["**Force Acct Labor**", "Every labor entry, including overtime and fringe benefits"],
+        ["**Force Acct Equipment**", "Every equipment entry (hours × rate)"],
+        ["**Materials / Contracts**", "Every material and contract entry"],
+        ["**Total Eligible Costs**", "The three above, added together — your bottom line"]
+      ],
+      "widths": [2.6, 3.9]
+    }},
+    {"screenshot": "The FEMA PA Cost Documentation page with the totals bar on top and the four cost tabs below"},
+
+    {"h1": "Force Account Labor"},
+    {"p": "\"Force account\" means your own personnel, as opposed to hired contractors. The **👷 Force Account Labor** tab tracks the hours your employees and volunteers worked on the incident. For most regular employees, FEMA reimburses **overtime** hours, not regular time — so the form keeps regular and overtime separate, and it accounts for **fringe benefits** (the percentage on top of wages for things like taxes and insurance)."},
+    {"steps": [
+      "On the Labor tab, click **+ Add Labor Entry**.",
+      "Fill in the person and their hours. As you type rates and fringe, the **Preview Total** updates live so you can see the calculated cost before saving.",
+      "Click **SAVE**. The entry joins the table and the totals bar updates."
+    ]},
+    {"table": {
+      "headers": ["Field", "What to enter"],
+      "rows": [
+        ["**Employee Name** *(required)*", "The worker's name, entered Last, First"],
+        ["**Position / Title**", "Their job title, e.g. Emergency Manager"],
+        ["**Department**", "Their home department or agency"],
+        ["**Date Worked**", "The day these hours were worked"],
+        ["**Regular Hours**", "Regular-time hours on the incident"],
+        ["**Overtime Hours**", "Overtime hours — usually the reimbursable category for employees"],
+        ["**Regular Rate ($/hr)** / **OT Rate ($/hr)**", "The hourly pay rates from payroll"],
+        ["**Fringe Benefits %**", "Fringe as a percentage of wages (defaults to 30)"],
+        ["**Notes**", "Anything useful — the assignment, watch shift, etc."]
+      ],
+      "widths": [2.6, 3.9]
+    }},
+    {"p": "The **Total w/Fringe** column is figured automatically as **(regular hours × regular rate + overtime hours × overtime rate) × (1 + fringe%)**. To fix an entry later, click the **✏** button on its row; the same window reopens with a **Delete** button available."},
+    {"callout": {"kind": "tip", "label": "IMPORT HOURS FROM THE ACTIVITY LOG",
+      "text": "The **↓ Import from ICS-214** button pulls the unit leaders out of the incident's saved **ICS-214 Activity Logs** and creates a labor entry for each — a fast head start. It fills in the name and unit and marks where it came from, but leaves the **hours and rates as placeholders**. You must open each imported entry and fill in the actual hours and pay rates before the cost is real."}},
+
+    {"h1": "Force Account Equipment"},
+    {"p": "The **🚛 Force Account Equipment** tab tracks your own vehicles and equipment. FEMA publishes a **Schedule of Equipment Rates** — a national price list of what it pays per hour for each kind of gear — and this tab is built around it. Rather than guess a rate, you look it up."},
+    {"steps": [
+      "On the Equipment tab, click **+ Add Equipment Entry**.",
+      "Type the **Equipment Type** (required). To get the official rate, click **📋 Lookup** next to the FEMA Rate field.",
+      "In the **FEMA Equipment Rate Lookup** window, search for the equipment and click **Use** on the right row — the rate (and its code) drop into your entry automatically.",
+      "Enter the **Hours Used** and the **Agency Unit ID** (a unit number or asset tag). Add the operator's name if useful. The **Preview Total** shows hours × rate.",
+      "Click **SAVE**."
+    ]},
+    {"table": {
+      "headers": ["Field", "What to enter"],
+      "rows": [
+        ["**Equipment Type** *(required)*", "What the equipment is, e.g. Pickup Truck (< 1 Ton)"],
+        ["**Agency Unit ID**", "Your unit number, VIN, or asset tag"],
+        ["**FEMA Schedule Code**", "The rate-schedule code (fills in from the lookup)"],
+        ["**Date Used**", "The day the equipment ran"],
+        ["**Hours Used**", "How many hours it operated on the incident"],
+        ["**FEMA Rate ($/hr)**", "The hourly rate — set it from **📋 Lookup**"],
+        ["**Operator Name**", "Who ran it, if tracked separately"],
+        ["**Notes**", "Mileage, fuel, purpose"]
+      ],
+      "widths": [2.6, 3.9]
+    }},
+    {"p": "The equipment total is simply **hours × rate**. Rows are edited or deleted with the **✏** button, the same as labor."},
+
+    {"h1": "Materials and Contracts"},
+    {"p": "The **📦 Materials / Contracts** tab covers things you **bought** for the incident (sandbags, cones, fuel) and **work you hired out** (a contractor's services). Both live here because both are documented the same way — with a purchase order or invoice."},
+    {"steps": [
+      "On the Materials / Contracts tab, click **+ Add Material / Contract**.",
+      "Type a **Description** (required) and choose a **Category** — Materials, Supplies, Contracts, Rental, or Other.",
+      "Enter the **Vendor / Contractor**, the **Quantity** and **Unit** (each, ton, yd³, hr…), and the **Unit Cost**. The **Total Cost** previews as quantity × unit cost.",
+      "Record the **PO / Contract #** and any notes (receipt number, justification), then click **SAVE**."
+    ]},
+    {"callout": {"kind": "important", "label": "KEEP THE PAPER",
+      "text": "FEMA requires **source documentation** for every cost claim. Enter the purchase order or invoice number in the **PO / Contract #** field, and keep the actual receipts and invoices on file — the entry here is the index, not the proof."}},
+
+    {"h1": "The Project Worksheet"},
+    {"p": "The **📋 Project Worksheet** tab is where the incident's costs come together into a submission-ready summary. The **Eligible Cost Summary** near the bottom is filled in automatically from your three cost tabs — you don't retype any figures. You supply the descriptive details around it:"},
+    {"table": {
+      "headers": ["Field", "What to enter"],
+      "rows": [
+        ["**Applicant Name**", "Who is claiming the costs — for example {{org}}"],
+        ["**Disaster / Declaration Number**", "The FEMA declaration number (e.g. FEMA-DR-XXXX-{{state_ex}})"],
+        ["**Incident Name**", "Fills in from the selected incident; editable"],
+        ["**Work Category**", "The FEMA category A through G (Debris Removal, Emergency Protective Measures, Roads and Bridges, and so on)"],
+        ["**Work Description / Scope**", "What was done, what was affected, and why it was necessary"],
+        ["**Work Start / End Date**", "The span of the work being claimed"]
+      ],
+      "widths": [2.9, 3.6]
+    }},
+    {"p": "When it's ready, click **📄 Export PW** in the page header. FieldCommand generates a formatted plain-text summary — applicant and disaster details, the scope of work, the cost totals by category, and an itemized breakdown of every labor, equipment, and material entry — and downloads it as a `.txt` file. Paste it into the FEMA Grants Portal or attach it to your official Project Worksheet."},
+    {"callout": {"kind": "warning", "label": "EQUIPMENT RATES GO STALE",
+      "text": "FEMA updates its equipment rates every year. If the loaded rates are more than a year old, an amber **rate reminder** appears near the top of the page with a link to the **FEMA Equipment Rates** page, where the rates are managed and updated (see Chapter 19). Update them before claiming so your equipment costs use current figures."}},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__The tabs are empty and nothing saves.__ Choose an incident from the **Select incident...** dropdown first. Every entry is stored against a specific incident; with none selected there is nowhere to save.",
+      "__My totals didn't change after I added an entry.__ The totals bar recalculates on save. If a number looks wrong, re-open the entry with **✏** and check the hours, rate, and fringe — the preview inside the window shows the calculation before you save.",
+      "__I imported from ICS-214 but the labor totals are near zero.__ The import fills in names and units but leaves **hours and rates as placeholders**. Open each imported labor entry and enter the real hours and pay rates.",
+      "__The FEMA rate lookup won't open or is empty.__ The rates load from the FieldCommand server. Confirm you're on the FieldCommand Wi-Fi and the server is running; if an amber rate reminder shows, the rate table may need updating on the **FEMA Equipment Rates** page.",
+      "__An amber \"rates are outdated\" banner is showing.__ The loaded FEMA equipment rates are over a year old. Click **→ Review Rates** and update them so equipment costs use the current schedule.",
+      "__The exported summary shows placeholder text like \"[Enter applicant name].\"__ Those fields were left blank on the Project Worksheet tab. Fill in Applicant, Disaster #, Category, and Scope, then click **📄 Export PW** again.",
+      "__Can I submit straight from FieldCommand?__ No. This page produces a worksheet summary only. Official Public Assistance filings go through your state or territorial emergency management agency with supporting documentation — review everything with your Finance Section Chief first."
+    ]}
+  ]
+}

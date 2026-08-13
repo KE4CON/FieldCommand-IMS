@@ -1,0 +1,136 @@
+{
+  "order": 23,
+  "title": "ICS-214 Activity Log & ICS-309 Communications Log",
+  "subtitle": "Two record-keeping forms in one chapter: the ICS-214 that logs what a unit did during a shift, and the ICS-309 that logs the message traffic on a radio net — both print-ready, both feeding the incident record.",
+  "in_this_chapter": [
+    "What each log is and how they differ",
+    "Filling in the ICS-214 header, personnel, and resources",
+    "Building the ICS-214 activity log entry by entry",
+    "Signing and generating the ICS-214",
+    "Exporting ICS-214 personnel to FEMA labor costs",
+    "The two ways to make an ICS-309",
+    "Filling in the ICS-309 by hand",
+    "Saving, printing, and tagging to an incident",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "The **ICS-214** logs what a unit or section did during an operational period — add personnel, add timestamped activity entries, sign, and **📄 Generate Form** to print. It can also push its people into **FEMA Labor** costs. The **ICS-309** logs radio message traffic. The easy way to make one is automatic — the Net Logger's **Export ICS-309** button builds it from a net you ran. The **ICS-309 page** itself is for typing a log by hand when there's no net logger record."}},
+
+    {"h1": "What These Are / What They Are For"},
+    {"p": "This chapter covers two Incident Command System (ICS) record-keeping forms that often get confused because their numbers are close. They do different jobs:"},
+    {"table": {
+      "headers": ["Form", "Records", "Kept by"],
+      "rows": [
+        ["**ICS-214 Activity Log**", "What a unit, resource, or section **did** during an operational period — the significant events and activities, timestamped.", "Each unit leader, for their own unit."],
+        ["**ICS-309 Communications Log**", "The **message traffic** that passed on a radio net or at a station — who called whom, when, and about what.", "The net control operator or radio operator."]
+      ],
+      "widths": [2.3, 3.0, 1.9]
+    }},
+    {"p": "Both produce a clean, print-ready form for the Incident Action Plan (IAP) and the permanent incident record. The ICS-214 has a bonus: it can hand its personnel list straight to the Federal Emergency Management Agency (FEMA) labor cost tracker, bridging the gap between logging what people did and getting them reimbursed for it."},
+
+    {"h1": "ICS-214 — Filling In the Header"},
+    {"p": "Open **ICS-214** from the dashboard or the top navigation. The screen has a live UTC clock and several cards. The first, **1. Incident & Unit Information**, sets the context:"},
+    {"table": {
+      "headers": ["Field", "What to type"],
+      "rows": [
+        ["**Incident Name**", "The incident this log belongs to (example: `Operation Winter Storm 2026`)."],
+        ["**Operational Period Date From / To**", "The start and end dates of the shift this log covers."],
+        ["**Time From**", "The start time of the operational period (example: `0600`)."],
+        ["**Unit Name / Designator**", "The unit or resource this log is for (example: `{{org_abbr}} Communications Unit`)."],
+        ["**Unit Leader Name**", "The name of the person leading the unit."],
+        ["**Unit Leader Position**", "Their ICS position (example: `Communications Unit Leader (COML)`)."]
+      ],
+      "widths": [2.7, 3.8]
+    }},
+
+    {"h1": "ICS-214 — Personnel and Resources"},
+    {"p": "The next card, **2. Personnel Assigned to This Period**, is a small table of who worked this shift. It starts with a few blank rows. For each person, fill in **Name**, **ICS Position**, and **Affiliation** (their agency or group). Click **+ Add Person** for more rows, and the **✕** on a row to remove it."},
+    {"p": "Below that, **2b. Resources Involved** is an optional table for the equipment, vehicles, and other gear used this period — radios, generators, go-boxes, vehicles. Each row has a **Resource** name and a **Type / Kind**. Click **+ Add Resource** to add one. If you leave this empty, it simply won't appear on the printed form."},
+    {"callout": {"kind": "note", "label": "PERSONNEL HERE ARE WHY THE FEMA EXPORT WORKS",
+      "text": "The people you list in the Personnel table are exactly who gets pushed to FEMA labor costs later. If you plan to claim labor reimbursement, take a moment to list everyone accurately — name and affiliation especially — because that's the data the cost tracker starts from."}},
+
+    {"h1": "ICS-214 — The Activity Log"},
+    {"p": "Card **3. Activity Log** is the point of the form: a running list of what happened, with times. Each entry is a **time** and a short **description** of the activity."},
+    {"steps": [
+      "Click **+ Add Entry** to add a blank entry you can time-stamp yourself, or **⏰ Add Timestamped Entry** to add one already stamped with the current UTC time.",
+      "Type the activity in the description box — what happened, plainly (example: \"Established contact with county EOC on 146.520\").",
+      "Repeat through the shift. The **⏰ Add Entry Now** button at the top does the same timestamp-and-add so you can log events as they occur.",
+      "Remove any entry with its **✕** button."
+    ]},
+    {"callout": {"kind": "tip", "label": "LOG AS YOU GO",
+      "text": "The timestamp buttons are built for real-time logging. Each time something notable happens, click **⏰ Add Timestamped Entry** and type a few words. It's far easier than reconstructing the whole shift from memory at the end — and a contemporaneous log is exactly what after-action reviews and reimbursement audits want to see."}},
+
+    {"h1": "ICS-214 — Signing and Generating"},
+    {"p": "The **4. Prepared By** card records who completed the log: **Prepared By (Name)**, **Position / Title**, and **Date / Time Prepared**. Below those is a **signature box** you can sign in with a mouse, stylus, or finger — the same signature pad used elsewhere, with a **Clear Signature** button and the option to leave it blank and sign the printed copy by hand. The **⏰ Auto-fill Dates** button fills the date fields with the current date and time."},
+    {"p": "Click **📄 Generate Form** to build the print-ready ICS-214 — the official layout with your personnel table, resources, activity log, and signature in place. From there you can:"},
+    {"table": {
+      "headers": ["Button", "What it does"],
+      "rows": [
+        ["**🖨 Print Form**", "Opens the print dialog to print the form or save it as a PDF."],
+        ["**💾 Save**", "Saves the log (to the server and to this device) so you can come back to it."],
+        ["**💵 Export to FEMA Labor**", "Pushes this period's personnel into the FEMA labor cost tracker (see below)."],
+        ["**← Edit**", "Returns to the entry form to make changes."]
+      ],
+      "widths": [2.3, 4.2]
+    }},
+
+    {"h1": "ICS-214 — Export to FEMA Labor"},
+    {"p": "This is the bridge from activity logging to reimbursement paperwork. Clicking **💵 Export to FEMA Labor** takes everyone in the Personnel table and creates a matching entry in the FEMA Force Account Labor tracker for the active incident — carrying over each person's name, position, and affiliation."},
+    {"steps": [
+      "Make sure the Personnel table lists everyone who worked, with names filled in.",
+      "Generate the form, then click **💵 Export to FEMA Labor**.",
+      "FieldCommand creates a labor entry for each person and tells you how many it exported.",
+      "Open the **FEMA PA Cost Documentation** page to fill in each person's **hours** and **pay rates** — the export carries the names, but you enter the hours and money there."
+    ]},
+    {"callout": {"kind": "important", "label": "THE EXPORT CARRIES PEOPLE, NOT HOURS",
+      "text": "The FEMA export creates one labor entry per person but leaves the **hours and rates blank** for you to fill in on the cost page. It's a head-start, not a finished cost record. Also, if no incident is currently selected, the entries are still created but without an incident link — so select your incident first for the cleanest result."}},
+
+    {"h1": "ICS-309 — Two Ways to Make One"},
+    {"p": "The **ICS-309 Communications Log** records the message traffic on a net or at a station. There are two ways to produce one, and picking the right one saves a lot of typing."},
+    {"table": {
+      "headers": ["Method", "When to use it"],
+      "rows": [
+        ["**Automatic — from the Net Logger**", "You ran a net and logged it. The Net Logger (net control / STARCOM logger) has an **Export ICS-309** button that builds the whole log for you — message traffic first, then the check-in list, with the net name, frequency/mode, and open/close times in the header. It both downloads a file and opens a print view."],
+        ["**Manual — the ICS-309 page**", "You need to log traffic that wasn't captured in a Net Logger. Open the **ICS-309** page and type each line by hand."]
+      ],
+      "widths": [2.7, 3.8]
+    }},
+    {"callout": {"kind": "tip", "label": "PREFER THE AUTOMATIC EXPORT",
+      "text": "If the traffic happened on a net you were logging, don't retype it here — go back to that net in the Net Logger and click **Export ICS-309**. It's faster and more accurate. Use the manual page only for traffic that has no net-logger record behind it."}},
+
+    {"h1": "ICS-309 — Filling In the Manual Page"},
+    {"p": "Open **ICS-309** from the navigation. The **Log Header** card sets the context of the log:"},
+    {"table": {
+      "headers": ["Field", "What to type"],
+      "rows": [
+        ["**Incident / Event Name**", "The incident or event (example: `Severe Storm 2026-06`)."],
+        ["**Operational Period — From / To**", "The start and end of the period this log covers."],
+        ["**Task No.**", "An optional task number."],
+        ["**Operator (Name / Callsign)**", "Who kept the log (example: `J. Smith W9XYZ`)."],
+        ["**Station / Net**", "The station or net name (example: `Net Control / EOC`)."],
+        ["**Page**", "The page number (example: `1 of 1`)."]
+      ],
+      "widths": [2.7, 3.8]
+    }},
+    {"p": "The **Log Entries** card is the message table. Each row is one message with a **Date / Time**, a **From** callsign, a **To** callsign, and the **Subject / Message**. Click **+ Add Entry** for a blank row, or **+ Add (timestamp now)** to add a row already stamped with the current time. Remove a row with its **✕**."},
+    {"steps": [
+      "Fill in the log header.",
+      "Add a row per message with **+ Add Entry** (or **+ Add (timestamp now)** during live traffic) and type the from, to, and subject.",
+      "Click **📄 Generate Form** to see the print-ready ICS-309.",
+      "Use **🖨 Print** to print or save as PDF, or **💾 Save to Incident** to file it in the incident record."
+    ]},
+    {"p": "The **Save to Incident** button also lets you tag the log to a specific incident using the dropdown next to it. If the server can't be reached, the log is saved locally on your device instead so nothing is lost, and you're told that's what happened."},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__My ICS-214 came back empty after I reopened the page.__ The page tries to restore your last session on this device, but a different device or a cleared browser won't have it. Use **💾 Save** to keep a server copy, and re-open from there.",
+      "__Export to FEMA Labor says I need to add a person.__ The Personnel table is empty or has no names filled in. Add at least one person with a name before exporting.",
+      "__I exported to FEMA Labor but the costs show $0.__ The export carries names only — hours and rates are blank until you enter them on the FEMA PA Cost Documentation page. Open it and fill in each person's hours and pay.",
+      "__My exported labor entries aren't attached to my incident.__ You exported with no incident selected. Select the incident first (its name is remembered across the cost pages), then export again.",
+      "__I don't want to retype my whole net into the ICS-309.__ Then don't — if you logged the net in the Net Logger, use its **Export ICS-309** button instead. The manual ICS-309 page is only for traffic with no net-logger record.",
+      "__I clicked Save to Incident and it said \"saved locally.\"__ The server was unreachable, so the log was kept on this device as a fallback. Reconnect to the FieldCommand Wi-Fi and try again to file it to the server.",
+      "__The printed form includes the menu bar.__ Use the form's own **🖨 Print** button rather than the browser menu — the page hides everything but the form when you print that way."
+    ]}
+  ]
+}

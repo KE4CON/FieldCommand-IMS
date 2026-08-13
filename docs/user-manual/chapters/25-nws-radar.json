@@ -1,0 +1,105 @@
+{
+  "order": 25,
+  "title": "National Weather Service (NWS) Animated Radar",
+  "subtitle": "A live, animated weather-radar map you can play back frame by frame — it lights up whenever FieldCommand has an internet connection, and gracefully holds the last picture when it doesn't.",
+  "in_this_chapter": [
+    "What the radar page is and where its data comes from",
+    "Opening the radar and what you see on screen",
+    "Reflectivity vs. Velocity, and reading the color legend",
+    "The playback controls — play, step, scrub, and speed",
+    "Choosing a color palette and jumping to a NEXRAD station",
+    "What happens when there's no internet (offline behavior)",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "Open **Radar** from the dashboard. If FieldCommand has internet, an animated weather-radar loop plays automatically over a dark map. Use the **⏸/▶** button to pause or play, drag the **timeline slider** to scrub through the loop, and set **Speed** to Slow/Med/Fast. Green is light rain, yellow is moderate, red is heavy, purple is extreme. No internet? The page shows the last radar it saw and keeps trying to reconnect."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "The **NEXRAD Radar** page shows live, moving weather radar for the United States. **NEXRAD** stands for **Next Generation Radar** — the nationwide network of Doppler weather radars run by the **National Weather Service (NWS)**. The page stitches the most recent radar images into a short animation so you can watch a storm's motion, judge which way it's tracking, and get a feel for how fast and how hard it's coming — all useful for keeping field teams safe and planning around the weather."},
+    {"p": "The imagery is pulled from an online radar service (RadrView), with an automatic backup source (the Iowa Environmental Mesonet, or **IEM**) if the first one is unavailable. Because the pictures come from the internet, **this page only works while FieldCommand has a WAN (internet) connection** — see Chapter 24. The header says so plainly, right next to the title: *· Requires internet connection*."},
+    {"callout": {"kind": "note", "label": "IT LIGHTS UP WHEN YOU HAVE INTERNET",
+      "text": "Radar is one of FieldCommand's internet-dependent extras. When a WAN source is present, the loop plays. When every internet source is down, the page can't fetch fresh radar — but it doesn't just go blank; it holds onto the last picture it managed to load and quietly reconnects. See **What Happens When There's No Internet**, below."}},
+
+    {"h1": "Opening the Radar and What You See"},
+    {"steps": [
+      "From the dashboard, open **Radar** (the ⛈ storm-cloud link). It's reachable from all dashboard modes.",
+      "The page fills the screen with a dark map. A thin header sits on top; a status bar and legend float over the map; and a control bar runs along the bottom.",
+      "If internet is available, you'll briefly see *Fetching radar frames…* and then the loop begins playing on its own."
+    ]},
+    {"screenshot": "The NEXRAD Radar page: a dark national map with colored radar returns, the reflectivity legend at top-right, and the playback control bar along the bottom"},
+    {"p": "The floating pieces around the map are:"},
+    {"table": {
+      "headers": ["On-screen element", "Where it is", "What it's for"],
+      "rows": [
+        ["**Status line**", "Top-left", "Shows what's loading — e.g. *NEXRAD CONUS composite* — and how many frames are in the loop."],
+        ["**Palette swatches**", "Top-right of the info bar", "Three little color circles for picking the radar color scheme (see below)."],
+        ["**Reflectivity legend**", "Top-right corner", "The color scale explaining what each radar color means in dBZ (see below)."],
+        ["**Control bar**", "Along the bottom", "All the playback controls — play/pause, step, the timeline slider, the time readout, and speed."]
+      ],
+      "widths": [2.1, 2.1, 3.0]
+    }},
+
+    {"h1": "Reflectivity, Velocity, and the Color Legend"},
+    {"p": "Two buttons in the header switch what the radar is showing:"},
+    {"bullets": [
+      "**Reflectivity** (the default) — how heavy the precipitation is. This is the everyday view most people mean by \"weather radar.\"",
+      "**Velocity** — how fast precipitation is moving toward or away from the radar. This is a more specialized view used to spot rotation. When Velocity is selected, the reflectivity color legend hides itself, because it no longer applies."
+    ]},
+    {"p": "For **Reflectivity**, the legend at top-right reads left (light) to right (extreme), labeled with dBZ values from **5** to **65+**. In plain terms:"},
+    {"table": {
+      "headers": ["Color", "Roughly means"],
+      "rows": [
+        ["**Green**", "Light precipitation — drizzle to light rain"],
+        ["**Yellow**", "Moderate rain"],
+        ["**Red**", "Heavy rain — a strong storm cell"],
+        ["**Purple / white**", "Extreme — very intense core, possible hail"]
+      ],
+      "widths": [2.0, 5.2]
+    }},
+
+    {"h1": "The Playback Controls"},
+    {"p": "The control bar along the bottom is where you drive the animation. From left to right:"},
+    {"table": {
+      "headers": ["Control", "What it does"],
+      "rows": [
+        ["**⏸ Pause / ▶ Play**", "Stops or starts the animation loop. It starts out playing."],
+        ["**⏮ / ⏭ Step**", "Move one frame back or forward. Stepping pauses the loop so you can study a single moment — good for watching a storm cell inch across the map."],
+        ["**Timeline slider**", "Drag it to jump to any point in the loaded loop. Dragging also pauses playback."],
+        ["**Time readout**", "Shows the date and time of the frame you're looking at. The newest frame is highlighted in amber so you always know when you're viewing the latest picture."],
+        ["**Speed: Slow · Med · Fast**", "Sets how quickly the loop animates. **Med** is the default; **Slow** is easier to follow a fast-moving line, **Fast** compresses a couple of hours into a quick sweep."]
+      ],
+      "widths": [2.3, 4.9]
+    }},
+
+    {"h1": "Palette and Station Selector"},
+    {"p": "Two extra controls tailor the view:"},
+    {"p": "**Palette** — the three colored circles in the top info bar switch the radar color scheme between **Default**, **Dark**, and **NOAA** (the classic National Oceanic and Atmospheric Administration look). It's purely a preference — pick whichever is easiest for your eyes and screen. The active palette has a white ring around it."},
+    {"p": "**Station selector** — the dropdown in the header (it starts on **Composite (National)**) lets you jump the map to a specific NEXRAD radar site, such as *KLOT — Chicago, IL* or *KFWS — Dallas/Ft Worth, TX*. This is a *\"focus here\"* jump — it recenters and zooms the map on that radar's coverage area. The imagery you see stays the national composite; the station picker doesn't change the data, just where you're looking. Choosing **Composite (National)** again zooms back out."},
+    {"callout": {"kind": "note", "label": "IT REFRESHES ITSELF",
+      "text": "As long as internet is available, the page automatically fetches new radar every **5 minutes** and adds it to the loop, so what you're watching stays current without you touching anything."}},
+
+    {"h1": "How Much History the Loop Covers"},
+    {"p": "The animation isn't a single snapshot — it's a short stack of recent radar images played in sequence, which is what lets you see motion. The status line reports how many are loaded (for example *18 frames*). The frames run oldest to newest, and the newest one is the amber-highlighted frame you land on when the page first loads. So a typical loop shows you roughly the **last couple of hours** of weather, which is usually plenty to judge whether a line of storms is building, weakening, or sliding past your area."},
+    {"p": "If the primary imagery service is unavailable, FieldCommand automatically falls back to a backup source (the Iowa Environmental Mesonet) and rebuilds the loop from the last couple of hours at roughly 10-minute steps — you'll see the status line note the fallback, but the controls all work the same way. A small pulsing dot near the status line means the page is busy fetching; when it stops, the loop is ready."},
+
+    {"h1": "What Happens When There's No Internet"},
+    {"p": "Radar needs the internet, but the page is built to fail gracefully rather than go dark:"},
+    {"bullets": [
+      "**If it has already loaded radar and then loses internet:** it keeps the last radar picture on screen and changes the status line to something like *Showing last radar (from 3:42 PM) — reconnecting every 30 s…*. You still have a recent picture to work from.",
+      "**If it never managed to load any radar (offline from the start):** a full-screen **RADAR UNAVAILABLE OFFLINE** banner appears with a 📡 icon and a short explanation, plus a **→ Check WAN Status** button that jumps you to the WAN Status page (Chapter 24) so you can see why there's no internet.",
+      "**Either way, it keeps trying.** The page re-checks for internet every **30 seconds** and, the moment a WAN source comes back, it automatically reloads fresh radar and resumes the animation — no need to reload the page yourself."
+    ]},
+    {"screenshot": "The full-screen offline banner reading RADAR UNAVAILABLE OFFLINE with the Check WAN Status button"},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__The whole screen says RADAR UNAVAILABLE OFFLINE.__ FieldCommand has no internet. Radar can't load without a WAN connection. Click **→ Check WAN Status** (or open the WAN Status page from the dashboard) and get an internet source back up per Chapter 24. The radar returns on its own within about 30 seconds of internet coming back.",
+      "__The status line says 'Showing last radar (from …)'.__ That's the offline-but-was-online state — internet dropped after some radar had loaded, so you're seeing the last good picture. It's still useful; just remember the time shown isn't current. It updates automatically when internet returns.",
+      "__The radar isn't animating.__ The loop may be paused. Click the **▶ Play** button at the bottom-left of the control bar. If you'd used **Step** or dragged the slider, that pauses playback on purpose.",
+      "__I picked a station but the radar picture didn't change.__ That's expected — the station selector only recenters the map on that radar's area; the imagery stays the national composite. Use it to zoom in on your region, not to change the data.",
+      "__The colors look wrong or hard to read.__ Try a different **Palette** (Default / Dark / NOAA) using the colored circles in the top info bar. And remember the color legend only applies to **Reflectivity** — in **Velocity** view the legend is hidden because it means something different.",
+      "__Radar loads slowly or stalls.__ On a weak or busy internet source, frames can take a while to arrive. Give it a moment; the page also has a built-in backup imagery source it falls back to automatically if the primary one fails."
+    ]}
+  ]
+}

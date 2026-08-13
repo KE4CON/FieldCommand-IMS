@@ -1,0 +1,144 @@
+{
+  "order": 13,
+  "title": "The Dead Man's Switch — deadmans.py",
+  "subtitle": "A dead man's switch watches an active net and, if the net falls silent for too long, raises an alarm — because in emergency communications a net that goes quiet unnoticed is a net that may have lost its operator. This chapter follows the switch from its single stored row through Arm, Reset, and Disarm to the background monitor that computes the warning and the trigger.",
+  "in_this_chapter": [
+    "What a dead man's switch is and why an emergency-net platform needs one",
+    "How all of its state lives in exactly one database row",
+    "What each column in that row means",
+    "How Arm, Reset, and Disarm change the state",
+    "How the background monitor decides when to warn and when to trigger",
+    "The 75-percent warning boundary and why it exists",
+    "Design takeaways and the maintainer's rule"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "IN ONE SENTENCE",
+      "text": "The dead man's switch stores a tiny amount of state in one singleton row, lets net control __Arm__, __Reset__, or __Disarm__ the watch on a net, and runs a background loop that flips the state to __warning__ at three-quarters of the inactivity threshold and to __triggered__ once the threshold is crossed."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "In amateur emergency communications a __net__ is a scheduled, controlled on-air conversation run by a net control operator. If that operator is incapacitated — a medical event, a power failure, a radio that dies — the net can simply go quiet, and nobody may notice until it is too late to matter. A __dead man's switch__ is the safeguard: an automatic monitor that expects to keep seeing activity, and that raises an alarm when the activity stops. FieldCommand implements one as a small always-running loop plus a handful of Hypertext Transfer Protocol (HTTP) endpoints, backed by [python/deadmans.py](python/deadmans.py) and a single database row."},
+    {"p": "The idea comes from the safety device on a locomotive or a lawn mower: a control the operator must keep engaged, so that if they let go, the machine stops itself. Here there is no pedal to hold — instead the 'engagement' signal is __net activity__. Every check-in, every logged transmission, every traffic entry updates a timestamp. As long as that timestamp keeps moving, the switch stays calm. When it stops moving for longer than the configured threshold, the switch fires."},
+    {"callout": {"kind": "note", "label": "JARGON, IN PLAIN WORDS",
+      "text": "A **net** is an organized on-air meeting of radio stations run by one controller. A **threshold** here is the number of minutes of silence the switch will tolerate before it alarms. **Singleton** means there is only ever __one__ of something — one row that holds the entire switch's state, never a table of many. **Armed / warning / triggered / disarmed** are the four states the switch moves between."}},
+
+    {"h1": "How State Is Kept — One Singleton Row"},
+    {"p": "The entire switch is described by one row in one table. It is defined in [python/db.py](python/db.py) as `dms_state`, and it is a __singleton__: the table exists only to hold row `id=1`, which is inserted once at schema-creation time and never added to. `INSERT OR IGNORE` guarantees the row exists on every boot without ever duplicating it:"},
+    {"code": [
+      "-- ── Dead Man's Switch (singleton row id=1) ────────────────────────────────────",
+      "CREATE TABLE IF NOT EXISTS dms_state (",
+      "    id              INTEGER PRIMARY KEY DEFAULT 1,",
+      "    state           TEXT NOT NULL DEFAULT 'disarmed',",
+      "    armed_nets      TEXT NOT NULL DEFAULT '[]',  -- JSON array",
+      "    threshold_min   INTEGER NOT NULL DEFAULT 30,",
+      "    last_activity   TEXT,",
+      "    armed_at        TEXT,",
+      "    triggered_at    TEXT",
+      ");",
+      "INSERT OR IGNORE INTO dms_state(id) VALUES(1);"
+    ]},
+    {"p": "Keeping all of the state in one row is a deliberate simplification. There is no history to page through and no per-run record to garbage-collect; the switch is either watching or it is not, and its condition right now is the only thing that matters. Each column carries one piece of that condition:"},
+    {"table": {
+      "headers": ["Column", "What it holds"],
+      "rows": [
+        ["`state`", "The overall condition of the switch: `disarmed`, `armed`, `warning`, or `triggered`."],
+        ["`armed_nets`", "Which nets are being watched, stored as a JavaScript Object Notation (JSON) text column so several nets can be armed at once, each with its own threshold and sub-state."],
+        ["`threshold_min`", "The default minutes of silence tolerated before the switch fires (30 by default)."],
+        ["`last_activity`", "Timestamp of the most recent activity seen across the armed nets — the signal the operator is still 'holding the pedal.'"],
+        ["`armed_at`", "When the switch was armed. Used for display and auditing."],
+        ["`triggered_at`", "When the switch fired, or empty if it has not. Set once, so repeated loops do not keep re-stamping it."]
+      ],
+      "widths": [1.6, 4.9]
+    }},
+    {"callout": {"kind": "note", "label": "WHY armed_nets IS A TEXT COLUMN, NOT A TABLE",
+      "text": "`armed_nets` holds JSON in a single text column rather than being a child table of one-row-per-net. The switch never needs to query __inside__ that list from Structured Query Language (SQL) — it always reads the whole switch state at once, adjusts it in Python, and writes it back whole. A text blob is the simplest store for data that is only ever read and written as a unit. If you ever need to filter or join on individual armed nets from SQL, that is the signal to promote it to a real table — until then, do not."}},
+
+    {"h1": "How It Works — Arm, Reset, Disarm"},
+    {"p": "Net control drives the switch through three actions, exposed as endpoints on the port-5050 Application Programming Interface (API). Each one reads the singleton row, changes it in memory, and writes it back — the row is always the source of truth. __Arm__ starts watching a net: it records the chosen threshold (falling back to 30 minutes), stamps the arm time, sets that net's sub-state to `armed`, and moves the overall `state` to `armed`:"},
+    {"code": [
+      "elif path == \"/api/dms/arm\":",
+      "    nid = str(body.get(\"net_id\",\"\")).strip()",
+      "    if not nid: return self.send_json({\"error\":\"net_id required\"},400)",
+      "    row = c.execute(\"SELECT armed_nets FROM dms_state WHERE id=1\").fetchone()",
+      "    armed = jload(row[\"armed_nets\"] if row else None, {})",
+      "    if not isinstance(armed, dict): armed = {}",
+      "    try: thr = int(body.get(\"threshold\", body.get(\"threshold_min\", 30)) or 30)",
+      "    except (ValueError, TypeError): thr = 30",
+      "    armed[nid] = {\"threshold_min\": thr, \"armed_at\": now, \"state\": \"armed\", \"triggered_at\": None}",
+      "    c.execute(\"UPDATE dms_state SET state='armed', armed_nets=?, last_activity=? WHERE id=1\", (jdump(armed), now))",
+      "    c.commit(); return self.send_json({\"ok\":True})"
+    ]},
+    {"p": "__Reset__ is what an operator does after the switch has fired and they have confirmed the net is fine: it clears that net's `triggered_at` and returns its sub-state to `armed`, so the watch resumes without disarming. It is a rearm, not a stand-down:"},
+    {"code": [
+      "elif path == \"/api/dms/reset\":",
+      "    nid = str(body.get(\"net_id\",\"\")).strip()",
+      "    row = c.execute(\"SELECT armed_nets FROM dms_state WHERE id=1\").fetchone()",
+      "    armed = jload(row[\"armed_nets\"] if row else None, {})",
+      "    if isinstance(armed, dict) and nid in armed:",
+      "        armed[nid][\"state\"] = \"armed\"; armed[nid][\"triggered_at\"] = None",
+      "        c.execute(\"UPDATE dms_state SET armed_nets=? WHERE id=1\", (jdump(armed),)); c.commit()",
+      "    return self.send_json({\"ok\":True})"
+    ]},
+    {"p": "__Disarm__ stops watching a net entirely: it removes that net from `armed_nets`. The clever part is the overall `state` afterward — if any other nets remain armed the switch stays `armed`; only when the last net is removed does it fall back to `disarmed`:"},
+    {"code": [
+      "elif path == \"/api/dms/disarm\":",
+      "    nid = str(body.get(\"net_id\",\"\")).strip()",
+      "    row = c.execute(\"SELECT armed_nets FROM dms_state WHERE id=1\").fetchone()",
+      "    armed = jload(row[\"armed_nets\"] if row else None, {})",
+      "    if isinstance(armed, dict) and nid in armed:",
+      "        del armed[nid]",
+      "        c.execute(\"UPDATE dms_state SET armed_nets=?, state=? WHERE id=1\", (jdump(armed), \"armed\" if armed else \"disarmed\")); c.commit()",
+      "    return self.send_json({\"ok\":True})"
+    ]},
+    {"p": "The 'holding the pedal' signal — `last_activity` — is stamped whenever the net sees action. Elsewhere in the same server, logging a net entry updates it directly (`UPDATE dms_state SET last_activity=? WHERE id=1`), so ordinary net traffic keeps the switch fed without anyone thinking about it."},
+
+    {"h1": "How It Works — Computing the Warning and the Trigger"},
+    {"p": "Deciding the switch is not net control's job — it is done by an independent background loop so that it keeps running even if the user interface is idle. [python/deadmans.py](python/deadmans.py) is a standalone service whose `monitor_loop()` wakes every 15 seconds, reads the state, and — only while the switch is `armed` or already in `warning` — works out how long it has been since the last activity. It converts the threshold from minutes to seconds and finds the most recent activity across the armed nets, deliberately skipping any net flagged as a drill so exercises never fire a real alarm:"},
+    {"code": [
+      "if dms.get(\"state\") in (\"armed\", \"warning\"):",
+      "    threshold_sec = dms.get(\"threshold_min\", 30) * 60",
+      "    armed_nets = dms.get(\"armed_nets\", [])",
+      "    latest = dms.get(\"last_activity\")",
+      "    for net_id in armed_nets:",
+      "        # Skip drill nets",
+      "        f = NETS_DIR / f\"{net_id}.json\"",
+      "        if f.exists():",
+      "            net = json.loads(f.read_text())",
+      "            if net.get(\"drill\", False):",
+      "                continue",
+      "            act = get_net_last_activity(net_id)",
+      "            if act and (latest is None or act > latest):",
+      "                latest = act"
+    ]},
+    {"p": "Timestamps are stored as text, so the loop parses the newest one back into a real datetime (tolerating both a trailing `Z` and a missing time zone) and measures the elapsed seconds. Then comes the heart of the switch — a three-way decision:"},
+    {"code": [
+      "elapsed = (datetime.now(timezone.utc) - last_dt).total_seconds()",
+      "prev_state = dms.get(\"state\")",
+      "if elapsed > threshold_sec:",
+      "    dms[\"state\"] = \"triggered\"",
+      "    if dms.get(\"triggered_at\") is None:",
+      "        dms[\"triggered_at\"] = utcnow()",
+      "        print(f\"[deadmans] TRIGGERED! No activity for {elapsed/60:.1f} minutes\")",
+      "elif elapsed > threshold_sec * 0.75:",
+      "    dms[\"state\"] = \"warning\"",
+      "    if prev_state == \"armed\":",
+      "        print(f\"[deadmans] WARNING: {(threshold_sec - elapsed)/60:.1f} min remaining\")",
+      "else:",
+      "    dms[\"state\"] = \"armed\"",
+      "save_json(DMS_STATE_F, dms)"
+    ]},
+    {"p": "Read from the bottom up, the logic is simple and complete. If elapsed silence is under three-quarters of the threshold, the net is healthy — `armed`. Once it passes __75 percent__ of the threshold, the switch enters `warning` — a deliberate early alert that gives net control a few minutes to check in before anything fires (at the default 30-minute threshold, the warning begins at 22.5 minutes of silence). Cross the full threshold and it is `triggered`. The `triggered_at` timestamp is written __only__ if it was empty, so the loop can run over and over without resetting the moment of the trigger, and the warning message prints only on the transition from `armed`, not on every 15-second pass."},
+    {"callout": {"kind": "note", "label": "TWO MONITORS, ONE DESIGN",
+      "text": "The same warning/trigger math appears in two places: the standalone `deadmans.py` service (shown here, watching `dms_state.json` with a single global threshold) and an in-process `dms_monitor()` inside the port-5050 server, which watches the `dms_state` __table__ with a per-net threshold and wakes every 30 seconds. Both use the identical boundaries — `elapsed > threshold` means triggered, `elapsed > threshold * 0.75` means warning. The `dms_state` row is the canonical state the API arms and disarms; `deadmans.py` is the original independent watchdog. If you change the trigger arithmetic, change it in __both__ or they will disagree."}},
+
+    {"h1": "Why It Matters / Design Takeaways"},
+    {"bullets": [
+      "__Activity is the pedal.__ The switch never asks the operator to do anything extra; ordinary net traffic stamps `last_activity`, and silence is what fires it.",
+      "__All state in one row.__ The whole switch is one singleton `dms_state` row — no history, no cleanup — so its current condition is always trivially readable.",
+      "__Arm / Reset / Disarm are precise.__ Reset rearms after a confirmed false alarm; Disarm removes one net and only stands the switch fully down when the last net leaves.",
+      "__An early warning, not just an alarm.__ The 75-percent boundary turns a hard cutoff into a two-stage alert, buying net control time to respond before the trigger.",
+      "__The monitor is independent.__ Deciding runs in a background loop, so the switch keeps watching whether or not anyone is looking at a screen."
+    ]},
+    {"callout": {"kind": "important", "label": "MAINTAINER'S RULE",
+      "text": "The `dms_state` singleton row is the switch's whole truth — read it, change it in memory, write it back whole; never scatter switch state into other tables. The trigger boundaries live in __two__ monitors (`deadmans.py` and the 5050 `dms_monitor`) with identical `> threshold` and `> threshold * 0.75` math: if you retune one, retune the other in the same commit, and add a regression test that a net crossing 75 percent goes `warning` and one crossing 100 percent goes `triggered` — with a drill net firing neither."}}
+  ]
+}

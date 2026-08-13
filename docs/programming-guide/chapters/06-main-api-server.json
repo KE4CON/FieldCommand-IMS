@@ -1,0 +1,239 @@
+{
+  "order": 6,
+  "title": "The Main API Server — fcc_lookup_server.py",
+  "subtitle": "One Python file, python/fcc_lookup_server.py, is the main back end for the whole web interface. It listens on port 5050, serves station configuration, the roster and member photos, barcode/QR check-in lookups, offline QR images, printable ID cards, Federal Communications Commission (FCC) callsign lookups, and much more. Every page you see in the browser is talking to this one server.",
+  "in_this_chapter": [
+    "What the main API server is and everything it serves",
+    "Why it is bound to localhost and reached only through nginx",
+    "How one request handler routes GET, POST, and DELETE by path",
+    "The send_json and send_bytes helpers every endpoint shares",
+    "How the roster hides the photo blob and maps labels to columns",
+    "The recent additions — offline QR, member photos, printable ID cards, and the agency-neutral org name",
+    "Design takeaways and the maintainer's rule"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "IN ONE SENTENCE",
+      "text": "`python/fcc_lookup_server.py` is a single-file Application Programming Interface (API) server on port 5050 that routes every browser request by its Uniform Resource Locator (URL) path to a block of code, reads or writes the database through `db.py`, and answers with either JSON or raw bytes — all bound to localhost and reached through nginx over Hypertext Transfer Protocol Secure (HTTPS)."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "If [python/db.py](python/db.py) is FieldCommand's data layer — the one front door to saved data — then [python/fcc_lookup_server.py](python/fcc_lookup_server.py) is the **main API server**: the program the web pages actually talk to. When an operator opens the roster page, checks someone in by scanning a barcode, saves the station's configuration, or prints member identification (ID) cards, the browser sends a request to this server and this server answers. Its file header states its job plainly: it is the __FieldCommand EmComm Main API Server — Port 5050__, with all runtime data stored in `fieldcommand.db` through `db.py`, and the separate read-only `fcc.db` used for FCC callsign lookups."},
+    {"p": "The name is historical — it began life as just an FCC callsign lookup — but it has grown into the primary service. In one file it serves station configuration, the member roster and each member's photo, the barcode and Quick Response (QR) code check-in lookup, an offline QR-code image generator, printable ID cards as a Portable Document Format (PDF) file, hospital and facility directories, the National Incident Management System (NIMS) resource-typing library, repeaters, nets and net traffic, map state, Incident Command System (ICS) forms, the dead-man's-switch state, and a pre-flight readiness check. This chapter does not tour every endpoint — it shows the shape of the file so any endpoint is easy to find and safe to change."},
+    {"callout": {"kind": "note", "label": "JARGON, IN PLAIN WORDS",
+      "text": "An **API** (Application Programming Interface) is just a set of URLs a program answers — the web page asks a question at a URL and gets data back. An **endpoint** is one of those URLs, like `/api/roster`. A **request handler** is the code that receives a request and decides what to do with it. **JSON** (JavaScript Object Notation) is the plain-text format the answers are written in."}},
+
+    {"h1": "Why It Is Bound to Localhost — the 'Why' Behind the Address"},
+    {"p": "The very last lines of the file are the most important lines for security, so they are worth reading first. The server binds to `127.0.0.1` — localhost — and not to the Pi's real network address:"},
+    {"code": [
+      "if __name__ == \"__main__\":",
+      "    db.startup()",
+      "    threading.Thread(target=dms_monitor, daemon=True).start()",
+      "    log.info(\"FCC Lookup API server on port 5050\")",
+      "    # Bind localhost only: the front end reaches this via nginx at /svc/5050 over",
+      "    # HTTPS, so the API is never exposed in cleartext on the LAN.",
+      "    HTTPServer((\"127.0.0.1\", 5050), Handler).serve_forever()"
+    ]},
+    {"p": "Binding to `127.0.0.1` means the operating system will only accept connections that come from the Pi itself. A laptop or phone on the field network **cannot** reach port 5050 directly. Instead, the browser talks to nginx (the web server) over HTTPS, and nginx forwards the request internally to `127.0.0.1:5050` at the path `/svc/5050`. That single decision does two jobs at once: it keeps the API off the local area network (LAN) in cleartext, and it puts nginx in front as the one place where HTTPS, and therefore the encryption that protects **personally identifiable information (PII)** like member names, phones, and photos, is handled. The API server itself never has to speak HTTPS — it trusts that anything reaching it already came through nginx."},
+    {"callout": {"kind": "important", "label": "NEVER MOVE THIS OFF LOCALHOST",
+      "text": "Do not change `127.0.0.1` to `0.0.0.0` to 'make it reachable.' That would expose the entire API — roster PII, photos, config, everything — as unencrypted plain Hypertext Transfer Protocol (HTTP) on the field network. The correct way to reach it from another device is always through nginx over HTTPS. If a page cannot reach an endpoint, fix the nginx route, not the bind address."}},
+    {"p": "Two more things happen at startup, in order. First `db.startup()` runs — that is the data layer creating and upgrading the schema and importing any legacy JSON, covered in the previous chapter. Then a background thread starts running `dms_monitor()`, the per-net dead-man's-switch watcher, as a **daemon** thread so it dies automatically when the server stops. Only after both are set up does the server begin serving requests."},
+
+    {"h1": "How It Works — One Handler, Routed by Path"},
+    {"p": "All the request handling lives in one class, `Handler`, which extends Python's built-in `BaseHTTPRequestHandler`. The base class calls a method named after the Hypertext Transfer Protocol (HTTP) method of each request: a browser GET calls `do_GET`, a save calls `do_POST`, a delete calls `do_DELETE`, and a browser pre-check calls `do_OPTIONS`. Inside each of those methods, the code is one long `if / elif` chain that compares the request's URL path against known endpoints and runs the matching block. The GET method sets this pattern up at the top:"},
+    {"code": [
+      "def do_GET(self):",
+      "    parsed = urlparse(self.path)",
+      "    path   = parsed.path.rstrip(\"/\")",
+      "    qs     = parse_qs(parsed.query)",
+      "    c      = get_conn()",
+      "",
+      "    if path == \"/api/fcc\":",
+      "        call = qs.get(\"call\",[\"\"])[0]",
+      "        if not call: return self.send_json({\"error\":\"Missing call\"},400)",
+      "        r = fcc_lookup(call)",
+      "        return self.send_json(r) if r else self.send_json({\"error\":\"Not found\"},404)"
+    ]},
+    {"p": "Three habits in that opening repeat in every handler and are worth naming. The path is normalized with `.rstrip(\"/\")` so `/api/roster` and `/api/roster/` are treated the same. The query string is parsed once into `qs`, and because `parse_qs` returns a list for every parameter, values are pulled out with the `qs.get(\"call\",[\"\"])[0]` idiom — 'give me the first value, or empty string if it is missing.' And a thread-local database connection `c` is fetched once at the top with `get_conn()`, so the whole handler shares one connection. Some endpoints match on an exact path; others, like the per-net routes, match with `path.startswith(\"/api/nets/\")` and then split the path to pull out an identifier:"},
+    {"code": [
+      "elif path.startswith(\"/api/nets/\"):",
+      "    parts  = path.split(\"/\"); net_id = parts[3] if len(parts)>3 else \"\"",
+      "    sub    = \"/\".join(parts[4:]) if len(parts)>4 else \"\""
+    ]},
+    {"callout": {"kind": "note", "label": "JARGON, IN PLAIN WORDS",
+      "text": "A **query string** is the part of a URL after the `?`, like `?call=W8EOC`. A **path parameter** is an identifier baked into the path itself, like the `net-123` in `/api/nets/net-123`. **CORS** (Cross-Origin Resource Sharing) is the browser's rule about which pages may call which servers; the `cors()` helper adds the headers that tell the browser 'this is allowed.'"}},
+
+    {"h1": "How It Works — The Two Reply Helpers"},
+    {"p": "Almost every endpoint ends by calling one of two helpers. `send_json` is the workhorse: it serializes a Python object to JSON, sets the content type and length, adds the CORS headers, and writes the body. The `default=str` argument means any value JSON does not natively understand (a date, for example) is turned into a string instead of crashing the response:"},
+    {"code": [
+      "def send_json(self, obj, code=200):",
+      "    body = json.dumps(obj, default=str).encode()",
+      "    self.send_response(code)",
+      "    self.send_header(\"Content-Type\",\"application/json\")",
+      "    self.send_header(\"Content-Length\",len(body))",
+      "    self.cors(); self.end_headers(); self.wfile.write(body)"
+    ]},
+    {"p": "The second helper, `send_bytes`, exists because not everything the server returns is JSON. QR images, member photos, and the ID-card PDF are raw binary. `send_bytes` takes the bytes and a content type, allows extra headers (used for caching and file-download names), and — importantly — wraps the actual write in a `try/except` so that a browser hanging up mid-download does not throw an unhandled error:"},
+    {"code": [
+      "def send_bytes(self, data, content_type, code=200, extra=None):",
+      "    self.send_response(code)",
+      "    self.send_header(\"Content-Type\", content_type)",
+      "    self.send_header(\"Content-Length\", len(data))",
+      "    if extra:",
+      "        for k, v in extra.items():",
+      "            self.send_header(k, v)",
+      "    self.cors(); self.end_headers()",
+      "    try:",
+      "        self.wfile.write(data)",
+      "    except Exception:",
+      "        pass"
+    ]},
+    {"p": "Because these two helpers do all the response plumbing, the endpoint code stays short: fetch or write data, then hand a Python object to `send_json` or raw bytes to `send_bytes`. That is why a 1,300-line file with dozens of endpoints is still readable — every endpoint follows the same tiny shape."},
+
+    {"h1": "How It Works — The Roster, Labels, and the Hidden Photo"},
+    {"p": "The roster is the richest example of the server doing real translation between what the database stores and what the web page wants. The database stores certifications and equipment as separate yes/no columns, but the roster page speaks in human labels like `ICS-100` and `VARA HF`. Two lists and two label maps at the top of the file are the single source of truth for that translation:"},
+    {"code": [
+      "CERT_COLS  = [\"ics100\",\"ics200\",\"ics300\",\"ics400\",\"ics700\",\"ics800\",",
+      "              \"emcomm1\",\"emcomm2\",\"cpr\",\"first_aid\",\"cert\"]",
+      "EQUIP_COLS = [\"hf\",\"vhf\",\"digital\",\"packet\",\"pactor\",\"vara_hf\",\"vara_fm\",",
+      "              \"aprs\",\"winlink\",\"go_box\",\"generator\",\"battery\",\"vehicle\"]",
+      "CERT_LABELS  = {\"ics100\":\"ICS-100\", ... \"cert\":\"CERT\"}",
+      "EQUIP_LABELS = {\"hf\":\"HF\", ... \"vehicle\":\"Vehicle\"}"
+    ]},
+    {"p": "The function `member_to_dict` turns one database row into the object the page receives. It does three jobs worth calling out. First, it **never ships the photo blob** in list or detail JSON — photos can be large, so it replaces the raw image with a simple `has_photo` boolean flag and drops the blob and its mime type entirely. Second, it rebuilds the `certifications` and `equipment` objects using the label maps, so the page gets `{\"ICS-100\": true, ...}` instead of raw column names. Third, it computes a `display_id` with a clear priority — callsign, then radio identifier, then member identifier:"},
+    {"code": [
+      "def member_to_dict(row):",
+      "    if row is None: return None",
+      "    d = dict(row)",
+      "    # Photos can be large; never ship the Base64 blob in list/detail JSON.",
+      "    # Expose only a flag — the actual image is served by GET /api/roster/photo.",
+      "    d[\"has_photo\"] = bool(d.get(\"photo_data\"))",
+      "    d.pop(\"photo_data\", None); d.pop(\"photo_mime\", None)",
+      "    d[\"certifications\"] = {CERT_LABELS[c]:  bool(d.pop(f\"cert_{c}\", 0))  for c in CERT_COLS}",
+      "    d[\"equipment\"]      = {EQUIP_LABELS[e]: bool(d.pop(f\"equip_{e}\", 0)) for e in EQUIP_COLS}",
+      "    d[\"display_id\"] = (d.get(\"callsign\") or d.get(\"radio_id\") or",
+      "                       d.get(\"member_id\") or d.get(\"id\",\"\"))"
+    ]},
+    {"p": "The reverse direction — saving a member — is handled by `member_upsert_sql` and `member_vals`, which accept **either** the database key (`ics100`) **or** the label (`ICS-100`) for each flag, so a page can post in whichever form it has. Normalizing at this API boundary is what keeps certifications and equipment from silently failing to save, and it is why the mapping lives in exactly one file."},
+    {"callout": {"kind": "note", "label": "JARGON, IN PLAIN WORDS",
+      "text": "A **blob** is a chunk of binary data — here, an image — stored in a database column. An **upsert** is 'insert or update': one statement that creates the row if it is new and updates it if it already exists. **Base64** is a way of writing binary data (like a photo) as plain text so it can travel inside JSON."}},
+
+    {"h1": "How It Works — Barcode and QR Check-In Lookup"},
+    {"p": "The check-in lookup is the endpoint that makes a scanner useful. A volunteer scans a badge and the browser calls `GET /api/barcode_lookup?code=XXXX`; the server answers with everything needed to auto-fill the check-in form. It tries the scanned code against four columns in turn — barcode, member identifier, callsign, then radio identifier — and stops at the first match:"},
+    {"code": [
+      "elif path == \"/api/barcode_lookup\":",
+      "    code = qs.get(\"code\",[\"\"])[0].strip().upper()",
+      "    if not code:",
+      "        return self.send_json({\"found\":False,\"error\":\"No code provided\"},400)",
+      "    row = None",
+      "    for col in [\"barcode_id\",\"member_id\",\"callsign\",\"radio_id\"]:",
+      "        row = c.execute(",
+      "            f\"SELECT * FROM roster WHERE UPPER({col})=? AND {col}!='' LIMIT 1\",",
+      "            (code,)",
+      "        ).fetchone()",
+      "        if row:",
+      "            break"
+    ]},
+    {"p": "The clever part is the fallback. If nobody on the roster matches and the scanned code **looks like a callsign** (checked with a regular expression for the amateur-radio callsign shape), the server looks the callsign up in the FCC database so that a visiting ham who was never entered on the roster still gets their name auto-filled. The reply is tagged `\"source\":\"fcc\"` and `\"on_roster\":false` so the page knows this came from the license database, not the local roster:"},
+    {"code": [
+      "if re.fullmatch(r\"[A-Z0-9]{1,3}[0-9][A-Z]{1,3}\", code):",
+      "    fcc = fcc_lookup(code)",
+      "    if fcc and fcc.get(\"name\"):",
+      "        return self.send_json({",
+      "            \"found\": True, \"source\": \"fcc\", \"on_roster\": False,",
+      "            \"name\": fcc[\"name\"], \"callsign\": code,",
+      "            \"member_type\": \"visitor\",",
+      "            \"suggested_position\": \"Amateur Radio Operator\",",
+      "        })"
+    ]},
+    {"p": "When a roster member does match, the reply includes a `suggested_position` derived from their role by the small `_suggest_position` helper (a commander maps to Incident Commander, a safety role to Safety Officer, and so on), and it fills the agency field from the member's own visitor agency or, if blank, from the deploying organization's short name via `_org_short(c)`."},
+
+    {"h1": "How It Works — The Recent Additions"},
+    {"p": "Four newer endpoints share a theme: they make the appliance work fully offline and stop it from hardcoding one agency's name. The first is the **offline QR image**. FieldCommand used to fetch QR codes from a Google charts URL — a dependency that is now dead and, worse, needs the internet. The `qr_svg` helper replaces it by drawing the QR code locally with ReportLab and returning it as Scalable Vector Graphics (SVG) text:"},
+    {"code": [
+      "def qr_svg(data, size_px=220):",
+      "    \"\"\"Render `data` as a scannable QR code and return it as an SVG string.",
+      "    Generated locally with ReportLab — no internet, no external service. This is",
+      "    what replaces the old (now-dead) chart.googleapis.com dependency.\"\"\"",
+      "    from reportlab.graphics.barcode.qr import QrCodeWidget",
+      "    from reportlab.graphics.shapes import Drawing",
+      "    from reportlab.graphics import renderSVG",
+      "    q = QrCodeWidget(str(data), barLevel=\"M\")",
+      "    x1, y1, x2, y2 = q.getBounds()",
+      "    w = (x2 - x1) or 1",
+      "    h = (y2 - y1) or 1",
+      "    d = Drawing(size_px, size_px)",
+      "    d.transform = [size_px / w, 0, 0, size_px / h, -x1 * size_px / w, -y1 * size_px / h]",
+      "    d.add(q)",
+      "    return renderSVG.drawToString(d)"
+    ]},
+    {"p": "The `GET /api/qr?data=XXXX` endpoint calls it and returns the SVG with `send_bytes` under the content type `image/svg+xml`, along with a `Cache-Control: no-store` header so a QR image is never cached against the wrong data. The second addition is the **member photo endpoint**. Because `member_to_dict` deliberately strips the photo out of roster JSON, the image needs its own route. `GET /api/roster/photo?id=<mid>` reads the stored Base64, decodes it back to real image bytes, handles the case where the stored value is a full `data:` URL, and streams it out:"},
+    {"code": [
+      "elif path == \"/api/roster/photo\":",
+      "    mid = qs.get(\"id\",[\"\"])[0]",
+      "    if not mid:",
+      "        return self.send_json({\"error\":\"missing id\"},400)",
+      "    row = c.execute(\"SELECT photo_data,photo_mime FROM roster WHERE id=?\",",
+      "                    (mid,)).fetchone()",
+      "    if not row or not row[\"photo_data\"]:",
+      "        return self.send_json({\"error\":\"no photo\"},404)",
+      "    ...",
+      "    img = _b64.b64decode(raw)",
+      "    return self.send_bytes(img, mime, extra={\"Cache-Control\":\"no-store\"})"
+    ]},
+    {"p": "Photos are also **saved** on their own route, `POST /api/roster/photo`, kept separate from the member upsert on purpose so that an ordinary edit of a member's details can never accidentally wipe their photo. The third addition is **printable ID cards**. `GET /api/id_cards.pdf` generates member badges on demand — all eligible members, or one member with `?id=<mid>` — by handing off to a separate `gen_id_cards` module and streaming the resulting PDF back:"},
+    {"code": [
+      "elif path == \"/api/id_cards.pdf\":",
+      "    mid = qs.get(\"id\",[\"\"])[0] or None",
+      "    backs = qs.get(\"backs\",[\"1\"])[0] not in (\"0\",\"false\",\"no\")",
+      "    ...",
+      "    _gen.generate_from_db(out_path=out, only_id=mid, backs=backs)",
+      "    with open(out,\"rb\") as f:",
+      "        data = f.read()",
+      "    return self.send_bytes(data, \"application/pdf\",",
+      "        extra={\"Content-Disposition\":\"inline; filename=member_id_cards.pdf\"})"
+    ]},
+    {"p": "The fourth addition is the smallest but matters most for reuse: `_org_short(c)`. FieldCommand is meant to be deployed by any agency, so an agency name must never be baked into the code. This helper reads the deploying organization's short name from the station configuration and returns an empty string — never a hardcoded agency — if it is not set:"},
+    {"code": [
+      "def _org_short(c):",
+      "    \"\"\"The deploying organization's short name from Setup (agency-neutral).",
+      "    Empty string if not configured — never a hardcoded agency.\"\"\"",
+      "    try:",
+      "        row = c.execute(\"SELECT org_short FROM station_config WHERE id=1\").fetchone()",
+      "        return (row[\"org_short\"] or \"\") if row else \"\"",
+      "    except Exception:",
+      "        return \"\""
+    ]},
+    {"callout": {"kind": "important", "label": "AGENCY-NEUTRAL IS A HARD RULE",
+      "text": "The whole point of `_org_short` is that FieldCommand ships to any agency and reads its identity from Setup. Never reintroduce a hardcoded agency name, callsign, or logo in this file to 'fill in a blank.' If a value should default to the deploying organization, read it from `station_config`, and let it be empty when Setup has not filled it in."}},
+
+    {"h1": "The Rest of the Endpoints, at a Glance"},
+    {"p": "The same handler serves many more endpoints in exactly the shapes shown above. This table is a map, not an exhaustive reference — read the matching `if` block in the source for the full behavior:"},
+    {"table": {
+      "headers": ["Path", "Method(s)", "What it serves"],
+      "rows": [
+        ["`/api/fcc`, `/api/fcc/search`, `/api/fcc/status`", "GET", "FCC callsign lookup, advanced search, and database freshness — all reading the separate read-only `fcc.db`."],
+        ["`/api/config`", "GET / POST", "The station's own configuration: callsign, organization, location, logo, module toggles, Wi-Fi, and more."],
+        ["`/api/roster`, `/api/roster/members`, `/api/roster/activations`", "GET / POST / DELETE", "The member roster, individual member upserts, and check-in activations."],
+        ["`/api/roster/promote`, `/api/roster/import`", "POST", "Promote a walk-in/visitor onto the roster; bulk-import members."],
+        ["`/api/nets`, `/api/nets/<id>/...`", "GET / POST / DELETE", "Nets, their check-in entries and traffic, plus open/close/checkout, with automatic ICS-211 check-in-list sync."],
+        ["`/api/position`", "GET", "Live station position from the GPS daemon, falling back to the configured or default location."],
+        ["`/api/hospitals`, `/api/facilities`, `/api/resource_types`, `/api/repeaters`", "GET / POST / DELETE", "The reference directories: hospitals (with an optional live CMS import), facilities, NIMS resource types, and repeaters."],
+        ["`/api/mapstate`, `/api/resmap`", "GET / POST", "Saved map shapes and markers for the incident map and the resource map."],
+        ["`/api/forms`, `/api/forms/<id>`", "GET / POST / DELETE", "Generic ICS/other form storage — the data blob is stored and re-expanded on read."],
+        ["`/api/dms`, `/api/dms/arm|reset|disarm`", "GET / POST", "Per-net dead-man's-switch state, armed and watched by the `dms_monitor` background thread."],
+        ["`/api/preflight`", "GET", "The go/no-go readiness check across services, databases, GPS, Wi-Fi, and setup."],
+        ["`/wan/status`, `/amprgate/status`, `/api/status`", "GET", "Status files written by sibling monitor scripts, plus a simple health ping."]
+      ],
+      "widths": [2.6, 1.4, 3.5]
+    }},
+
+    {"h1": "Why It Matters / Design Takeaways"},
+    {"bullets": [
+      "__One file, one shape.__ Every endpoint is a block in a path-matched `if/elif` chain that fetches or writes through `db.py` and answers with `send_json` or `send_bytes`. Learn that shape once and any endpoint is easy to find and safe to extend.",
+      "__Localhost plus nginx is the security boundary.__ The server binds to `127.0.0.1` and trusts nginx to handle HTTPS and reach it at `/svc/5050`, so PII never crosses the LAN in cleartext. The bind address is not a knob to turn.",
+      "__Translate at the boundary.__ The roster maps database columns to human labels in one place, hides the photo blob behind a `has_photo` flag, and accepts either form on save — so the page and the schema can each speak their own language.",
+      "__Offline and agency-neutral by design.__ Recent work replaced an internet QR dependency with a local ReportLab generator, split photo and ID-card delivery into their own byte endpoints, and swapped a hardcoded agency for `_org_short` read from Setup."
+    ]},
+    {"callout": {"kind": "important", "label": "MAINTAINER'S RULE",
+      "text": "Add an endpoint by adding one `if/elif` branch to the matching `do_GET`/`do_POST`/`do_DELETE` method, reading and writing only through the `get_conn()` connection and replying only through `send_json` or `send_bytes`. Keep the server bound to `127.0.0.1` — reach it through nginx, never by opening the bind address. Never ship a photo blob in list JSON, and never hardcode an agency name: read identity from `station_config` via `_org_short`. Any label/column mapping belongs in the `CERT_*`/`EQUIP_*` tables at the top of the file, nowhere else."}}
+  ]
+}

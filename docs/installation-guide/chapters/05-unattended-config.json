@@ -1,0 +1,138 @@
+{
+  "order": 5,
+  "title": "Unattended Setup — The fieldcommand.conf File",
+  "subtitle": "An optional little text file that answers all of the setup's questions ahead of time, so the one-command build runs with nothing to type on screen — perfect for stamping out several identical servers.",
+  "in_this_chapter": [
+    "What the config file is and when it's worth making one",
+    "Where to put it so the setup finds it (the three locations, in order)",
+    "The golden rule: anything you leave out is still handled for you",
+    "Every setting explained, with its size and time cost",
+    "A complete, ready-to-edit sample file",
+    "Why the callsign line can be left empty",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "Copy **`fieldcommand.conf.sample`** to a plain text file named **`fieldcommand.conf`**, fill in your values, and drop it on the SD card's boot partition (so it lands at **`/boot/firmware/fieldcommand.conf`**). Run the setup as usual — it finds the file, asks **nothing**, and builds the server from your answers. Anything you leave out of the file is either asked on screen or takes its normal default. This is optional; skip the whole chapter if you're happy answering the questions live."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "In the previous chapter, the one-command setup asked you a handful of short questions on screen — your callsign, your location, the Wi-Fi name and password, and a couple of data options. That's the normal way, and for a single server it's perfectly fine. But there's a second way: you can write those answers into a small text file **ahead of time**, and the setup will read them straight from the file and ask you **nothing**. This is called an **unattended** (or **hands-off**) setup."},
+    {"p": "The file is named **`fieldcommand.conf`**. It is completely **optional** — the setup works fine without it. You'd bother making one for two reasons: you're building **several identical servers** and don't want to type the same answers over and over, or you want every unit configured **exactly** the same way with no chance of a typo on screen. Fill the file in once, copy it to each SD card, and every build comes out identical."},
+    {"callout": {"kind": "note", "label": "YOU DON'T NEED THIS FILE",
+      "text": "If you're building just one server, or you're happy pressing Enter through the questions, you can ignore this chapter entirely. The config file is a convenience for repeat builds and identical fleets — not a requirement. Everything it does, the on-screen questions do too."}},
+
+    {"h1": "Start From the Sample"},
+    {"p": "You don't write this file from a blank page. The FieldCommand software ships a ready-made example named **`fieldcommand.conf.sample`** in its **`scripts`** folder. It already lists every setting, with a comment above each one explaining what it does. The easiest path is to copy that sample, rename the copy to **`fieldcommand.conf`** (drop the `.sample`), and change the values to match your group."},
+    {"steps": [
+      "Find **`fieldcommand.conf.sample`** in the FieldCommand **`scripts`** folder.",
+      "Make a copy of it and rename the copy to **`fieldcommand.conf`** — the exact name matters, so type it carefully, all lowercase, no `.sample` on the end.",
+      "Open **`fieldcommand.conf`** in any plain text editor (Notepad on Windows, TextEdit in plain-text mode on a Mac, or a code editor).",
+      "Change the values on the right of each `=` sign to your own. Keep the quotation marks around each value.",
+      "Save the file (as plain text, not rich text), then put it in one of the locations described next."
+    ]},
+    {"callout": {"kind": "warning", "label": "SAVE IT AS PLAIN TEXT, AND KEEP THE QUOTES",
+      "text": "This file must be plain text. If your editor offers \"Rich Text\" or adds a `.txt`, `.rtf`, or `.doc` ending, the setup won't read it. On Windows Notepad, use **File ▸ Save As** and set **Save as type** to **All Files**, then name it exactly `fieldcommand.conf`. Keep the double quotes around each value (for example `AP_SSID=\"EMCOMM-NET\"`) — they're part of the format."}},
+
+    {"h1": "Where to Put It — the Three Locations"},
+    {"p": "When the setup starts, it looks for the config file in a fixed order and uses the **first** one it finds. You only need to place it in **one** of these spots. Here they are, in the order the setup checks them:"},
+    {"table": {
+      "headers": ["Order", "Where", "When to use it"],
+      "rows": [
+        ["1", "**Wherever `--config` points.** Run the setup with `--config /path/to/fieldcommand.conf` and it reads that exact file.", "When your file lives somewhere unusual, or you keep several and want to pick one by name."],
+        ["2", "**On the SD card's boot partition** — it ends up at **`/boot/firmware/fieldcommand.conf`** on the Pi (older images: `/boot/fieldcommand.conf`).", "The easiest for a fleet: you can drop the file onto the card from your everyday computer before the card ever goes in the Pi."],
+        ["3", "**Next to the setup script** — in the same folder as `fieldcommand-setup.sh` (so, `scripts/fieldcommand.conf`).", "Handy if you copied the whole FieldCommand folder to the card and want the answers to travel with it."]
+      ],
+      "widths": [0.7, 3.6, 2.4]
+    }},
+    {"p": "For most people building a batch of servers, **location 2 is the winner**: after you image an SD card, the card shows up on your computer as a small drive (the \"boot\" partition). Just copy `fieldcommand.conf` onto it, right alongside the FieldCommand folder, and eject. When that card boots in a Pi, the setup finds the file immediately and runs hands-off."},
+    {"callout": {"kind": "tip", "label": "THE `--config` OPTION SPELLED OUT",
+      "text": "To point the setup at a file by name, add `--config` and the full path to the run command, like this:\n\n`sudo bash fieldcommand-setup.sh --config /home/pi/fieldcommand.conf`\n\nSubstitute your real path for `/home/pi/fieldcommand.conf`. This beats every other location, so it's the surest way to be certain which file is used."}},
+
+    {"h1": "The Golden Rule — Leave Out Anything You're Unsure Of"},
+    {"p": "You do **not** have to fill in every line. The setup treats the file as a set of answers you've **already given**. For any setting you include, it uses your value and doesn't ask. For any setting you **leave out** (delete the line, or don't add it), one of two things happens:"},
+    {"bullets": [
+      "If you provided a config file at all, the setup runs **hands-off** and quietly uses each missing setting's **normal default** (the same default shown in brackets when you'd answer on screen).",
+      "So a partial file is completely fine: fill in the two or three things that differ for your group (usually the location and the Wi-Fi password), leave the rest out, and the sensible defaults fill the gaps."
+    ]},
+    {"callout": {"kind": "important", "label": "A FILE MEANS NO QUESTIONS AT ALL",
+      "text": "The moment the setup finds a config file, it switches to hands-off mode for the **whole** run — it will not stop to ask about a setting you left out; it uses that setting's default instead. If you want to be asked about something on screen, don't use a config file for that build (or fill the file in completely so nothing is left to chance). The one thing the setup **always** pauses for is the drive-erase confirmation in Chapter 4 — that safety stop happens no matter what, config file or not."}},
+
+    {"h1": "Every Setting, Explained"},
+    {"p": "Here is every line in the file, what it controls, what to type, and — where it matters — how much disk space and download time your choice costs. The defaults shown are exactly what you get if you leave the line out."},
+    {"table": {
+      "headers": ["Setting", "What it does", "Values / default"],
+      "rows": [
+        ["**`PROFILE`**", "How much of FieldCommand to install. **Full** installs everything (the web app plus the background radio/data services); **Server only** installs the back-end services without the web front-end; **Web only** installs just the web front-end.", "`1`=Full (recommended), `2`=Server only, `3`=Web only. Default **`1`**. Leave it on `1` unless you have a specific split-role setup."],
+        ["**`CALLSIGN`**", "Your group's amateur-radio station callsign. Setting it turns **on** the Amateur Radio features; leaving it blank keeps them switched off. It's automatically made all-uppercase.", "A callsign in quotes (e.g. `\"KE4CON\"`), or empty `\"\"`. Default **blank**. See the callout below — blank is a valid, deliberate choice."],
+        ["**`STATION_LAT`**", "Your station's latitude in decimal degrees. Used for the map, weather, and sunrise/sunset times.", "A number in quotes, e.g. `\"42.3153\"`. Default **`42.3153`**. Positive for north."],
+        ["**`STATION_LON`**", "Your station's longitude in decimal degrees. Same uses as latitude.", "A number in quotes, e.g. `\"-88.4473\"`. Default **`-88.4473`**. Note the **minus sign** for west."],
+        ["**`AP_SSID`**", "The name of the Wi-Fi network the field devices join (broadcast by the router). This is the network operators see and connect to.", "A network name in quotes. Default **`EMCOMM-NET`**. Leave it as-is unless your group standardizes on a different name."],
+        ["**`AP_PASS`**", "The password for that Wi-Fi network. Everyone who connects types this once.", "A password in quotes. Default **`fieldcommand2026`**. **Change this** to your own before a real deployment."],
+        ["**`SERVER_IP`**", "The fixed network address the Pi serves the FieldCommand app on. This is the address operators type into their browser.", "An address in quotes. Default **`192.168.50.1`**. Leave it alone unless you know your network needs a different address."],
+        ["**`DO_FCC`**", "Whether to download the full Federal Communications Commission (FCC) amateur-radio license database during install, so you can look up any US callsign offline.", "`y` or `N`. Default **`N`**. Costs about **600 megabytes (MB)** of download and disk — say `y` only if you want offline callsign lookups."],
+        ["**`TILE_PRESET`**", "How much of the offline **map** to install. Higher tiers cover more area at higher detail, so the map still works with no internet. Bigger tiers take longer to download and use more disk.", "`0`=skip · `1`=essential (~8 MB) · `2`=standard (~180 MB) · `3`=full (~1.6 gigabytes, GB). Default **`1`**."],
+        ["**`KIWIX_TIER`**", "How much of the offline **reference library** (Kiwix — offline copies of Wikipedia, medical and survival references, and similar) to install. Higher tiers include more material. This is the biggest space user of them all.", "`0`=skip · `1`=essential (~2.5 GB) · `2`=extended (~10 GB) · `3`=full (~25 GB). Default **`1`**."]
+      ],
+      "widths": [1.4, 3.3, 2.0]
+    }},
+    {"callout": {"kind": "note", "label": "PLAN FOR THE DOWNLOAD SIZE AND TIME",
+      "text": "The three data options — `DO_FCC`, `TILE_PRESET`, and `KIWIX_TIER` — decide how long the install takes and how much of the drive it fills. The essentials (`TILE_PRESET=\"1\"` and `KIWIX_TIER=\"1\"`) are a light ~10 MB of maps and ~2.5 GB of library — quick, and enough for a first build. The full tiers together pull down well over 25 GB and need a solid internet connection and patience. If you're on a slow or metered connection, start with the essentials; you can always add more later. These downloads happen after the reboot, during the automatic install."}},
+
+    {"h1": "The Callsign Line Can Be Empty — On Purpose"},
+    {"p": "The **`CALLSIGN`** line is the one setting people most often wonder about. Leaving it blank is not a mistake or an oversight — it's a supported choice, and for many groups it's the correct one."},
+    {"callout": {"kind": "important", "label": "LEAVE THE CALLSIGN BLANK IF YOU HAVE NO LICENSED HAMS",
+      "text": "If **no one in your group is a licensed amateur-radio operator**, set `CALLSIGN=\"\"` (empty quotes). FieldCommand then works fully and simply keeps the **Amateur Radio** tools switched off, so you only see the features you're allowed to use. Enter a callsign **only** if you have a properly licensed operator with privileges on the bands and modes you intend to use — transmitting without a license is unlawful. You can always add a callsign later on the Setup screen (Chapter 6 of the User Manual) if your group licenses an operator down the road."}},
+
+    {"h1": "A Complete Sample File"},
+    {"p": "Here is a full, ready-to-edit config file. Every line is filled in with a typical value, so you can copy this, change the handful that differ for your group, and be done. Lines that begin with `#` are **comments** — friendly notes the setup ignores — so you can leave them in for reference."},
+    {"code": [
+      "# FieldCommand IMS — unattended setup answers",
+      "",
+      "# Install profile: 1=Full (recommended), 2=Server only, 3=Web only",
+      "PROFILE=\"1\"",
+      "",
+      "# Station callsign — OPTIONAL. Leave blank (\"\") if no amateur operators.",
+      "CALLSIGN=\"\"",
+      "",
+      "# Station location (decimal degrees). Used for weather, maps, sunrise/sunset.",
+      "STATION_LAT=\"42.3153\"",
+      "STATION_LON=\"-88.4473\"",
+      "",
+      "# WiFi network the field devices connect to.",
+      "AP_SSID=\"EMCOMM-NET\"",
+      "AP_PASS=\"fieldcommand2026\"",
+      "",
+      "# Static IP the Pi serves the app on.",
+      "SERVER_IP=\"192.168.50.1\"",
+      "",
+      "# Download the FCC amateur database during install? (~600 MB)  y or N",
+      "DO_FCC=\"N\"",
+      "",
+      "# Offline map tiles: 0=skip, 1=essential(~8MB), 2=standard(~180MB), 3=full(~1.6GB)",
+      "TILE_PRESET=\"1\"",
+      "",
+      "# Kiwix offline library: 0=skip, 1=essential(~2.5GB), 2=extended(~10GB), 3=full(~25GB)",
+      "KIWIX_TIER=\"1\"",
+      "",
+      "# ── Advanced (optional) — leave commented for automatic drive selection ──",
+      "#FC_SSD_A=\"/dev/nvme0n1\"",
+      "#FC_SSD_B=\"/dev/nvme1n1\""
+    ]},
+
+    {"h1": "The Advanced Drive Settings (Almost Everyone Skips These)"},
+    {"p": "At the bottom of the sample you'll see two lines that start with `#` — **`FC_SSD_A`** and **`FC_SSD_B`**. Because they begin with `#`, they're **switched off** (commented out), and that's how they should stay for nearly every build."},
+    {"p": "Normally the setup finds your two solid-state drives (SSDs) by itself and mirrors them — you don't have to name them. These two lines exist only for the rare case where you need to **force** exactly which two drives become the mirror (for example, if a Pi has more than two drives attached and the automatic pick isn't what you want). To use them, you'd remove the `#` from the front of each line and put in the correct device names. If you don't recognize what a device name like `/dev/nvme0n1` means, that's a sure sign you should leave these lines commented out and let the setup choose."},
+    {"callout": {"kind": "warning", "label": "DON'T UNCOMMENT THESE UNLESS YOU'RE SURE",
+      "text": "Forcing the wrong two device names here points the mirror-build at the wrong drives. For a standard two-SSD FieldCommand server, leave `FC_SSD_A` and `FC_SSD_B` commented out (with their `#`) and let the setup detect the drives automatically — it's the safe, tested path."}},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__The setup still asks me questions on screen — it didn't find my file.__ The setup only goes hands-off when it finds the file. Check three things: the name is exactly `fieldcommand.conf` (all lowercase, no `.txt` or `.sample` on the end — Windows sometimes hides file endings, so turn on \"file name extensions\" in Explorer to be sure); the file is in one of the three locations (on the SD boot partition it should sit at `/boot/firmware/fieldcommand.conf`); and you saved it as plain text. To remove all doubt, pass it by name: `--config /full/path/to/fieldcommand.conf`.",
+      "__It found the file but a setting didn't take effect.__ Most often the line was misspelled, or the quotes or the `=` were dropped. Each line must read `KEY=\"value\"` exactly — for example `SERVER_IP=\"192.168.50.1\"`. Compare your line against the sample. Also remember the setting names are case-sensitive: it's `AP_SSID`, not `ap_ssid`.",
+      "__I left a line out and it used a value I didn't want.__ A left-out line takes its **default** (the value shown in the table above). If you want a different value, add the line back and set it. If you want to be asked on screen instead, don't use a config file for that build.",
+      "__My callsign didn't turn the ham features on.__ Make sure `CALLSIGN` has a real callsign inside the quotes, e.g. `CALLSIGN=\"KE4CON\"`, not empty quotes `\"\"`. An empty value deliberately keeps the Amateur Radio tools off.",
+      "__The install ran but skipped the maps or library I wanted.__ You likely left `TILE_PRESET` or `KIWIX_TIER` at `0` (skip) or `1` (essential). Set them to `2` or `3` for more, remembering the larger tiers are big downloads (up to ~1.6 GB of maps and ~25 GB of library) that need a good internet connection.",
+      "__It went hands-off but I wanted to answer one question live.__ A config file makes the **whole** run hands-off — there's no per-question opt-out. Either fill the file in completely, or don't use a file for that build and answer everything on screen. Either way, the drive-erase confirmation still stops and waits for you to type `YES`."
+    ]}
+  ]
+}

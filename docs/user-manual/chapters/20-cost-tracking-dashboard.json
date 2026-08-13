@@ -1,0 +1,102 @@
+{
+  "order": 20,
+  "title": "Cost Tracking Dashboard",
+  "subtitle": "The one-glance money screen — what the incident has cost so far, where the money is going, how fast it's burning, and where it's headed — pulled together automatically from your cost entries.",
+  "in_this_chapter": [
+    "What the Cost Dashboard is and where its numbers come from",
+    "Picking an incident to view",
+    "The six big stat tiles at the top",
+    "The Cost Breakdown bars",
+    "Resources on Incident and how to make them count",
+    "Cost Projection — where the spending is headed",
+    "The Budget Tracker",
+    "Cost by Operational Period",
+    "The companion page: entering the actual costs",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "Open **Cost Dashboard** and pick your incident from the dropdown. The big tiles show the running total and the split between labor, equipment, and materials. Lower panels show where costs are headed and let you set a **Budget Limit** to track how much is left. The numbers here are read-only — you **enter** costs on the **✏ Edit Costs** page (the FEMA cost documentation page). The dashboard refreshes itself every two minutes."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "During a long incident, the Finance Section and the Incident Commander need a fast, honest answer to one question: __what is this costing us, and can we afford to keep going?__ The **Cost Dashboard** answers that on one screen. It gathers every cost that has been documented for the incident, adds it all up, breaks it down by type, works out how fast money is being spent, and projects where the total is headed."},
+    {"p": "The dashboard is a **read-only summary** — a window onto the numbers, not a place you type them in. The actual cost entries are made on the **FEMA PA Cost Documentation** page (Chapter 19 covers the rates those entries use). This dashboard reads all of those entries plus the daily rates on your T-cards, and paints the picture. It refreshes on its own every **two minutes**, so a screen left open in the command post stays roughly current without anyone touching it."},
+    {"callout": {"kind": "note", "label": "WHERE THE MONEY NUMBERS COME FROM",
+      "text": "Everything on this dashboard traces back to the **FEMA Force Account** cost entries — the labor, equipment, and materials logged on the cost-documentation page — and the estimated daily costs set on T-card resources. If a cost isn't entered there, it won't show here. An empty-looking dashboard usually just means no costs have been documented yet."}},
+
+    {"h1": "Picking an Incident"},
+    {"p": "The dashboard shows one incident at a time. Until you choose one, it simply says __Select an incident to view cost dashboard.__"},
+    {"steps": [
+      "Open **Cost Dashboard** from the dashboard's Finance area.",
+      "At the top right, open the **Select incident...** dropdown and choose your incident.",
+      "The dashboard fills in immediately. Your choice is remembered, so next time the page opens straight to it.",
+      "Use **↺ Refresh** any time to pull the latest numbers without waiting for the automatic two-minute refresh."
+    ]},
+    {"screenshot": "The Cost Dashboard with an incident selected: the row of large stat tiles across the top and the breakdown panels below"},
+
+    {"h1": "The Six Stat Tiles"},
+    {"p": "Across the top sit six large tiles, each a headline number sized to be read from across the room. Left to right:"},
+    {"table": {
+      "headers": ["Tile", "What it shows"],
+      "rows": [
+        ["**Total Costs**", "The running total of every documented cost on the incident. This is the single most-watched number. Below it: how many resources and personnel are on the T-card board."],
+        ["**Force Acct Labor**", "The total cost of people — your own personnel's hours, including overtime and fringe benefits. Shows how many labor entries make it up."],
+        ["**Force Acct Equipment**", "The total cost of your own equipment used, priced from the FEMA rate schedule. Shows the entry count."],
+        ["**Materials / Contracts**", "The total for things bought or contracted — supplies, rentals, contractor invoices. Shows the entry count."],
+        ["**Elapsed Time**", "How long the incident has been open, counted from its start time (for example \"2.3d\" or \"18.5h\"). This is what makes the burn rate possible."],
+        ["**Burn Rate**", "How fast money is being spent — the dollars-per-hour figure, with the per-day and per-12-hour-period equivalents beneath it."]
+      ],
+      "widths": [2.3, 4.2]
+    }},
+    {"callout": {"kind": "note", "label": "WHY BURN RATE MIGHT SHOW A DASH",
+      "text": "The **Burn Rate** and **Elapsed Time** tiles need two things to calculate: some documented costs, and a known incident start time. If either is missing, they show a dash (—) and a hint like __Enter costs above to calculate__. Once costs are entered and the incident has a start time, the numbers appear."}},
+
+    {"h1": "Cost Breakdown"},
+    {"p": "Below the tiles, the **Cost Breakdown** panel shows the same three cost types — **Force Account Labor** (red), **Force Account Equipment** (amber), and **Materials / Contracts** (green) — as horizontal bars. Each bar's length is that category's share of the total, and each line shows both the dollar amount and the percentage. At a glance you can see whether your spending is mostly people, mostly gear, or mostly purchases — which is exactly the split FEMA cares about."},
+
+    {"h1": "Resources on Incident"},
+    {"p": "On the left of the middle row, the **Resources on Incident** panel lists the resources from your T-card board, grouped by type. For each type it shows the **Count** (how many of that resource), the **Personnel** on them, and an **Est Daily $** — the estimated daily cost."},
+    {"p": "That daily-cost column is only filled in if someone has set a daily rate on the T-card. The panel's own note says it plainly: __Set daily cost to include in burn rate estimate.__ A row with no rate shows a dash and contributes nothing to the totals. When rates are set, a **Totals** line at the bottom sums the personnel and the daily cost across all resources."},
+    {"callout": {"kind": "important", "label": "T-CARD DAILY RATES FEED THE BURN RATE",
+      "text": "To have resource costs show up here and in the burn-rate estimate, set a **daily or hourly rate on each T-card**. Without those rates, the dashboard can only count the costs typed into the FEMA cost-documentation page. Setting T-card rates is the quickest way to get a realistic running cost during a live incident. Use the **Edit rates →** link in this panel to jump to where they're set."}},
+
+    {"h1": "Cost Projection"},
+    {"p": "On the right of the middle row, the **Cost Projection** panel answers \"if we keep spending at this pace, what will the total be?\" Using the current burn rate, it projects the total cost at four fixed horizons:"},
+    {"table": {
+      "headers": ["Horizon", "Meaning"],
+      "rows": [
+        ["**Next 12hr (1 period)**", "Projected total one operational period out."],
+        ["**Next 24hr (1 day)**", "Projected total a full day out."],
+        ["**Next 72hr (3 days)**", "Projected total three days out — useful for a multi-day activation."],
+        ["**Next 7 days**", "Projected total a week out — the long-range budget picture."]
+      ],
+      "widths": [2.4, 4.1]
+    }},
+    {"p": "Each line shows the projected total and, in smaller text, how much of that is added spending beyond today. These are **estimates** — the panel says so — built on the assumption that today's burn rate simply continues. They are for budget planning, not for the official cost record."},
+
+    {"h1": "The Budget Tracker"},
+    {"p": "Underneath the projection sits the **Budget Tracker**. If your activation was authorized with a spending limit, type it into the **Budget Limit** box and click **Set**. A bar appears showing how much of the budget is spent, the percentage used, and the dollars remaining."},
+    {"p": "The bar changes color as you approach the limit — **green** while there's comfortable room, **amber** as you cross about 70 percent, and **red** near or over the limit. If you go over, the line switches to __over budget__ in red. It's a simple visual gut-check that the incident is staying within what was approved."},
+    {"callout": {"kind": "note", "label": "THE BUDGET FIGURE IS JUST FOR THIS VIEW",
+      "text": "The number you type into **Budget Limit** is only used to draw this bar. It doesn't change any cost entry or get reported anywhere — it's a local yardstick so you can see spent-versus-authorized at a glance."}},
+
+    {"h1": "Cost by Operational Period"},
+    {"p": "The bottom panel, **Cost by Op Period**, breaks the spending out period by period — **Labor**, **Equipment**, **Materials**, and a **Total** for each operational period. Costs only land in a period if the underlying FEMA cost entry was tagged with an operational period; anything untagged is grouped under __Unassigned__."},
+    {"p": "This per-period view is what you want for after-action documentation and for preparing the FEMA Project Worksheet (PW), because it shows how cost accumulated over the life of the incident rather than as one lump sum."},
+
+    {"h1": "The Companion Page — Where Costs Are Actually Entered"},
+    {"p": "Because the dashboard is read-only, the real data entry happens next door on the **FEMA PA Cost Documentation** page, reachable from the **✏ Edit Costs** button at the top of the dashboard (or the __Edit rates →__ and __Edit Costs__ links inside the panels). That page has four tabs — **Force Account Labor**, **Force Account Equipment**, **Materials / Contracts**, and **Project Worksheet** — where each cost is logged with its detail. Everything you type there is what the dashboard sums up here."},
+    {"p": "A small footnote on the dashboard says the same thing: costs shown come from FEMA Force Account entries, and all projections are estimates to verify with the Finance Section Chief. Treat the dashboard as the summary and the cost-documentation page as the ledger."},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__It just says \"Select an incident to view cost dashboard.\"__ You haven't chosen an incident yet. Pick one from the **Select incident...** dropdown at the top right.",
+      "__All my totals are $0 even though we've been working for hours.__ No costs have been documented yet. Costs come from the FEMA cost-documentation page — click **✏ Edit Costs** and add labor, equipment, or material entries. Hours worked don't cost anything here until they're entered as labor.",
+      "__Burn Rate and projections show a dash.__ They need both documented costs and an incident start time. Add some costs, and make sure the incident has a start time set, then refresh.",
+      "__The Resources panel shows resources but no dollar amounts.__ Those T-cards don't have daily rates set. Use **Edit rates →** to set a daily or hourly cost on each resource so it counts.",
+      "__The per-period table says \"No period data.\"__ Your cost entries aren't tagged with an operational period. Tag each FEMA cost entry with its period on the cost-documentation page, and they'll sort into periods here.",
+      "__\"Error loading cost data.\"__ The page couldn't reach the cost service. Confirm you're on the FieldCommand Wi-Fi and the server is running, then click **↺ Refresh**.",
+      "__The numbers look stale.__ The dashboard auto-refreshes every two minutes, but you can force it any time with **↺ Refresh** to pull the latest figures immediately."
+    ]}
+  ]
+}

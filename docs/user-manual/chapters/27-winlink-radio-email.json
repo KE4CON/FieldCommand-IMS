@@ -1,0 +1,107 @@
+{
+  "order": 27,
+  "title": "Winlink Radio Email",
+  "subtitle": "How FieldCommand takes ICS forms that traveled over Winlink radio email and files them into your incident record — using the Winlink Form Import page.",
+  "in_this_chapter": [
+    "What Winlink is, and what FieldCommand does (and doesn't do) with it",
+    "The radio side: Winlink Express, Pat, and how the message reaches you",
+    "Opening the Winlink Form Import page",
+    "Step 1 — handing FieldCommand the form data (drop a file or paste)",
+    "Step 2 — reviewing and correcting what was pulled out",
+    "Step 3 — tagging the form to an incident and filing it",
+    "Printing a clean ICS form vs. archiving to the record",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "In your Winlink program, open the message that carries the ICS form and **save its `RMS_Express_Form_*.xml` attachment** (or just copy the message text). In FieldCommand, open **Winlink Form Import**, **drop the file** onto the page (or paste it) and click **Parse Form Data**. Check the fields it pulled out, pick the **Incident** and whether the message was **Received** or **Sent**, then click **Archive to incident** to file it — or **Open in ICS form** to print a clean copy."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "**Winlink** is radio email. It lets amateur-radio operators send and receive email-style messages — with attachments — over the air when the regular internet is down. During an incident, {{org}} uses it to move ICS paperwork between stations that have no other connection. FieldCommand does **not** transmit Winlink itself; the radio work is done by a separate Winlink program running on an operator's computer next to the radio. What FieldCommand adds is the **bridge on the receiving end**: it takes an ICS form that arrived (or was sent) over Winlink and drops it neatly into your incident record, so that message lives alongside the rest of your forms, logs, and reports instead of being stranded in an email inbox."},
+    {"p": "The whole job happens on one screen — the **Winlink Form Import** page. You give it the form, it reads the fields, you check them, and you file the result. Think of it as the inbox-to-file-cabinet step for radio email."},
+    {"callout": {"kind": "important", "label": "THIS IS A LICENSED-OPERATOR FEATURE",
+      "text": "Winlink runs on amateur-radio frequencies, so it legally requires a properly licensed amateur-radio operator with a callsign (for example **{{club}}**). Like the other ham features, Winlink is only switched on when a **Club / Station Callsign** has been set in Setup (Chapter 3). If your group has no licensed operator, this page stays grayed out — by design."}},
+
+    {"h1": "The Radio Side — Where the Message Comes From"},
+    {"p": "Before FieldCommand ever sees anything, the message travels over the radio using one of the common Winlink programs. FieldCommand works with whatever your operators already use; the table below is just so you know the names you'll hear on the air."},
+    {"table": {
+      "headers": ["Program", "Runs on", "How it connects"],
+      "rows": [
+        ["**Winlink Express**", "A Windows laptop at the radio", "VARA High Frequency (HF), VARA FM, Telnet, or Pactor"],
+        ["**Pat**", "The Raspberry Pi or another Linux computer", "VARA FM, Telnet, or AX.25 packet"],
+        ["**RMS Express**", "A Windows laptop", "Pactor (needs a hardware SCS modem)"]
+      ],
+      "widths": [2.0, 2.3, 2.6]
+    }},
+    {"p": "All you need from the radio side is the ICS form the message carried. Winlink attaches ICS forms as a small file named something like `RMS_Express_Form_ICS213.xml`. In your Winlink program, open the message, **right-click that attachment and Save it** somewhere you can find it — or, if you'd rather, just **copy the whole message text**. Either one is enough for FieldCommand. This works the same whether the form came **in** to you or was one you **sent** out."},
+
+    {"h1": "Opening the Winlink Form Import Page"},
+    {"steps": [
+      "On a device connected to the FieldCommand Wi-Fi, open the dashboard.",
+      "Open **Winlink Form Import** (or go straight to the address `http://192.168.50.1/winlink-import.html`).",
+      "The **📥 Winlink Form Import** page opens. It is laid out as three numbered steps, top to bottom — **1** provide the data, **2** review it, **3** file it. Steps 2 and 3 stay hidden until you've handed it a form."
+    ]},
+    {"screenshot": "The Winlink Form Import page showing Step 1 with the drop zone and paste box"},
+
+    {"h1": "Step 1 — Provide the Winlink Form Data"},
+    {"p": "The first box, **① Provide the Winlink form data**, is where you hand the form over. You have two ways to do it, and either is fine:"},
+    {"bullets": [
+      "__Drop or browse for the file.__ Drag the saved `RMS_Express_Form_*.xml` file onto the large dashed **drop zone** (the 📂 area that reads *“Drop an RMS_Express_Form file here, or click to browse”*). Or click it to open a file picker and choose the file. It accepts `.xml` and `.txt` files.",
+      "__Paste the text.__ Below the drop zone is a box labeled *“— or paste below —”*. Paste the form's XML, or the plain Winlink message text, straight into it."
+    ]},
+    {"p": "Then click **Parse Form Data**. FieldCommand reads what you gave it and jumps to Step 2. (The **Clear** button empties everything and starts over.) If you dropped or browsed to a file, it parses automatically — you don't even need to click the button."},
+    {"callout": {"kind": "note", "label": "IT CAN READ THE PLAIN MESSAGE TOO",
+      "text": "If you don't have the neat `.xml` attachment — only the message text — paste that. FieldCommand will scan it for `Label: value` lines and pull out what it can. The tidy XML file gives the cleanest result, but the text fallback means a copy-paste is never wasted."}},
+
+    {"h1": "Step 2 — Review and Correct the Extracted Data"},
+    {"p": "The **② Review & correct the extracted data** box appears with a colored banner telling you what it found. FieldCommand recognizes three ICS forms automatically:"},
+    {"table": {
+      "headers": ["Banner says", "Meaning"],
+      "rows": [
+        ["Green — *Detected an ICS-213 General Message*", "A general message form. The most common Winlink ICS form."],
+        ["Green — *Detected an ICS-214 Activity Log*", "A unit activity log form."],
+        ["Green — *Detected an ICS-309 Communications Log*", "A radio communications log form."],
+        ["Amber — *Form type not recognized automatically*", "It couldn't tell which form this is. The data is still captured and can be archived; only the three forms above can be re-printed as clean ICS forms."]
+      ],
+      "widths": [2.9, 3.7]
+    }},
+    {"p": "Below the banner is a grid of the fields it pulled out, each in its own editable box. **Read them over and fix anything that looks wrong** — nothing here is locked. Longer items (the message body, activity list, log entries) show as multi-line boxes. What you'll see depends on the form type:"},
+    {"table": {
+      "headers": ["ICS-213 (General Message)", "ICS-214 (Activity Log)", "ICS-309 (Comms Log)"],
+      "rows": [
+        ["Incident, To (Name/Position), From (Name/Position), Message #, Date, Time, Subject, Message Text, Approved By, Reply", "Incident, Unit Name, Unit Leader, Op Period From/To, Time From/To, Prepared By, Activities, Personnel", "Incident, Op Period From/To, Task No., Operator, Station / Net, Page, Log Entries"]
+      ],
+      "widths": [2.3, 2.2, 2.1]
+    }},
+    {"callout": {"kind": "note", "label": "THE “FIELDS NOT AUTOMATICALLY MAPPED” BOX",
+      "text": "Winlink forms come in many versions and sometimes carry an extra field FieldCommand doesn't have a home for. Anything like that shows in an amber **Fields not automatically mapped** box below the grid. Those values are **not lost** — they are kept with the archived record. Glance at them in case one really belongs in a field above; otherwise you can ignore them."}},
+
+    {"h1": "Step 3 — Tag to Incident and File"},
+    {"p": "The **③ Tag to incident & file** box has two small pickers and two action buttons."},
+    {"table": {
+      "headers": ["Control", "What it does"],
+      "rows": [
+        ["**Incident**", "Choose which incident this form belongs to. The list is filled from your active incidents. If there are none, it files to a general archive."],
+        ["**Direction**", "Say whether this was **Received (incoming traffic)** or **Sent (outgoing traffic)** — so the record shows which way the message went."]
+      ],
+      "widths": [1.8, 4.8]
+    }},
+    {"p": "Then pick one of the two buttons:"},
+    {"bullets": [
+      "__📄 Open in ICS form (print).__ Re-draws the data as a proper, printable ICS-213, ICS-214, or ICS-309 form in a new tab, ready to print or save as a paper copy. (Available only for those three recognized forms.)",
+      "__💾 Archive to incident.__ Files the form — every field, the unmapped extras, and the original raw text — into the incident record on the server. A green line confirms it was archived, noting the form type and direction."
+    ]},
+    {"callout": {"kind": "warning", "label": "IF THE SERVER CAN'T BE REACHED",
+      "text": "If **Archive to incident** can't reach the server, FieldCommand doesn't throw the form away — it saves a copy **on the device you're using** and shows an amber message. Once the server is back, come back to this page and archive again so the record lands where it belongs."}},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__The Winlink Form Import page is grayed out or missing.__ Winlink is a licensed-operator feature. Make sure a **Club / Station Callsign** is set in Setup (Chapter 3) and that the **Winlink** module is switched on under Active Modules.",
+      "__It says “Could not find any form data.”__ You pasted something it couldn't read. Paste the actual `RMS_Express_Form` XML, or the full Winlink message text — not just a subject line. Saving the XML attachment from your Winlink program gives the best result.",
+      "__The banner is amber and the form type is “not recognized.”__ FieldCommand only auto-identifies ICS-213, ICS-214, and ICS-309. You can still **Archive** an unrecognized form (the data is kept), but **Open in ICS form** won't be available for it.",
+      "__Some fields came in blank or in the wrong box.__ Winlink forms vary by version. Just type the corrections into the field boxes in Step 2 before you file — and check the amber **Fields not automatically mapped** box in case a value landed there.",
+      "__The Incident list shows “no active incident.”__ There are no incidents to attach to right now, so the form will file to the general archive. Start or select an incident first if you want it tied to one.",
+      "__Archiving showed an amber “server unreachable” message.__ The form was saved locally on this device so nothing is lost. Reconnect to the FieldCommand server and archive again."
+    ]}
+  ]
+}

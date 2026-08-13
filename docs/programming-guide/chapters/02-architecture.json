@@ -1,0 +1,132 @@
+{
+  "order": 2,
+  "title": "System Architecture — The Big Picture",
+  "subtitle": "This chapter traces a single request from a browser all the way to the database and back, lays out the service-and-port map, and explains why FieldCommand is shaped as a set of small independent processes behind one nginx front door — and where every piece of state lives.",
+  "in_this_chapter": [
+    "The request path — browser to nginx to a Python service to SQLite and back",
+    "Why everything now goes through nginx over one encrypted connection",
+    "The service-and-port map, grounded in the real nginx config",
+    "Why the four core services bind localhost only (a recent security change)",
+    "Why this shape — offline-first, no framework, independent services, one file",
+    "Where state lives and how data flows",
+    "Design takeaways and the maintainer's rule"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "IN ONE SENTENCE",
+      "text": "A browser talks only to __nginx__ over one encrypted connection; nginx serves the static pages and forwards each Application Programming Interface (API) call — using a same-origin `/svc/<port>/` address — to the matching small Python service, which reads or writes the one __SQLite__ file and answers."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "FieldCommand is not one big program. It is a handful of **small, single-purpose Python backends**, each doing one job, all sitting behind a single web server (**nginx**) that faces the browser. The architecture's job is to make that collection of parts behave, to the operator, like one seamless website — while keeping the parts genuinely independent underneath, so any one of them can be restarted or worked on without taking down the rest."},
+    {"p": "This chapter is the map you keep open while reading the rest of the book. Every later chapter is about the inside of one of these boxes; this chapter is about how the boxes connect, which port each one listens on, and how a click in a browser becomes a row in the database."},
+    {"callout": {"kind": "note", "label": "JARGON, IN PLAIN WORDS",
+      "text": "**nginx** (pronounced 'engine-x') is a fast web server that answers browsers, serves files, and can act as a **reverse proxy** — meaning it takes a request meant for a program running behind it and forwards it on, then relays the answer back. A **port** is a numbered doorway on a computer; different programs listen on different port numbers so requests reach the right one. **Same-origin** means every request goes to the same address (same name, same port, same encryption), which browsers treat as safe and simple."}},
+
+    {"h1": "How It Works — The Request Path"},
+    {"p": "Follow one API call from a page. Every request, whether for a page or for data, arrives at nginx first — nothing else is exposed to the browser. Here is the whole path:"},
+    {"steps": [
+      "A device on the FieldCommand Wi-Fi opens a page and the page's JavaScript makes a call — for example, the dashboard fetching the station configuration.",
+      "That call goes to nginx over Hypertext Transfer Protocol Secure (HTTPS) on port 443. nginx terminates the Transport Layer Security (TLS) encryption here — it is the only place encryption is handled.",
+      "nginx looks at the address. If it is a file (a page, an image, a stylesheet), nginx serves it straight from the `html/` folder on disk. If it starts with `/svc/<port>/`, nginx forwards it to the Python service listening on that port on the same machine.",
+      "The Python service handles the request — reading or writing the SQLite database through `python/db.py` — and returns JavaScript Object Notation (JSON).",
+      "nginx relays that answer back to the browser over the same encrypted connection. The page updates."
+    ]},
+    {"p": "The front-end code shows how simple the browser's side of this is. The shared identity helper, and every page, calls the core API through a fixed same-origin base — there is no host or port in the address the browser ever sees:"},
+    {"code": [
+      "const API       = '/svc/5050';"
+    ]},
+    {"p": "And a real call from the dashboard (`html/index.html`) looks like this — just a path, no scheme and no host:"},
+    {"code": [
+      "const r = await fetch('/svc/5050/api/config');"
+    ]},
+    {"p": "On the nginx side, the matching rule forwards that `/svc/5050/` address to the core service on the local machine. The comment in the real config file explains the one subtle mechanic — the **trailing slash** on `proxy_pass` strips the `/svc/5050/` prefix, so the Python service sees exactly the path it always expected (`/api/config`), unaware that nginx is in front of it:"},
+    {"code": [
+      "# /svc/<port>/<path>  ->  http://127.0.0.1:<port>/<path>",
+      "# The trailing slash on proxy_pass strips the /svc/<port>/ prefix, so the",
+      "# backend sees exactly the path the front end used to call directly.",
+      "location /svc/5050/ {   # main API / FCC lookup / QR / ID cards",
+      "    proxy_pass         http://127.0.0.1:5050/;",
+      "    proxy_set_header   Host $host;",
+      "    proxy_set_header   X-Real-IP $remote_addr;",
+      "    proxy_read_timeout 60;",
+      "    client_max_body_size 20M;   # member photos, logos",
+      "}"
+    ]},
+    {"callout": {"kind": "note", "label": "JARGON, IN PLAIN WORDS",
+      "text": "**HTTPS** is ordinary web traffic (HTTP) wrapped in encryption so it cannot be read in transit. **TLS (Transport Layer Security)** is that encryption. **Terminate TLS** means nginx is where the encryption is unwrapped; everything past nginx, on the same machine, is plain unencrypted traffic to `127.0.0.1` (the machine talking to itself). **`proxy_pass`** is the nginx instruction that forwards a request to a program behind it."}},
+
+    {"h1": "How It Works — The Service and Port Map"},
+    {"p": "Each concern is its own process listening on its own port. This is the complete map, taken from the real `udev/nginx-fieldcommand.conf` and the systemd service files. The first four are the **core services**; the rest are supporting servers proxied by nginx under friendly paths."},
+    {"table": {
+      "headers": ["Port", "Service (file)", "Role", "nginx path"],
+      "rows": [
+        ["5050", "`fcc_lookup_server.py`", "Core API — Federal Communications Commission (FCC) callsign lookup, nets/roster, GPS position, hospitals, preflight, ID cards.", "`/svc/5050/`"],
+        ["5051", "`health_monitor.py`", "Health monitor — CPU/memory/disk, service states, internet/GPS/Wide-Area-Network (WAN)/44Net roll-up.", "`/svc/5051/`"],
+        ["5055", "`ics_platform_server.py`", "ICS platform — incidents, ICS forms, Resource Status Cards (T-cards), the IAP, and Federal Emergency Management Agency (FEMA) cost tracking.", "`/svc/5055/`"],
+        ["5056", "`reference_server.py`", "Offline reference library — stores and renders reference Portable Document Format (PDF) files; large uploads.", "`/svc/5056/`"],
+        ["8081", "Kiwix", "Offline knowledge library (for example, an offline copy of reference wikis).", "`/kiwix/`"],
+        ["8083", "`tile_server.py` (Flask)", "Offline map tiles — serves the map imagery for the tactical and resource maps with no internet.", "`/tiles/`"],
+        ["8090", "Pat (Winlink)", "Winlink backup email over radio.", "`/winlink/`"]
+      ],
+      "widths": [0.7, 2.1, 3.2, 1.0]
+    }},
+    {"p": "Two more nginx paths, `/aprs-gw/` and `/aprs-yc/`, exist to relay the live Automatic Packet Reporting System (APRS) tactical feed — including WebSocket upgrades — from a radio gateway, so the browser can reach that feed same-origin over TLS as well. They point by default at the APRS gateway on this machine and can be repointed at another host if the gateway runs elsewhere."},
+    {"callout": {"kind": "important", "label": "DO NOT POINT ICS CALLS AT 5051",
+      "text": "The ICS platform is on port **5055**. Port **5051** is the health monitor. These are easy to transpose and the mistake is silent — an ICS API call sent to 5051 simply will not find its route. When you add or move an ICS endpoint, confirm the front end calls `/svc/5055/`."}},
+
+    {"h1": "Why It's Shaped This Way — Localhost-Only Core Services"},
+    {"p": "The four core services (5050, 5051, 5055, 5056) each **bind to `127.0.0.1` only** — the loopback address, meaning they accept connections from the same machine and nothing else. They are never reachable directly from the network; the only way in is through nginx over HTTPS. You can see this at the bottom of each server's `main()`. In the core API server (`fcc_lookup_server.py`):"},
+    {"code": [
+      "log.info(\"FCC Lookup API server on port 5050\")",
+      "# Bind localhost only: the front end reaches this via nginx at /svc/5050 over",
+      "# HTTPS; the service is not exposed on the network directly.",
+      "HTTPServer((\"127.0.0.1\", 5050), Handler).serve_forever()"
+    ]},
+    {"p": "And identically in the ICS platform server (`ics_platform_server.py`):"},
+    {"code": [
+      "log.info(\"ICS Platform API on port 5055\")",
+      "# Localhost only — reached via nginx at /svc/5055 over HTTPS.",
+      "HTTPServer((\"127.0.0.1\", 5055), ICSHandler).serve_forever()"
+    ]},
+    {"p": "This is a **recent, deliberate security change**, and it matters for maintenance. Earlier, the front end called services directly at `http://host:<port>`, which meant those ports had to be open on the network and pages mixed encrypted and unencrypted traffic. Now there is exactly one door (nginx, TLS) and one address style (`/svc/<port>/`), and the same page works identically over plain HTTP in development and HTTPS in production with no mixed-content problems. The config file states this intent directly:"},
+    {"code": [
+      "# The four core services (5050 main/FCC, 5051 health, 5055 ICS, 5056 refs) are",
+      "# reached same-origin at /svc/<port>/... so the app works identically over http",
+      "# (dev) and https (production) with no mixed-content. The front end no longer",
+      "# calls http://host:<port> directly."
+    ]},
+    {"callout": {"kind": "warning", "label": "WHY THERE IS DELIBERATELY NO HSTS",
+      "text": "The nginx config intentionally omits the HTTP Strict-Transport-Security (HSTS) header. FieldCommand uses a self-signed or local-Certificate-Authority (CA) certificate on a closed Local Area Network (LAN) with no public domain, so the browser shows a one-time trust prompt. HSTS would forbid that click-through and lock operators out of their own appliance. Leave it off — it is a considered choice, noted in the config, not an oversight."}},
+    {"p": "The supporting servers (tiles on 8083, and the others) are a slightly different case: the tile server binds `0.0.0.0` (all interfaces) by design, but is still reached through nginx's `/tiles/` path in normal use. The security posture across the whole appliance rests on one fact: **the network itself is isolated.** FieldCommand is a no-login, open-LAN tool on purpose — 'any device, no login' is a feature — which is safe only because the EMCOMM-NET Wi-Fi is a closed network. These ports must never be exposed to an untrusted network."},
+
+    {"h1": "Why It's Shaped This Way — Independent Processes, One File"},
+    {"p": "Two design choices define the whole architecture, and both trace straight back to running in a field with no internet and no database expert on hand."},
+    {"p": "**First: many small independent processes instead of one framework.** Each service is built on Python's own `http.server` from the standard library — no Django, no Flask (except the tile server), no application framework at all. Each one is its own systemd service, so it starts at boot, restarts automatically if it crashes, and can be updated or restarted without touching the others. If the reference library server has a bad day, net logging and the ICS platform keep running. The cost of this independence is that these are simple single-threaded servers; a slow request in one process can block other clients of *that* process, which is a known, consciously-deferred trade-off rather than a bug."},
+    {"p": "**Second: one SQLite file instead of a database server.** All incident data lives in a single file reached through `python/db.py`. There is no database server to install, secure, start at boot, or troubleshoot at two in the morning in a shelter. Backing up the entire system's data is copying a file. The data layer chapter covers how `db.py` makes concurrent access from several processes safe; here the point is architectural — the shared state of the whole platform is one file on one disk."},
+    {"callout": {"kind": "note", "label": "JARGON, IN PLAIN WORDS",
+      "text": "A **process** is one running program with its own memory. **Single-threaded** means a process handles one request at a time, start to finish, before the next. **Binding to `0.0.0.0`** means listening on every network connection the machine has; **binding to `127.0.0.1`** means listening only to the machine itself. **systemd** is the Linux part that launches these processes at boot and restarts them if they die."}},
+
+    {"h1": "How It Works — Where State Lives"},
+    {"p": "It helps to know exactly where every kind of state is kept, because that tells you what survives a reboot, what gets backed up, and what does not:"},
+    {"table": {
+      "headers": ["State", "Where it lives", "Survives a reboot?"],
+      "rows": [
+        ["All incident data (nets, logs, ICS forms, T-cards, IAP, cost, resources, roster, station config)", "The one SQLite file, via `python/db.py`. Backed up to an external drive and archived.", "Yes — this is the permanent record."],
+        ["Uploaded files (member photos, logos, reference PDFs, map tiles)", "Files on disk under `/opt/fieldcommand/data/` and the tile store.", "Yes."],
+        ["Per-operator UI state (which identity is selected, panel choices)", "The browser's `localStorage` on each device — never on the server.", "Only on that device; it is not incident data and is not archived."],
+        ["Live status (CPU, service health, internet/GPS/WAN)", "Computed on demand by the health monitor; not stored.", "No — it is a snapshot of right now."]
+      ],
+      "widths": [2.4, 2.6, 1.4]
+    }},
+    {"p": "The dividing line is simple and important: **incident data is server-side and permanent; interface preferences are browser-side and disposable.** When you build a feature, anything an incident produces must be persisted through `db.py` so it reaches the backup and archive path — never left in memory or in `localStorage` alone."},
+
+    {"h1": "Why It Matters / Design Takeaways"},
+    {"bullets": [
+      "__One front door.__ Every request goes through nginx over one TLS connection; the browser only ever uses same-origin `/svc/<port>/` addresses, so development and production behave identically with no mixed-content.",
+      "__Locked-down core.__ The four core services bind `127.0.0.1` and are unreachable except through nginx — a recent, deliberate security tightening. The whole no-login model is safe only because the LAN is isolated.",
+      "__Independent by design.__ Each concern is its own standard-library Python process and its own systemd service, so one can fail or be updated without taking down the rest.",
+      "__State has a clear home.__ Incident data is one SQLite file (permanent, backed up); interface preferences live in the browser (disposable). Know which is which before you store anything."
+    ]},
+    {"callout": {"kind": "important", "label": "MAINTAINER'S RULE",
+      "text": "Respect the one-front-door shape. The browser must reach services only through nginx's `/svc/<port>/` paths — never wire a page to `http://host:<port>` directly, and keep the core services bound to `127.0.0.1`. When you add a service, add its nginx `location` block and a systemd unit, keep it localhost-only unless there is a specific reason not to, and confirm the whole thing still passes `python scripts/preflight_check.py`."}}
+  ]
+}

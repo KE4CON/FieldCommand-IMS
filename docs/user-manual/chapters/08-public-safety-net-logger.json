@@ -1,0 +1,129 @@
+{
+  "order": 8,
+  "title": "{{ps_mode}} Net Logger",
+  "subtitle": "The same live net log as Chapter 7, tuned for radios identified by unit number instead of amateur callsign — for {{ps_short}} nets, interoperability exercises, and served-agency support.",
+  "in_this_chapter": [
+    "What the {{ps_mode}} Net Logger is and how it differs from the amateur logger",
+    "When to use this logger instead of the Amateur Net Logger",
+    "Opening the page and reading the {{ps_short}} screen",
+    "Creating a {{ps_mode}} net with talkgroup and dispatch center",
+    "Logging units by Radio ID, with status and talkgroup fields",
+    "Checking units out and the shared quarter-hour timing",
+    "The Traffic Log, Observer Link, Drill Mode, and ICS-309 export",
+    "How to handle operators who hold both a license and a radio ID",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "Open the **{{ps_logger}}** from the dashboard. Click **+ New Net**, name it, pick a talkgroup and dispatch center, and **Create Net**. As units call in, type each **Radio ID / Unit #**, pick a **status**, and click **LOG ENTRY**. Click **Check Out** when a unit clears. Close the net and print the **📄 ICS-309** just like the amateur logger. If you already know the Amateur Net Logger (Chapter 7), you already know this one — the mechanics are identical."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "The **{{ps_mode}} Net Logger** is the same live net log described in Chapter 7, set up for **{{ps_short}}** radio operations instead of amateur ones. The one real difference is *how a participant is identified*. On an amateur net, stations check in by **callsign**, which FieldCommand looks up in the FCC (Federal Communications Commission) license database. On a {{ps_short}} net, units check in by **Radio ID** — the unit number on a trunked, P25 (Project 25 digital public-safety), or conventional radio — and **no license lookup is needed or performed**. This is the tool for {{ps_mode}} nets, interoperability exercises, and any net where the participants may not hold amateur licenses."},
+    {"p": "For {{org_the}}, the {{ps_short}} side is branded as the **{{ps_logger}}**. Everything else — creating nets, logging entries, checking units out, the quarter-hour participation timer, Drill Mode, the Observer Link, and the ICS-309 (the standard Incident Command System communications log) export — works exactly as it does on the amateur logger. **This chapter covers only what's different; for the shared mechanics, read Chapter 7.**"},
+    {"callout": {"kind": "note", "label": "SAME ENGINE, DIFFERENT LABELS",
+      "text": "Under the hood the {{ps_logger}} and the Amateur Net Logger are the same tool. If you've run one, the other holds no surprises — the buttons are in the same places and behave the same way. What changes is the vocabulary: **Radio ID** instead of callsign, **units** instead of stations, and **talkgroups** and **dispatch centers** instead of frequencies and grid squares."}},
+
+    {"h1": "How It Differs From the Amateur Net Logger"},
+    {"p": "Here is the side-by-side, so you can see exactly which parts change:"},
+    {"table": {
+      "headers": ["Feature", "Amateur Net Logger (Ch. 7)", "{{ps_mode}} Net Logger"],
+      "rows": [
+        ["**Primary ID**", "FCC callsign — auto-filled from the offline database", "**Radio ID** (unit number) — typed in, no lookup"],
+        ["**License check**", "FCC lookup confirms an active license", "**None required**"],
+        ["**Roster lookup**", "By callsign → name and member ID", "By radio ID → name and member ID"],
+        ["**Extra fields**", "Location / grid square", "**Talkgroup** and **Dispatch Center**"],
+        ["**ICS-309 column**", "Callsign in the station column", "Radio ID in the station column"],
+        ["**Typical use**", "ARES / RACES / AUXCOMM", "{{ps_mode}} agency nets, interop exercises"]
+      ],
+      "widths": [1.7, 2.5, 2.3]
+    }},
+
+    {"h1": "Opening the {{ps_logger}}"},
+    {"steps": [
+      "On a device connected to the FieldCommand Wi-Fi, open the dashboard (default **http://192.168.50.1**).",
+      "Click the **{{ps_logger}}** — its header shows the blue **STARCOM** badge and reads **NET LOGGER**.",
+      "The logger opens with a blue accent theme. The layout mirrors the amateur logger: a net-picker strip, a two-column body with the logging area on the left, and a **STARCOM NET SUMMARY** sidebar on the right."
+    ]},
+    {"screenshot": "The {{ps_mode}} Net Logger with the STARCOM badge header, the blue-accented net picker, and the summary sidebar"},
+    {"p": "The navigation links at the top let you jump to the **{{ps_short}} Dashboard**, the **Amateur Logger**, or **Observer** mode. Until you create or select a net, the header reads **No Net Selected** and the body says *Select or create a {{ps_mode}} net to begin*."},
+
+    {"h1": "Creating a {{ps_mode}} Net"},
+    {"p": "Click the blue **+ New Net** button. The **Create {{ps_mode}} Net** box appears. Its fields are tuned for {{ps_short}} radio:"},
+    {"table": {
+      "headers": ["Field", "What to type", "Notes"],
+      "rows": [
+        ["**Net Name**", "A plain name for the net", "Required."],
+        ["**Net Type**", "Dispatch Net, Tactical Net, Command Net, Mutual Aid Net, Search and Rescue Net, EOC Coordination Net, or Medical Net", "Labels the net and prints on the ICS-309."],
+        ["**Talkgroup**", "Digital Talkgroup, Conventional Digital, Conventional Analog, P25, or DMR (Digital Mobile Radio)", "The kind of radio channel the net uses."],
+        ["**Channel / Frequency**", "The channel name or frequency the net runs on", "Free text."],
+        ["**Dispatch Center**", "The dispatch center backing the net (example: `{{county_ex}} Sheriff Dispatch`)", "Optional; shows in the net header when set."]
+      ],
+      "widths": [2.1, 3.3, 2.1]
+    }},
+    {"steps": [
+      "Type at least a **Net Name**.",
+      "Pick the **Type**, **Talkgroup**, and **Channel**, and name the **Dispatch Center** if there is one.",
+      "Click **Create Net**. The net goes active, a tab appears, and the check-in form is ready."
+    ]},
+
+    {"h1": "Logging a Unit Check-In"},
+    {"p": "The **Log Unit Check-In / Traffic** form is where you record each unit as it calls in. Because there's no callsign to look up, you type the **Radio ID** and go — it's the only required field. The form's fields:"},
+    {"table": {
+      "headers": ["Field", "What it's for"],
+      "rows": [
+        ["**Radio ID / Unit #**", "The unit's radio identifier. Shown in bold, large type. **This is the only field you must fill in.**"],
+        ["**Unit Name / Callsign**", "The unit's name or the operator's name."],
+        ["**Status**", "The unit's state: Check-In, Traffic, Priority Traffic, Emergency, Dispatch, Check-Out, En Route, On Scene, Available, or Out of Service."],
+        ["**Talkgroup**", "Which talkgroup the unit is on: Digital Talkgroup, Conventional Digital, Conventional Analog, P25 Direct, DMR Direct, or GMRS (General Mobile Radio Service)."],
+        ["**Channel / Frequency**", "The channel the unit is using. The **📡 Pick** button lets you choose from your saved channels (ICS-205 / Channel Library)."],
+        ["**Precedence**", "Routine, Welfare, Priority, or Emergency — color-codes the row exactly as in the amateur logger."],
+        ["**Location**", "Where the unit is."],
+        ["**Remarks**", "A short free-text note about the unit or its message."],
+        ["**ICS Position**", "Optional. The unit's role on an incident, from the grouped list."],
+        ["**Incident ID**", "Optional. Ties the check-in to an incident and reveals a **📋 ICS-211 →** link to that incident's check-in list."]
+      ],
+      "widths": [2.2, 4.3]
+    }},
+    {"p": "There's also a **📡 Dispatch Center** box at the top-right of the form. Type the dispatch center's name there and it shows in the net header, so everyone watching knows which dispatch is backing the net."},
+    {"steps": [
+      "Type the **Radio ID / Unit #**.",
+      "Pick a **Status**, and add talkgroup, channel, location, or remarks as needed.",
+      "Click the blue **LOG ENTRY** button.",
+      "The unit drops into the **Units Logged** list, newest at the top, stamped with the time. Use **Clear** to reset the form without logging."
+    ]},
+    {"callout": {"kind": "note", "label": "NO ENTER-TO-LOG HERE",
+      "text": "Unlike the amateur logger, the {{ps_logger}} does not log on the Enter key — click the **LOG ENTRY** button to record each unit. Everything else about logging, including the colored precedence edge on each row, works the same."}},
+
+    {"h1": "Checking Units Out, Traffic, and the Shared Tools"},
+    {"p": "The rest of the {{ps_logger}} behaves just like Chapter 7, so we'll keep this short:"},
+    {"bullets": [
+      "**Check Out** — each logged unit has a **Check Out** button and a running **Duration**. Click it when the unit clears; the time is frozen and rounded **up to the nearest quarter-hour**, the same way volunteer and staffing time is documented.",
+      "**Traffic Log tab** — the **📨 Traffic** tab records messages passed on the net (From unit, To unit/address, a Type such as Dispatch / Tactical / Resource Request / Status / Priority / Emergency, and a summary). This traffic is the primary content of the ICS-309.",
+      "**Sidebar** — the **STARCOM NET SUMMARY** panel shows the net name, type, unit count, traffic count, open/close times, and duration; the **ACTIVE NETS** panel lists every open net.",
+      "**Drill Mode** — the header checkbox marks the net as an exercise and raises the **⚠ DRILL / EXERCISE ⚠** banner; the exported ICS-309 is stamped accordingly. Always use it for training.",
+      "**🔗 Observer Link** — copies a read-only link so a supervisor or EOC officer can watch the net live without touching the log (Chapter 9).",
+      "**💾 Backup** — saves the whole net as a JSON file on your device."
+    ]},
+
+    {"h1": "Closing the Net and Exporting the ICS-309"},
+    {"steps": [
+      "Click the red **Close Net** button and confirm. **Every unit still checked in is automatically checked out** at the close time.",
+      "Click **📄 ICS-309**. The communications log builds, downloads, and opens in a new tab ready to print.",
+      "The printed form is labeled **STARCOM NET**, and its **Unit Check-In Log** shows the **Radio ID** in the station column (where the amateur version shows a callsign). It carries the net type, channel/frequency, open/close times, totals, the **Message Traffic Log**, and each unit's participation duration rounded up to the quarter-hour."
+    ]},
+
+    {"h1": "Operators Who Hold Both a License and a Radio ID"},
+    {"callout": {"kind": "important", "label": "KEEP THE TWO LOGS CLEAN",
+      "text": "Some people carry **both** an amateur license and a {{ps_short}} radio ID. On a {{ps_mode}} net, they should check in **by radio ID only**, here. If they also need to take part in a concurrent **amateur** net on the same incident, they check into the **Amateur Net Logger** separately, by callsign (Chapter 7). Logging each person in the correct logger keeps both communications logs accurate and defensible."}},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__The net picker is stuck on *Loading nets…* or nets won't appear.__ The logger talks to the FieldCommand service on the Pi. Confirm your device is on the FieldCommand Wi-Fi and the server is running, then reload.",
+      "__I typed a unit but clicking LOG ENTRY did nothing / it asked for a Radio ID.__ A unit check-in needs a **Radio ID**. Type one in the Radio ID / Unit # field and log again.",
+      "__I only see amateur nets, not my {{ps_short}} nets (or vice-versa).__ The {{ps_logger}} shows only {{ps_mode}} nets, and the Amateur Logger shows only amateur nets — they're kept separate on purpose. Use the navigation links at the top to switch loggers.",
+      "__Log Traffic or Check Out said to select a net first.__ Click a net tab, or create one with **+ New Net**, before logging.",
+      "__The 📡 Pick button said no channels were found.__ You need an ICS-205 Communications Plan or a Channel Library set up for the incident. Until then, type the channel or frequency by hand.",
+      "__The ICS-309 export did nothing.__ Select a net first, then click **📄 ICS-309** again. If a pop-up was blocked, the file still downloads — check your downloads folder."
+    ]}
+  ]
+}

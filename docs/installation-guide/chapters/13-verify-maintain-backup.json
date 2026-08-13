@@ -1,0 +1,139 @@
+{
+  "order": 13,
+  "title": "First-Boot Verification, Maintenance & Backups",
+  "subtitle": "How to prove the finished server actually works, how to keep it up to date, and how to make backups so you never lose an incident's data.",
+  "in_this_chapter": [
+    "Verifying the install with the Pre-Flight readiness check (GO / CAUTION / NO-GO)",
+    "A quick by-hand checklist: dashboard loads, key services are up, Wi-Fi is reachable",
+    "The real service ports and how to confirm each is running",
+    "How updates work, and when to run them",
+    "Why the field server normally runs offline",
+    "USB auto-backup with a drive labeled FIELDCOMMAND",
+    "Full-system backup to an external drive, and where incident data lives",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "Open a browser on the FieldCommand Wi-Fi and go to **http://192.168.50.1** — the dashboard should load. Then open the **Pre-Flight** page and press **Auto-Check**: a green **GO** means the core services are up and the install worked. To update the server, run **`sudo bash /opt/fieldcommand/scripts/update.sh`** while it has internet — normally only before a deployment. To back up, plug in a USB drive labeled **FIELDCOMMAND** and it copies your data automatically."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "The server is built and installed. This chapter is about the three things you do right after that build, and keep doing for the life of the server: **prove it works**, **keep it current**, and **protect its data**. None of these is hard — most of it is a page you open in a browser or a single command — but skipping them is how groups get surprised in the field. A five-minute check now beats a dead dashboard during a real activation."},
+    {"p": "The chapter is in three parts. **Part 1 — Verify** confirms the install actually succeeded, using FieldCommand's own built-in **Pre-Flight** readiness check plus a short by-hand list. **Part 2 — Maintenance & Updates** explains how and when to update. **Part 3 — Backups** covers the plug-in-a-USB-drive auto-backup and a full-system backup, and tells you exactly where your incident data lives so you always know what you're protecting."},
+    {"callout": {"kind": "note", "label": "WHO DOES THIS",
+      "text": "Verifying is done once, by whoever built the server, right after the install finishes — and again as a habit before every deployment. Updates and backups are ongoing housekeeping for the same administrator. Regular operators never need to touch any of this."}},
+
+    {"h1": "Part 1 — Verify the Install Worked"},
+    {"p": "There are two ways to confirm the server came up correctly. The fast, official way is FieldCommand's **Pre-Flight** page, which checks the core services for you and gives a single **GO / CAUTION / NO-GO** verdict. The second is a short by-hand checklist you can run in under a minute. Do both the first time; after that, the Pre-Flight page alone is enough."},
+
+    {"h2": "The Pre-Flight Readiness Check — GO / CAUTION / NO-GO"},
+    {"p": "**Pre-flight** is the readiness page pilots borrow their name from: a go/no-go check you run before you commit. In FieldCommand it lives at **http://192.168.50.1/preflight.html** (or click **Preflight** in the top navigation bar). At the very top it shows one big verdict word and a colored progress bar. To check the install, you only care about the first section, **Data Readiness**, which the server can fill in **automatically**."},
+    {"steps": [
+      "On a device connected to the FieldCommand Wi-Fi, open a browser and go to **http://192.168.50.1/preflight.html**.",
+      "Find the **🗄 Data Readiness (Auto-Checked)** section at the top and click its **Auto-Check** button (it may run on its own when the page loads).",
+      "The page asks the server how it's doing and marks each item with a green check or a red cross. Watch the big verdict word at the top."
+    ]},
+    {"p": "The verdict word can be one of three states. Here is exactly what each means for a freshly-built server:"},
+    {"table": {
+      "headers": ["Verdict", "Color", "What it means", "What to do"],
+      "rows": [
+        ["**GO**", "Green", "Every required item is confirmed. The core services answered, the dashboard is up, and nothing is failing.", "The install is good. You're done verifying."],
+        ["**CAUTION**", "Amber", "Nothing is broken, but some items aren't confirmed yet — usually optional ones you haven't set up (a roster, repeater data), or items you simply haven't checked off by hand.", "Fine for confirming the install. Read the amber items; anything you plan to use in the field, set up before deployment."],
+        ["**NO-GO**", "Red", "At least one **required** item failed or is unconfirmed — for example a core service didn't answer, or Organization Setup was never completed.", "The install has a real problem. Read which item shows a red cross and see Troubleshooting below."]
+      ],
+      "widths": [1.2, 0.9, 3.1, 1.7]
+    }},
+    {"callout": {"kind": "note", "label": "CAUTION IS NORMAL ON A BRAND-NEW SERVER",
+      "text": "A freshly-built server almost always shows **CAUTION**, not GO — simply because optional things like the member roster, repeater database, or an active incident haven't been set up yet. That does **not** mean the install failed. For verifying the install, what you care about is that the **required** items (the ones with a small red dot) are green and that you never see **NO-GO**. You'll reach GO later, in the field, once everything is loaded."}},
+    {"callout": {"kind": "important", "label": "PRE-FLIGHT IS ALSO YOUR PRE-DEPLOYMENT CHECK",
+      "text": "This same page is what your team runs before every activation — power, antennas, personnel, and safety items are all on it. Right now you're only using the auto-checked Data Readiness section to confirm the build. Keep the page in mind: it's the standard go/no-go review your net control operator will use for real."}},
+
+    {"h2": "The Quick By-Hand Checklist"},
+    {"p": "If you'd rather confirm the basics yourself, or the Pre-Flight page won't load, run this short list. Each item takes seconds:"},
+    {"table": {
+      "headers": ["Check", "How to confirm", "Good result"],
+      "rows": [
+        ["**The dashboard loads**", "In a browser on the FieldCommand Wi-Fi, go to **http://192.168.50.1**", "The FieldCommand dashboard appears with its tiles and the clock ticking."],
+        ["**Wi-Fi is reachable**", "On a phone or laptop, look for the Wi-Fi network named **EMCOMM-NET** and connect to it", "The device connects and gets an address in the `192.168.50.x` range."],
+        ["**The lookup service answers**", "Browse to **http://192.168.50.1:5050** (the FCC callsign lookup API)", "You get a response from the server rather than a connection error."],
+        ["**Offline reference is up (if installed)**", "Browse to **http://192.168.50.1:8081** (the Kiwix offline library)", "The Kiwix welcome page loads with whatever offline books you installed."],
+        ["**Winlink backup is up (if installed)**", "Browse to **http://192.168.50.1:8090** (the Pat Winlink client)", "The Pat web page loads."]
+      ],
+      "widths": [1.9, 3.0, 2.0]
+    }},
+    {"p": "Acronyms, once: **API** means *Application Programming Interface* — a small web address other software talks to; you're just confirming it answers. **FCC** is the *Federal Communications Commission*, whose callsign database FieldCommand looks up offline. **SSID** (seen on the Setup screen) is a *Service Set Identifier*, the technical name for a Wi-Fi network's name."},
+
+    {"h2": "The Real Service Ports — a Reference"},
+    {"p": "FieldCommand is several small services working together, each listening on its own **port** (a numbered doorway on the same server address). You don't normally think about them, but when you're verifying an install — or chasing a problem later — knowing the real ports lets you test each piece directly. A **port** is just the number after the colon in an address like `192.168.50.1:5050`."},
+    {"table": {
+      "headers": ["Address", "Service", "What it does"],
+      "rows": [
+        ["**http://192.168.50.1**", "Web dashboard (nginx)", "Serves every FieldCommand page — the main front door on the standard web port 80."],
+        ["**:5050**", "FCC Lookup / core API", "Callsign lookups, organization config, incidents, and net logs."],
+        ["**:5051**", "Health Monitor / ICS platform", "System health and the ICS forms, T-cards, check-ins, GPS, and cost tracking."],
+        ["**:8000 / :8001**", "Direwolf TNC", "Decodes APRS off the radio (AGWPE on 8000, KISS on 8001). Optional — amateur radio only."],
+        ["**:8081**", "Kiwix offline library", "Wikipedia, medical, and reference books served offline. Optional."],
+        ["**:8083**", "Offline map tiles", "The local map imagery so maps work with no internet. Optional."],
+        ["**:8090**", "Pat Winlink", "Browser-based backup Winlink radio-email client. Optional."]
+      ],
+      "widths": [1.5, 2.1, 3.3]
+    }},
+    {"callout": {"kind": "note", "label": "OPTIONAL SERVICES ONLY EXIST IF YOU INSTALLED THEM",
+      "text": "The services marked *Optional* above (Kiwix, map tiles, Pat, Direwolf) are only present if you chose them during setup. If one of those addresses doesn't answer but you never installed it, that's expected — not a fault. The dashboard and the two core services (5050 and 5051) should always be up."}},
+
+    {"h1": "Part 2 — Maintenance & Updates"},
+    {"p": "FieldCommand ships one tool for all upkeep: a menu-driven script called **`update.sh`**. You run it and pick a numbered option — restart services, check their status, refresh data, update the web files, and so on. It's the single place you go for routine maintenance."},
+    {"code": ["sudo bash /opt/fieldcommand/scripts/update.sh"]},
+    {"p": "The word **`sudo`** means \"run this as the administrator\"; it may ask for the server's password. When the menu appears, you type the number or letter of what you want and press Enter. The most useful choices are:"},
+    {"table": {
+      "headers": ["Choice", "What it does", "When you'd use it"],
+      "rows": [
+        ["**3) Check service status**", "Lists every service with a green or red dot.", "The quickest health check — run this first if something seems off."],
+        ["**1) Restart all services**", "Stops and starts every service cleanly.", "After an update, or to clear a service that's misbehaving."],
+        ["**7) Update web files**", "Copies the newest FieldCommand pages and programs into place and restarts services.", "When you've pulled a newer version of the software and want it live."],
+        ["**5) Refresh FCC database**", "Rebuilds the offline callsign database from the latest data.", "Before a deployment, while online, so lookups are current."],
+        ["**8) Backup data**", "Copies the runtime data to a folder (see Part 3).", "A fast on-demand snapshot without hunting for a USB drive."]
+      ],
+      "widths": [1.9, 2.9, 2.1]
+    }},
+
+    {"h2": "When to Update — and Why the Server Runs Offline"},
+    {"p": "The FieldCommand server is built to run **completely offline**. In the field it usually has no internet at all — that's the whole point of an off-grid emergency system. Because of that, there is no automatic \"check for updates\" running in the background, and there shouldn't be. **You** decide when to update, and you do it deliberately, on your own schedule."},
+    {"callout": {"kind": "important", "label": "UPDATE BEFORE A DEPLOYMENT, WHILE YOU STILL HAVE INTERNET",
+      "text": "The right time to update — and to refresh the FCC callsign database and repeater data — is **at home base, before you deploy, while the server is online**. Do it as part of packing the go-kit. Once you're in the field the server is offline by design, so an update there usually isn't possible and definitely isn't the moment to try. Update early, verify with Pre-Flight, then deploy a known-good server."}},
+    {"p": "Between deployments, a good rhythm is: update and refresh data before any planned activation or exercise, run the Pre-Flight check to confirm everything still reads GO or a benign CAUTION, then set the server aside ready to go. There is no need to update a server that's sitting idle and working."},
+
+    {"h1": "Part 3 — Backups"},
+    {"p": "A mirror (RAID 1) protects you if a **drive** dies, but it is **not a backup** — it faithfully copies mistakes and deletions to both drives instantly. Backups are separate and just as important: they capture your incident data onto a drive you can remove and store somewhere safe. FieldCommand gives you two easy ways to do this."},
+
+    {"h2": "USB Auto-Backup — Just Plug In a Drive Labeled FIELDCOMMAND"},
+    {"p": "The simplest backup in FieldCommand needs no commands at all. The server watches for a USB drive whose volume label is exactly **FIELDCOMMAND** (all capital letters). The moment you plug one in, the server automatically copies all of its runtime data — including a clean snapshot of the incident database — onto that drive, into a folder stamped with the date and time."},
+    {"steps": [
+      "Prepare a USB drive whose volume label is exactly **FIELDCOMMAND** (all capitals). On Windows, format it as FAT32 and set the volume label to `FIELDCOMMAND`; on Linux you can run `sudo mkfs.vfat -n FIELDCOMMAND /dev/sda1` (substitute your real device name).",
+      "Plug the drive into the FieldCommand server.",
+      "The backup runs by itself. Your data is copied to **/media/fieldcommand/backup/** in a folder named for the current date and time (for example `20260812_143005`).",
+      "Wait a few seconds, then remove the drive and store it somewhere safe. Repeat as often as you like — each insertion makes a fresh, separate backup."
+    ]},
+    {"callout": {"kind": "warning", "label": "THE LABEL MUST BE EXACTLY FIELDCOMMAND",
+      "text": "The trigger matches the volume label **FIELDCOMMAND** in all capital letters — nothing else. A drive labeled `Fieldcommand`, `FIELD-COMMAND`, or `BACKUP` will simply be ignored and no backup happens. If plugging in your drive does nothing, the label is almost always the reason. Re-label it and try again."}},
+
+    {"h2": "Full-System Backup to an External Drive"},
+    {"p": "The USB auto-backup captures your **data**. For a deployment archive or a belt-and-suspenders copy, you can also make an on-demand backup from the maintenance menu: run **`update.sh`** and choose **8) Backup data**, which writes a timestamped copy of the runtime data to the server. For a genuine full-system copy you'd take before major changes, back the whole data folder up to a large external drive (a rugged USB hard drive is ideal) so an entire incident's records live on removable media you keep off the server."},
+
+    {"h2": "Where the Incident Data Lives"},
+    {"p": "It helps to know exactly what you're protecting. Everything FieldCommand creates during an activation — your organization configuration, incidents, net logs, ICS forms, check-ins, and the main database — lives under one folder on the server:"},
+    {"code": ["/opt/fieldcommand/data/"]},
+    {"p": "Inside it, **`fieldcommand.db`** is the single database file holding the live incident records. Both backup methods above copy this folder, and the USB auto-backup additionally makes a clean, consistent snapshot of the database so you always have a good copy even if the server was busy. The web pages themselves live separately under **/opt/fieldcommand/html/**, but those come from the software and don't need backing up the way your data does."},
+    {"callout": {"kind": "tip", "label": "A SIMPLE, RELIABLE BACKUP HABIT",
+      "text": "Keep one USB drive labeled **FIELDCOMMAND** in the go-kit at all times. Plug it in at the end of every operating period — a shift change, a net closing, the end of the day — and you'll always have a recent, removable copy of the incident's data. It costs ten seconds and it's the single best protection against losing a day's work."}},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__Pre-Flight shows NO-GO / a service item has a red cross.__ A required service isn't answering. Run the maintenance menu — `sudo bash /opt/fieldcommand/scripts/update.sh` — and choose **3) Check service status** to see which one is down, then **1) Restart all services**. Re-run the Pre-Flight Auto-Check. If a specific service keeps failing, check its log with `journalctl -u fcc-lookup -n 50` (swap in the failing service's name).",
+      "__Pre-Flight says \"Server unreachable\" when I press Auto-Check.__ The page loaded but the core service on port 5050 didn't answer. Confirm the dashboard itself loads at **http://192.168.50.1**; if it doesn't, the server or its web service is down — restart services from the maintenance menu. If the dashboard loads but Auto-Check still fails, restart the services and try again.",
+      "__The dashboard loads but only partly — some tiles or pages are missing or error.__ That's usually an **optional service** that isn't running (Kiwix, map tiles, Pat, or Direwolf), or one that needs a restart. Check service status from the maintenance menu (choice 3). A service you never installed will always look \"down\" — that's expected, not a fault. Restart the ones you do use with choice 1.",
+      "__An update fails, or won't run because there's no internet.__ Updates and data refreshes need the server to be **online**, which it usually isn't in the field. Wait until the server is back at home base with internet, then run the update there. If an update ran but a service didn't come back, use the maintenance menu to **Restart all services** (choice 1) and re-check status (choice 3).",
+      "__I plugged in the backup drive and nothing happened.__ The volume label must be exactly **FIELDCOMMAND** in all capital letters — this is the single most common cause. Re-label the drive (`FIELDCOMMAND`) and re-insert it. Also make sure the drive is a standard USB drive the server can mount; give it a few seconds after inserting, then look for a dated folder under `/media/fieldcommand/backup/` to confirm the copy ran.",
+      "__I'm not sure the backup actually worked.__ After inserting a FIELDCOMMAND drive, a new folder named with the current date and time (like `20260812_143005`) should appear on the drive under `backup/`, containing a `data` folder and a `fieldcommand_backup.db` file. If those are there, the backup succeeded. If not, re-check the label and try again."
+    ]}
+  ]
+}

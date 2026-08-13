@@ -1,0 +1,123 @@
+{
+  "order": 11,
+  "title": "Federal Communications Commission (FCC) Callsign Lookup",
+  "subtitle": "An offline, on-the-Pi copy of the entire national amateur-radio license database — look up any callsign in a second, with no internet, and let the rest of FieldCommand fill in names for you automatically.",
+  "in_this_chapter": [
+    "What the Callsign Lookup tool is and why it works offline",
+    "Doing a quick single-callsign lookup",
+    "Reading the result card, field by field",
+    "The buttons on a result: FCC ULS, Add to Roster, Copy",
+    "Advanced Search — finding people by name, city, state, class, or grid",
+    "Recent Lookups",
+    "Where the database fills in names automatically for you",
+    "Keeping the database current",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "Open **Callsign Lookup** from the dashboard. Type a callsign in the big box and press **Enter** (or click **Look Up**). A card shows the operator's name, license class, status, and city/state. To find someone whose callsign you don't know, use **Advanced Search** below the box. It all runs on the Pi — no internet needed."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "The **Callsign Lookup** tool is a searchable copy of the Federal Communications Commission (FCC) amateur-radio license database — every active licensee in the country, over 800,000 of them — stored right on the Pi. When someone checks into your net and gives a callsign, this is where you confirm who they are, whether their license is still valid, and where they're licensed out of."},
+    {"p": "The important word is **offline**. The whole database lives in a small file on the server (a SQLite database, which is just a self-contained file full of records). Because it's local, a lookup returns instantly and works even when there's no internet at all — which is exactly the situation FieldCommand is built for. You are not reaching out to the FCC's website; you're reading a copy that was already downloaded and stored for you."},
+    {"callout": {"kind": "note", "label": "WHY THIS MATTERS DURING AN INCIDENT",
+      "text": "During a real activation your internet may be down or unreliable. A live web lookup would fail exactly when you need it. Keeping the database on the Pi means callsign verification keeps working no matter what the network is doing."}},
+
+    {"h1": "Opening the Tool and Doing a Quick Lookup"},
+    {"p": "At the top of the page is a hero panel headed **📻 CALLSIGN LOOKUP**, with the reminder *“FCC Amateur Radio License Database · Offline SQLite · Updated weekly.”* Under it is one large text box and a **Look Up** button. This is the fast path — if you already know the callsign, you never need anything else on the page."},
+    {"steps": [
+      "From the dashboard, click **Callsign Lookup**.",
+      "Click in the big search box and type a callsign — for example `W8XYZ`. It automatically shifts to capital letters as you type.",
+      "Press **Enter**, or click the **Look Up** button.",
+      "A result card slides into view below the box with everything the database knows about that callsign."
+    ]},
+    {"screenshot": "The Callsign Lookup page: the amber CALLSIGN LOOKUP hero with the large search box and Look Up button"},
+    {"callout": {"kind": "note", "label": "IT'S NOT LIVE-AS-YOU-TYPE",
+      "text": "Nothing happens until you press **Enter** or click **Look Up**. Type the whole callsign first, then search. This is deliberate — it avoids hammering the database with a lookup for every keystroke."}},
+
+    {"h1": "Reading the Result Card"},
+    {"p": "When a callsign is found, the card shows the callsign in large amber letters, a colored **license-class tag**, and a status dot. Below that is a grid of details. Here is what each item means in plain terms:"},
+    {"table": {
+      "headers": ["Field", "What it tells you"],
+      "rows": [
+        ["**License Class** (colored tag)", "The privilege level of the license: **Technician**, **General**, **Amateur Extra**, **Novice**, or **Advanced**. Higher classes may use more bands and modes."],
+        ["**Status dot**", "**Active** (green) means the license is current. Anything else (red) means it is not active — expired, cancelled, or otherwise not in good standing."],
+        ["**Name**", "The licensee's name (or the organization/club name, for a club license)."],
+        ["**City, State**", "Where the license is registered — the licensee's mailing address city and state."],
+        ["**Zip Code**", "The mailing-address ZIP code."],
+        ["**Country**", "Country of the license (usually US)."],
+        ["**Grant Date**", "The date the current license was granted."],
+        ["**Expiration Date**", "When the license expires. If that date has already passed, it is shown in **red** as a warning."],
+        ["**FRN**", "FCC Registration Number — a unique ID the FCC assigns to each licensee. Rarely needed day-to-day."],
+        ["**License ID**", "The internal license record number the FCC uses. It's what links through to the official record."],
+        ["**Grid Square**", "The operator's Maidenhead grid locator, if the record includes one — a short code hams use to describe location. Only shown when present."]
+      ],
+      "widths": [2.4, 4.1]
+    }},
+    {"callout": {"kind": "important", "label": "A RED EXPIRATION DATE IS A FLAG, NOT A BLOCK",
+      "text": "If the **Expiration Date** shows in red, that operator's license has lapsed on paper. FieldCommand still shows you the record — it's just alerting you so a net control operator can note it and follow up. Verifying license validity is part of running a clean, legal net."}},
+
+    {"h1": "The Buttons on a Result"},
+    {"p": "At the bottom of a found result are three actions:"},
+    {"table": {
+      "headers": ["Button", "What it does"],
+      "rows": [
+        ["**FCC ULS ↗**", "Opens the FCC's official Universal Licensing System page for this exact license in a new browser tab. This one **does** need internet — it's a link out to the FCC's live website for the authoritative record."],
+        ["**+ Add to Roster**", "Jumps to the Roster page with this callsign pre-filled, so you can add the operator to your incident roster without retyping their information."],
+        ["**📋 Copy**", "Copies the callsign to your clipboard so you can paste it into a form, a log, or a message."]
+      ],
+      "widths": [2.0, 4.5]
+    }},
+
+    {"h1": "Advanced Search — Finding a Callsign You Don't Know"},
+    {"p": "Sometimes you have a name but not a callsign — someone reports \"a John Smith from Columbus is trying to reach net control.\" The **Advanced Search** panel below the main box lets you search the database by details other than the callsign. Fill in any one or more of these boxes and click **Search**:"},
+    {"table": {
+      "headers": ["Search box", "What to enter"],
+      "rows": [
+        ["**Last Name / Entity Name**", "A surname, or a club/organization name (example: `Smith`)."],
+        ["**First Name**", "A first name (example: `John`)."],
+        ["**State**", "Pick a state from the dropdown, or leave it on **All States**."],
+        ["**License Class**", "Narrow to one class — Technician, General, Amateur Extra, Novice, or Advanced — or leave on **All Classes**."],
+        ["**City**", "A city or town name (example: `Columbus`)."],
+        ["**Grid Square**", "A Maidenhead grid locator (example: `EN80`)."]
+      ],
+      "widths": [2.4, 4.1]
+    }},
+    {"p": "You must fill in at least one box — if you click **Search** with everything blank, the page reminds you to enter a search criterion. Results appear in a table below with columns for **Callsign**, **Name**, **Class**, **City**, **State**, **Status**, and **Expires**. A count (for example *“12 results found”*) shows on the right. Click any **callsign** in the table to jump straight to its full result card. The **Clear** button empties all the boxes and wipes the results so you can start a fresh search."},
+    {"screenshot": "The Advanced Search panel with the results table showing several matching licensees"},
+    {"callout": {"kind": "tip", "label": "TOO MANY RESULTS? ADD ANOTHER DETAIL",
+      "text": "A common last name alone can return a long list. Add a **State** or **City** to narrow it down. The search returns up to 100 matches at a time, so a broad search may not show everyone — tighten it up."}},
+
+    {"h1": "Recent Lookups"},
+    {"p": "At the very bottom, under **Recent Lookups**, the page keeps a row of buttons for the last callsigns you looked up (up to 20). Click any one to instantly look it up again. This list is stored in your own browser, so it's per-device — a handy shortcut when you keep coming back to the same few stations during a net."},
+
+    {"h1": "Where the Database Fills In Names for You"},
+    {"p": "You often won't open this page directly at all — the same database quietly does its job inside other tools. Whenever you type a callsign into one of these, FieldCommand looks it up in the background and fills in the operator's details:"},
+    {"table": {
+      "headers": ["Where", "How it helps"],
+      "rows": [
+        ["**Net Control Logger**", "As you enter a callsign in the check-in field, the operator's **name** and **license class** fill in automatically. A **red border** warns you if the callsign isn't in the database or the license has expired."],
+        ["**Scan Check-In**", "After a Quick Response (QR) code scan or a manual entry, if the code is a callsign, the FCC record supplies the operator's name (falling back to your roster if it isn't found)."],
+        ["**ICS-213 General Message**", "The *From Callsign* field pulls the sender's name from the database, so the message is properly attributed without extra typing."]
+      ],
+      "widths": [1.9, 4.6]
+    }},
+    {"p": "In other words, the value of having the whole FCC database on the Pi isn't just this one lookup page — it's that every place you enter a callsign gets smarter and faster, all without internet."},
+
+    {"h1": "Keeping the Database Current"},
+    {"p": "The FCC updates its license records constantly — new licenses, renewals, upgrades, and expirations. The copy on your Pi is refreshed on a schedule (weekly is typical). If you need to update it manually, an administrator downloads the FCC's license export (from the FCC's Universal Licensing System, ULS) and runs the import step described in the Installation Guide. Day-to-day operators never have to think about this; it's a one-time-per-refresh administrator task."},
+    {"callout": {"kind": "note", "label": "A MISSING CALLSIGN USUALLY MEANS AN OUT-OF-DATE COPY",
+      "text": "If a brand-new licensee or a very recent callsign change isn't found, the local copy simply predates that change. Update the database (or check the FCC ULS link online) to pick up the newest records."}},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__Nothing happens when I type.__ The tool doesn't search as you type. Finish typing the callsign, then press **Enter** or click **Look Up**.",
+      "__“Callsign not found in FCC database.”__ Either the callsign is mistyped, or your local copy of the database doesn't include it yet (very new or recently changed callsigns). Double-check the spelling, try **Advanced Search** by name, or update the database as described above.",
+      "__“Could not reach local FCC database. Ensure the server is running on port 5050.”__ The lookup service on the Pi isn't responding. Confirm the FieldCommand server is powered on and running, then try again. This is a server issue, not a typo.",
+      "__A license shows an expired (red) date.__ That's the database telling you the license has lapsed on record. It's not an error — note it for your net log and verify with the operator or the live FCC ULS link.",
+      "__Advanced Search says “Enter at least one search criterion.”__ You clicked **Search** with every box empty. Fill in at least one field (name, city, state, class, or grid) first.",
+      "__Advanced Search returns nothing.__ Your criteria were too narrow or slightly off (a misspelled city, wrong state). Remove a filter or two and search again with less detail.",
+      "__The FCC ULS ↗ button won't open the record.__ That button links to the FCC's live website and needs internet. Offline, it won't load — but the local result card still shows you everything stored on the Pi."
+    ]}
+  ]
+}

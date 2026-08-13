@@ -1,0 +1,121 @@
+{
+  "order": 19,
+  "title": "Federal Emergency Management Agency (FEMA) Equipment Rate Schedule",
+  "subtitle": "The built-in price list of what FEMA will pay per hour or per day for equipment you own and used on an incident — so your cost paperwork uses the right, current numbers.",
+  "in_this_chapter": [
+    "What the Equipment Rate Schedule is and why it matters for reimbursement",
+    "Opening the page and reading the rate table",
+    "Every column explained in plain terms",
+    "Searching and filtering to find one rate fast",
+    "The Rate Year badge and the stale-rate warning",
+    "Editing a rate and adding your own custom rate",
+    "Updating the whole schedule to a new year",
+    "How these rates feed the rest of the cost tools",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "Open **FEMA Equipment Rates**. You'll see a long price list of equipment with a dollar rate on each row. When you need a number, type in the **Search** box or pick a **category** to filter. To change a price, click the **✏** pencil on its row, type the new number, and **Save**. Once a year, after FEMA publishes a new schedule, update the changed prices and click **Update Rate Year** so the yellow \"rates are old\" warning goes away."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "When {{org}} uses its own equipment on a federally declared disaster — a generator, a truck, a chainsaw, a light tower — the Federal Emergency Management Agency (FEMA) can reimburse you for that use. But it does not pay whatever you ask. FEMA publishes an official price list, the **Schedule of Equipment Rates**, that says exactly how much it will pay per hour (or per day) for each kind of equipment. That list is what this page holds."},
+    {"p": "The **FEMA Equipment Rates** page is the master copy of that price list living inside FieldCommand. Every time you log a piece of equipment on the cost-documentation pages (Chapter 20), the rate on this page is the number that gets used. Getting these rates right — and current — is what keeps your reimbursement paperwork accurate and defensible."},
+    {"p": "FieldCommand ships with all **44 standard FEMA equipment categories** already loaded from the 2025 schedule, so the list is useful the moment you open it. You don't build it from scratch; you keep it up to date."},
+    {"callout": {"kind": "important", "label": "EQUIPMENT ONLY — NOT LABOR",
+      "text": "These rates cover **equipment**, never people. The hours a person works are tracked separately as \"Force Account Labor\" on the cost-documentation page. The page banner says this plainly: __Labor NOT included__. Do not try to log a person's pay here."}},
+
+    {"h1": "Opening the Page and What You See"},
+    {"steps": [
+      "From the dashboard, go to the **Finance** section and open **FEMA Equipment Rates** (you can also reach it from the FEMA cost pages).",
+      "The page opens with a blue **FEMA** badge and the title **FEMA Equipment Rate Schedule** at the top.",
+      "Below the title is an info bar showing the **Rate Year** and a link to the official schedule on fema.gov.",
+      "The main body is one big table, grouped into category headings, with one row per piece of equipment."
+    ]},
+    {"screenshot": "The FEMA Equipment Rate Schedule page: the FEMA badge and title, the Rate Year info bar, the search box, and the grouped rate table below"},
+    {"p": "The equipment is grouped under colored **category headings** — for example __Generators__, __Vehicles__, __Trucks__ — so related items sit together. Inside each group, every row is one specific piece of equipment with its own price."},
+
+    {"h1": "Reading the Rate Table — Every Column"},
+    {"p": "Each row in the table has these columns, left to right:"},
+    {"table": {
+      "headers": ["Column", "What it means"],
+      "rows": [
+        ["**Code**", "The FEMA schedule code for this item (for example `8814`). This is FEMA's official reference number — matching it on your paperwork ties your entry to the exact line in FEMA's published schedule."],
+        ["**Description**", "The plain description of the equipment — what it is and, often, its size range (for example \"Generator, 10-25 kW\")."],
+        ["**Unit**", "How the rate is measured: **hour**, **day**, **mile**, or **each**. This tells you whether the dollar figure is per hour of use, per day, per mile driven, or per item."],
+        ["**Rate**", "The dollar amount FEMA will reimburse per unit, shown in green (for example `$14.50`). This is the number that matters."],
+        ["**Year**", "The rate year this specific price belongs to — the year of the FEMA schedule it came from."],
+        ["**Notes**", "Any extra note on the item — often blank."],
+        ["**✏ (pencil)**", "The edit button. Click it to change this row (covered below)."]
+      ],
+      "widths": [1.8, 4.7]
+    }},
+    {"callout": {"kind": "note", "label": "WHY THE CODE MATTERS",
+      "text": "When you document equipment for reimbursement, FEMA reviewers expect the schedule code. Keeping the **Code** filled in here means it can flow onto your cost entries automatically, so you are not looking it up by hand under pressure."}},
+
+    {"h1": "Finding One Rate Fast"},
+    {"p": "The 44 categories add up to a long list. Two controls at the top narrow it down:"},
+    {"table": {
+      "headers": ["Control", "What it does"],
+      "rows": [
+        ["**Search equipment** box", "Type any part of an equipment name, category, or code. The table filters as you type, showing only matching rows. Type `generator` to see just generators."],
+        ["**All categories** dropdown", "Pick a single category to show only that group. Set it back to __All categories__ to see everything again."],
+        ["**Rate count**", "A small note next to the controls shows how many rates currently match — for example \"18 rates\" — so you know how much you're looking at."]
+      ],
+      "widths": [2.4, 4.1]
+    }},
+    {"p": "You can use the search box and the category dropdown together — pick a category, then type to narrow within it."},
+
+    {"h1": "The Rate Year Badge and the Stale-Rate Warning"},
+    {"p": "FEMA republishes its equipment schedule every year, and the prices drift upward with inflation. FieldCommand helps you notice when your loaded rates have fallen behind."},
+    {"p": "At the top of the page, the **Rate Year** shows which year's schedule your rates came from (for example __2025__). If those rates are more than a year old, a yellow **reminder banner** appears across the top warning you the rates are outdated and pointing you to fema.gov for the current schedule. The same warning also shows up on the cost-documentation pages, so whoever is entering costs sees it too."},
+    {"callout": {"kind": "warning", "label": "USE THE RATE IN EFFECT AT THE TIME OF THE DISASTER",
+      "text": "FEMA reimburses at the schedule rate that was in effect **when your disaster was declared** — not necessarily the newest one. If your incident happened last year, you may need last year's rate, not this year's. The info bar reminds you of this. When in doubt, check the linked fema.gov schedule and confirm with your Finance Section Chief."}},
+
+    {"h1": "Editing a Rate"},
+    {"p": "When FEMA publishes new numbers, or you spot one that is wrong, you edit the rate in place:"},
+    {"steps": [
+      "Find the equipment row (search or filter if needed).",
+      "Click the **✏** pencil button at the right end of the row.",
+      "The **Edit Rate** box opens, pre-filled with that item's current values.",
+      "Change what you need — most often just the **Rate ($/unit)** and the **Rate Year**.",
+      "Click **Save**. The table updates immediately, and the new rate is used everywhere from that moment on."
+    ]},
+    {"p": "The edit box holds these fields: **Description**, **Category**, **FEMA Code**, **Unit** (hour, day, mile, or each), **Rate ($/unit)**, **Rate Year**, and an optional **Notes** line. Only the Description is required; the rest fill in the detail."},
+
+    {"h1": "Adding a Custom Rate"},
+    {"p": "The 44 built-in categories cover FEMA's standard equipment, but you may own something unusual — a specialized trailer, a piece of gear with a locally negotiated rate. Use **+ Add Custom Rate** at the top of the page to add it."},
+    {"steps": [
+      "Click **+ Add Custom Rate**.",
+      "The **Add Custom Rate** box opens, empty.",
+      "Type a **Description** (required), and fill in **Category**, **FEMA Code**, **Unit**, **Rate**, **Rate Year**, and **Notes** as they apply.",
+      "Click **Save**. Your custom item now appears in the table alongside the built-in ones and can be picked when documenting costs."
+    ]},
+    {"callout": {"kind": "note", "label": "DELETING A RATE",
+      "text": "When you open an existing rate with the pencil, a **Delete** button appears in the edit box. Use it to remove a custom rate you no longer need. You'll be asked to confirm first. Removing standard FEMA items is usually a bad idea — edit the price instead of deleting the row."}},
+
+    {"h1": "Updating the Whole Schedule to a New Year"},
+    {"p": "Once a year, when FEMA releases a fresh Schedule of Equipment Rates, you bring FieldCommand current. There are two parts to this, and it helps to understand the difference."},
+    {"steps": [
+      "Download the new schedule from the fema.gov link in the info bar.",
+      "Edit each rate whose **dollar amount changed**, using the pencil (above). This is the part that actually updates prices.",
+      "When the prices are current, click **📅 Update Rate Year** at the top.",
+      "Enter the new year and confirm. Every rate's year tag is stamped to that year, and the yellow stale-rate warning clears."
+    ]},
+    {"callout": {"kind": "important", "label": "UPDATING THE YEAR DOES NOT CHANGE ANY PRICES",
+      "text": "The **Update Rate Year** button only changes the **year label** on the rates — it does **not** touch the dollar amounts. Its own box says so. If you click it without first editing the changed prices, you'll have current-year labels sitting on last-year's numbers. Always update the prices first, then stamp the year."}},
+
+    {"h1": "How These Rates Feed the Rest of the System"},
+    {"p": "This page is not a standalone reference — it is the source of truth the cost tools pull from. On the **FEMA PA Cost Documentation** page (Chapter 20), when you log a piece of equipment, there is a **📋 Lookup** button that opens a search of exactly these rates; pick one and its dollar rate and FEMA code drop straight into the entry. So the minutes you spend keeping this list current pay off every time someone documents a cost — they get the right number without hunting for it."},
+    {"p": "Everything here is stored in the server's local database. No internet is needed once the rates are loaded — the fema.gov links are only there for when you want to check or download the official schedule."},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__The table says \"Loading rates...\" and never fills in.__ The page couldn't reach the server. Confirm you're connected to the FieldCommand Wi-Fi and the server is running, then reload the page. If it shows a red \"Error loading rates\" message, the cost service may be down — check with whoever runs the server.",
+      "__A yellow banner says my rates are old.__ That's the stale-rate warning — your loaded rates are more than a year past. Check fema.gov for the current schedule, edit the changed prices, then click **Update Rate Year**. If you're documenting an older incident, remember you may actually want the older rates.",
+      "__I clicked Update Rate Year but the prices didn't change.__ That button only changes the year label, never the dollar amounts. Edit each changed rate with the **✏** pencil first, then stamp the new year.",
+      "__Search shows \"No rates match.\"__ Your search text or category filter is too narrow. Clear the search box and set the dropdown back to __All categories__ to see the full list again.",
+      "__I can't find a piece of equipment I own.__ It may not be one of the 44 standard FEMA items. Add it with **+ Add Custom Rate**, or confirm the correct FEMA category on the official schedule.",
+      "__I edited a rate but the cost pages still show the old number.__ The cost pages read rates when they load. Reload the cost-documentation page, or re-open the equipment lookup, and the updated rate will appear."
+    ]}
+  ]
+}

@@ -1,0 +1,106 @@
+{
+  "order": 1,
+  "title": "Overview — What You're Building",
+  "subtitle": "The whole FieldCommand system at a glance: two small computers, a Wi-Fi network, and a set of workstations — so any phone, tablet, or laptop can run the full incident-management toolset with no internet and no app to install.",
+  "in_this_chapter": [
+    "What FieldCommand is, in plain words",
+    "The two Raspberry Pi 5 servers and what each one does",
+    "The network that ties everything together (EMCOMM-NET)",
+    "The operator workstations, and how any personal device joins in",
+    "How all the pieces fit together (a quick reference table)",
+    "What's required and what's optional (internet, amateur radio)",
+    "How the rest of this guide is organized",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "You're building a self-contained command post out of two small computers (Raspberry Pi 5 units), a Wi-Fi router, and a network switch. One computer runs all the FieldCommand tools; the other is an optional amateur-radio gateway. Together they create a private Wi-Fi network named **EMCOMM-NET**. Anyone joins that Wi-Fi from a phone, tablet, or laptop, opens a browser to **http://192.168.50.1**, and has the whole system — no internet, no app to install, nothing to set up on their device. This chapter is the map; the rest of the guide is the build."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "FieldCommand Incident Management System (IMS) is a complete, self-contained command post that runs without the internet. It gives an emergency-operations team everything it needs to manage an incident — Incident Command System (ICS) forms, net (radio traffic) logging, resource and personnel tracking, maps, cost documentation, and an offline reference library — all from an ordinary web browser. Nobody needs a special app, an account, or a working internet connection. If the power is out and the cell towers are down, FieldCommand still works, because it carries its own network and all of its data with it."},
+    {"p": "This chapter does not ask you to build anything yet. It is the picture on the front of the puzzle box: it shows you every piece, explains what each one is for, and shows how they connect — so that when the later chapters walk you through the build step by step, you already understand what you are assembling and why. Read it once, and the rest of the guide will make much more sense."},
+    {"callout": {"kind": "note", "label": "OFFLINE-FIRST IS THE WHOLE POINT",
+      "text": "\"Offline-first\" means the system is designed to work perfectly with **no internet at all**, and simply does a little extra when the internet happens to be available. That is the opposite of most modern software, which stops working the moment it loses signal. FieldCommand is built the way it is because incidents are exactly when the internet is least reliable."}},
+
+    {"h1": "The Two Servers — Two Raspberry Pi 5 Computers"},
+    {"p": "The heart of the system is two small computers called **Raspberry Pi 5** units. A Raspberry Pi is a full computer about the size of a deck of cards; it runs quietly, sips power, and costs a fraction of a normal desktop. FieldCommand uses two of them, each with its own separate job. Keeping the jobs on separate computers means one can be rebooted, reconfigured, or upgraded without disturbing the other — and if one ever fails, the other keeps doing its job."},
+    {"table": {
+      "headers": ["Server", "Address", "What it does"],
+      "rows": [
+        ["**FieldCommand application server**", "`192.168.50.1`", "The main computer. It runs **all** of the FieldCommand tools — the dashboard, the ICS forms, net logging, the maps, the roster, the offline reference library, and the health monitor. This is the address everyone opens in their browser to use the system."],
+        ["**44Net / AMPRNet gateway**", "`192.168.50.2`", "A second, dedicated computer whose only job is to be an amateur-radio internet gateway (the amateur-radio internet is called **AMPRNet** or **44Net**). It is completely optional — only amateur-radio groups use it — and it is kept separate so it can never interfere with the main server."]
+      ],
+      "widths": [2.4, 1.4, 3.1]
+    }},
+    {"callout": {"kind": "note", "label": "THE TWO SERVERS ARE THE SAME IN EVERY EDITION",
+      "text": "Both Raspberry Pi 5 servers are identical no matter which group is deploying FieldCommand. What differs between deployments is only the operator workstations and the choice of internet source — both covered below. The servers themselves never change."}},
+
+    {"h1": "The Network — EMCOMM-NET"},
+    {"p": "The two servers, the workstations, and everyone's phones and tablets all need a way to talk to each other. That is what the network is for. FieldCommand's network is created by two pieces of equipment working together:"},
+    {"bullets": [
+      "__An ASUS Wi-Fi router.__ This broadcasts the private Wi-Fi network — named **EMCOMM-NET** by default — that every device joins. It is a travel-sized Wi-Fi 7 router. Notably, **neither Raspberry Pi creates the Wi-Fi**; the router does that job, which keeps the servers free to do their own work. For larger buildings, two more identical routers can be added as \"mesh\" extenders to spread the same EMCOMM-NET signal further (covered in the hardware chapter).",
+      "__A UniFi network switch.__ A switch is simply a box with many network sockets that lets wired devices join the same network with a plain Ethernet cable. It gives the two servers, the workstations, and a printer fast, rock-solid wired connections, and leaves room to plug in more."
+    ]},
+    {"p": "Together, the router and switch form **EMCOMM-NET** — the private, self-contained network the whole command post lives on. It exists whether or not there is any internet, because the router and switch make it themselves. The name **EMCOMM-NET** comes from \"emergency communications\"; it is just the default network name and has nothing to do with any callsign or group."},
+    {"callout": {"kind": "important", "label": "EMCOMM-NET IS SELF-CONTAINED",
+      "text": "EMCOMM-NET is your own private network. It does not depend on the internet, a phone company, or any outside service to exist. As long as the router and switch have power, the network is up and everyone on it can reach the FieldCommand server — even in a parking lot in the middle of nowhere."}},
+
+    {"h1": "The Operator Workstations"},
+    {"p": "For the people running the incident from the command post itself, FieldCommand includes dedicated **operator workstations** — {{workstation}} units, one per operator station, each with its own monitor. These are the seats where net control operators, the planning section, and others sit and work all shift. They connect to EMCOMM-NET by wired cable through the switch, so they are always fast and never drop out."},
+    {"p": "But here is the key idea that makes the whole design so flexible: **you do not have to use the provided workstations to use FieldCommand.** Because every tool runs in a plain web browser, any device that can join Wi-Fi and open a web page can be a full FieldCommand station."},
+    {"h1": "How Any Phone, Tablet, or Laptop Joins In"},
+    {"p": "This is the part that surprises most people, so it is worth stating plainly. For anyone to use the entire system, they do just two things:"},
+    {"steps": [
+      "Join the Wi-Fi network named **EMCOMM-NET** (the same way you'd join any Wi-Fi — pick it from the list and enter the password).",
+      "Open a web browser and go to **http://192.168.50.1** (type it exactly, including the `http://`)."
+    ]},
+    {"p": "That's it. The full FieldCommand dashboard opens, and every tool is available. There is **no app to download**, **no account to create**, **no internet required**, and **nothing to install or configure on the device**. A volunteer can walk in with the phone in their pocket, join EMCOMM-NET, open the page, and start logging traffic within a minute. The same is true for a tablet, a personal laptop, or a borrowed Chromebook. Everyone reaches the same live system at the same address, and everyone sees the same up-to-the-second information."},
+    {"callout": {"kind": "tip", "label": "WHY A BROWSER, AND WHY IT MATTERS",
+      "text": "Running everything in the web browser is a deliberate choice. Browsers are already on every phone, tablet, and computer, so there is nothing to install and nothing that can be the \"wrong version.\" It also means a team can scale from two operators to twenty just by having more people join EMCOMM-NET — no extra software, no licenses, no setup."}},
+
+    {"h1": "How the Pieces Fit Together"},
+    {"p": "Here is the entire system in one table. Every later chapter builds one of these pieces; this is the shape of the finished command post."},
+    {"table": {
+      "headers": ["Piece", "What it is", "Its job in the system"],
+      "rows": [
+        ["FieldCommand application server", "A Raspberry Pi 5 at `192.168.50.1`", "Runs all the tools; the address everyone's browser opens."],
+        ["44Net / AMPRNet gateway", "A second Raspberry Pi 5 at `192.168.50.2`", "Optional amateur-radio internet gateway; kept separate from the main server."],
+        ["ASUS Wi-Fi router", "A travel-sized Wi-Fi 7 router (plus optional mesh units)", "Broadcasts the EMCOMM-NET Wi-Fi that all devices join."],
+        ["UniFi network switch", "A managed 16-port switch", "Wires the servers, workstations, and printer together at high speed."],
+        ["Operator workstations", "{{workstation}} units with monitors", "Dedicated seats for the command-post staff (optional but recommended)."],
+        ["Any phone / tablet / laptop", "Whatever devices people already have", "Join EMCOMM-NET, open `http://192.168.50.1`, and become a full station."]
+      ],
+      "widths": [1.9, 2.3, 2.7]
+    }},
+
+    {"h1": "What's Required and What's Optional"},
+    {"p": "The command post above is fully functional entirely on its own, with no outside connection. A few things are genuinely optional and only add extra capability when you want it:"},
+    {"table": {
+      "headers": ["Capability", "Required?", "What it adds"],
+      "rows": [
+        ["**Internet / wide-area network (WAN)**", "Optional", "When available, it switches on live extras — National Weather Service alerts, live amateur-radio position data, and space-weather propagation. The core system works fully without it. The internet source differs by edition: {{cell_primary}} or {{sat_fallback}}."],
+        ["**Amateur radio**", "Optional", "Adds the ham features — APRS position mapping, Winlink email-over-radio, the 44Net gateway, and JS8Call. These legally require a licensed operator, so a group without one simply skips them. All amateur-radio setup lives in Part 2 of this guide."]
+      ],
+      "widths": [2.3, 1.2, 3.4]
+    }},
+    {"callout": {"kind": "note", "label": "NON-HAM GROUPS: YOU LOSE NOTHING",
+      "text": "If your group has no licensed amateur-radio operators, you skip the second (gateway) Raspberry Pi and all of Part 2. The core incident-management system — ICS forms, net logging, resource tracking, maps, cost documentation, and the offline library — is completely unaffected and remains fully usable."}},
+
+    {"h1": "How the Rest of This Guide Is Organized"},
+    {"p": "The guide is split into two parts so you only read what applies to you:"},
+    {"bullets": [
+      "__Part 1 — Core install (everyone).__ This builds the command post described in this chapter: the hardware you need, the one-command server setup, the pull-a-drive reliability test, the network, the workstations, printing, and the offline data library. Every group does Part 1.",
+      "__Part 2 — Amateur radio (optional).__ This covers the ham-radio additions: the 44Net gateway, APRS, Winlink, and the related equipment. Only groups with a licensed amateur-radio operator need it; everyone else can stop after Part 1."
+    ]},
+    {"p": "The very next chapter is the shopping list — every piece of hardware named above, with the exact models and what each one is for — so you can gather (or check off) everything before the build begins."},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__I only have one Raspberry Pi — is that a problem?__ Only if you want amateur-radio features. The **second** Pi is the optional 44Net/AMPRNet gateway. The core system runs entirely on the first Pi (the application server at `192.168.50.1`). Non-ham groups need only one.",
+      "__Do operators need the internet to use FieldCommand?__ No. Everything runs on the local EMCOMM-NET network. The internet is optional and only adds live extras (weather alerts, propagation data). With no internet, the full incident-management system still works.",
+      "__Does each person have to install an app or make an account?__ No. Anyone joins the EMCOMM-NET Wi-Fi and opens `http://192.168.50.1` in a browser. There is no app, no account, and no per-device setup.",
+      "__I joined EMCOMM-NET but the page won't load.__ Make sure you typed the full address including `http://` — for example `http://192.168.50.1` — and that you are connected to **EMCOMM-NET** specifically, not some other nearby Wi-Fi. Confirm the router and the application-server Pi both have power.",
+      "__Why is the Wi-Fi named EMCOMM-NET and not my group's name?__ `EMCOMM-NET` is just the default network name (short for \"emergency communications\"). You can rename it later in the Setup screen; it is never tied to a callsign or a specific group."
+    ]}
+  ]
+}

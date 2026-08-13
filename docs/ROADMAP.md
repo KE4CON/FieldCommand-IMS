@@ -86,4 +86,21 @@ Phone QR check-in works **today over plain HTTP** without any of the above, via 
 ---
 
 ## Other post-v1.0 candidates
-_(add here as they come up)_
+
+- **Public-safety branding is hardcoded to "Starcom" in the UI** (found 2026-08-13 during the
+  Programming Guide pass). `html/index.html` and related pages hardcode "Starcom" / "Starcom Net
+  Logger" / the `starcom` mode instead of deriving the label from the configured public-safety
+  system name (`station_config.ps_system_name`). A non-Starcom agency (World edition) still sees
+  "Starcom" everywhere. Fix: drive the public-safety label from config so it's truly agency-neutral.
+  (The User Manual accurately describes the current hardcoded UI, so it should be updated together
+  with this change.)
+- **Two dead-man's-switch monitors can disagree** (found 2026-08-13). `python/deadmans.py` (a
+  standalone service watching `dms_state.json`, `armed_nets` as a JSON *list* with one global
+  threshold) and the `dms_monitor()` inside `fcc_lookup_server.py` (watching the `dms_state` SQLite
+  table, `armed_nets` as a *dict* with per-net thresholds) implement the same feature two ways with
+  different state shapes/stores. They can hold conflicting state. Consolidate onto one (the
+  table-based monitor with the arm/reset/disarm endpoints is the canonical one).
+- **`theme.css` `@import`s a Google Font** (Oswald) — a single online dependency in an otherwise
+  offline-first front end; bundle the font locally so the theme renders fully offline.
+
+_(add more here as they come up)_

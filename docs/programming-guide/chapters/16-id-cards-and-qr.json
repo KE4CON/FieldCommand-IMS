@@ -1,0 +1,198 @@
+{
+  "order": 16,
+  "title": "Member ID Cards, Access Cards, and Offline QR — gen_id_cards.py & gen_operator_cards.py",
+  "subtitle": "Two small Python scripts turn the roster into laminate-ready cards on plain business-card stock. gen_id_cards.py prints the modern two-sided photo credential — front with a real, scannable Quick Response (QR) code drawn entirely offline; back with the network-access details — while the older gen_operator_cards.py prints the Wi-Fi access card it grew out of. Both are fully agency-neutral, driven from the station's own configuration.",
+  "in_this_chapter": [
+    "What the two card generators are and how they differ",
+    "Why the QR code is drawn locally instead of fetched from an online service",
+    "How one card is drawn on a ReportLab canvas, field by field",
+    "How a real scannable QR is built with QrCodeWidget and placed on the card",
+    "How photos are embedded as JPEG without needing an image library",
+    "Who gets a card, and the walk-in / mutual-aid exception",
+    "How the web server turns a button click into an on-demand PDF",
+    "Design takeaways and the maintainer's rule"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "IN ONE SENTENCE",
+      "text": "`gen_id_cards.py` reads the roster and the station's configuration, and draws a two-sided photo identity (ID) card per member — front with photo, identifiers, and a real offline QR that the check-in scanner reads; back with Wi-Fi and dashboard access — laid out ten to a sheet for a home printer, and the web server generates it on demand at `/api/id_cards.pdf`."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "When a team shows up to staff an incident, two paper things make the day run: a **photo credential** that proves who someone is and lets them check in, and an **access card** that tells them how to get onto the field network. FieldCommand produces both from the roster it already holds, so nobody has to retype names into a design program. Two scripts under `python/` do this: [python/gen_id_cards.py](python/gen_id_cards.py) is the current, richer generator — a two-sided photo ID card — and [python/gen_operator_cards.py](python/gen_operator_cards.py) is the earlier Wi-Fi-access-only card it grew out of, kept because it still prints a clean single-sided access card and reads a Comma-Separated Values (CSV) file as well as the database."},
+    {"p": "Both scripts are built on the same idea: lay out cards on **Avery 5371 / 5874 / 8371** business-card stock — ten cards per Letter sheet, each 3.5 inches by 2 inches — using ReportLab's drawing canvas, then print double-sided and cut. Neither needs the internet, a design tool, or a card-printing service. On a Raspberry Pi in a shelter with no connectivity, that self-containment is the whole point."},
+    {"callout": {"kind": "note", "label": "JARGON, IN PLAIN WORDS",
+      "text": "**ReportLab** is a Python library that draws Portable Document Format (PDF) pages by placing text, shapes, and images at exact coordinates — like an artist working on graph paper. **QR code** (Quick Response code) is the square barcode a phone or 2D scanner reads. **Canvas** is ReportLab's blank page you draw onto; its origin (0, 0) is the **bottom-left** corner, so a larger Y means higher up the page."}},
+    {"p": "The most important design promise, stated at the top of `gen_id_cards.py`, is that nothing is tied to any one group. Every piece of branding — organization name, callsign, logo, and even the labels on the identifier fields — is read from `station_config`, the single-row table the Setup screen fills in:"},
+    {"code": [
+      "AGENCY-NEUTRAL: every branding value (org name, callsign, logo, and the ID-field",
+      "labels) is read from station_config, which the Setup screen fills in. Nothing is",
+      "hardcoded to any one group — the same code prints correct cards for any agency."
+    ]},
+    {"p": "That is the difference you will feel first when comparing the two files. The older `gen_operator_cards.py` still carries hardcoded constants near the top — `ORG_SHORT = 'MCESV/MCEMA'`, `CALLSIGN = 'K9ESV'`, a fixed logo path — because it predates the agency-neutral rule. The newer `gen_id_cards.py` has none of that; it pulls the same values from the database at print time. When you maintain these, treat `gen_id_cards.py` as the model and `gen_operator_cards.py` as legacy."},
+
+    {"h1": "Why the QR Is Drawn Locally — the 'Why' Behind the Choice"},
+    {"p": "Earlier versions of FieldCommand made a QR code the easy way: they asked Google's chart web service to render one and embedded the returned image. That service was shut down, so every QR silently broke — a bad failure for an offline field tool that is supposed to work with no internet at all. The fix was to stop depending on anyone else's server and draw the QR **inside the process**, with ReportLab's own barcode widget. The same replacement was made in the main server's `/api/qr` endpoint, whose comment records the history plainly:"},
+    {"code": [
+      "def qr_svg(data, size_px=220):",
+      "    \"\"\"Render `data` as a scannable QR code and return it as an SVG string.",
+      "    Generated locally with ReportLab — no internet, no external service. This is",
+      "    what replaces the old (now-dead) chart.googleapis.com dependency.\"\"\""
+    ]},
+    {"p": "So there are two places a QR is produced from the same underlying widget, and it helps to keep them straight. On the **card**, `gen_id_cards.py` draws the QR directly into the PDF as vector shapes. On **screen**, the Federal Communications Commission (FCC) lookup server's `/api/qr` endpoint renders the same kind of QR as a Scalable Vector Graphics (SVG) image so the roster page can show or download one for any member. Both are offline; both encode the member's `barcode_id`; both exist because the online shortcut died."},
+    {"callout": {"kind": "important", "label": "WHY THIS MATTERS FOR THE FIELD",
+      "text": "A credential whose QR only works with internet access is worse than no QR at all, because it fails at exactly the moment the tool is needed — during an activation, off-grid. Drawing the QR locally is not a nicety; it is what makes the check-in workflow trustworthy. Never reintroduce a network call into card or QR generation."}},
+
+    {"h1": "How It Works — Drawing One Card"},
+    {"p": "The heart of `gen_id_cards.py` is `draw_id_card(c, x, y, member, cfg)`. It receives the canvas `c`, the bottom-left corner `(x, y)` of one card slot, the member's data as a dictionary, and the station configuration `cfg`. Everything on the card is positioned relative to that corner in inches, so the same function works no matter which of the ten slots it is filling. Its own docstring states the contract:"},
+    {"code": [
+      "def draw_id_card(c, x, y, member, cfg):",
+      "    \"\"\"Draw a single 3.5\" x 2\" member ID card. (x, y) is the bottom-left corner.\"\"\""
+    ]},
+    {"p": "The first thing it does is resolve branding from `cfg`, always with a fallback so a half-configured station still prints something sensible. Note how the identifier-field **labels** themselves come from configuration — an agency that calls its number a 'Badge Number' instead of 'Member ID' gets its own wording:"},
+    {"code": [
+      "org_short  = (cfg.get('org_short') or cfg.get('org_name') or 'FieldCommand').strip()",
+      "org_full   = (cfg.get('org_name') or org_short).strip()",
+      "call_org   = (cfg.get('callsign') or '').strip()",
+      "mid_label  = (cfg.get('ps_member_id_label') or 'Member ID').strip()",
+      "rid_label  = (cfg.get('ps_id_label') or 'Radio ID').strip()"
+    ]},
+    {"p": "Then it pulls the member's own fields, and makes one important decision: the QR encodes `barcode_id`, but if that is empty it falls back through `member_id`, then `callsign`, then the internal row `id`. In other words, the QR always encodes **something the scanner can match**, chosen in order of preference:"},
+    {"code": [
+      "barcode   = (member.get('barcode_id') or member_id or callsign or",
+      "             member.get('id') or '').strip()",
+      "is_ham    = bool(callsign)",
+      "type_tag  = {'visitor': 'MUTUAL AID', 'mutual_aid': 'MUTUAL AID'}.get(mtype, 'MEMBER')"
+    ]},
+    {"p": "From there the drawing is deliberate and ordered: a white rounded card body, a navy header band with a thin gold accent line, the logo and organization name in the header, a membership-type tag on the right, the photo on the left, the name and role on the right, an identifier panel, the QR at bottom-right, and a footer band. Each region is drawn with plain ReportLab calls — `roundRect`, `rect`, `drawString`, `drawImage` — clipped to the rounded corners so the colored bands do not spill past the card edge:"},
+    {"code": [
+      "# ── Header band ─────────────────────────────────────────────────────────────",
+      "c.saveState()",
+      "p = c.beginPath()",
+      "p.roundRect(x, y, CARD_W, CARD_H, 0.09 * inch)",
+      "c.clipPath(p, stroke=0, fill=0)",
+      "c.setFillColor(EOC)",
+      "c.rect(x, y + CARD_H - HB, CARD_W, HB, fill=1, stroke=0)",
+      "c.setFillColor(GOLD)",
+      "c.rect(x, y + CARD_H - HB - 0.022 * inch, CARD_W, 0.022 * inch, fill=1, stroke=0)",
+      "c.restoreState()"
+    ]},
+    {"p": "Two small helpers keep the layout honest. `_fit(c, text, font, max_w, start_sz)` shrinks a font size step by step until the text fits the available width, so a long name never runs off the card. `_labeled_field(c, x, y, w, label, value)` draws the credential's signature look — a tiny uppercase label with the value in bold beneath it — and is reused for each identifier in the panel. The identifier panel builds a list of up to three fields from whatever the member actually has, so a licensed operator shows a callsign while a non-ham shows only the identifiers that apply:"},
+    {"code": [
+      "fields = []",
+      "if callsign:",
+      "    fields.append(('Callsign', callsign))",
+      "if member_id:",
+      "    fields.append((mid_label, member_id))",
+      "if radio_id:",
+      "    fields.append((rid_label, radio_id))",
+      "fields = fields[:3] or [('ID', barcode or '—')]"
+    ]},
+
+    {"h1": "How It Works — The Real, Scannable QR"},
+    {"p": "The QR is built by `_qr_drawing`, and it is worth reading closely because the same math appears in the server's `qr_svg`. A `QrCodeWidget` knows how to render the code, but at its own natural size; the helper wraps it in a `Drawing` and applies a transform that scales and shifts the widget so it exactly fills a `size_pt`-by-`size_pt` square:"},
+    {"code": [
+      "def _qr_drawing(data, size_pt):",
+      "    \"\"\"A ReportLab Drawing of a real, scannable QR for `data`, size_pt square.\"\"\"",
+      "    q = QrCodeWidget(str(data), barLevel='M')",
+      "    b = q.getBounds()",
+      "    w = (b[2] - b[0]) or 1",
+      "    h = (b[3] - b[1]) or 1",
+      "    d = Drawing(size_pt, size_pt)",
+      "    d.transform = [size_pt / w, 0, 0, size_pt / h, -b[0] * size_pt / w, -b[1] * size_pt / h]",
+      "    d.add(q)",
+      "    return d"
+    ]},
+    {"callout": {"kind": "note", "label": "JARGON, IN PLAIN WORDS",
+      "text": "`getBounds()` returns the four edges of the QR at its natural size. The six numbers in `transform` are a standard affine transform: the first and fourth scale it to the square you want, and the last two slide it so its corner lands at the origin. `barLevel='M'` is the error-correction level — Medium — which lets a scanner still read the code if part of it is smudged or the lamination glares."}},
+    {"p": "On the card, the QR is boxed in a white square with a thin border (so it stays scannable against any background) and then drawn with `renderPDF.draw`. The whole block is wrapped so that a bad value can never crash a whole sheet of cards — a single unreadable member should not stop the other nine from printing:"},
+    {"code": [
+      "if barcode:",
+      "    c.setFillColor(white)",
+      "    c.setStrokeColor(LINE)",
+      "    c.setLineWidth(0.5)",
+      "    c.rect(qx - 0.03 * inch, qy - 0.03 * inch, QSZ + 0.06 * inch, QSZ + 0.06 * inch,",
+      "           fill=1, stroke=1)",
+      "    try:",
+      "        renderPDF.draw(_qr_drawing(barcode, QSZ), c, qx, qy)",
+      "    except Exception:",
+      "        pass"
+    ]},
+    {"p": "That encoded value is the same string the **Scan Check-In** page and any Universal Serial Bus (USB) or Bluetooth 2D barcode scanner look up. The card and the check-in flow agree on `barcode_id` as the shared key, which is what makes 'scan the card to check in' work end to end."},
+
+    {"h1": "How It Works — Embedding Photos Without an Image Library"},
+    {"p": "Photos are stored in the database as base64 text (a plain-text encoding of the raw image bytes). `_img_reader` turns that back into something ReportLab can place, and its docstring explains a deliberate constraint: photos are kept as JPEG specifically so ReportLab can embed them **without** the Python Imaging Library (PIL), which is a heavy dependency to avoid on a small appliance:"},
+    {"code": [
+      "def _img_reader(b64_or_dataurl):",
+      "    \"\"\"Return a ReportLab ImageReader from base64 (or a data: URL), or None.",
+      "    Photos are stored/exported as JPEG so ReportLab embeds them without needing",
+      "    the Python Imaging Library (PIL).\"\"\"",
+      "    raw = (b64_or_dataurl or '').strip()",
+      "    if not raw:",
+      "        return None",
+      "    if raw.startswith('data:'):",
+      "        raw = raw.split(',', 1)[-1]",
+      "    try:",
+      "        return ImageReader(io.BytesIO(base64.b64decode(raw)))",
+      "    except Exception:",
+      "        return None"
+    ]},
+    {"p": "If there is no photo, the card does not leave an ugly gap — it draws a soft panel with the member's initials, so every card looks finished whether or not a picture is on file. The same `_img_reader` handles the organization logo in the header, so an agency with no logo simply gets clean text instead."},
+
+    {"h1": "How It Works — Who Gets a Card, and the Sheet Layout"},
+    {"p": "Not everyone in the roster is a member. Walk-ins and mutual-aid personnel are in the same table but should not be handed a full credential unless a partner agency has already supplied a photo. `_include` encodes exactly that rule:"},
+    {"code": [
+      "def _include(m):",
+      "    \"\"\"Members get a card. Walk-ins / mutual-aid only if they have a photo.\"\"\"",
+      "    mtype = (m.get('member_type') or 'member')",
+      "    if mtype in ('visitor', 'mutual_aid'):",
+      "        return bool(m.get('photo_data'))",
+      "    return True"
+    ]},
+    {"p": "`generate_cards` then paginates the eligible members ten to a sheet and, by default, prints a matching **back** for every front so the sheet can be run through the printer twice for double-sided cards. The clever part is the mirroring: when printing the second side, the columns are flipped so each back lands behind its own front after the sheet is turned over on its long edge:"},
+    {"code": [
+      "for i, m in enumerate(pg):",
+      "    col = i % COLS",
+      "    row = i // COLS",
+      "    if kind == 'back':",
+      "        col = COLS - 1 - col   # mirror for long-edge duplex flip",
+      "    x = LEFT_M + col * CARD_W",
+      "    y = PAGE_H - TOP_M - (row + 1) * CARD_H"
+    ]},
+    {"p": "The back itself, drawn by `draw_card_back`, is the network-access card: the Wi-Fi network name and password and the dashboard address, all again from `station_config` (`wifi_ssid`, `wifi_pass`, `server_url`). This is the same information the older `gen_operator_cards.py` puts on the front of its single-sided card — the newer script simply moved it to the back of the credential so one printed card does both jobs."},
+
+    {"h1": "How It Works — The Web Endpoint That Generates on Demand"},
+    {"p": "A field operator never runs the script by hand. The roster page has a print button that opens the FCC lookup server's `/api/id_cards.pdf` endpoint, which imports the script as a module and calls its one public entry point, `generate_from_db`. The endpoint writes to a temporary file and streams the PDF straight back to the browser to display inline:"},
+    {"code": [
+      "elif path == \"/api/id_cards.pdf\":",
+      "    mid = qs.get(\"id\",[\"\"])[0] or None",
+      "    backs = qs.get(\"backs\",[\"1\"])[0] not in (\"0\",\"false\",\"no\")",
+      "    import tempfile",
+      "    try:",
+      "        import gen_id_cards as _gen",
+      "    except Exception as e:",
+      "        return self.send_json({\"error\":f\"card module unavailable: {e}\"},500)",
+      "    out = os.path.join(tempfile.gettempdir(), \"fc_member_id_cards.pdf\")",
+      "    try:",
+      "        _gen.generate_from_db(out_path=out, only_id=mid, backs=backs)"
+    ]},
+    {"p": "On the browser side the call is a single line — the button either prints the whole roster or one member's card, depending on whether an `id` is passed:"},
+    {"code": [
+      "// Open the printable ID-card PDF. No id → all eligible members; id → one card.",
+      "function printIdCards(id) {",
+      "  const url = `${API}/api/id_cards.pdf` + (id ? `?id=${encodeURIComponent(id)}` : '');",
+      "  window.open(url, '_blank');",
+      "}"
+    ]},
+    {"p": "`generate_from_db` is the seam between the web layer and the drawing code: it opens the database, loads the config and the eligible members, and refuses cleanly if there is nothing to print by raising `ValueError(\"No eligible members to print.\")`, which the endpoint turns into a 404 rather than a crash. The same function backs the command-line interface (`--demo`, `--id`, `--out`) so the script is testable on a laptop with no database at all."},
+
+    {"h1": "Why It Matters / Design Takeaways"},
+    {"bullets": [
+      "__Agency-neutral by construction.__ `gen_id_cards.py` reads every branding value, including field labels, from `station_config`. The same code prints correct cards for any organization; `gen_operator_cards.py` is the older, hardcoded predecessor to migrate away from.",
+      "__Offline is non-negotiable.__ The QR is drawn locally with `QrCodeWidget` after the online Google chart service died. Both the card (`_qr_drawing`) and the on-screen `/api/qr` endpoint share the same offline approach.",
+      "__One shared key.__ The QR encodes `barcode_id` (with sensible fallbacks), the exact value the Scan Check-In page matches — which is what makes scan-to-check-in work.",
+      "__Robust drawing.__ Font auto-fit, initials when no photo, JPEG-without-PIL embedding, and try/except around the QR mean one bad record never ruins a whole printed sheet.",
+      "__Thin web seam.__ The server imports the script and calls `generate_from_db`; the front end is a one-line `window.open`. The drawing logic stays entirely in the script."
+    ]},
+    {"callout": {"kind": "important", "label": "MAINTAINER'S RULE",
+      "text": "Treat `gen_id_cards.py` as the living card generator and `gen_operator_cards.py` as legacy. Never hardcode a name, callsign, logo, or label into a card — add it to `station_config` and read it through `cfg.get(...)` with a fallback. Never reintroduce a network call into QR or card generation; the whole reason `_qr_drawing` exists is that an online QR broke in the field. And keep `barcode_id` as the single shared check-in key across the card, the QR, and the Scan Check-In page — if you change how it is chosen, change it in all three."}}
+  ]
+}

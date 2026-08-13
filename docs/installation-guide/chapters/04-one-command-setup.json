@@ -1,0 +1,91 @@
+{
+  "order": 4,
+  "title": "The One-Command Setup — Build the Server",
+  "subtitle": "The single command that turns a freshly-imaged Raspberry Pi into a finished FieldCommand server — it builds the mirrored drives, copies the operating system, reboots, and installs and configures everything for you.",
+  "in_this_chapter": [
+    "What the one command does, start to finish",
+    "The two ways to answer its questions (on screen, or from a file)",
+    "Running it — the exact command",
+    "The safety pause before it erases the drives",
+    "What a dry run shows you first",
+    "What happens after it reboots (the automatic install)",
+    "How it turns on secure HTTPS for you",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "On the Pi, open a terminal and run **`sudo bash fieldcommand-setup.sh`**. Answer a few short questions (callsign, location, Wi-Fi, a couple of options), type **YES** when it asks to erase the two drives, and walk away. It builds the mirrored drives, reboots into them, and installs and configures FieldCommand IMS by itself. When it's done, do the **pull-a-drive test** in the next chapter."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "In the previous chapters you imaged a microSD card and put the FieldCommand software where the Pi can find it. This chapter is where the server actually gets built. Instead of a dozen fiddly manual steps — partitioning drives, creating the mirror, copying the operating system, editing boot files, installing packages — **one command does all of it**. You run it once, answer a few questions at the start, confirm the drive erase, and it runs hands-off from there."},
+    {"p": "The command is a script named **`fieldcommand-setup.sh`**. It lives in the **`scripts`** folder of the FieldCommand software. Everything it does is described below in plain language so you know exactly what is happening and why — but you do not have to understand any of it to use it. You just run it and answer the prompts."},
+    {"callout": {"kind": "note", "label": "WHO DOES THIS",
+      "text": "This is a one-time job done by whoever is building the server — one person, at a workbench, before the equipment goes to the field. Everyone else just connects to the finished server over Wi-Fi (they never touch this)."}},
+
+    {"h1": "What the One Command Does, Start to Finish"},
+    {"p": "From the single command, the setup works through five things in order. You do not run these separately — they are listed so you can follow along on screen and know what each stage means:"},
+    {"table": {
+      "headers": ["Stage", "What it does", "Why it matters"],
+      "rows": [
+        ["**Bring the bootloader up to date**", "Updates the Pi's low-level start-up firmware to a known-good version.", "Booting a Pi 5 from mirrored drives depends on recent firmware. Doing this on every unit removes the most common reason one drive isn't seen."],
+        ["**Stage 0 — See both drives**", "Makes sure the Pi can see **both** solid-state drives (SSDs) behind the enclosure's expansion board. If it can't, it adds two settings and reboots once.", "The mirror needs two drives. This stage guarantees both are visible before anything is erased."],
+        ["**Stage 1 — Pick the drives & confirm**", "Shows you the two drives it will use and waits for you to type **YES**.", "This is the safety pause. Nothing is erased until you confirm the exact drives."],
+        ["**Stage 2 — Build the mirror & copy the OS**", "Partitions and formats both drives, creates the RAID 1 mirror, copies the running operating system onto it, and points the Pi at the mirror to boot from.", "This is the heavy lifting — the part that would take many careful manual steps by hand."],
+        ["**Reboot & finish**", "Reboots into the mirrored drives and, on that first boot, automatically installs and configures FieldCommand IMS with your answers.", "You end up with a fully installed, fully configured server — not just a mirror."]
+      ],
+      "widths": [1.9, 2.7, 1.9]
+    }},
+    {"callout": {"kind": "note", "label": "\"RAID 1\" AND \"MIRROR\" MEAN THE SAME THING HERE",
+      "text": "A **mirror** (the technical name is **RAID 1**) means two drives holding an identical copy of everything, kept in step automatically. If one drive fails, the other keeps running with all your data. The next chapter covers how to prove that actually works. For now, just know that's what the setup is building."}},
+
+    {"h1": "How You Answer Its Questions — Two Ways"},
+    {"p": "The setup needs a handful of answers: your callsign (or none), your location, the Wi-Fi name and password, and a couple of data options. You can provide them **either** way:"},
+    {"bullets": [
+      "__On screen (interactive).__ You just run the command and it asks each question in turn, showing a sensible default in brackets. Press Enter to accept a default, or type your own answer. This is the normal way and needs no preparation.",
+      "__From a file (unattended).__ You fill in a small text file named **`fieldcommand.conf`** ahead of time and the setup reads your answers from it, asking nothing on screen. This is ideal when you're building several identical servers. The next chapter covers this file in full."
+    ]},
+    {"callout": {"kind": "note", "label": "THE CALLSIGN IS OPTIONAL — ON PURPOSE",
+      "text": "When it asks for a **station callsign**, you can leave it blank. Do that if your group has no licensed amateur-radio operators — FieldCommand works fully without it and simply keeps the Amateur Radio tools switched off. Only enter a callsign if you have a properly licensed operator with privileges on the bands and modes you intend to use. You can always add one later in the Setup screen."}},
+
+    {"h1": "Running It — The Exact Command"},
+    {"p": "On the Pi (with a monitor and keyboard connected, booted from the microSD card), open a **Terminal** window and type this one line, then press Enter:"},
+    {"code": ["sudo bash /boot/firmware/FieldCommand-IMS/scripts/fieldcommand-setup.sh"]},
+    {"p": "The word **`sudo`** means \"do this as the administrator\" — it may ask for your password the first time. If you copied the FieldCommand folder somewhere else, point the command at wherever the `scripts` folder actually is. That's the whole thing. From here it prints what it's doing as it goes, in plain, labeled steps."},
+    {"callout": {"kind": "tip", "label": "IF THE PI HAS INTERNET, THERE'S AN EVEN SHORTER WAY",
+      "text": "Instead of copying the FieldCommand folder to the card first, you can have the Pi download it and launch the same setup with a single line:\n\n`curl -fsSL https://raw.githubusercontent.com/KE4CON/FieldCommand-IMS/main/scripts/bootstrap.sh | sudo bash`\n\nThis needs the Pi to be online. The copy-the-folder method above needs no internet at all — pick whichever fits your situation."}},
+
+    {"h1": "See What It Would Do First — The Dry Run"},
+    {"p": "If you'd like to watch the whole process print out **without changing anything**, add **`--dry-run`** to the end of the command:"},
+    {"code": ["sudo bash /boot/firmware/FieldCommand-IMS/scripts/fieldcommand-setup.sh --dry-run"]},
+    {"p": "In dry-run mode it announces every action it would take — which drives it would erase, what it would install — but touches nothing. It's a safe way to preview the run and confirm it sees both of your drives before you commit. When you're satisfied, run it again without `--dry-run` to do it for real."},
+
+    {"h1": "The Safety Pause — Confirming the Erase"},
+    {"p": "Building a mirror means **completely erasing both solid-state drives**. The setup will not do this quietly. When it reaches Stage 1 it stops, lists the two exact drives — by size, model, and serial number — and prints:"},
+    {"code": ["The following drives will be COMPLETELY ERASED:", "Type YES (all caps) to erase these two drives and build the mirror:"]},
+    {"p": "Nothing is erased until you type **`YES`** in capital letters and press Enter. Anything else — a lowercase \"yes\", a stray keypress, closing the window — cancels safely and leaves the drives untouched. Read the two drives it lists and make sure they're the ones you mean to wipe."},
+    {"callout": {"kind": "warning", "label": "BOTH DRIVES ARE ERASED — CHECK BEFORE YOU TYPE YES",
+      "text": "This step erases everything on both SSDs. That's expected — they're brand-new blank drives in a normal build — but if there's any chance one of them holds data you want, stop and copy it off first. The microSD card is not touched, so a mistake here never harms the card you booted from."}},
+
+    {"h1": "What Happens After It Reboots"},
+    {"p": "Once the mirror is built and the operating system is copied over, the setup reboots the Pi **into the mirrored drives**. On that very first boot it runs the FieldCommand installer automatically — installing the web server, the maps, the offline data you asked for, and writing your configuration — with no further input from you. You'll see it work through the install on screen and finish on its own."},
+    {"p": "When it's done you have a complete, configured FieldCommand server running from a fault-tolerant mirror. There is exactly **one** thing left that only you can do by hand: the **pull-a-drive test**, which proves the mirror actually protects you. That's the whole of the next chapter — don't skip it."},
+    {"callout": {"kind": "important", "label": "A MIRROR YOU HAVEN'T TESTED IS A MIRROR YOU CAN'T TRUST",
+      "text": "The setup builds the mirror, but only pulling a drive with the power off and watching the server come back up on the remaining drive proves it works. It takes ten minutes and it is the entire point of having two drives. The next chapter walks you through it."}},
+
+    {"h1": "It Turns On Secure HTTPS For You"},
+    {"p": "As part of the automatic install, the setup also switches the server over to **secure HTTPS** — the same kind of encrypted connection your bank's website uses, shown by a **padlock** in the browser. You do not do anything for this: it creates the security certificate and configures the web server on its own. From then on the tools are served at **`https://192.168.50.1`** (note the **`s`**), and if anyone types the plain `http://` address the server automatically sends them to the secure one. This keeps operator and member information encrypted as it crosses the Wi-Fi, instead of traveling in plain readable text."},
+    {"p": "By default the certificate comes from a small private **Certificate Authority (CA)** that lives on the FieldCommand server itself — a trusted \"stamp\" that vouches for the server. There is **one** small, one-time step per device to make the padlock look completely clean: installing that stamp (a file named **`fieldcommand-ca.crt`**) on each phone, tablet, or computer. The connect chapter walks through it in plain steps; it takes under a minute and you only ever do it once per device."},
+    {"callout": {"kind": "note", "label": "A SIMPLER \"SELF-SIGNED\" MODE, IF YOU PREFER",
+      "text": "If you would rather not distribute a certificate file to each device, you can build the server so it signs its own certificate instead. Run the setup with **`TLS_SELF_SIGNED=1`** in front of the command. There is then nothing to install on any device — but each device shows a one-time **\"not secure\"** warning that a person taps through to accept the first time they connect. It is a trade-off: the default (private CA) needs a one-time file on each device but then looks perfectly clean; self-signed needs no file but shows that first-time warning. Either way the connection is fully encrypted. The connect chapter covers both."}},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__It says \"Fewer than two NVMe drives are visible\" and reboots.__ That's normal on the first run — it just switched on the setting that lets the Pi see both drives, and it needs one reboot to take effect. After the reboot, run the same command again; your earlier answers were saved, so it picks up where it left off and moves on to the erase confirmation.",
+      "__After that reboot it still sees only one drive.__ This is a hardware seating issue, not a software one. Power off, re-seat both SSDs firmly in their slots, check the enclosure's ribbon cable is fully home, then run the command again.",
+      "__It says the system is \"already running from a RAID array.\"__ The mirror is already built — setup has been done on this Pi. You don't need to run it again. If you truly want to rebuild from scratch, that's a deliberate wipe-and-start-over, not a re-run.",
+      "__It says it's \"running from NVMe, not the microSD card.\"__ You booted from the solid-state drives instead of the card. Power off, make sure the microSD card is inserted, and boot from it to build the mirror.",
+      "__\"Could not gain administrator rights.\"__ Run it with `sudo` at the front exactly as shown above. On a brand-new Pi, the first `sudo` command may ask for the password you set when you imaged the card.",
+      "__I want to stop partway through.__ Before you type YES to the erase, you can cancel anything safely — nothing has been changed yet. Press Ctrl+C to stop. After the erase begins, let it finish; if it's interrupted, re-run it and let it rebuild the mirror cleanly."
+    ]}
+  ]
+}

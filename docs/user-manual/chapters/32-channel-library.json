@@ -1,0 +1,126 @@
+{
+  "order": 32,
+  "title": "Channel Library",
+  "subtitle": "Your agency's own list of radio channels — repeaters, interop, tactical, and public-safety frequencies — that drop straight into the ICS-205 communications plan with one click.",
+  "in_this_chapter": [
+    "What the Channel Library is and how it differs from the Repeater Database",
+    "The channel table, column by column",
+    "Searching and filtering by function",
+    "Adding and editing a channel",
+    "The Function categories and what they mean",
+    "Importing and exporting channels as a CSV",
+    "Pulling channels in from RadioReference",
+    "How channels reach the ICS-205 radio plan",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "Open **http://192.168.50.1/channel_library.html**. Click **+ Add Channel**, type a **name** and an **RX frequency**, pick a **Function** color, and **Save**. Your channel is now available in the **ICS-205 Channel Library picker** on every radio plan. Universal channels (National Simplex, APRS, mutual aid) are already there — you only add your own agency's channels."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "The **Channel Library** is {{org_the}}'s curated list of the radio channels you actually use on an incident — your local repeaters, interoperability channels, tactical talk-around frequencies, public-safety talkgroups, medical channels, and any satellite or data channels. Each entry is stored with everything a radio plan needs: a name, the receive and transmit frequencies, the tone, the mode, and which part of the operation it's for."},
+    {"p": "Its whole purpose is to feed the **ICS-205 Incident Radio Communications Plan**. When someone builds an ICS-205 for an incident, they don't retype frequencies — they pick from this library, and the details fill themselves in. Set the library up once for your jurisdiction and every radio plan afterward is a few clicks instead of a research project."},
+    {"callout": {"kind": "note", "label": "CHANNEL LIBRARY vs. REPEATER DATABASE",
+      "text": "These two are cousins. The **Repeater Database** (Chapter 31) is a big, imported list of *every* repeater in your region — a reference you search. The **Channel Library** is a short, hand-picked list of the specific channels *you plan to use*, including non-repeater channels like simplex, interop, and public-safety talkgroups. You can send a repeater from the database straight into this library with its **+ Channel Lib** button."}},
+
+    {"h1": "Opening the Page"},
+    {"p": "Open a browser on the FieldCommand Wi-Fi and go to **http://192.168.50.1/channel_library.html**, or reach it from the dashboard. The page opens with a **COMMS** badge and the title **CHANNEL LIBRARY**. Across the top-right sit the main buttons: **+ Add Channel**, **📥 Import CSV**, **📤 Export CSV**, and a **← Dashboard** link. Below the header, a blue notice reminds you that universal channels are always available and you only need to add your agency-specific ones. The full list of channels fills the page in a table."},
+    {"callout": {"kind": "note", "label": "UNIVERSAL CHANNELS ARE ALWAYS THERE",
+      "text": "Common national channels — National Simplex, APRS, NIFOG (National Interoperability Field Operations Guide) channels, and standard mutual-aid frequencies — are built in and always available in the ICS-205 picker automatically. You do **not** need to add them here. Use this page only for your own local repeaters, interop channels, and tactical frequencies. Built-in channels are marked with a small **seed** tag so you can tell them from ones you added."}},
+
+    {"h1": "Reading the Channel Table"},
+    {"p": "Each row is one channel. The columns, left to right:"},
+    {"table": {
+      "headers": ["Column", "What it shows"],
+      "rows": [
+        ["**Channel Name**", "The plain-language name, e.g. *County Command*. Built-in channels carry a **seed** tag."],
+        ["**Alpha Tag**", "A short radio-display name (up to 10 characters), e.g. *MHCO CMD* — the label your radio screen shows."],
+        ["**RX Freq**", "The frequency you **listen** on, in MHz. Shown in green."],
+        ["**TX Freq**", "The frequency you **transmit** on. Shows **= RX** when it's the same as the receive frequency (a simplex channel)."],
+        ["**PL/DCS**", "The access tone or digital code — CTCSS in Hertz (e.g. *100.0*) or DCS (e.g. *D023N*)."],
+        ["**Mode**", "How the channel operates: FM, NFM (narrow FM), P25, DMR, D-STAR, C4FM, AM, SSB, or Analog."],
+        ["**Function**", "A colored badge grouping the channel by role — Command, Tactical, Interop, and so on (explained below)."],
+        ["**Division**", "Which incident division or group the channel is assigned to, e.g. *Div A*, *Grp SAR*, or *All*."],
+        ["**Notes**", "Free text — repeater location, coverage, special instructions."],
+        ["**(actions)**", "A **✏** button to edit the channel and a **✕** button to delete it."]
+      ],
+      "widths": [1.6, 4.9]
+    }},
+    {"callout": {"kind": "note", "label": "WHAT 'RX' AND 'TX' MEAN",
+      "text": "**RX** is receive — the frequency you listen on. **TX** is transmit — the frequency you talk on. On a repeater they differ (the repeater listens on one and sends on the other). On a **simplex** channel — radio-to-radio with no repeater — they're the same, and the table shows **= RX** for the transmit frequency."}},
+
+    {"h1": "Searching and Filtering"},
+    {"p": "A filter bar sits above the table. The **Search** box narrows the list as you type — it matches any word in the name, frequency, or function. Next to it, the **All Functions** dropdown limits the list to a single function category. The count of matching channels shows on the right. That's the whole filter set — the library is meant to stay short, so you rarely need more."},
+
+    {"h1": "Adding or Editing a Channel"},
+    {"p": "Click **+ Add Channel** to create one, or the **✏** button on any row to edit an existing one. The same form opens (titled **+ ADD CHANNEL** or **✏ EDIT CHANNEL**). Fill it in:"},
+    {"table": {
+      "headers": ["Field", "What to enter", "Required?"],
+      "rows": [
+        ["**Channel Name**", "A clear name, e.g. *County Command*.", "Yes"],
+        ["**Alpha Tag**", "A short (10-character) radio-display label, e.g. *MHCO CMD*.", "No"],
+        ["**Function**", "The channel's role — pick from the list (see below).", "No (defaults to Tactical)"],
+        ["**RX Frequency (MHz)**", "The listen frequency, e.g. *155.3400*.", "Yes"],
+        ["**TX Frequency (MHz)**", "The transmit frequency. Leave blank if it's the same as RX.", "No"],
+        ["**PL Tone / DCS**", "The access tone or code, e.g. *100.0 Hz* or *D023N*.", "No"],
+        ["**Mode**", "FM, NFM, P25, DMR, D-STAR, C4FM, AM, SSB, or Analog.", "No (defaults to FM)"],
+        ["**Division / Group Assignment**", "Where the channel is used, e.g. *Div A*, *Grp SAR*, *All*.", "No"],
+        ["**Notes**", "Repeater location, coverage area, or special instructions.", "No"]
+      ],
+      "widths": [2.3, 3.3, 0.9]
+    }},
+    {"p": "Only **Channel Name** and **RX Frequency** are required. Click **SAVE CHANNEL** to store it, or **Cancel** to back out. Deleting a channel (the **✕** button) asks you to confirm first; built-in seed channels are hidden rather than erased, so a delete is reversible if you ever need it back."},
+
+    {"h1": "The Function Categories"},
+    {"p": "The **Function** is a color-coded label that groups channels by their role on the incident. It's what makes a printed ICS-205 easy to scan. The choices:"},
+    {"table": {
+      "headers": ["Function", "What it's for"],
+      "rows": [
+        ["**Command**", "Command-and-control channels — the Incident Commander and command staff."],
+        ["**Tactical**", "Field/operations working channels for the crews doing the work."],
+        ["**Interop**", "Interoperability channels shared with other agencies (fire, EMS, law)."],
+        ["**Medical**", "Channels for medical coordination, hospitals, and aid stations."],
+        ["**Data**", "Digital/data channels — APRS, packet, Winlink, telemetry."],
+        ["**Amateur**", "General amateur-radio repeaters and simplex frequencies."],
+        ["**Calling**", "National calling and monitoring frequencies used to make initial contact."],
+        ["**Mutual Aid**", "Regional mutual-aid channels for cross-jurisdiction response."],
+        ["**Air**", "Air-to-ground and aviation-coordination channels."]
+      ],
+      "widths": [1.6, 4.9]
+    }},
+
+    {"h1": "Import and Export (CSV)"},
+    {"p": "The Channel Library moves in and out as a **CSV** (comma-separated values — a plain spreadsheet-style file), so you can share a channel plan between systems or edit it in a spreadsheet."},
+    {"bullets": [
+      "**📤 Export CSV** downloads the whole library as `channel_library.csv`. Keep it as a backup, or hand it to another FieldCommand system.",
+      "**📥 Import CSV** opens a file picker; choose a CSV and each row with a name and RX frequency is added. Columns are matched by their header names (`name`, `rx_freq`, `tx_freq`, `pl_tone`, `mode`, `function`, `division`, `notes`). When it's done, a message tells you how many channels imported."
+    ]},
+    {"callout": {"kind": "tip", "label": "SET IT UP AT HOME",
+      "text": "Because it exports and imports cleanly, the fastest way to build a big channel plan is in a spreadsheet on a regular computer, then import the CSV here. Do it before you deploy, export a backup, and you can restore the same plan onto any FieldCommand system in seconds."}},
+
+    {"h1": "Importing from RadioReference (Optional)"},
+    {"p": "The blue notice at the top has a **📡 Import from RadioReference →** link. RadioReference is an online database of public-safety and commercial frequencies. Clicking the link opens the **RADIOREFERENCE IMPORT** panel, where you can pull a county's channels in directly. This is optional and needs a paid account."},
+    {"steps": [
+      "Enter your own **RadioReference Premium** username and password (they're used only for this one request and are never stored).",
+      "Type your **ZIP Code** and click **🔍 Lookup ZIP** to find your **County ID** automatically.",
+      "Optionally pick a **Filter by Tag** — Fire Dispatch, EMS, Law, Interop, Emergency Ops, Amateur, and so on — to limit what comes back.",
+      "Click **📥 Fetch Channels**. The results appear in a checklist on the right.",
+      "Review the list, uncheck anything you don't want, then click **Import Selected** — or **Import All** to take everything."
+    ]},
+    {"callout": {"kind": "important", "label": "A RADIOREFERENCE PREMIUM SUBSCRIPTION IS REQUIRED",
+      "text": "This feature only works with a paid **RadioReference Premium** subscription and your own login. FieldCommand uses your credentials solely to make the request you asked for and does not save them. If you don't have a subscription, skip this — building channels by hand or importing a CSV works just as well."}},
+
+    {"h1": "How Channels Reach the Radio Plan"},
+    {"p": "Everything in this library flows into the **ICS-205 Communications Plan**. When an operator builds an ICS-205 for an incident, the form's Channel Library picker lists every channel here — the ones you added plus the built-in universal channels. Selecting a channel copies its name, frequencies, tone, mode, and function straight onto the form, so the radio plan is built by picking rather than typing. That is why it pays to keep this library accurate: it is the single source every radio plan draws from."},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__The table says 'Cannot reach server'.__ The Channel Library talks to a server on the FieldCommand Pi. Make sure the Pi is powered up and your device is on the FieldCommand Wi-Fi, then reload the page.",
+      "__Save won't work / it says a field is required.__ **Channel Name** and **RX Frequency** are both required. Fill them in, then click **SAVE CHANNEL** again.",
+      "__A channel I deleted is still showing / one I want is gone.__ Deletes hide the channel rather than erasing it, and built-in **seed** channels can't be permanently removed. Reload the page; if a channel you need is missing, re-add it or re-import your CSV backup.",
+      "__My channels aren't showing up in the ICS-205 picker.__ Confirm they saved here first (they should appear in this table). If they're here but not on the form, reload the ICS-205 page so it re-reads the library.",
+      "__The RadioReference import says 'Error' or 'Enter credentials'.__ It needs a valid **RadioReference Premium** username and password, and a County ID (use **Lookup ZIP** to fill that in). Without a paid subscription this feature won't return data — build channels by hand or import a CSV instead.",
+      "__I want the same channels on another system.__ Use **📤 Export CSV** here, then **📥 Import CSV** on the other system."
+    ]}
+  ]
+}

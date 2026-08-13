@@ -1,0 +1,126 @@
+{
+  "order": 9,
+  "title": "Offline Map Tiles & the Kiwix Library",
+  "subtitle": "Loading the two big piles of reference data onto the server before it goes to the field: the map pictures the tactical map draws from, and Kiwix — an offline copy of Wikipedia and other reference libraries you can read in a browser with no internet.",
+  "in_this_chapter": [
+    "Why a field server needs its map and reference data stored locally",
+    "Offline map tiles — what they are and why the map is blank without them",
+    "The four tile presets (skip / essential / standard / full) and what each covers",
+    "Letting the one-command setup fetch tiles for you, or running the tile script later",
+    "The Kiwix offline library — what it is and what it holds",
+    "The three Kiwix tiers (essential / extended / full) and what each contains",
+    "How operators open the Kiwix library from EMCOMM-NET",
+    "Adding or expanding either data set after the server is built",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "A FieldCommand server runs with **no internet**, so its map pictures and reference books must be copied on **while you still have internet** — on the workbench, before deployment. The easy path: the one-command setup already asked you two questions — **map tiles** (`TILE_PRESET`) and the **Kiwix library** (`KIWIX_TIER`) — and downloaded what you chose. To add more later, plug the server into the internet and run **`sudo bash download_tiles.sh`** for maps or **`sudo bash kiwix_setup.sh`** for the library. Operators reach the library in a browser at the server address on port **8081**."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "FieldCommand IMS (Incident Management System) is built to run where there is **no internet at all** — a parking lot, a shelter, a served agency's basement, a remote staging area. That is the whole point of it. But two of its most useful features normally depend on the internet: the **tactical map**, which pulls its map pictures from the web as you pan and zoom, and any **reference lookup** an operator might want mid-incident (a medical fact, a repair procedure, a piece of ham-radio know-how)."},
+    {"p": "The fix for both is the same idea: **copy the data onto the server ahead of time, while you still have internet**, so it is sitting on the server's own drives when you get to the field. This chapter covers the two big data sets you load this way — **offline map tiles** for the map, and the **Kiwix offline library** for reference reading. You do this **once**, at the workbench, before the equipment ever leaves for an incident."},
+    {"callout": {"kind": "important", "label": "DO THIS WHILE YOU STILL HAVE INTERNET",
+      "text": "Every download in this chapter needs a working internet connection **at the time you run it**. That is fine — you are meant to do it on the bench during setup. Once the server is deployed and offline, whatever you loaded is all it has. If you are not sure how much to load, load **more** now; you cannot go back and get it in the field."}},
+    {"callout": {"kind": "note", "label": "WHO DOES THIS",
+      "text": "This is a one-time job for whoever builds the server. Field operators never touch it — they just use the map and open the library in a browser. If you took the defaults during the one-command setup (Chapter 4), a starter set of both is **already loaded** and you can skip straight to the Troubleshooting section, or come back here only when you want to add more."}},
+
+    {"h1": "Part 1 — Offline Map Tiles"},
+    {"p": "The tactical map is stitched together from thousands of small square images called **tiles**. Each tile is one little piece of the map at one zoom level; the map software fits them together like floor tiles to make the picture you pan and scroll around. Online maps fetch these tiles from the internet the instant you need them. A field server can't do that — so the tiles have to already be on the server."},
+    {"p": "That is what an **offline tile download** does: it fetches the tiles for the area you care about, at the zoom levels you care about, and stores them in a file on the server. After that the map works fully offline — roads, terrain, aerial imagery, the lot — for the area you downloaded. **Outside** that area, or zoomed in **closer** than the levels you fetched, the map simply shows blank gray squares, because those tiles were never downloaded."},
+    {"callout": {"kind": "note", "label": "WHY THE MAP IS BLANK UNTIL YOU DO THIS",
+      "text": "A brand-new server has **no tiles**. If you open the map before loading any, you'll see gray squares and no roads — nothing is broken, the pictures simply aren't there yet. Load a tile preset and the area you picked fills in. This is the single most common \"is it broken?\" question, and the answer is almost always \"no tiles were downloaded for that spot.\""}},
+
+    {"h2": "The Four Tile Presets"},
+    {"p": "To keep the choice simple, the setup offers four ready-made **presets**, chosen with the `TILE_PRESET` setting. Each is a bigger area and finer detail than the one before — and a bigger download. Pick based on how much of the map you need to see up close versus how much drive space and download time you want to spend."},
+    {"table": {
+      "headers": ["Preset (TILE_PRESET)", "Size on disk", "What it covers", "Good for"],
+      "rows": [
+        ["**0 — Skip**", "0", "Nothing — no tiles at all", "You'll load tiles later, or the map isn't needed."],
+        ["**1 — Essential**", "~8 MB", "Your home county at a wide, low-detail zoom — enough to see the county shape, major roads, and where things sit in relation to each other.", "A fast, tiny download that gets a usable map on screen immediately. A fine starting point for any deployment."],
+        ["**2 — Standard**", "~180 MB", "Your county area down to street level — you can zoom in and read individual roads and neighborhoods.", "The recommended everyday choice. Enough detail to actually navigate and assign sectors, still small enough to download in minutes."],
+        ["**3 — Full**", "~1.6 GB", "The widest area at the finest detail — building- and parcel-level zoom across your county and a buffer around it.", "Search-and-rescue grids, damage assessment, anything where you must zoom right in. Largest download; needs the most drive space."]
+      ],
+      "widths": [1.7, 1.1, 2.6, 2.0]
+    }},
+    {"callout": {"kind": "tip", "label": "WHAT \"ZOOM LEVEL\" MEANS FOR SIZE",
+      "text": "The reason **Full** is hundreds of times bigger than **Essential** is zoom. Each step closer in doubles the map's detail in every direction, which multiplies the number of tiles enormously. A whole state at a wide zoom is a small download; a single county at building-level zoom is a large one. The presets balance area against detail so you don't have to think about it — but that is why the sizes jump the way they do."}},
+
+    {"h2": "The Easy Way — Let the Setup Do It"},
+    {"p": "The simplest path is the one you probably already took. During the one-command setup (Chapter 4), it asked which tile preset you wanted, or read your choice from the `TILE_PRESET` line in the `fieldcommand.conf` answers file. Whatever you picked, it downloaded and stored for you as part of the build — no separate step. If you accepted the default there, your server already has a starter map and you don't need to do anything else here."},
+    {"code": ["# From fieldcommand.conf — the setup used this automatically:", "# Offline map tiles: 0=skip, 1=essential(~8MB), 2=standard(~180MB), 3=full(~1.6GB)", "TILE_PRESET=\"1\""]},
+
+    {"h2": "Adding or Changing Tiles Later"},
+    {"p": "You can add more map area or finer detail at any time — you are never locked into the preset you chose at build time. You just need to give the server internet again for the download. The tool is a script named **`download_tiles.sh`** in the FieldCommand `scripts` folder."},
+    {"steps": [
+      "Connect the server to the internet (plug it into a network that has internet, or otherwise give it a connection) — the download needs it.",
+      "Open a terminal on the server and run **`sudo bash download_tiles.sh`** (the word `sudo` means \"as administrator\"; it may ask for your password).",
+      "A menu appears with the same Essential / Standard / Full choices, plus options to search for a specific county or state, or to type in your own area by coordinates.",
+      "Pick what you want. The script shows you the rough number of tiles, the download size, and about how long it will take, then asks you to confirm before it starts.",
+      "Let it run. It prints its progress as it goes and can be **resumed** — if it's interrupted, just run it again and it picks up the tiles it hasn't fetched yet, skipping the ones it already has.",
+      "When it finishes, the new area is immediately part of the offline map. Disconnect the internet again and you're ready for the field."
+    ]},
+    {"callout": {"kind": "note", "label": "IT ONLY DOWNLOADS WHAT'S MISSING",
+      "text": "Running the tile download again never re-fetches tiles you already have — it only pulls the new ones. That means adding a neighboring county, or a finer zoom level, costs only the extra data, not a fresh start. It also means a stopped download is safe to simply re-run."}},
+
+    {"h1": "Part 2 — The Kiwix Offline Library"},
+    {"p": "**Kiwix** is a free program that serves **offline copies of whole websites** — you read them in an ordinary web browser exactly as if you were online, except everything is stored on the server and needs no internet. The copies come as single files called **ZIM files** (that's just the file format's name). FieldCommand can host a curated shelf of these that are useful during an incident."},
+    {"p": "Why does an incident-management server need Wikipedia? Because when the internet is down, an operator may still need to look something up: how to treat a specific injury, how to repair a generator or a radio, an evacuation or shelter detail, a piece of technical reference. Kiwix puts a small **reference library** on the server so those answers are available offline, in a browser, to anyone on the network."},
+    {"callout": {"kind": "note", "label": "WHAT'S ON THE SHELF",
+      "text": "The curated collection leans toward things that matter in the field: **WikiMed** (a full medical encyclopedia — symptoms, treatments, drugs, procedures), **Wikipedia** (compact or full), **Wikivoyage** (shelter, evacuation, and travel logistics), **Wikibooks** (first aid, survival, ham radio, electronics, field skills), **iFixit** (step-by-step repair guides for radios, computers, vehicles, generators, medical gear), and more advanced medical, training, and electronics references. You choose how much of this to load with the tiers below."}},
+
+    {"h2": "The Three Kiwix Tiers"},
+    {"p": "Just like the tile presets, the Kiwix content is grouped into simple **tiers**, chosen with the `KIWIX_TIER` setting. Each tier adds more libraries — and a lot more drive space. These downloads are **much larger** than the map tiles (whole encyclopedias), so plan your drive space accordingly."},
+    {"table": {
+      "headers": ["Tier (KIWIX_TIER)", "Size on disk", "What it adds", "What that gives you"],
+      "rows": [
+        ["**0 — Skip**", "0", "Nothing — Kiwix not installed", "You don't need offline reference, or you'll add it later."],
+        ["**1 — Essential**", "~2.5 GB", "Medical encyclopedia, a compact Wikipedia, and the shelter/travel guide", "The core field reference: medical lookup, general facts, and evacuation/shelter logistics. The recommended starting point."],
+        ["**2 — Extended**", "~10 GB", "Everything in Tier 1, **plus** the how-to/field-manual library and the equipment-repair guides", "Adds hands-on knowledge — first aid, survival, electronics, and step-by-step repair for the gear you bring."],
+        ["**3 — Full**", "~25 GB", "Everything in Tiers 1 and 2, **plus** the full medical Wikipedia, a training/education library, and an electronics Q&A archive", "The complete shelf: comprehensive clinical reference, Incident Command System (ICS) and responder training, and deep electronics/radio troubleshooting."]
+      ],
+      "widths": [1.6, 1.1, 2.7, 2.0]
+    }},
+    {"callout": {"kind": "important", "label": "CHECK YOUR DRIVE SPACE FIRST",
+      "text": "**Tier 3 is about 25 gigabytes.** Make sure the server's drives have room before you start — the download tool checks free space and will stop rather than fill the disk, but it's better to plan ahead. If you're tight on space, Tier 1 (~2.5 GB) already covers the most critical need, which is offline medical reference."}},
+
+    {"h2": "How the Setup Loads It"},
+    {"p": "As with tiles, the one-command setup already handled this if you let it. It asked which Kiwix tier you wanted, or read the `KIWIX_TIER` line from your answers file, then installed the Kiwix server and downloaded the tier you chose. If you took the default, a starter library is already on the server and serving."},
+    {"code": ["# From fieldcommand.conf — the setup used this automatically:", "# Kiwix offline library: 0=skip, 1=essential(~2.5GB), 2=extended(~10GB), 3=full(~25GB)", "KIWIX_TIER=\"1\""]},
+
+    {"h2": "How Operators Reach the Library"},
+    {"p": "Once Kiwix is loaded, anyone on the field network can read it in a browser — no login, no special app. Kiwix serves its pages on **port 8081** of the server. \"Port 8081\" just means you add `:8081` to the end of the server address in the browser."},
+    {"steps": [
+      "Make sure your device is connected to the FieldCommand Wi-Fi network — by default named **EMCOMM-NET**.",
+      "Open any web browser.",
+      "In the address bar, type the server address followed by **`:8081`**. With the default server address that is **http://192.168.50.1:8081** (type it exactly, including the `http://`). If your build uses a different server address, use your real one with `:8081` on the end.",
+      "The Kiwix library page opens, listing every reference book you loaded. Click one to open it and read or search it just like a normal website — entirely offline."
+    ]},
+    {"callout": {"kind": "tip", "label": "MAKE IT EASY TO FIND ON THE DAY",
+      "text": "Field operators won't remember a port number under pressure. Write **http://192.168.50.1:8081** (or your real address) on the same card or sign that lists the Wi-Fi name and password, so anyone can pull up the reference library without asking. The FieldCommand dashboard may also link to it directly."}},
+
+    {"h2": "Adding or Expanding the Library Later"},
+    {"p": "You can grow the library at any time — step up from Tier 1 to Tier 2, or add individual titles — as long as the server has internet for the download. The tool is a script named **`kiwix_setup.sh`** in the `scripts` folder."},
+    {"steps": [
+      "Give the server an internet connection — these downloads are large and need it.",
+      "Open a terminal and run **`sudo bash kiwix_setup.sh`** to get the interactive menu, or run **`sudo bash kiwix_setup.sh --tier 2`** to jump straight to a tier.",
+      "The menu lists every available title with its size and whether it's already installed, and lets you pick a whole tier or choose titles one at a time.",
+      "Confirm the plan. It shows the total download size (already-installed titles are skipped) before it starts.",
+      "Let it download. Large titles can take a long time on a slow connection; the download **resumes** if interrupted — just re-run the same command and it continues where it stopped.",
+      "When it's done, Kiwix automatically starts serving the new titles at the same port 8081 address — no extra step. Disconnect the internet and you're field-ready."
+    ]},
+    {"callout": {"kind": "note", "label": "CHECK WHAT YOU'VE GOT",
+      "text": "To see what's already loaded without downloading anything, run **`sudo bash kiwix_setup.sh --status`** for the library or **`sudo bash download_tiles.sh --status`** for the map tiles. Each prints what's installed and how much space it uses — handy before a deployment to confirm the server is stocked."}},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__The map shows blank gray squares with no roads.__ No tiles are loaded for that spot, or you've zoomed in closer than the detail you downloaded. If the *whole* map is blank, no tiles were ever loaded — run `sudo bash download_tiles.sh` (with internet) and pick a preset. If only *part* is blank, it's outside your downloaded area, or zoomed in past the level you fetched; download a larger area or the **Full** preset, which includes finer zoom.",
+      "__The Kiwix library page won't load.__ First, check the address — it must include the port: **http://192.168.50.1:8081** (or your real server address with `:8081`), including the `http://`. Second, make sure you're connected to the **EMCOMM-NET** Wi-Fi. Third, Kiwix may not be installed if you chose tier **0** at setup — run `sudo bash kiwix_setup.sh` with internet and pick a tier. To confirm it's running, run `sudo bash kiwix_setup.sh --status` on the server.",
+      "__Kiwix loads but the shelf is empty (no books).__ The Kiwix server is running but no libraries were downloaded — this happens if the install set up the system but the download was skipped or failed. Run `sudo bash kiwix_setup.sh --tier 1` with internet to fetch the essential titles.",
+      "__The download stops partway through / \"insufficient disk space.\"__ The drive filled up. Kiwix checks free space and stops before overflowing rather than corrupting anything. Free up room or choose a smaller tier/preset. Remember Tier 3 Kiwix is ~25 GB and Full tiles are ~1.6 GB — make sure the space is there before starting.",
+      "__The download got interrupted (lost internet, closed the window).__ No harm done — both tools **resume**. Just run the same command again once internet is back. The tile downloader skips tiles it already has; the Kiwix downloader picks partial files up where they left off. Nothing needs to be deleted or restarted from scratch.",
+      "__I loaded tiles/books but they're not showing up.__ For tiles, re-run with `--status` to confirm they downloaded; if they're listed but the map is still blank, the tile server may need a restart (the download tool tells you the exact command when it finishes). For Kiwix, the library starts serving new titles automatically — reload the browser page at the `:8081` address.",
+      "__I only have a little internet time — what should I load first?__ Load **tile preset 1 (Essential, ~8 MB)** and **Kiwix tier 1 (~2.5 GB)** first. Those two cover a usable map and the most critical offline reference (medical) for the least data. Add more later whenever you next have a good connection."
+    ]}
+  ]
+}

@@ -1,0 +1,109 @@
+{
+  "order": 34,
+  "title": "Reference Tools — Grid, Cheat Sheets, Resources, Print Center",
+  "subtitle": "Four everyday utility pages: a grid-square calculator, printable radio and ICS cheat sheets, a searchable reference document library, and a one-stop print center. All work fully offline.",
+  "in_this_chapter": [
+    "The Grid Square Calculator — convert coordinates, measure distance and bearing",
+    "The Radio Cheat Sheets — phonetics, Q-codes, prowords, band plans, and more",
+    "The Reference Library — upload, tag, search, and download documents",
+    "The Print Center — print any form or reference card, and build an incident cover sheet",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "Four utility pages you'll reach for constantly. **Grid** (`grid.html`) converts between coordinates and grid squares and measures distance/bearing. **Cheat Sheets** (`cheatsheets.html`) are printable quick-reference cards — phonetics, Q-codes, prowords, band plans. **Reference Library** (`refs.html`) stores and searches your PDFs and manuals. **Print Center** (`printcenter.html`) prints any form or card and builds an incident cover sheet. Every one works with no internet."}},
+
+    {"h1": "What These Are / What They Are For"},
+    {"p": "FieldCommand bundles a handful of reference and utility pages that don't belong to any one incident — they're tools you use over and over, before and during an activation. This chapter covers four of them. None needs the internet: they run entirely on the FieldCommand server and your browser, so they work the same on a dead-quiet field network as they do at home."},
+
+    {"h1": "The Grid Square Calculator"},
+    {"p": "Open **http://192.168.50.1/grid.html**. The **📡 GRID SQUARE CALCULATOR** converts between two ways of naming a spot on Earth — plain latitude/longitude and the **Maidenhead grid locator** hams use — and measures the distance and direction between two grid squares. A grid locator is a short code like `EN52wa` that packs a location into a few characters, easy to say over the radio."},
+    {"h2": "Coordinates to Grid, and Grid to Coordinates"},
+    {"p": "The page has two panels side by side:"},
+    {"table": {
+      "headers": ["Panel", "You enter", "You get back"],
+      "rows": [
+        ["**📍 Lat / Lon → Grid Square**", "Latitude and longitude in decimal degrees (fill them in, or tap **📡 Use My Location (GPS)** to pull them from the device).", "The 6-character and 4-character grid, plus the field, square, and subsquare broken out, and the position in DMS (degrees-minutes-seconds)."],
+        ["**🔤 Grid Square → Lat / Lon**", "A Maidenhead locator, 4 or 6 characters (e.g. `EN90ab`).", "The center latitude and longitude of that grid, in decimal and DMS."]
+      ],
+      "widths": [2.3, 2.7, 3.0]
+    }},
+    {"p": "Click **Calculate Grid** or **Decode Grid** to run each one. The big amber result shows the answer; the rows beneath break it down."},
+    {"h2": "Distance and Bearing Between Two Grids"},
+    {"p": "The **📐 Distance & Bearing Between Two Grids** panel takes two grid squares — **Grid 1** and **Grid 2** — and, on **Go**, reports the great-circle distance between them in both kilometers and miles, plus the compass bearing each way (for example *247° WSW*). This is how you answer *how far and which way* is a repeater, a served facility, or another station."},
+    {"h2": "The Grid Map and Reference"},
+    {"p": "Below the calculators, a **🗺 Grid Square Map (North America)** shows the grid overlaid on the continent — click or tap anywhere on it to look up that spot, and your current result is highlighted with an amber box. At the bottom, a **📋 Maidenhead Grid Reference** table explains the precision levels (field, square, subsquare, extended) and how the letters and digits are assigned, for anyone who wants to understand the code rather than just use it."},
+    {"callout": {"kind": "note", "label": "WHY YOU'D USE THIS",
+      "text": "Grid squares turn a mouthful of coordinates into a short code you can pass by voice without errors. Use this page to find your own grid for the Setup screen, to decode a grid another station gives you, or to measure the distance and heading to a facility or repeater. **Use My Location** needs the browser's location permission and a device that can supply it."}},
+
+    {"h1": "The Radio Cheat Sheets"},
+    {"p": "Open **http://192.168.50.1/cheatsheets.html**. The **📖 RADIO CHEAT SHEETS** page is a stack of printable quick-reference cards for common radio and Incident Command System (ICS) tasks. A row of tabs across the top switches between them; the **🖨 Print All** button prints every card at once, each on its own page, ready to laminate."},
+    {"table": {
+      "headers": ["Tab", "What's on it"],
+      "rows": [
+        ["**Phonetic Alphabet**", "The full NATO phonetic alphabet (Alpha, Bravo, Charlie…) with pronunciation, plus the ITU way of pronouncing numbers."],
+        ["**Q-Codes**", "Common HF/amateur Q-codes (QRM, QSY, QTH…) and a separate set of net/EmComm Q-codes (QNI, QNC, QTC…)."],
+        ["**Prowords**", "Procedure words — SAY AGAIN, ROGER, WILCO, OVER, OUT, CORRECTION, BREAK — with meanings and example use."],
+        ["**Band Plan**", "The 2-meter and 70-centimeter band plans (simplex, repeater, calling, APRS segments), HF emergency frequencies, and special-service bands (MURS, FRS, GMRS, marine, aviation)."],
+        ["**NTS Precedence**", "The message-precedence levels — EMERGENCY, PRIORITY, WELFARE, ROUTINE — plus the ICS triage priorities (Immediate, Delayed, Minor, Expectant)."],
+        ["**ICS Structure**", "The ICS organization chart (Incident Commander, command staff, the four sections) and a table of the key ICS forms and what each is for."],
+        ["**CTCSS / DCS**", "The full CTCSS tone table (all 40-plus tones in Hertz) and common DCS digital codes."],
+        ["**Signal Reports**", "The RST readability/strength scale, P25 signal-quality guide, plain-voice FM report shorthand, and a dBm-to-watts reference."]
+      ],
+      "widths": [1.7, 4.8]
+    }},
+    {"callout": {"kind": "tip", "label": "BUILT TO PRINT",
+      "text": "These cards are designed to fit on a single sheet each. Print the ones your operators need, laminate them, and clip them to a go-kit or a position binder. **🖨 Print All** lays every card out one-per-page in a single job. You can also jump to a specific card from the **Print Center** (below)."}},
+
+    {"h1": "The Reference Library"},
+    {"p": "Open **http://192.168.50.1/refs.html**. The **📚 REFERENCE LIBRARY** is where {{org_the}} stores the documents an operation depends on — radio manuals, ICS forms and plans, agency and government documents, training materials, and standard operating guides — so they're available on the field network with no internet. Think of it as your deployable filing cabinet."},
+    {"h2": "Finding a Document"},
+    {"p": "Three tabs across the top split the collection by audience: **📻 Amateur Radio**, **🏛 ICS / Emergency Mgmt**, and **📂 All Documents** (a document can be cross-referenced onto both tabs). Down the left side, a sidebar filters by **Category** — Radio Manuals, ICS Forms & Plans, Agency/Government, Training Materials, Plans & Procedures, Other — and by **Tags**, with a **Sort By** dropdown (newest, title, source, most downloaded). The **🔍 search** box at the top matches titles, descriptions, sources, and tags. Toggle between a card **grid** (**⊞**) and a compact **list** (**☰**) with the buttons on the right."},
+    {"h2": "Opening and Downloading"},
+    {"p": "Click any document to open its detail window, which shows the file name, size, source, what it applies to, revision, expiry, and description. From there, **⬇ Download** saves the file to your device, **✏ Edit** changes its details, **🗑 Delete** removes it, and **🔗** adds it to (or removes it from) both tabs. PDFs show a thumbnail preview on their card."},
+    {"h2": "Uploading a Document"},
+    {"p": "Click **⬆ Upload Document** to open the upload panel. Drag a file onto the drop zone (or click to browse — PDF, Word, Excel, PowerPoint, images, KML, or ZIP, up to 200 MB), then fill in the details:"},
+    {"table": {
+      "headers": ["Field", "What to enter"],
+      "rows": [
+        ["**Title** *(required)*", "A clear name, e.g. *IC-7300 Operating Manual*."],
+        ["**Category** *(required)*", "The kind of document — Radio Manual, ICS Form/Plan, Agency, Training, Plan/Procedure, or Other."],
+        ["**Show on tab(s)** *(required)*", "Check Amateur Radio, ICS, or both."],
+        ["**Source / Publisher**", "Who produced it, e.g. *Icom, ARRL, FEMA*."],
+        ["**Applies To**", "Where it applies, e.g. a county, state, or *Statewide*."],
+        ["**Description**", "A short note on the contents and when to use it."],
+        ["**Tags**", "Comma-separated keywords for searching, e.g. *HF, NIMS, mutual aid*."],
+        ["**Revision / Version**", "The revision, e.g. *Rev 3* or *v2.1*."],
+        ["**Expiry Date**", "When the document goes stale, if applicable — expired documents are flagged."]
+      ],
+      "widths": [2.3, 4.2]
+    }},
+    {"p": "Click **⬆ Upload Document** to store it. A progress bar tracks the upload, and the new document appears in the library."},
+    {"callout": {"kind": "note", "label": "STOCK IT BEFORE YOU DEPLOY",
+      "text": "The Reference Library is only as useful as what you put in it, and it needs no internet once stocked — so load it in advance. Upload your radio manuals, your agency's plans, blank ICS forms, and frequency guides while you're on a normal connection, and every operator can pull them up in the field. Tag them well so they're easy to find when it matters."}},
+
+    {"h1": "The Print Center"},
+    {"p": "Open **http://192.168.50.1/printcenter.html**. The **🖨 PRINT CENTER** gathers the app's printable forms and reference cards in one place and adds a cover-sheet builder. It's grouped into sections:"},
+    {"bullets": [
+      "**📋 ICS / NTS Forms** — cards for the ICS-213 General Message, ICS-214 Activity Log, ICS-309 Communications Log, an NTS Radiogram, and a Pre-Flight (deployment readiness) Checklist. Each card has **Open Form** and **Preview**.",
+      "**📖 Reference Cards** — quick links to print the cheat-sheet cards (phonetics, Q-codes and prowords, ICS structure and forms, CTCSS/DCS and signal reports).",
+      "**📻 Operations** — print current logs and boards straight from the live pages: Net Control and {{ps_short}} logs (as ICS-309), the member Roster, and the Resource Board."
+    ]},
+    {"p": "Each card's **Preview** button loads that document in a preview pane on the same page, with its own **🖨 Print** button, so you can check a form before committing it to paper."},
+    {"h2": "The Incident Cover Sheet Generator"},
+    {"p": "The **📄 Incident Cover Sheet Generator** builds a clean cover page for an incident packet. Fill in the fields — Incident Name, Incident Number, Date/Time, Incident Commander, Agency, Operational Period, Location/Jurisdiction, Net Frequency, and a Situation Summary — then click **📄 Generate Cover Sheet** to see the formatted result, and **🖨 Print** to print it. **✕ Clear** empties the form."},
+    {"callout": {"kind": "note", "label": "PRINTING USES YOUR DEVICE'S OWN PRINTER",
+      "text": "Every **Print** button opens your device's normal browser print dialog. That means you can print to any printer that device can reach — or choose *Save as PDF* to keep a copy as a file. There is no central print server, so printing works from any laptop, tablet, or phone on the FieldCommand network, using whatever printer that device already knows about."}},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__Grid: 'Use My Location' does nothing or errors.__ The browser needs permission to share location, and the device needs a way to determine it. Grant the permission when asked, or type your coordinates in by hand.",
+      "__Grid: the distance/bearing panel says 'Invalid grid(s)'.__ One of the two grid squares isn't a valid Maidenhead locator. Enter at least a 4-character grid (e.g. `EN52`) in each box.",
+      "__Cheat Sheets: a card prints cut off.__ Use **🖨 Print All** (which paginates each card cleanly), or in the print dialog choose landscape orientation or *Fit to page* for the wider tables.",
+      "__Reference Library: it says the server is unavailable.__ The library runs on the FieldCommand Pi. Confirm the Pi is powered on and your device is on the FieldCommand Wi-Fi, then click **⟳** to retry.",
+      "__Reference Library: my upload failed.__ Check the file is a supported type and under 200 MB, and that you gave it a **Title** and picked at least one tab. Then try the upload again.",
+      "__Print Center: nothing happens when I click Print.__ Your browser may have blocked the print pop-up. Allow pop-ups for the FieldCommand address, or open the form with **Open Form** and print from there.",
+      "__Print Center: the printer I want isn't listed.__ Printing uses the device you're on. If that device can't see the printer, connect to it first (or use another device that can), then print — or choose *Save as PDF* and print the file elsewhere."
+    ]}
+  ]
+}

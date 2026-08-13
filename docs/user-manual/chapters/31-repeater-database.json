@@ -1,0 +1,162 @@
+{
+  "order": 31,
+  "title": "Repeater Database",
+  "subtitle": "A searchable, filterable list of the VHF/UHF repeaters in your area — loaded from a free RepeaterBook export — that feeds the radio plan, the channel library, and the maps.",
+  "in_this_chapter": [
+    "What the Repeater Database is and where its data comes from",
+    "The three source tabs: Offline File, Server API, and Demo Data",
+    "Loading a RepeaterBook CSV by drag-and-drop",
+    "Reading the repeater table, column by column",
+    "Searching, filtering, and sorting by distance",
+    "The detail panel — full repeater info, Copy, Program, and Add to Channel Library",
+    "Adding a repeater by hand",
+    "Plotting repeaters on the Map View",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "Open **http://192.168.50.1/repeaters.html**. Log in at **repeaterbook.com** (free), search your county, and click **Export → CSV**. Back in FieldCommand, drag that CSV file onto the big drop box. Your repeaters appear in a table you can search, filter, and sort. Click any row to see full details, and use **+ Channel Lib** to send a repeater into the radio plan."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "The **Repeater Database** is FieldCommand's local list of the VHF/UHF (Very High Frequency / Ultra High Frequency) repeaters near your operating area — the frequencies, tones, and access details operators need to actually make contact on a repeater. A repeater is a radio station on a tower or building that re-transmits signals to give handheld and mobile radios far more range than they'd have talking directly to each other."},
+    {"p": "You load the data once, from a free export, and FieldCommand keeps it. From then on that same repeater list feeds three other places in the app: the **ICS-205** communications plan channel picker, the **Channel Library** (Chapter 32), and the **Repeaters** overlay on the tactical and resource maps. Getting good repeater data in here means every other radio-planning tool is already stocked with real, local frequencies."},
+    {"callout": {"kind": "note", "label": "IT ALL WORKS OFFLINE",
+      "text": "Once the data is loaded, the Repeater Database needs no internet. It is stored right in your browser and on the server, so you can search and plan on a dead-quiet network. You only need the internet for the one-time download of the export file — and you can do that at home before you ever deploy."}},
+
+    {"h1": "Opening the Page and Choosing a Source"},
+    {"p": "Open a browser on the FieldCommand Wi-Fi and go to **http://192.168.50.1/repeaters.html**, or reach it from the dashboard. The page opens with a header reading **📻 REPEATER DATABASE** and a row of **source tabs** just below it. The source tabs decide where the repeater list comes from:"},
+    {"table": {
+      "headers": ["Source tab", "What it does", "When to use it"],
+      "rows": [
+        ["**📁 Offline File**", "Loads repeaters from a file you export from RepeaterBook and drop onto the page. This is the normal, recommended way.", "Almost always. It works with any free account and needs no internet after the download."],
+        ["**🖥 Server API**", "Pulls repeaters automatically from a program running on the FieldCommand Pi (`fetch_repeaters.py`). Needs an approved RepeaterBook API token.", "Only if your group has gone through RepeaterBook's separate token-approval process. Optional and advanced."],
+        ["**🔬 Demo Data**", "Shows a handful of fake sample repeaters so you can see how the page looks and behaves.", "Just for practice. These are clearly-marked placeholders — never use them on the air."]
+      ],
+      "widths": [1.7, 3.0, 2.3]
+    }},
+    {"callout": {"kind": "important", "label": "THE API TOKEN IS NOT THE SAME AS A LOGIN",
+      "text": "The **Server API** tab needs an **approved RepeaterBook API token**, which is a separate application you file with RepeaterBook staff and can take several weeks to be granted. It is *not* your normal repeaterbook.com password. You do **not** need it for everyday use — the **Offline File** method below gives you the exact same data with just a free account."}},
+
+    {"h1": "Loading a RepeaterBook CSV (the Normal Way)"},
+    {"p": "On the **📁 Offline File** tab, the page shows a large dashed **drop box** titled *Load RepeaterBook Offline Export*. Getting your data in is a five-minute job:"},
+    {"steps": [
+      "On any device with internet, log in at **repeaterbook.com** (a free account is all you need).",
+      "Search for your county or area, then click **Export → CSV**. A file downloads to that device.",
+      "Alternatively, use the **RepeaterBook mobile app** → **Export → Share file** to get the same kind of file.",
+      "Get that file onto a device connected to the FieldCommand Wi-Fi (copy it over, email it to yourself, or use a USB stick).",
+      "On the Repeater Database page, **drag the file onto the drop box** — or click the drop box (or the **Load file** picker at the top right) to browse for it.",
+      "A progress box reads *Importing RepeaterBook Data*, then *Loaded N repeaters!* The table appears."
+    ]},
+    {"screenshot": "The Offline File tab with the dashed drop box and the numbered 'how to get the export file' instructions"},
+    {"callout": {"kind": "note", "label": "CSV, JSON, OR FIELDCOMMAND'S OWN FILE",
+      "text": "The drop box accepts a **RepeaterBook CSV**, a **RepeaterBook JSON**, or a FieldCommand `repeaters.json` file. CSV (comma-separated values — a plain spreadsheet-style file) is the easiest and most common. FieldCommand figures out the format for you and matches up the columns automatically."}},
+    {"callout": {"kind": "tip", "label": "IT REMEMBERS YOUR DATA",
+      "text": "After a successful import, the repeater list is saved in your browser. Next time you open the page it loads straight from that saved copy — no need to drop the file again. To swap in fresh data, use the **⬆ Load different file** button in the banner, or re-drop a newer CSV. Refresh the export before each activation so tones and status are current."}},
+
+    {"h1": "Reading the Repeater Table"},
+    {"p": "Once data is loaded, the main table fills the page. Each row is one repeater. The columns, left to right:"},
+    {"table": {
+      "headers": ["Column", "What it shows"],
+      "rows": [
+        ["**Output**", "The frequency you **listen** on (the repeater's transmit frequency), in MHz. Shown in green."],
+        ["**Input**", "The frequency you **transmit** on. Your radio usually sets this automatically from the offset."],
+        ["**Callsign**", "The repeater's licensed callsign — its identity on the air."],
+        ["**Tone**", "The CTCSS/DCS tone or code needed to open the repeater's receiver (see the note below). Shown as a green badge."],
+        ["**Mode**", "How the repeater operates: **FM** (plain analog), **D-STAR**, **C4FM** (Fusion), **DMR**, or **P25**. Each mode gets its own colored badge."],
+        ["**City**", "The nearest city or town the repeater covers."],
+        ["**State**", "The state (or province) it's in."],
+        ["**EmComm**", "Emergency-communications affiliations — **ARES**, **RACES**, **SKY** (SKYWARN), **CAN** (CANWARN) — shown as badges when the repeater is affiliated."],
+        ["**Links**", "Internet-linking systems the repeater carries — **EL** (EchoLink), **AS** (AllStar), **WX** (Wires-X)."],
+        ["**Use**", "Whether the repeater is **OPEN** to all, **CLOSED**, or **PRIVATE**."],
+        ["**Status**", "A colored dot: green = on the air, red = off the air."],
+        ["**Dist**", "How far the repeater is from your station, in miles. This column only appears when you turn on distance sorting (below)."]
+      ],
+      "widths": [1.5, 5.0]
+    }},
+    {"callout": {"kind": "note", "label": "WHAT A 'TONE' IS",
+      "text": "Many repeaters ignore your signal unless you send a quiet sub-audible tone along with your voice — this keeps them from being triggered by noise or distant stations. **CTCSS** (Continuous Tone-Coded Squelch System) uses a tone in Hertz like *103.5*; **DCS** (Digital-Coded Squelch) uses a numeric code like *D023*. Program the tone shown here into your radio or the repeater simply won't hear you."}},
+    {"p": "Click any column heading (for example **Callsign ↕** or **Output ↕**) to sort by that column; click again to reverse the order. The sorted column turns green."},
+
+    {"h1": "Searching, Filtering, and Sorting by Distance"},
+    {"p": "A big county export can hold hundreds of repeaters. The **toolbar** above the table narrows it down. It only appears after data is loaded."},
+    {"table": {
+      "headers": ["Control", "What it does"],
+      "rows": [
+        ["**Search** box", "Type a callsign, city, frequency, tone, or word from the notes to instantly narrow the list."],
+        ["**Band**", "Limit to one amateur band — 10m, 6m, 2m, 1.25m, 70cm, 33cm, or 23cm."],
+        ["**Mode**", "Show only FM, D-STAR, C4FM/Fusion, DMR, or P25 repeaters."],
+        ["**Status**", "Show only on-air or only off-air repeaters."],
+        ["**State**", "Filter to a single state (the list is built from your loaded data)."],
+        ["**Use**", "Show only Open, Closed, or Private repeaters."],
+        ["**EmComm**", "Show only ARES, SKYWARN, or RACES repeaters."],
+        ["**Sort by distance**", "Choose **Nearest first** or **Farthest first**. Turning this on reveals the **Dist** column showing miles from your station."]
+      ],
+      "widths": [2.0, 4.5]
+    }},
+    {"p": "Filters stack — set a Band **and** a Mode **and** an EmComm affiliation to zero in on exactly the repeaters you want. The status bar at the bottom always shows how many repeaters match out of the total. To the right of the toolbar sit four buttons: **➕ Add Repeater**, **🗺 Map View**, **⬇ CSV** (export the current filtered list to a file), and **🖨 Print**."},
+
+    {"h1": "The Detail Panel"},
+    {"p": "Click any row and a **detail panel** slides in from the right with everything known about that repeater. At the top: the output frequency in large green type, the callsign, and its band/city/state. Below that, a row of affiliation and mode badges, then a list of details:"},
+    {"table": {
+      "headers": ["Detail row", "Meaning"],
+      "rows": [
+        ["**Input**", "The transmit frequency in MHz."],
+        ["**CTCSS (out)**", "The tone your radio must send to open the repeater. Shows *None / CSQ* if none is needed."],
+        ["**CTCSS (in)**", "The tone the repeater sends back, if different (often the same)."],
+        ["**Offset**", "The gap between input and output frequency (for example −0.600 MHz)."],
+        ["**Digital Code**", "The color code or digital ID, for digital repeaters."],
+        ["**County**", "The county the repeater serves."],
+        ["**Distance**", "Miles from your station."],
+        ["**Status**", "On-air (green) or off-air (red)."],
+        ["**Use**", "Open, Closed, or Private."],
+        ["**Trustee/Sponsor**", "Who owns or runs the repeater."],
+        ["**Last Updated**", "When the RepeaterBook record was last touched."],
+        ["**Website**", "A link to the sponsor's page, if listed."]
+      ],
+      "widths": [2.0, 4.5]
+    }},
+    {"p": "Four buttons sit at the bottom of the panel:"},
+    {"bullets": [
+      "**📋 Copy** — copies a one-line summary of the repeater to your clipboard, handy for pasting into a message or log.",
+      "**📡 Program** — shows a plain **Programming Summary** (RX, TX, offset, both tones, mode, name) laid out for hand-programming a radio.",
+      "**🖨** — prints the panel.",
+      "**+ Channel Lib** — adds this repeater to the **Channel Library** as a channel, so it's available in the ICS-205 radio plan. A brief **✓ Added** confirms it worked."
+    ]},
+
+    {"h1": "Adding a Repeater by Hand"},
+    {"p": "For a machine that isn't in RepeaterBook — a local club repeater, a temporary machine, or one you just want on the list — click **➕ Add Repeater**. A form opens. **Output Freq (MHz)** is the only required field; fill in whatever else you know:"},
+    {"table": {
+      "headers": ["Field", "What to enter"],
+      "rows": [
+        ["**Callsign**", "The repeater's callsign (typed in automatically as capitals)."],
+        ["**Output Freq (MHz)** *(required)*", "The listen frequency, e.g. `146.940`."],
+        ["**Input Freq (MHz)**", "The transmit frequency. Leave blank for auto/simplex."],
+        ["**Tone / PL (Hz)**", "The access tone, e.g. `103.5`."],
+        ["**Mode**", "FM, D-STAR, C4FM, DMR, P25, or NXDN."],
+        ["**City / State**", "Where the repeater is."],
+        ["**Latitude / Longitude**", "Decimal coordinates, so it can appear on the map."],
+        ["**Notes**", "Anything useful, e.g. *EOC primary, wide-area coverage*."],
+        ["**ARES / RACES / SKYWARN**", "Check any emergency affiliations that apply."]
+      ],
+      "widths": [2.4, 4.1]
+    }},
+    {"p": "Click **Add to List** and the repeater joins the table immediately. A hand-added repeater lives in the current list only — use the **⬇ CSV** button to export and keep it if you want it permanently."},
+
+    {"h1": "Map View — Repeaters on a Map"},
+    {"p": "Click **🗺 Map View** in the toolbar to open a full-screen map plotting every repeater in the **current filtered view** that has coordinates. The button shows a count in parentheses, e.g. *🗺 Map View (247)*, so you know how many will plot. Because it follows your filters, you can set a Band or an EmComm filter first, then open the map to see exactly those repeaters."},
+    {"p": "Pins are colored by mode, matching the legend across the top: green FM, blue D-STAR, orange C4FM/Fusion, purple DMR, red P25, and amber for any ARES/RACES-affiliated repeater (the amber overrides the mode color). Click a pin for a popup with the frequency, offset, mode, tone, location, sponsor, and affiliation badges — plus a **+ Add to Channel Library** button to import it on the spot. Press **Escape** or click **✕ Close** to return to the table."},
+    {"callout": {"kind": "note", "label": "ONLY REPEATERS WITH COORDINATES PLOT",
+      "text": "A RepeaterBook CSV includes latitude and longitude for every repeater, so nearly all of them plot. Repeaters you added by hand without coordinates still appear in the table but not on the map — the map status line tells you how many were left off. The same repeater data also powers the **📡 Repeaters** layer on the Tactical Map and Resource Map."}},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__I opened the page and there's no table, just a drop box.__ That's the normal empty state — no data is loaded yet. Follow *Loading a RepeaterBook CSV* above to drop in an export file.",
+      "__The import failed with an error.__ Make sure the file is a genuine **RepeaterBook CSV or JSON export**, not a spreadsheet you re-saved in another format. Re-download the export and drop it again.",
+      "__The Server API tab shows 'unreachable' or 'unavailable'.__ That's expected unless your group has an approved RepeaterBook API token and has run `fetch_repeaters.py` on the Pi. Use the **Offline File** tab instead — it needs only a free account.",
+      "__Map View says 'No repeaters with coordinates'.__ The repeaters currently shown have no latitude/longitude. Clear your filters, or load a RepeaterBook CSV (which includes coordinates for every entry).",
+      "__My hand-added repeater disappeared.__ Manually-added repeaters aren't saved permanently. Click **⬇ CSV** to export the list, then re-import that file to keep them.",
+      "__The Dist column is missing.__ It only appears when **Sort by distance** is set to *Nearest first* or *Farthest first*. Turn that on and the column appears.",
+      "__The distances look wrong.__ Distances are measured from the station's set coordinates. If they're off, the station location may need updating in Setup (Chapter 3)."
+    ]}
+  ]
+}

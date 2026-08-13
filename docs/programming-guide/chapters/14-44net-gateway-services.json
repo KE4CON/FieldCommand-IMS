@@ -1,0 +1,188 @@
+{
+  "order": 14,
+  "title": "The 44Net Gateway Services — amprgate_status.py & amprgate_poll.py",
+  "subtitle": "FieldCommand can reach out onto the Amateur Packet Radio Network (AMPRNet / 44Net) through a second, dedicated Raspberry Pi that runs a WireGuard tunnel and nothing else. Two small Python programs tie that gateway Pi to the main FieldCommand server: amprgate_status.py runs on the gateway and reports and controls the tunnel, and amprgate_poll.py runs on the server and reads that report every 30 seconds so the dashboard can show 44Net health.",
+  "in_this_chapter": [
+    "What the 44Net gateway is and why it is a separate Pi",
+    "How amprgate_status.py reports tunnel status, system health, and routes",
+    "How the split-port security model keeps control local while status stays open",
+    "How the gateway validates a callsign by calling back to the FieldCommand server over HTTPS",
+    "How amprgate_poll.py copies that status to the server for the dashboard",
+    "Design takeaways and the maintainer's rule"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "IN ONE SENTENCE",
+      "text": "`amprgate_status.py` runs on a separate gateway Pi and serves read-only 44Net tunnel status on port 9000 while keeping tunnel control locked to localhost port 9001, and `amprgate_poll.py` on the FieldCommand server fetches that status every 30 seconds into a JSON file the dashboard reads."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "Amateur radio operators are allocated a whole slice of the Internet address space — the `44.0.0.0/8` block, known as the **Amateur Packet Radio Network (AMPRNet / 44Net)**. To route traffic onto it, a station builds an encrypted tunnel to the AMPRNet gateway and then forwards the `44.0.0.0/8` network through that tunnel. FieldCommand does this on a **second Raspberry Pi that does nothing else** — the gateway Pi at `192.168.50.2`, sitting beside the main FieldCommand server at `192.168.50.1`. The gateway Pi owns the WireGuard tunnel, the routing rules, and the firewall for 44Net; the main server never touches any of it directly."},
+    {"p": "Two programs connect the two Pis. On the gateway Pi, [python/amprgate_status.py](python/amprgate_status.py) is a small web service that reports whether the tunnel is up, how much data has moved, what the routes look like, and how the gateway Pi itself is doing (temperature, memory, uptime). It also — on a strictly separate, localhost-only port — lets a licensed operator with physical access bring the tunnel up, down, or restart it. On the FieldCommand server, [python/amprgate_poll.py](python/amprgate_poll.py) simply asks the gateway for that status every 30 seconds and writes it to a file, so the main dashboard and health monitor can display 44Net state without ever talking to the gateway themselves."},
+    {"callout": {"kind": "note", "label": "JARGON, IN PLAIN WORDS",
+      "text": "**AMPRNet / 44Net** is the block of Internet addresses (everything starting `44.`) reserved for licensed amateur radio use. **WireGuard** is a modern, fast Virtual Private Network (VPN) — an encrypted tunnel between two machines; here the gateway Pi's end is the network interface called `ampr0`. **Gateway** here means the machine that forwards traffic between the local EMCOMM-NET and 44Net. **Part 97** is the section of United States Federal Communications Commission (FCC) rules governing amateur radio; it requires station identification, which is why access is logged."}},
+
+    {"h1": "Why the Gateway Is Its Own Pi — the 'Why' Behind the Split"},
+    {"p": "The gateway is deliberately a separate machine so that the risky, privileged work of routing a public Internet block never runs inside the incident-management server. The gateway Pi holds the WireGuard private key, runs Internet Protocol (IP) forwarding, and rewrites firewall rules every time the tunnel comes up or down — all of which is defined in the tunnel config the installer writes:"},
+    {"code": [
+      "PostUp   = ip route add 44.0.0.0/8 dev ampr0 2>/dev/null || true",
+      "PostUp   = iptables -A FORWARD -i ampr0 -o eth0 -j ACCEPT",
+      "PostUp   = iptables -A FORWARD -i eth0 -o ampr0 -j ACCEPT",
+      "PostUp   = iptables -t nat -A POSTROUTING -o ampr0 -j MASQUERADE"
+    ]},
+    {"p": "Keeping that on its own Pi means a problem on the gateway — a crashed tunnel, a firewall mistake, a reboot — cannot take down net control, the roster, or the forms on the main server. The two machines fail independently. It also keeps the security boundary crisp: the gateway exposes exactly one read-only status endpoint to the network and keeps every control action physically local, which is the model the rest of this chapter walks through."},
+    {"callout": {"kind": "note", "label": "WHY THE INSTALLER LIVES SEPARATELY TOO",
+      "text": "The gateway is set up by its own script, `scripts/setup_44net.sh`, which the banner explicitly says runs on the DEDICATED GATEWAY PI (192.168.50.2), NOT on the FieldCommand server Pi (192.168.50.1). It installs WireGuard, enables IP forwarding, writes `/etc/wireguard/ampr0.conf`, and installs `amprgate_status.py` as a systemd service. The separation is baked in from installation onward, not just at runtime."}},
+
+    {"h1": "How It Works — The Split-Port Security Model"},
+    {"p": "The single most important design decision in `amprgate_status.py` is that **status and control live on different ports with different reach**. The file's own header spells it out, and the two ports are set at the top of the configuration block:"},
+    {"code": [
+      "PUBLIC_PORT    = 9000          # Status + UI — accessible from EMCOMM-NET",
+      "CONTROL_PORT   = 9001          # Tunnel control — localhost only",
+      "WG_INTERFACE   = \"ampr0\""
+    ]},
+    {"p": "Port 9000 is bound to all interfaces (`0.0.0.0`) so any device on the EMCOMM-NET can read status and so the FieldCommand server's poller can reach it. Port 9001 is bound to `127.0.0.1` only, which means the operating system itself will not accept a connection to it from anywhere but the gateway Pi's own keyboard. There is no network path to the control port — you have to be sitting at the machine. The two servers are started as two separate `HTTPServer` objects with two different handler classes:"},
+    {"code": [
+      "def run_public_server():",
+      "    server = HTTPServer((\"0.0.0.0\", PUBLIC_PORT), PublicHandler)",
+      "    ...",
+      "    server.serve_forever()",
+      "",
+      "def run_local_server():",
+      "    server = HTTPServer((\"127.0.0.1\", CONTROL_PORT), LocalHandler)",
+      "    ...",
+      "    server.serve_forever()"
+    ]},
+    {"p": "The public `PublicHandler` serves the dashboard UI, the login endpoints, and the read-only `/api/status` — but if anyone tries to reach a tunnel-control action on the public port, it is refused outright with a message telling them where control actually lives:"},
+    {"code": [
+      "elif path.startswith(\"/api/tunnel/\"):",
+      "    # Tunnel control blocked on public port — must use localhost:9001",
+      "    self.send_json({",
+      "        \"ok\": False,",
+      "        \"error\": \"Tunnel control requires physical access to the gateway Pi. \"",
+      "                 \"Use the local keyboard and browser at http://localhost:9001\",",
+      "    }, 403)"
+    ]},
+    {"p": "The `LocalHandler` on 9001 is the only place `tunnel_action()` — the code that actually shells out to `wg-quick up`/`down`/`restart` — can be reached. And even there, a valid callsign session is still required before anything happens, so control demands **both** physical presence at the Pi **and** a logged-in licensed operator:"},
+    {"code": [
+      "token = get_token_from_request(self)",
+      "session = validate_session(token)",
+      "",
+      "if not session:",
+      "    self.send_json({",
+      "        \"ok\": False,",
+      "        \"error\": \"Valid callsign session required. \"",
+      "                 \"Log in at http://192.168.50.2:9000 first.\",",
+      "    }, 401)",
+      "    return"
+    ]},
+    {"callout": {"kind": "warning", "label": "DEFENSE IN DEPTH, NOT ONE LOCK",
+      "text": "Three independent barriers guard bringing the tunnel up or down: (1) the control port is bound to localhost, so there is no network route to it at all; (2) the installer's firewall rule `ufw deny in on eth0 to any port 9001` blocks it a second time even if the binding ever changed; and (3) the handler still checks for a valid FCC callsign session. Never collapse these into one. Each is there because the other two might someday fail."}},
+
+    {"h1": "How It Works — Building the Status Report"},
+    {"p": "Everything the status service reports is assembled by `build_status()`, which gathers the tunnel state and the gateway Pi's own vital signs into one dictionary. It is what both `/api/status` endpoints return and what the poller on the server ends up storing:"},
+    {"code": [
+      "def build_status():",
+      "    wg = get_wg_status()",
+      "    mem_used, mem_total = get_mem()",
+      "    return {",
+      "        \"timestamp\": utcnow(),",
+      "        \"gateway_ip\": \"192.168.50.2\",",
+      "        **wg,",
+      "        \"cpu_temp\": get_cpu_temp(),",
+      "        \"mem_used_mb\": mem_used,",
+      "        \"mem_total_mb\": mem_total,",
+      "        \"uptime\": get_uptime(),",
+      "        \"ip_forward\": get_ip_forward(),",
+      "        \"routes\": get_routes(),",
+      "        \"peers\": get_peers(),",
+      "        \"access_log\": get_access_log(),",
+      "    }"
+    ]},
+    {"p": "The tunnel half comes from `get_wg_status()`, which shells out to `wg show ampr0 dump` and reads the raw tab-separated dump WireGuard produces. The key judgement it makes is deciding whether the tunnel is really **up**: it is not enough for the interface to exist — there must be a recent handshake. The code treats the tunnel as up only if it has a 44-address and the last handshake was under five minutes ago:"},
+    {"code": [
+      "tunnel_up = (ampr_addr is not None and",
+      "             hs_epoch_val > 0 and",
+      "             (int(time.time()) - hs_epoch_val) < 300)"
+    ]},
+    {"callout": {"kind": "note", "label": "WHY A HANDSHAKE, NOT JUST AN INTERFACE",
+      "text": "A WireGuard interface can be configured and have an address while the far end is unreachable — the tunnel looks present but carries nothing. WireGuard only records a handshake timestamp when the two ends actually exchange keys. Checking that the handshake is recent (under 300 seconds) is how the code distinguishes a live tunnel from a dead one that merely still has its interface configured."}},
+    {"p": "The system half — `get_cpu_temp()`, `get_mem()`, `get_uptime()`, `get_ip_forward()` — reads the Pi's own kernel files (`/sys/class/thermal`, `/proc/meminfo`, `/proc/uptime`, `/proc/sys/net/ipv4/ip_forward`) and each wraps its work in a try/except that returns `None` on failure. That matters because the status page must never crash just because one sensor could not be read; a missing value simply shows as a dash on the dashboard. `get_routes()` confirms the `44.0.0.0/8` route is present, and `get_peers()` lists the tunnel peers with their last-handshake age."},
+
+    {"h1": "How It Works — Callsign Lookup Back to the Server"},
+    {"p": "Before the gateway will issue a login session, it validates the callsign. It does a quick format check itself, then — for the authoritative answer — calls **back across the LAN to the FieldCommand server's FCC database**. This is the one place the gateway reaches into the main server. The endpoint and its Secure Sockets Layer (SSL) context are configured at the top of the file:"},
+    {"code": [
+      "# FCC lookup on the FieldCommand Pi, reached via its HTTPS reverse proxy at /svc/5050",
+      "import ssl as _ssl",
+      "FIELDCOMMAND_API = \"https://192.168.50.1/svc/5050\"",
+      "_FC_SSL = _ssl.create_default_context()",
+      "_FC_SSL.check_hostname = False",
+      "_FC_SSL.verify_mode = _ssl.CERT_NONE"
+    ]},
+    {"p": "Two things are worth understanding here. First, the call now goes over **HTTPS** to the server's reverse proxy path `/svc/5050`, because the core FCC Application Programming Interface (API) is bound to localhost on the server and is no longer exposed in cleartext. Second, because this crosses the LAN to a Pi presenting a **self-signed or local-Certificate-Authority (CA) certificate**, the code deliberately turns certificate verification off for this one call. The comment in the source explains the reasoning precisely: the FCC data is public, and the lookup degrades gracefully if it fails, so skipping verification of the LAN's own certificate is an accepted trade-off here — not a pattern to copy for anything sensitive. The lookup itself passes that context into the request:"},
+    {"code": [
+      "url = f\"{FIELDCOMMAND_API}/callsign/{cs}\"",
+      "req = urllib.request.Request(url, headers={\"User-Agent\": \"amprgate/1.0\"})",
+      "with urllib.request.urlopen(req, timeout=5, context=_FC_SSL) as resp:",
+      "    data = json.loads(resp.read().decode())",
+      "    if data.get(\"found\"):",
+      "        return {\"valid\": True, \"name\": data.get(\"name\", \"\"),",
+      "                \"license_class\": data.get(\"license_class\", \"\"), \"error\": None}"
+    ]},
+    {"p": "The graceful fallback is the important safety net. If the FieldCommand server is unreachable — powered off, rebooting, unplugged — the gateway must still be usable, so a network failure falls back to format-only validation and logs that it did so, rather than locking every operator out:"},
+    {"code": [
+      "except urllib.error.URLError:",
+      "    # FieldCommand Pi unreachable — fall back to format-only validation",
+      "    access_log(\"FCC-FALLBACK\", cs, \"localhost\",",
+      "               \"FieldCommand Pi unreachable — format-only validation used\")",
+      "    return {\"valid\": True, \"name\": None,",
+      "            \"license_class\": \"Unknown (FCC DB offline)\",",
+      "            \"error\": None, \"fallback\": True}"
+    ]},
+    {"callout": {"kind": "important", "label": "EVERY ACCESS IS LOGGED FOR PART 97",
+      "text": "Logins, failures, logouts, FCC fallbacks, and every tunnel action are written to `/var/log/amprgate-access.log` via `access_log()`. This is not decoration — Part 97 requires station identification, and this log is how the gateway records which licensed operator did what and when. When you add any new privileged action, log it the same way."}},
+
+    {"h1": "How It Works — The Poller on the Server"},
+    {"p": "The gateway service is only half the picture. The FieldCommand server needs 44Net status on its own dashboard, but the server never talks to the gateway on demand — instead `amprgate_poll.py` runs as a small loop that fetches the status every 30 seconds and writes it to a file. Its whole job is stated in its header, and its configuration is four constants:"},
+    {"code": [
+      "GATEWAY_URL = \"http://192.168.50.2:9000/api/status\"",
+      "OUTPUT_FILE = Path(\"/opt/fieldcommand/data/amprgate_status.json\")",
+      "POLL_INTERVAL = 30  # seconds",
+      "TIMEOUT = 5         # seconds per request"
+    ]},
+    {"p": "The poll reads the gateway's read-only status endpoint (no authentication, because it is read-only public data) and stamps the result with when it was polled and whether the gateway answered at all. If the gateway is unreachable, it does not crash or leave a stale file — it writes a clearly-marked `reachable: False` record instead:"},
+    {"code": [
+      "def poll():",
+      "    try:",
+      "        with urllib.request.urlopen(GATEWAY_URL, timeout=TIMEOUT) as resp:",
+      "            data = json.loads(resp.read().decode())",
+      "            data[\"polled_at\"] = utcnow()",
+      "            data[\"reachable\"] = True",
+      "            return data",
+      "    except urllib.error.URLError as e:",
+      "        return {\"reachable\": False, \"tunnel\": \"unknown\",",
+      "                \"error\": str(e.reason), \"polled_at\": utcnow(),",
+      "                \"gateway_ip\": \"192.168.50.2\"}"
+    ]},
+    {"p": "The write is **atomic** — it writes to a temporary file and then renames it over the real one — so a dashboard reading the file never catches a half-written JSON document. A rename on the same filesystem is atomic; a reader either sees the whole old file or the whole new one, never a torn mix:"},
+    {"code": [
+      "def write(data):",
+      "    try:",
+      "        OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)",
+      "        tmp = OUTPUT_FILE.with_suffix(\".tmp\")",
+      "        tmp.write_text(json.dumps(data, indent=2))",
+      "        tmp.replace(OUTPUT_FILE)",
+      "    except Exception as e:",
+      "        print(f\"[amprgate-poll] Write error: {e}\")"
+    ]},
+    {"p": "This poll-to-a-file pattern is the same decoupling FieldCommand uses elsewhere: the network call and the display are separated by a file on disk. The dashboard reads a local file that is always valid and at most 30 seconds old; it never has to wait on, retry, or handle errors from a cross-Pi HTTP call. If the gateway is down, the file simply says so."},
+
+    {"h1": "Why It Matters / Design Takeaways"},
+    {"bullets": [
+      "__Physical separation of concerns.__ The gateway is its own Pi so that routing a public Internet block — private keys, IP forwarding, firewall rewrites — can never destabilize the incident-management server. The two fail independently.",
+      "__Status is open, control is local.__ Read-only status is served to the whole EMCOMM-NET on port 9000; tunnel control is bound to localhost port 9001, firewalled a second time, and still requires a callsign session. Presence plus identity, never one alone.",
+      "__Reach back, but degrade gracefully.__ Callsign validation calls the server's FCC database over HTTPS (skipping verification only for the LAN's own local certificate, on public data), and falls back to format-only validation — logged — when the server is unreachable, so the gateway is never bricked by a server outage.",
+      "__Decouple with a file.__ The server never queries the gateway on demand; a 30-second poller writes an always-valid, atomically-replaced JSON file that the dashboard reads. Network latency and gateway outages never reach the UI."
+    ]},
+    {"callout": {"kind": "important", "label": "MAINTAINER'S RULE",
+      "text": "Never move tunnel control onto the public port, and never bind the control server to anything but `127.0.0.1`. Any new privileged gateway action goes through `LocalHandler` on 9001, requires a valid session, and calls `access_log()` for Part 97. Keep the certificate-verification bypass scoped to the single, public, gracefully-degrading FCC callsign lookup — do not reuse `_FC_SSL` for any call that carries private data or that must not silently fail. And keep the poller's writes atomic (temp file then rename) so the dashboard always reads whole JSON."}}
+  ]
+}

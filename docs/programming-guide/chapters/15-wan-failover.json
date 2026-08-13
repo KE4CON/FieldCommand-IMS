@@ -1,0 +1,188 @@
+{
+  "order": 15,
+  "title": "WAN Failover — wan_monitor.py",
+  "subtitle": "FieldCommand is built to run with no internet at all. But when internet IS available, one small program — python/wan_monitor.py — manages up to two internet sources, decides which one is carrying traffic, detects when the preferred one drops, and falls back to the other automatically. It writes a status file the dashboard and the WAN Settings screen read.",
+  "in_this_chapter": [
+    "What WAN failover is and why an offline-first system still bothers with it",
+    "The role-based source-A / source-B model — preferred versus fallback",
+    "The three detection methods and what each one actually tests",
+    "How one poll cycle decides which source is active",
+    "How the front end (wan_settings.html) configures and reflects the sources",
+    "Design takeaways and the maintainer's rule"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "IN ONE SENTENCE",
+      "text": "`wan_monitor.py` checks internet every 30 seconds, tries the operator's preferred internet source first and the fallback second using one of three detection methods, and writes an atomic status file that the dashboard and the WAN Settings screen read."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "FieldCommand is an **offline-first** system: every core feature — nets, roster, forms, resources, the map — works with no internet whatsoever, because in the field there usually is none. But sometimes there is: a cellular modem, a satellite dish, a phone hotspot, a wired connection at a fixed site. When internet is available, it is worth using — and it is worth having a **backup** internet source that takes over automatically when the first one drops. That is the job of **Wide Area Network (WAN)** failover, and it lives entirely in one file, [python/wan_monitor.py](python/wan_monitor.py)."},
+    {"p": "The monitor runs as a small loop, waking every 30 seconds to answer three questions: is there internet at all right now; if so, which of the configured sources is carrying it; and what are the details of each source (carrier, signal strength, throughput) worth showing on the dashboard. It writes those answers to a status file. It does **not** switch physical connections itself — the operating system and the hardware handle the actual routing — the monitor's job is to **detect and report** which source is live so the rest of FieldCommand, and the operator, always know the true state."},
+    {"callout": {"kind": "note", "label": "JARGON, IN PLAIN WORDS",
+      "text": "**WAN (Wide Area Network)** here just means 'the internet connection' — the link out of the local site to the wider world. **Failover** means automatically switching to a backup when the main one fails. **Preferred** and **fallback** are the two roles a source can hold: preferred is tried first, fallback is the backup. A **poll** is one round of checking; the monitor polls every 30 seconds."}},
+
+    {"h1": "Why an Offline-First System Still Has Failover — the 'Why'"},
+    {"p": "It would be easy to assume that a system designed to work without internet does not need to manage internet carefully. The opposite is true. Precisely because FieldCommand only reaches out when a link exists, the moments a link *does* exist are valuable and often fragile — a cellular signal that fades behind a building, a satellite dish that loses its view of the sky, a hotspot whose battery dies. Having a second source that quietly takes over, and a dashboard that honestly shows which one is live, is what turns 'we had internet for a while' into 'we kept internet.'"},
+    {"p": "The design is deliberately **technology-agnostic**. The monitor makes no assumption about which slot holds which kind of connection — the file's own docstring is explicit that either source can be cellular, satellite, fixed ISP, or hotspot, and that 'the role is what matters, not the type.' What decides priority is the role an operator assigned, not the hardware:"},
+    {"code": [
+      "# Each WAN source has a role — 'preferred' or 'fallback'.",
+      "# The preferred source is tried first. If it's down or not detected,",
+      "# the fallback source is used. Either source can be cellular, satellite,",
+      "# fixed ISP, hotspot, or any other type. No assumptions about which",
+      "# slot is which technology."
+    ]},
+
+    {"h1": "How It Works — The Source Model and Config"},
+    {"p": "Configuration is a JSON file, loaded with a clear order of preference: the site's own saved config first, then a shipped defaults file, then — if both are missing — a bare hard-coded minimum so the monitor can never fail to start:"},
+    {"code": [
+      "def load_config():",
+      "    \"\"\"Load WAN config — site config first, fallback to defaults.\"\"\"",
+      "    for path in [CONFIG_FILE, DEFAULTS_FILE]:",
+      "        try:",
+      "            with open(path) as f:",
+      "                cfg = json.load(f)",
+      "            # Migrate old primary_wan/secondary_wan format to wan_sources array",
+      "            if \"primary_wan\" in cfg and \"wan_sources\" not in cfg:",
+      "                cfg = _migrate_old_config(cfg)",
+      "            return cfg",
+      "        except Exception:",
+      "            pass"
+    ]},
+    {"p": "Each source in the `wan_sources` array carries an `id`, an `enabled` flag, a `role` (`preferred` or `fallback`), a human `label`, a `type`, and — the important part for failover — a `detection_method`. Notice the config also carries a migration step: an older format stored `primary_wan`/`secondary_wan` keys, and `_migrate_old_config()` converts those to the newer role-based `wan_sources` array on the fly, so a site that upgrades keeps its settings. This mirrors the same forward-compatibility discipline the data layer uses — old configs are brought forward, never broken."},
+    {"callout": {"kind": "note", "label": "WHY ROLES, NOT SLOTS", "text": "Storing a `role` on each source instead of hard-coding 'source A is primary' means an operator can swap which connection is preferred without rewiring anything — the Settings screen even has a one-click 'swap roles' button. The monitor simply sorts by role at poll time, so the same two configured sources can trade priority instantly."}},
+
+    {"h1": "How It Works — The Three Detection Methods"},
+    {"p": "The heart of failover is deciding whether a given source is actually reachable right now. That is `check_source()`, and it supports three methods — each a different level of certainty about whether a WAN path is truly live:"},
+    {"code": [
+      "def check_source(source):",
+      "    method = source.get(\"detection_method\", \"internet_only\")",
+      "    if method == \"internet_only\":",
+      "        return True   # caller already confirmed internet is up",
+      "    elif method == \"ping\":",
+      "        host = source.get(\"ping_host\", \"\")",
+      "        if not host:",
+      "            return False",
+      "        ok, _ = ping_test(host, count=1, timeout=2)",
+      "        return ok",
+      "    elif method == \"admin_reachable\":",
+      "        url = source.get(\"admin_url\", \"\")",
+      "        if not url:",
+      "            return False",
+      "        ok, _, _ = http_test(url, timeout=source.get(\"admin_timeout_s\", 3))",
+      "        return ok",
+      "    return False"
+    ]},
+    {"table": {
+      "headers": ["Method", "What it tests", "When to use it"],
+      "rows": [
+        ["`internet_only`", "Nothing source-specific — it trusts the caller's earlier internet check. Always returns `True` once internet is confirmed up.", "A phone hotspot or USB dongle with no queryable address, or when there is only one WAN source and you just need up/down."],
+        ["`ping`", "Pings an address that only answers when this WAN path is active (a modem or hotspot gateway IP). Reachable means the path is live.", "Two sources where each modem's gateway IP is only reachable over its own path (e.g. Starlink at `192.168.100.1`, Android hotspot at `192.168.43.1`)."],
+        ["`admin_reachable`", "Makes an HTTP request to the modem's admin page. Answering means the path is live — and the page body may reveal carrier and signal.", "A modem/router with a web interface, when you want the bonus of carrier name and signal strength detection."]
+      ],
+      "widths": [1.6, 3.4, 2.6]
+    }},
+    {"p": "The `ping` and `admin_reachable` methods both fail **closed** — if the source has no host or URL configured, or the test does not succeed, they return `False`, so an unconfigured or unreachable source is never mistaken for a live one. Only `internet_only` returns `True` unconditionally, and only because the caller has already proven internet is up before it is ever consulted."},
+
+    {"h1": "How It Works — One Poll Cycle"},
+    {"p": "`poll()` runs one full decision. It first establishes whether there is any internet at all by pinging a well-known public address; if that fails, nothing downstream matters and no source is marked active:"},
+    {"code": [
+      "# Test internet connectivity first",
+      "internet_ok, internet_latency = ping_test(\"1.1.1.1\")"
+    ]},
+    {"p": "If internet is up, the enabled sources are **sorted so the preferred role comes first**, and the first one that passes its detection test becomes the active source. This single sort is the whole failover policy — preferred wins when it is reachable; the fallback is only reached if the preferred source fails its check:"},
+    {"code": [
+      "ordered = sorted(enabled, key=lambda s: (0 if s.get(\"role\") == \"preferred\" else 1))",
+      "",
+      "for source in ordered:",
+      "    if check_source(source):",
+      "        active_source_id = source.get(\"id\")",
+      "        active_label     = source.get(\"label\", \"WAN\")",
+      "        break"
+    ]},
+    {"p": "There is a careful edge case right after: if internet is up but no source matched — which happens when every source uses `internet_only` and so none 'claims' the link — the code still needs to name an active source rather than show a blank. It picks the first preferred source, or failing that the first source at all, so the dashboard always attributes a live link to something sensible:"},
+    {"code": [
+      "# If no specific source matched (e.g. all internet_only), use first preferred",
+      "if not active_source_id and enabled:",
+      "    pref = [s for s in ordered if s.get(\"role\") == \"preferred\"]",
+      "    if pref:",
+      "        active_source_id = pref[0].get(\"id\")",
+      "        active_label     = pref[0].get(\"label\", \"WAN\")"
+    ]},
+    {"p": "Once the active source is chosen, `get_source_details()` gathers display detail for every enabled source. When a source exposes an admin page, the monitor scrapes it for carrier name, cellular technology, signal strength, and — for satellite terminals that expose a JSON status like Starlink — latency, throughput, obstruction, and uptime. The signal-strength banding is a good example of turning a raw number into something an operator reads at a glance:"},
+    {"code": [
+      "rssi_m = re.search(r\"rssi[\\\":\\s]+(-?\\d+)\", body, re.I)",
+      "if rssi_m:",
+      "    rssi = int(rssi_m.group(1))",
+      "    result[\"signal_dbm\"] = rssi",
+      "    result[\"signal_strength\"] = (",
+      "        f\"Excellent ({rssi} dBm)\" if rssi >= -70 else",
+      "        f\"Good ({rssi} dBm)\"      if rssi >= -85 else",
+      "        f\"Fair ({rssi} dBm)\"      if rssi >= -100 else",
+      "        f\"Poor ({rssi} dBm)\"",
+      "    )"
+    ]},
+    {"callout": {"kind": "note", "label": "WHY THE OUTPUT CARRIES 'LEGACY' KEYS", "text": "`poll()` returns both the new structured `wan_sources` map and older flat keys like `instyconnect`, `starlink`, `primary_wan`, and `secondary_wan`. Those are there so an older dashboard (`wan-status.html`) that expected the previous shape keeps working after the role-based rewrite. When you add a field, add it to the new structure; only touch the legacy keys if you are deliberately maintaining that old view."}},
+
+    {"h1": "How It Works — Writing Status and Surviving Errors"},
+    {"p": "Like the 44Net poller, the monitor writes its result **atomically** — temp file, then rename — so a dashboard reading `wan_status.json` never sees a half-written file:"},
+    {"code": [
+      "def write_status(data):",
+      "    try:",
+      "        OUTPUT_FILE.parent.mkdir(parents=True, exist_ok=True)",
+      "        tmp = OUTPUT_FILE.with_suffix(\".tmp\")",
+      "        tmp.write_text(json.dumps(data, indent=2))",
+      "        tmp.replace(OUTPUT_FILE)",
+      "    except Exception as e:",
+      "        print(f\"[wan-monitor] Write error: {e}\")"
+    ]},
+    {"p": "The main loop is built so a single bad poll can never stop the monitor. If `poll()` throws for any reason, the loop catches it, prints it, and writes an honest 'everything disconnected' status rather than leaving a stale file or dying:"},
+    {"code": [
+      "while True:",
+      "    try:",
+      "        data = poll()",
+      "        write_status(data)",
+      "        ...",
+      "    except Exception as e:",
+      "        print(f\"[wan-monitor] Poll error: {e}\")",
+      "        write_status({",
+      "            \"timestamp\": utcnow(), \"active_source\": \"none\",",
+      "            \"error\": str(e),",
+      "            ...",
+      "            \"wan_sources\":  {},",
+      "        })",
+      "    time.sleep(POLL_INTERVAL)"
+    ]},
+
+    {"h1": "How It Works — The Front End"},
+    {"p": "The operator side of failover is [html/wan_settings.html](html/wan_settings.html), the WAN / Internet Settings screen. It presents exactly two source cards — Source A and Source B — each with a role badge, an enabled toggle, and the fields the monitor reads: display name, role, type, provider, detection method, and (shown only when relevant) a ping host or admin URL. The screen's intro states the same policy the monitor enforces, in plain words, including that changes take effect on the next 30-second poll:"},
+    {"code": [
+      "The <strong>preferred</strong> source is tried first.",
+      "If it's down or not detected, the <strong>fallback</strong> source is used automatically.",
+      "Either source can be cellular, satellite, hotspot, or fixed — the role is what matters, not the type.",
+      "Changes take effect within 30 seconds (next poll cycle)."
+    ]},
+    {"p": "The detection-method dropdown drives which extra field appears, and the page shows tailored inline help for each method — real gateway IPs for common hotspots and satellite terminals — so an operator never has to guess. The 'swap roles' button is pure convenience over the role model: it just exchanges the two role values and re-renders, letting the operator flip preferred and fallback in one click:"},
+    {"code": [
+      "function swapRoles() {",
+      "  const ra = document.getElementById('role_a');",
+      "  const rb = document.getElementById('role_b');",
+      "  const tmp = ra.value;",
+      "  ra.value  = rb.value;",
+      "  rb.value  = tmp;",
+      "  updateCard('a');",
+      "  updateCard('b');",
+      "}"
+    ]},
+    {"p": "Save posts the assembled config to the Incident Command System (ICS) service (`/svc/5055/api/ics/wan_config`), which persists it to the same `wan_config.json` the monitor reads on its next cycle. The card visuals — the green left border for preferred, amber for fallback, dimmed for disabled — are a live reflection of the role model, updated as the operator edits, so what they see always matches what the monitor will do."},
+
+    {"h1": "Why It Matters / Design Takeaways"},
+    {"bullets": [
+      "__Offline-first, but opportunistic.__ FieldCommand needs no internet, yet when a link exists the monitor makes the most of it and keeps a backup ready — turning fragile connectivity into resilient connectivity.",
+      "__Role, not hardware.__ Priority is the operator-assigned `preferred`/`fallback` role, sorted at poll time. Any technology can hold either role, and the two can swap in one click.",
+      "__Right-sized detection.__ Three methods trade certainty for simplicity — trust internet, ping a path-specific gateway, or query a modem admin page (which also yields carrier and signal). Ping and admin checks fail closed.",
+      "__Never dies, never lies.__ A bad poll is caught and reported as an honest disconnected status; the status file is written atomically so the dashboard always reads whole, current JSON.",
+      "__Forward-compatible.__ Old `primary_wan`/`secondary_wan` configs migrate to the role array on load, and the output keeps legacy keys so the previous dashboard view keeps working."
+    ]},
+    {"callout": {"kind": "important", "label": "MAINTAINER'S RULE",
+      "text": "Failover policy lives in one place — the role sort in `poll()`. To change priority behavior, change that sort, not the detection methods. Keep detection methods failing closed (no host/URL or a failed test means `False`); only `internet_only` may return `True`, and only after the internet ping has already passed. Add new fields to the structured `wan_sources` output, leave the legacy keys alone unless you are deliberately maintaining the old dashboard, and keep every config change backward-compatible via `_migrate_old_config()`. Always write the status file atomically (temp then rename)."}}
+  ]
+}

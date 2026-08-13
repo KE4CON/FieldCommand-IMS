@@ -1,0 +1,97 @@
+{
+  "order": 14,
+  "title": "GPS-Tracked Resource Map",
+  "subtitle": "A live map of where every resource on your incident actually is — each one a colored pin showing its status — with three easy ways to set a position, including one-tap Global Positioning System (GPS) from a phone in the field.",
+  "in_this_chapter": [
+    "What the Resource Map is and how it ties to your T-cards",
+    "Picking an incident and reading the top bar",
+    "The pins: shapes, letters, and status colors",
+    "The sidebar list and the “X/Y have GPS” count",
+    "Setting a resource's position three ways",
+    "The Location Label, saving, and clearing GPS",
+    "My Location, Auto-refresh, and the Repeater overlay",
+    "The public-safety Resource Map variant (units and zones)",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "Open the **Resource Map**, pick your **incident** from the dropdown, and every resource with a position appears as a colored pin (green = available, blue = staging, dark blue = assigned, red = out of service). Click a resource in the sidebar — or a pin on the map — to open **Set Position**, then use **device GPS**, **click the map**, or **type coordinates**, and **Save**. Turn on **Auto-refresh 30s** to watch positions update as teams move."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "The **Resource Map** shows the current Global Positioning System (GPS) positions of all the resources on your active incident — engines, teams, staging areas, whatever is on your resource board — so the Operations Section can see the whole picture on a map instead of reading a list of coordinates. Each resource is a color-coded pin, and its color reflects its current status at a glance."},
+    {"p": "The resources come straight from your incident's **T-card board** (the Incident Command System, ICS, resource-tracking cards). Anything tracked there can be placed on this map. Resources that don't have a position yet aren't lost — they're listed in the sidebar with a dashed-circle marker and a \"No GPS\" note, so you can see exactly what still needs to be located and positioned."},
+    {"callout": {"kind": "note", "label": "ONE SHARED SET OF RESOURCES",
+      "text": "This map doesn't have its own separate resource list. It reads the same resources your incident already tracks. Add a resource on the T-card board and it shows up here ready to be positioned; update its status there and its pin color changes here."}},
+
+    {"h1": "Picking an Incident and the Top Bar"},
+    {"p": "The map is always about one incident at a time. The **top bar** holds the controls:"},
+    {"table": {
+      "headers": ["Control", "What it does"],
+      "rows": [
+        ["**Incident selector** (dropdown)", "Choose which incident's resources to show. Your last choice is remembered, so the map reopens where you left off."],
+        ["**📍 My Location**", "Drops a marker at your own device's GPS position and zooms to it — handy for checking the map lines up with where you actually are."],
+        ["**↺ Refresh**", "Reloads all resource positions from the server right now."],
+        ["**📡 Repeaters**", "Overlays repeaters from the FieldCommand Repeater Database on the map (toggle on/off)."],
+        ["**Auto-refresh 30s** (checkbox)", "When ticked, the map reloads positions automatically every 30 seconds. Use it when resources are moving and updating their locations."],
+        ["**T-Cards** / **← Dashboard**", "Links back to the resource board and the main dashboard."]
+      ],
+      "widths": [2.2, 4.3]
+    }},
+    {"screenshot": "The Resource Map with the incident selector open in the top bar and several colored resource pins on the map"},
+
+    {"h1": "Reading the Pins"},
+    {"p": "A resource that has a position is drawn as a **teardrop pin** with a letter in the middle — the first letter of its resource type (E for Engine, T for Team, and so on) — so you can tell kinds of resources apart without clicking. The pin's color is its status. A resource **without** a position shows instead as a **dashed circle**, both in the sidebar and (where a location is inferred) on the map, marking it as \"not placed yet.\""},
+    {"table": {
+      "headers": ["Color", "Status", "Plain meaning"],
+      "rows": [
+        ["🟢 Green", "**Available**", "Ready to be assigned."],
+        ["🔵 Blue", "**Staging**", "Waiting at a staging area, held in reserve."],
+        ["🔵 Dark blue", "**Assigned**", "Given a job and working it."],
+        ["🟠 Amber", "**En Route**", "On the way to an assignment."],
+        ["🔴 Red", "**Out of Service**", "Not currently usable (out of service)."],
+        ["⭕ Dashed circle", "**No GPS yet**", "The resource exists but hasn't been positioned. Click it to set a location."]
+      ],
+      "widths": [1.6, 1.9, 3.0]
+    }},
+    {"p": "The **Legend** in the lower-left of the map repeats this color key and reminds you that ✕ / a dashed marker means \"no GPS yet\" and that clicking any pin lets you edit it. When more than one resource is positioned, the map automatically zooms to fit them all in view."},
+
+    {"h1": "The Sidebar List"},
+    {"p": "On the right, the **🚒 RESOURCES** sidebar lists every resource on the incident. Its header shows a count like *“7/12 have GPS”* — meaning 7 of your 12 resources are positioned and 5 still need placing. Each row shows the resource name, a status dot, its type and status, its assignment (if any), personnel count, and — if positioned — its coordinates and location label with a \"last updated\" time. Rows with a position have a **green** left edge; rows without one have a **gray** edge and read *“No GPS — click to set position.”* Click any row to open the Set Position window for that resource. The **Set All…** button is a reminder of how to place resources (click a resource, or use the map-click method)."},
+
+    {"h1": "Setting a Resource's Position"},
+    {"p": "Click a resource — in the sidebar, or its pin's **✏ Update Position** button on the map — to open the **Set Position** window. It offers three ways to fix a location, so you can use whichever fits the situation:"},
+    {"table": {
+      "headers": ["Method", "How to use it", "Best for"],
+      "rows": [
+        ["**📍 Use Device GPS**", "Click it and the browser reads **this device's** GPS. The coordinates fill in and it shows the accuracy (± meters).", "A field operator standing at the resource, using a phone or tablet."],
+        ["**🗺 Click Map to Place**", "Click it; the window closes and the cursor becomes a crosshair. Click the spot on the map to drop the resource there.", "Command or Planning placing a resource at a known point on the map."],
+        ["**Type coordinates**", "Type the decimal **Latitude** and **Longitude** straight into the boxes.", "A position read off a paper map, a handheld GPS, or a radio report."]
+      ],
+      "widths": [1.9, 3.0, 1.6]
+    }},
+    {"callout": {"kind": "note", "label": "“DEVICE GPS” MEANS THE DEVICE YOU'RE HOLDING",
+      "text": "**📍 Use Device GPS** reports the position of whatever device has this page open — so it's only useful when that device is physically **at** the resource. If you're back at the EOC placing a team that's miles away, use **Click Map to Place** or type the coordinates instead."}},
+    {"p": "You can also add an optional **Location Label** — a plain-language description like \"Division Alpha staging area\" — that shows under the coordinates so people don't have to read raw numbers. When the position looks right, click **Save Position**; the pin appears on the map immediately. **Clear GPS** removes the position (the resource goes back to \"no GPS\"), and **Cancel** closes the window without changes. The window checks your numbers and won't save coordinates that are out of range or blank."},
+    {"screenshot": "The Set Position window with Use Device GPS and Click Map to Place buttons, coordinate fields, and a Location Label"},
+
+    {"h1": "My Location, Auto-refresh, and Repeaters"},
+    {"p": "Three top-bar tools round out the map. **📍 My Location** simply marks and zooms to where **you** are — a quick sanity check that the map matches reality. **Auto-refresh 30s** keeps the whole map current on its own, reloading every 30 seconds; leave it on during active operations so moving resources update without you clicking Refresh. **📡 Repeaters** paints nearby repeaters from your Repeater Database onto the map, color-coded by mode, with amber for repeaters flagged for emergency communications (ARES/RACES/SKYWARN) — useful context for planning where teams will have radio coverage. If no repeaters load, import a RepeaterBook file on the Repeater Database page first."},
+
+    {"h1": "The Public-Safety Resource Map Variant"},
+    {"p": "A second, related screen — the **{{ps_mode}} Resource Map** — works the same way but is built for tracking **public-safety units** rather than ICS T-card resources, and it lets you draw **zones** on the map. Reach for this one when you're plotting law-enforcement, fire, EMS, or other public-safety units alongside your own resources."},
+    {"p": "Instead of reading from the T-card board, you add units yourself on its **+ Add** tab, entering a **Radio ID / Unit #**, a name/description, a **Type** (Law Enforcement, Fire, EMS, EOC Staff, Public Works, Volunteer, ARES/RACES, Search & Rescue, or Other), a **Status** (Available, Busy/Engaged, Staged/Standby, or Out of Service), and a position (typed or **🗺 Pick on Map**). Each unit becomes a colored dot with a type icon. The **Zones** tab lets you outline areas — pick a **name** and a **color** (blue Operations, green Clear/Safe, amber Caution, red Danger/Restricted, purple Special Ops), then click the map to drop corners and **Finish Zone** to close the shape. It's the tool for marking sectors, evacuation zones, and restricted areas."},
+    {"callout": {"kind": "note", "label": "TWO MAPS, TWO JOBS",
+      "text": "The main **Resource Map** tracks your incident's ICS resources straight from the T-card board and centers on GPS positioning. The **{{ps_mode}} Resource Map** is for hand-entered public-safety units and drawing zones. They look alike but hold different data — use the one that matches what you're tracking."}},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__The map is empty after I pick an incident.__ That incident may have no resources on its T-card board yet, or none of them are positioned. Check the sidebar count — if it reads \"0/0,\" add resources on the T-card board first; if it reads \"0/5,\" the resources exist but need positions set.",
+      "__A resource isn't on the map but is in the sidebar.__ It has no GPS position yet (gray edge, \"No GPS\"). Click it and set a position with device GPS, a map click, or typed coordinates.",
+      "__“Use Device GPS” gives the wrong spot or an error.__ It reads the device you're holding, which must be at the resource and have location services allowed in the browser. To place a distant resource, use **Click Map to Place** or type the coordinates instead.",
+      "__Positions aren't updating as teams move.__ Turn on the **Auto-refresh 30s** checkbox, or click **↺ Refresh**. Remember the map only shows positions that have actually been re-sent to the server.",
+      "__“Coordinates out of range” when I save.__ A typed latitude/longitude is invalid (latitude must be −90 to 90, longitude −180 to 180). Re-check the numbers — and don't forget the minus sign on a west longitude.",
+      "__The Repeaters button shows nothing.__ No repeater data is loaded. Import a RepeaterBook CSV on the **Repeater Database** page, then toggle **📡 Repeaters** again.",
+      "__I meant to use the public-safety map with units and zones.__ That's the separate **{{ps_mode}} Resource Map**. Open it instead — the main Resource Map only shows ICS T-card resources and doesn't draw zones."
+    ]}
+  ]
+}

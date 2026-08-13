@@ -1,0 +1,103 @@
+{
+  "order": 26,
+  "title": "High Frequency (HF) Propagation Tool",
+  "subtitle": "A one-screen read on how well the long-distance radio bands are working right now — pulled from live solar data when you have internet, so you can pick a band that will actually get your traffic through.",
+  "in_this_chapter": [
+    "What High Frequency (HF) propagation is and why it matters for radio traffic",
+    "Opening the page and where its numbers come from",
+    "Reading the Solar Indices strip (SFI, SN, A, K, and the rest)",
+    "The K-Index scale and what each level means for HF",
+    "Band Conditions cards — day vs. night, good to closed",
+    "MUF/LUF estimates, the ionosphere diagram, and the 24-hour band guide",
+    "The EmComm Quick Reference and what to do when offline",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "Open **HF Propagation** from the dashboard. The colored strip at the top shows current space-weather numbers; the **Band Conditions** cards below show which bands are **Good** (green), **Fair** (amber), **Poor**, or **Closed** right now, split into Day and Night. For emergency traffic, **40m is the reliable workhorse day and night** — start there. The **K-Index** is the fastest health check: 0–2 is great, 5+ means degraded HF. Needs internet for live data; falls back to an estimate offline."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "**High Frequency (HF)** is the range of radio bands (roughly 1.8 to 30 MHz) that can carry a signal hundreds or thousands of miles by bouncing off the upper atmosphere. **Propagation** is just the word for *how well that bouncing is working right now* — and it changes constantly with the sun, the time of day, and the season. This page gives you a quick, current read so you don't waste time calling on a band that's dead when a different band is wide open."},
+    {"p": "For a group passing emergency traffic over radio, that's genuinely useful: pick the wrong band and your message goes nowhere; pick the right one and you reach the next county — or the next state — cleanly. The tool pulls live solar and geomagnetic data from **HamQSL** (a well-known amateur-radio space-weather feed) about every 15 minutes when internet is available, and turns it into plain green/amber/red band ratings."},
+    {"callout": {"kind": "note", "label": "AN ESTIMATE, NOT A GUARANTEE",
+      "text": "Propagation is a model, not a promise. These bars are a well-informed starting point; real-world conditions still vary. When the page can't reach the internet, it shows a **model-based estimate** from time-of-day and typical patterns instead of live numbers — clearly marked *Offline — internet unavailable*. Either way, confirm with an actual on-air check before you count on a band."}},
+
+    {"h1": "Opening the Page"},
+    {"steps": [
+      "From the dashboard, open **HF Propagation** (the ☀ sun link).",
+      "A thin **refresh bar** sits under the header. It reminds you that solar data updates every 15 minutes, and carries a **⟳ Refresh** button if you want fresh numbers right now.",
+      "The header's right corner shows when the data was last updated — or *Fetching data…* while it loads."
+    ]},
+    {"screenshot": "The HF Propagation page: the Solar Indices strip of cards across the top, the K-Index scale bar, and the colored Band Conditions cards below"},
+
+    {"h1": "The Solar Indices Strip"},
+    {"p": "Across the top is a row of small cards, each a single space-weather number. They're color-coded — green is favorable, amber is so-so, red is unfavorable — so you can glance at the row and get the gist without knowing the science. Here's what each one means in plain terms:"},
+    {"table": {
+      "headers": ["Card", "Full name", "Plain meaning"],
+      "rows": [
+        ["**SFI**", "Solar Flux Index", "The sun's overall radio energy. **Higher is better** for the high bands — above ~130 the upper bands (20m and up) tend to open up; below ~70 you're mostly limited to the lower bands."],
+        ["**SN**", "Sunspot Number", "How many sunspots are showing. Loosely tracks SFI — more sunspots generally means livelier high-band conditions."],
+        ["**A-Index**", "Geomagnetic A-index", "A daily measure of how disturbed Earth's magnetic field is. **Lower is better**; under 10 is quiet, over 30 means a stirred-up, degraded ionosphere."],
+        ["**K-Index**", "3-hour Planetary K-index", "The short-term version of the A-index, updated every few hours. The single most useful number here — see the K-Index scale below."],
+        ["**X-Ray**", "X-Ray Flux Class", "Current solar-flare X-ray level. A letter class — an **X** or **M** flare (shown red/amber) can cause a sudden HF blackout on the sunlit side of Earth."],
+        ["**Proton**", "Proton Event", "Whether a solar proton event is underway. **None** is what you want; an event (shown red) degrades polar radio paths."],
+        ["**Signal**", "Signal Noise Level", "The current background radio-noise level — how much natural static you're fighting."]
+      ],
+      "widths": [1.2, 2.3, 3.7]
+    }},
+
+    {"h1": "The K-Index Scale"},
+    {"p": "Just under the strip is a **K-Index Scale** bar — ten cells labeled **K0** through **K9** — with the current level lit up. It's the quickest single health check for HF, because a geomagnetic storm can wreck otherwise-good conditions. Read it like this:"},
+    {"table": {
+      "headers": ["K level", "Condition", "What it means for HF"],
+      "rows": [
+        ["**K0–K2**", "Quiet", "Good HF — the ionosphere is calm and stable."],
+        ["**K3–K4**", "Unsettled", "Fair — some fading and weaker paths, but workable."],
+        ["**K5–K7**", "Storm", "Degraded HF — polar and long paths suffer; expect trouble."],
+        ["**K8–K9**", "Severe storm", "Possible HF blackout — high bands may be unusable."]
+      ],
+      "widths": [1.6, 1.8, 3.8]
+    }},
+
+    {"h1": "Band Conditions Cards"},
+    {"p": "The heart of the page is the **Band Conditions (Day/Night Model)** grid. Each card covers a band group (for example **80m–40m**, **30m–20m**, **17m–15m**, **10m**) and shows two colored bars — one for **Day** and one for **Night** — with a one-word rating. The fuller and greener the bar, the better:"},
+    {"table": {
+      "headers": ["Rating", "Bar color", "Meaning"],
+      "rows": [
+        ["**Good**", "Green, nearly full", "Band is open and reliable"],
+        ["**Fair**", "Amber, about half", "Usable, but weaker or spotty"],
+        ["**Poor**", "Orange-red, short", "Marginal — likely to struggle"],
+        ["**Closed**", "Gray, tiny", "Effectively dead for now"]
+      ],
+      "widths": [1.6, 2.2, 3.4]
+    }},
+    {"p": "Because the same band behaves very differently by day and by night, the Day/Night split is the important part. A band that's **Good** at night may be **Poor** at midday, and vice-versa — glance at the bar for the time you're actually operating."},
+
+    {"h1": "MUF/LUF, the Ionosphere Diagram, and the 24-Hour Guide"},
+    {"p": "Below the band cards are three more visual aids that add depth:"},
+    {"bullets": [
+      "**MUF / LUF Estimates** — a small table by path distance (Local, Regional, DX, Long Path). **MUF** is the **Maximum Usable Frequency** and **LUF** the **Lowest Usable Frequency** — together they bracket the window of frequencies likely to work for that distance, and the table names a suggested **Best Band** and a rough **Reliability** percentage for each.",
+      "**Ionosphere Layers** — a labeled diagram of the atmospheric layers (D, E, F1, F2) that bend HF signals back to Earth, with a sketched skip path. It's a teaching picture that shows *why* the bands behave as they do; the layer heights shift with the sun and the time of day.",
+      "**24-Hour Band Activity Guide** — a chart with a row per band (80m, 40m, 20m, 15m, 10m) and the hours of the day across the bottom in Coordinated Universal Time (UTC). Shaded blocks mark when each band is typically usable, and a bright **NOW** line marks the current hour so you can see, at a glance, which bands are in their good window right now."
+    ]},
+
+    {"h1": "The EmComm Quick Reference"},
+    {"p": "At the bottom, the **EmComm Propagation Quick Reference** panel is a printable-style cheat sheet built for emergency communications. The left table lists each band's typical **Day Use** and **Night Use** in words (*Best day band*, *Excellent DX*, *Closed*, and so on). The right table translates the solar numbers into effects (*SFI > 150 → high bands open*, *K ≥ 7 → HF blackout possible*). The takeaways the panel spells out are worth remembering:"},
+    {"bullets": [
+      "**40m is the backbone** — reliable day and night for regional-to-national paths. When in doubt, start on 40m.",
+      "**80m** is the night band for local and regional work.",
+      "**60m** (its five channels) is useful for interoperating with served agencies.",
+      "**14.300 MHz** on 20m is the standard maritime-mobile / distress watch frequency worth monitoring."
+    ]},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__The numbers all show 'N/A' and it says 'Offline — internet unavailable'.__ The page couldn't reach the live solar feed, so it's showing a model-based estimate instead of current data. Get an internet source up (Chapter 24) and click **⟳ Refresh**; the live numbers should fill in.",
+      "__The data looks stale.__ Live data updates about every 15 minutes on its own. To force an immediate update, click the **⟳ Refresh** button in the refresh bar under the header. The header's top-right corner shows the last-updated time so you can tell how fresh it is.",
+      "__Every band shows Poor even though the sun looks active.__ Check the **K-Index**. A geomagnetic storm (K5 or higher) drags conditions down across the board regardless of solar flux — that's the model doing its job, not a glitch. Wait for the storm to settle.",
+      "__A band the tool calls 'Good' isn't working for me on the air.__ These ratings are a model, not a live measurement, and local factors (your antenna, noise, terrain, the far station) all matter. Treat the page as a starting point and confirm with an actual on-air check or a propagation beacon.",
+      "__The band cards or charts look empty or misaligned.__ Try the **⟳ Refresh** button, or reload the page. The charts redraw when the window is resized, so resizing the browser can also nudge them back into shape.",
+      "__This tool doesn't show VHF/UHF bands (2m, 70cm).__ That's by design — it covers HF only. The Very High Frequency (VHF) and Ultra High Frequency (UHF) bands propagate by different rules and aren't part of this page."
+    ]}
+  ]
+}

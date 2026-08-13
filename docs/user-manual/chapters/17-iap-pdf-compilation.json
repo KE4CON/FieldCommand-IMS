@@ -1,0 +1,111 @@
+{
+  "order": 17,
+  "title": "Incident Command System (ICS) Planning Section & Incident Action Plan (IAP) Assembly",
+  "subtitle": "Gather the operational period's ICS forms into one Incident Action Plan, check how complete it is, build the morning briefing sheet, and turn the whole package into a single PDF anyone can print.",
+  "in_this_chapter": [
+    "What an Incident Action Plan (IAP) is and why it is assembled, not written",
+    "The IAP Assembly page — picking which forms go in",
+    "The cover page preview, operational period, and form variant",
+    "Reading the completeness bar",
+    "Three ways to get the IAP out: Print, Save as PDF, Save as HTML",
+    "The IAP Compile page — merging saved forms into one PDF",
+    "The ICS-204A Briefing Sheet — all assignments on one page for the briefing",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "Open **IAP Assembly** from an incident. Pick the **Operational Period**, tick the forms to include (the required ones start ticked), then click **📄 Save as PDF** to download the whole plan as one file. For a merged PDF built straight from your saved forms, use **IAP Compile** instead. For the morning briefing, open the **ICS-204A Briefing Sheet** and print it landscape."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "An **Incident Action Plan (IAP)** is the written game plan for one **operational period** — usually one shift. It says what the objectives are, who is doing what, how everyone will talk to each other, and what to do if someone gets hurt. In the Incident Command System (ICS), you don't write the IAP as one long document; you fill out a set of standard **ICS forms** and then **assemble** the right ones into a package. FieldCommand's Planning Section tools do that assembling for you."},
+    {"p": "There are three linked screens, and this chapter covers all three: the **IAP Assembly** page (choose forms and export the plan), the **IAP Compile** page (merge your saved forms into one PDF), and the **ICS-204A Briefing Sheet** (a one-page summary of every assignment for the operational period briefing). Each individual form is filled out on its own screen; these pages gather the finished forms together."},
+    {"callout": {"kind": "note", "label": "FILL THE FORMS FIRST, ASSEMBLE SECOND",
+      "text": "These pages don't create the content of a form — they collect forms that already exist. Complete your ICS-202, 203, 204, and the rest on their own pages, then come here to bundle them. A form you never filled out simply shows as \"not saved\" here."}},
+
+    {"h1": "The IAP Assembly Page"},
+    {"p": "Open the **INCIDENT ACTION PLAN — ASSEMBLY** page from an incident. It is split into two columns. The **left column** is the form checklist; the **right column** shows a live preview of the IAP cover page plus the options and export tools."},
+    {"screenshot": "The IAP Assembly page: form checklist on the left, cover-page preview and options panel on the right, export buttons across the top"},
+    {"p": "The left column lists the full ICS form set in IAP order. Each row shows the form number (for example **ICS-204**), its title, a colored tag naming the section that owns it (Command, Operations, Planning, Logistics, or All), a **status label**, and an **Open →** or **Edit →** link that jumps to that form."},
+    {"table": {
+      "headers": ["Status label", "What it means"],
+      "rows": [
+        ["**Saved**", "The form has been filled out and saved for this incident and period — a green checkmark"],
+        ["**Required — not yet saved**", "This form is required for a complete IAP but hasn't been saved yet"],
+        ["**Not started**", "An optional form that hasn't been filled out"]
+      ],
+      "widths": [3.0, 3.5]
+    }},
+    {"p": "To include or exclude a form, tick or untick its **checkbox** (or click anywhere on the row). Included rows turn green. The forms usually required for a complete IAP — **ICS-201, 202, 203, 204, 205,** and **206** — start ticked for you; add optional forms like the **ICS-207** organization chart or **ICS-208** safety message as your incident needs them."},
+
+    {"h1": "The Cover Page, Period, and Variant"},
+    {"p": "The right column's top box is a **live cover-page preview**. It fills in from your organization setup and the incident record, so you can see how the finished cover will read — {{org}}'s name and logo, the incident name, the operational period, and the Incident Commander."},
+    {"p": "Below the preview, the **IAP OPTIONS** box holds two dropdowns:"},
+    {"table": {
+      "headers": ["Option", "What it does"],
+      "rows": [
+        ["**Operational Period**", "Which shift's forms to assemble (Period 1 through 5). Changing it reloads the checklist so each row's status reflects that period."],
+        ["**ICS Form Variant**", "Which agency's version of the forms to use — **FEMA**, **USCG** (United States Coast Guard), or **NWCG** (National Wildfire Coordinating Group). Pick the one {{served_the}} expects."]
+      ],
+      "widths": [2.4, 4.1]
+    }},
+
+    {"h1": "The Completeness Bar"},
+    {"p": "Under the options is a **COMPLETENESS** bar. It tracks only the **required** forms and tells you, in plain numbers, how ready the IAP is — for example \"4 of 6 required forms saved (67% complete).\" The bar turns green at 100%. Use it as a quick pre-flight check before you distribute the plan: if it isn't full, some required form still needs finishing, and the checklist shows which one (look for the red **Required — not yet saved** labels). The **QUICK LINKS** box below jumps straight to the first several forms."},
+
+    {"h1": "Getting the IAP Out — Three Buttons"},
+    {"p": "The three buttons in the page header are three ways to produce the finished plan. They differ in where the work happens and how reliable the page layout is."},
+    {"table": {
+      "headers": ["Button", "When to use it", "What happens"],
+      "rows": [
+        ["**🖨 Print IAP**", "A printer is on the network or attached to your device", "Opens a print-ready cover page and table of contents in a new browser tab and launches the print dialog. Allow pop-ups for this to work."],
+        ["**📄 Save as PDF** *(recommended)*", "No printer on site, or the plan must go off-site, be emailed, or archived", "Sends your selected forms to the FieldCommand server, which builds a proper 8.5\" × 11\" PDF and downloads it as `IAP_[Incident]_Period[N]_[Date].pdf`. Opens in any PDF reader anywhere; layout is guaranteed."],
+        ["**💾 Save as HTML** *(fallback)*", "The server is unreachable, or you want a lightweight file with no server call", "Downloads a self-contained web-page version straight from the browser. Open it and use File → Print. Page layout can vary by browser — use PDF when layout matters."]
+      ],
+      "widths": [1.9, 2.3, 2.3]
+    }},
+    {"callout": {"kind": "tip", "label": "USE SAVE AS PDF FOR ANYTHING THAT LEAVES THE ROOM",
+      "text": "The PDF is built on the Pi server, comes out at a guaranteed letter-size layout, and opens on any device — so it is the right choice for emailing the Emergency Operations Center (EOC), copying to a USB drive, or archiving. Reach for **Save as HTML** only if the PDF button fails."}},
+
+    {"h1": "The IAP Compile Page"},
+    {"p": "Where IAP Assembly is form-by-form, the **IAP PDF Compile** page (`iap_compile.html`) is built to merge every completed form of the types you pick into one continuous PDF, in the standard IAP order. This is the fuller compiler."},
+    {"steps": [
+      "Open **IAP Compile** from the dashboard. Choose an **incident** and a **period** (or **All Periods**) from the dropdowns at the top.",
+      "The **Forms for This IAP** list shows each form type, how many saved copies exist, and whether it belongs in a standard IAP. Form types that have saved data are selectable; ones with no data are grayed out.",
+      "Saved IAP-order forms are pre-ticked. Adjust the selection by clicking rows, or use the **All** / **None** buttons.",
+      "In **Compile Options**, choose whether to **Include title page** and keep **IAP order** (202→203→204→205→206…), and optionally type a **Prepared By** name (the Planning Section Chief).",
+      "Check the **Summary** box — it shows how many form types and how many total pages are selected.",
+      "Click **📄 Download IAP PDF**. The Pi merges the forms and the file downloads. It can be printed from any device on the network or saved for off-site printing."
+    ]},
+    {"callout": {"kind": "warning", "label": "IF THE PDF COMPILER ISN'T AVAILABLE",
+      "text": "If the page shows a red banner reading \"PDF compiler not available on this server,\" the PDF libraries aren't installed on the Pi. The banner names the exact command to run on the Pi (installing `reportlab` and `pypdf`), after which you restart the ICS service. Until then, use **Save as HTML** on the IAP Assembly page as a stand-in."}},
+
+    {"h1": "The ICS-204A Briefing Sheet"},
+    {"p": "The **ICS-204A Briefing Sheet** (`briefing_204a.html`) is a single-page rollup of every assignment for the operational period, built for reading aloud at the morning briefing. It gathers all the **ICS-204 Assignment Lists** you've saved and groups them by **branch**, so the whole tactical picture fits on one screen — no flipping between forms."},
+    {"p": "At the top, a **summary bar** counts the Branches, Divisions/Groups, Resources, and Personnel in the plan. Each branch appears as its own card, color-coded by the standard ICS branch colors, with a table underneath:"},
+    {"table": {
+      "headers": ["Column", "What it shows"],
+      "rows": [
+        ["**Division / Group**", "The division or group name (or staging area)"],
+        ["**Supervisor**", "Who is in charge of that division or group"],
+        ["**Tactical Channel**", "The radio channel that division works on"],
+        ["**Resources Assigned**", "Chips listing each resource, its leader, and personnel count"],
+        ["**Work Assignment (brief)**", "A short summary of the tactical task"]
+      ],
+      "widths": [1.9, 1.6, 3.0]
+    }},
+    {"p": "The **Branch** filter narrows the view to one branch, and the **Show empty divisions** checkbox reveals divisions with nothing assigned yet (they are hidden by default to keep the sheet tight). When you're ready, **🖨 Print Landscape** produces a clean, printer-friendly page — it prints in landscape so the wide assignment tables fit — with the on-screen buttons and colors removed. Use **↺ Refresh** to pull in any ICS-204 changes made since you opened the page."},
+    {"callout": {"kind": "note", "label": "NO 204S YET?",
+      "text": "If the briefing sheet says \"No ICS-204 forms found,\" the Assignment Lists for this incident and period haven't been created. The page gives you a link straight to a new ICS-204. The briefing sheet only ever reflects what's already in the ICS-204s."}},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__The IAP Assembly page says \"No incident selected.\"__ These pages work on a specific incident. Open IAP Assembly from an incident page (or pick the incident from the dropdown on IAP Compile) so it knows which forms to gather.",
+      "__A form I completed shows as \"not saved\" here.__ Check that you saved it for the **same operational period** you have selected here — the status is per period. Switch the **Operational Period** dropdown to the right shift, or open the form and confirm it saved.",
+      "__The completeness bar won't reach 100%.__ One or more **required** forms haven't been saved. Look for the red **Required — not yet saved** labels in the checklist and finish those forms.",
+      "__Clicking Print IAP did nothing.__ The print view opens in a new browser tab, which your browser may have blocked. Allow pop-ups for the FieldCommand address and click **🖨 Print IAP** again.",
+      "__Save as PDF failed with an error.__ The PDF is generated on the Pi server. Confirm you're connected to the FieldCommand Wi-Fi and the server is running. As a fallback, use **💾 Save as HTML**, or check the IAP Compile page for the red \"PDF compiler not available\" banner and follow its instructions.",
+      "__The IAP Compile Download button is grayed out.__ You must select at least one form type that has saved data, and the PDF compiler must be available on the server. Tick a form type that shows a saved count, and resolve any red compiler banner first.",
+      "__The Briefing Sheet is missing resources or supervisors.__ It only shows what's entered in the ICS-204 forms. Open the relevant ICS-204 (use the **✏ Edit** link on the row), fill in the division supervisor, channel, and resources, save, then click **↺ Refresh**."
+    ]}
+  ]
+}

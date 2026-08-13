@@ -1,0 +1,331 @@
+{
+  "order": 38,
+  "title": "Troubleshooting & Frequently Asked Questions",
+  "subtitle": "The common problems and questions from across FieldCommand, answered in one place — symptom, cause, and the fix, grounded in how the system actually behaves.",
+  "in_this_chapter": [
+    "Can't reach http://192.168.50.1 — the number-one problem, and it's almost always Wi-Fi",
+    "A feature or whole card is missing — modes, Setup, and the grayed-out ham tools",
+    "No internet features (radar, alerts) because you're offline — and why that's fine",
+    "Can't log a net — which logger, which mode",
+    "Printing and saving to PDF",
+    "Where's my data, and is it saved?",
+    "A quick symptom-and-fix reference",
+    "Can I run other programs (e.g. LibreOffice) on the workstations?"
+  ],
+  "blocks": [
+    {
+      "callout": {
+        "kind": "tip",
+        "label": "QUICK VERSION",
+        "text": "Most problems are one of three things: **you're on the wrong Wi-Fi** (join **EMCOMM-NET**, then go to **http://192.168.50.1**), **you're in the wrong mode** (switch **Amateur / {{ps_mode}} / ICS** at the top of the dashboard), or **a feature is off in Setup** (turn it on under **Active Modules**). Almost everything else is a variation on those. Your data is saved on the {{mid}} automatically — you don't have to."
+      }
+    },
+    {
+      "h1": "What This Is / What It Is For"
+    },
+    {
+      "p": "This chapter is where to start when something isn't working, or when you just have a quick question. It gathers the most common issues from across FieldCommand — can't reach the site, a missing feature, no radar, can't log a net, printing trouble, \"where's my data\" — into one list. Each answer names the exact screen or setting so you can fix it and get back to work."
+    },
+    {
+      "p": "Almost everything here is safe to try. Reading screens, switching modes, and opening tools don't change anyone else's view or put anything on the air. When a fix does change a shared setting, the entry says so."
+    },
+    {
+      "callout": {
+        "kind": "note",
+        "label": "TWO CHECKS SOLVE MOST OF IT",
+        "text": "Before you dig in: (1) confirm your device is on the **EMCOMM-NET** Wi-Fi, and (2) confirm you typed the address exactly — **http://192.168.50.1**, including the `http://`. Those two account for the large majority of \"it's broken\" reports."
+      }
+    },
+    {
+      "h1": "Can't Reach http://192.168.50.1"
+    },
+    {
+      "h2": "The page won't load at all. What do I check?"
+    },
+    {
+      "p": "A blank or \"can't connect\" page almost always means your device isn't actually talking to the {{mid}} yet — not that the system is down. FieldCommand serves its pages only to devices joined to its own Wi-Fi, so the fix is nearly always about the network, not the app. Work through it in order:"
+    },
+    {
+      "steps": [
+        "Open your device's Wi-Fi settings and confirm you're joined to **EMCOMM-NET** (or whatever your group named the network in Setup). Being near it isn't enough — you have to be **connected** to it.",
+        "Type the address exactly: **http://192.168.50.1**. Include the `http://`. Don't add `www`, and don't let the browser turn it into a search.",
+        "If your browser jumps to `https://` (with an `s`) and shows a security warning, retype it with plain `http://`. FieldCommand is a local system and uses `http`.",
+        "Turn off mobile data on a phone temporarily. Some phones see \"no internet\" on EMCOMM-NET and silently switch to cellular, which can't reach the {{mid}}.",
+        "Still nothing? The {{mid}} may still be booting (give it a minute or two after power-on) or need a restart. If other people can reach it and you can't, the problem is your device; if nobody can, it's the {{mid}}."
+      ]
+    },
+    {
+      "callout": {
+        "kind": "note",
+        "label": "\"NO INTERNET\" ON EMCOMM-NET IS NORMAL",
+        "text": "Your phone or laptop may warn that EMCOMM-NET has **no internet access**. That's expected — FieldCommand is an offline system. Choose to **stay connected** anyway (phones often ask). The dashboard and every offline feature work perfectly with no internet; only the few online extras, like weather radar, need a connection."
+      }
+    },
+    {
+      "h1": "A Feature or Card Is Missing"
+    },
+    {
+      "h2": "A screen I expected isn't on the dashboard. Where did it go?"
+    },
+    {
+      "p": "Nothing is deleted — it's almost always hidden on purpose, for one of three reasons. Check them in this order:"
+    },
+    {
+      "table": {
+        "headers": [
+          "Symptom",
+          "Likely cause",
+          "Fix"
+        ],
+        "rows": [
+          [
+            "A whole group of cards changed",
+            "You're in a different **mode**",
+            "Use the mode switcher at the top: **📻 Amateur Radio**, **🚔 {{ps_mode}}**, or **🏛 ICS**. Each mode shows a different set of cards."
+          ],
+          [
+            "One optional feature is gone",
+            "It was turned off in **Setup ▸ Active Modules**",
+            "Open **Setup**, switch that module on, and **Save**. It reappears on the dashboard."
+          ],
+          [
+            "The ham cards (APRS, Winlink, 44Net, JS8Call) are grayed out and won't open",
+            "No **callsign** was entered in Setup",
+            "Enter a valid **Club / Station Callsign** in Setup and **Save**. The ham features unlock. (They stay off without a callsign by design — they legally require a licensed operator.)"
+          ],
+          [
+            "An online card (radar, alerts) looks dead",
+            "You're **offline** — no internet",
+            "Expected. Those need a WAN connection; everything else works offline. See the next section."
+          ]
+        ],
+        "widths": [
+          2.4,
+          2.0,
+          2.1
+        ]
+      }
+    },
+    {
+      "callout": {
+        "kind": "important",
+        "label": "GRAYED-OUT HAM TOOLS ARE NOT A BUG",
+        "text": "If your group has **no licensed amateur-radio operator**, the amateur features are meant to stay off — the app won't let an unlicensed group transmit on ham bands. Leaving the callsign blank in Setup keeps that whole side of the app tidily out of the way. Enter a callsign only if you actually hold a license for it."
+      }
+    },
+    {
+      "h1": "No Internet Features (Radar, Alerts)"
+    },
+    {
+      "h2": "The weather radar and NWS alerts are blank. Is something broken?"
+    },
+    {
+      "p": "No. FieldCommand is **offline-first** — it's designed to run on a {{mid}} with no internet, and the vast majority of it does. A small number of features pull live data from the internet, and those simply wait quietly when there's no connection:"
+    },
+    {
+      "bullets": [
+        "**NWS weather alerts** and **animated NEXRAD radar** — need live National Weather Service data.",
+        "**Live map basemaps beyond the offline tiles** — the offline tiles always work; extra online detail does not.",
+        "**FCC callsign lookups are the exception** — they run against a copy of the database stored **on the {{mid}}**, so they keep working with no internet at all."
+      ]
+    },
+    {
+      "p": "If you want these live features, connect a **WAN** (Wide Area Network — an internet source): {{cell_primary}} as the usual connection, with {{sat_fallback}} as a backup. Configure and monitor sources on the **WAN Status** / **WAN Source Configuration** screens. The moment a connection is up, radar and alerts fill in on their own."
+    },
+    {
+      "callout": {
+        "kind": "note",
+        "label": "OFFLINE IS THE POINT",
+        "text": "Running with no internet is not a degraded mode — it's the design. Nets, check-ins, the roster, ICS forms, the IAP, maps on offline tiles, callsign lookups, and printing all work with the {{mid}} sitting on a table and nothing plugged into the wall but power."
+      }
+    },
+    {
+      "h1": "Can't Log a Net"
+    },
+    {
+      "h2": "I opened a net logger but I can't add stations / it's the wrong kind of net."
+    },
+    {
+      "p": "FieldCommand has more than one net logger because amateur nets and {{ps_short}} nets record different things. Make sure you're in the right one:"
+    },
+    {
+      "table": {
+        "headers": [
+          "You're logging…",
+          "Use this screen",
+          "Reached from"
+        ],
+        "rows": [
+          [
+            "An amateur-radio net",
+            "**Amateur Net Control Logger** (`netcontrol.html`)",
+            "Amateur Radio mode ▸ the **Amateur Net Control** card"
+          ],
+          [
+            "A {{ps_short}} net",
+            "**{{ps_mode}} Net Logger** (`starcom.html`)",
+            "{{ps_mode}} mode ▸ the net logger card"
+          ],
+          [
+            "Just watching, no editing",
+            "**Observer Mode** (`observer.html`)",
+            "A read-only view of a running net — you can't add stations here by design"
+          ]
+        ],
+        "widths": [
+          2.2,
+          2.5,
+          2.2
+        ]
+      }
+    },
+    {
+      "bullets": [
+        "__I can see the net but every field is read-only.__ You're in **Observer Mode**. Open the matching logger (Amateur or {{ps_mode}}) to actually record traffic.",
+        "__The amateur logger won't let me set my station.__ Confirm a **callsign** is entered in Setup — the amateur tools need one.",
+        "__Nothing I log seems to save.__ Check the dashboard is otherwise loading. If pages load but data won't save, the config/data service on the {{mid}} may be down — see the Appendix's health section, or restart the {{mid}}."
+      ]
+    },
+    {
+      "h1": "Printing and PDF"
+    },
+    {
+      "h2": "How do I print a form or save it as a PDF?"
+    },
+    {
+      "p": "FieldCommand prints two ways. Most forms and reports have their own print or **export PDF** button, and there's a central **Print Center** (`printcenter.html`) that gathers the common outputs — ICS-309, the roster, ICS forms, and the full IAP package — in one place."
+    },
+    {
+      "steps": [
+        "For a single form (an ICS-213, an ICS-309, a preflight report), use that screen's own **Print** or **Export PDF** / **Compile PDF** button.",
+        "For the standard outputs together, open the **Print Center** card and pick what you want.",
+        "To save as a PDF instead of putting ink on paper, choose **Save as PDF** (or **Microsoft Print to PDF**) as the destination in your browser's print dialog."
+      ]
+    },
+    {
+      "bullets": [
+        "__The print dialog shows the dashboard menus / clutter.__ Use the screen's own **Print** button rather than the browser menu where possible — those pages are laid out to drop the navigation and print clean.",
+        "__I have no printer.__ You don't need one. Choose **Save as PDF** in the print dialog and keep or share the file. The IAP tools compile straight to PDF with one click.",
+        "__The printer isn't found.__ Printing goes through the {{mid}}'s print service; confirm the printer is on, connected, and added. Printing needs the printer reachable from the {{mid}}, not from your phone."
+      ]
+    },
+    {
+      "h1": "Where's My Data — Is It Saved?"
+    },
+    {
+      "h2": "Do I have to save my work? Where does it live?"
+    },
+    {
+      "p": "Your incident data — nets, check-ins, roster, ICS forms, the IAP — is saved **on the {{mid}} automatically** as you go. There's no \"save the whole session\" button to forget. Every operator's device is just a window onto the one shared copy on the {{mid}}, so what one person logs, everyone sees."
+    },
+    {
+      "table": {
+        "headers": [
+          "Kind of data",
+          "Where it lives",
+          "Saved how"
+        ],
+        "rows": [
+          [
+            "Nets, check-ins, roster, ICS forms, incidents",
+            "On the **{{mid}}** (the server)",
+            "Automatically, and shared to everyone connected"
+          ],
+          [
+            "Nightly full backup",
+            "External **FIELDCOMMAND** USB drive",
+            "Automatically overnight, when the drive is connected"
+          ],
+          [
+            "Finished incidents you archive",
+            "External **FIELDCOMMAND** USB drive",
+            "When you click **Archive to USB** in Incident Management"
+          ],
+          [
+            "Your **Preflight** checklist answers",
+            "In **your browser**, on your device",
+            "When you click **Save Progress** — not shared centrally"
+          ]
+        ],
+        "widths": [
+          2.5,
+          2.2,
+          2.0
+        ]
+      }
+    },
+    {
+      "callout": {
+        "kind": "important",
+        "label": "THE ONE THING THAT'S PER-DEVICE",
+        "text": "The **Preflight** checklist is the exception — your ✓/⚠/✕ answers are stored in the browser you used, not on the {{mid}}. Do the preflight on the device you'll keep, or **Print Report** / **Export JSON** for the record. Everything else is central and automatic."
+      }
+    },
+    {
+      "callout": {
+        "kind": "tip",
+        "label": "IS MY DATA BACKED UP?",
+        "text": "Keep the **FIELDCOMMAND** USB drive plugged into the {{mid}} and the nightly backup takes care of itself. No drive means no automatic backup — your data then lives only on the {{mid}}'s internal storage until you connect one. See the Appendix (Administration) for archiving and backups."
+      }
+    },
+    {
+      "h1": "A Few More Quick Answers"
+    },
+    {
+      "h2": "Is it safe to click around while I'm learning?"
+    },
+    {
+      "p": "Yes. Opening screens, switching modes, reading logs, and browsing the reference library change nothing and put nothing on the air. A brand-new {{mid}}, before Setup is even done, shows **everything** on purpose so you can explore. The things that have real-world effect — sending traffic, deleting an archived incident — take a deliberate, clearly labeled action."
+    },
+    {
+      "h2": "Two of us edited the same thing — whose wins?"
+    },
+    {
+      "p": "Because everyone shares the one copy on the {{mid}}, the most recent save is what sticks, and everyone's screen catches up to it. For net logging, that's why one person is **net control** at a time; others can ride along in **Observer Mode**."
+    },
+    {
+      "h2": "The reference library or a manual won't open."
+    },
+    {
+      "p": "The reference library is served by its own program on the {{mid}}. If a document won't open but the rest of the dashboard works, that reference service may be down — note it for whoever maintains the {{mid}} (see the Appendix's service tables), and restart the {{mid}} if you can."
+    },
+    {
+      "h1": "Troubleshooting"
+    },
+    {
+      "bullets": [
+        "**http://192.168.50.1 won't load.** You're probably not joined to the **EMCOMM-NET** Wi-Fi, or your phone slipped to mobile data. Join the network, keep the connection despite the \"no internet\" warning, and retype the address with `http://`.",
+        "**The browser forces https:// and warns.** Retype plain **http://192.168.50.1** — FieldCommand is a local `http` system.",
+        "**A card or feature is missing.** Check the **mode** switch first, then **Setup ▸ Active Modules**. Ham cards need a callsign in Setup.",
+        "**Ham tools (APRS/Winlink/44Net/JS8Call) are grayed out.** By design when no callsign is set. Enter one in Setup and Save — only if you actually hold the license.",
+        "**Radar/alerts are blank.** You're offline; that's expected. Connect a WAN source to enable them; everything else works offline.",
+        "**Can't add to a net.** You may be in **Observer Mode**, or the wrong logger for the net type. Open the Amateur or {{ps_mode}} logger to match your net.",
+        "**Print shows menus / no printer.** Use the page's own **Print/Export** button; choose **Save as PDF** if you have no printer; confirm the printer is reachable from the {{mid}}.",
+        "**\"Did my work save?\"** Yes — incident data saves automatically on the {{mid}} and is shared to everyone. Only the **Preflight** checklist is per-device (Save Progress / Export).",
+        "**Is my data backed up?** Only if the **FIELDCOMMAND** USB drive is connected for the nightly backup. Keep it plugged in.",
+        "**A document or reference won't open.** The reference service on the {{mid}} may be down; note it and restart the {{mid}} if the rest works."
+      ]
+    },
+    {
+      "h1": "Can I run other programs on the workstations, like an office suite?"
+    },
+    {
+      "p": "**Yes.** The operator workstations (the **{{workstation}}**) are full Raspberry Pi desktop computers running Linux, and FieldCommand is just a web app you open in a browser on them — it does not take the machine over, so you can run other everyday software right beside it."
+    },
+    {
+      "bullets": [
+        "For documents and spreadsheets, use **LibreOffice** (Writer / Calc / Impress) — free, fully **offline**, and **usually already installed** on Raspberry Pi OS; if not, `sudo apt install libreoffice`. It reads and writes `.docx` / `.xlsx` for sharing with Microsoft Office users.",
+        "It **prints to the same printer** as the app: all printing goes through Linux's **CUPS (Common Unix Printing System)**, so a printer set up on the workstation works for both LibreOffice and FieldCommand's Print Center.",
+        "**Attach documents you create to the active incident** so they are saved and archived with the rest of the record instead of stranded on one machine.",
+        "Install extra software (a PDF viewer, GIMP, etc.) on the **workstations**, not the always-on server, and do it **before deployment while you have internet**, since the field runs offline."
+      ]
+    },
+    {
+      "callout": {
+        "kind": "note",
+        "label": "FULL WALKTHROUGH",
+        "text": "The **Network Hardware** chapter covers this in detail under “Running Other Software on the Workstations.”"
+      }
+    }
+  ]
+}

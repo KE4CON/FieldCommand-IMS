@@ -1,0 +1,223 @@
+{
+  "order": 11,
+  "title": "The Offline Map Tile Server — tile_server.py",
+  "subtitle": "A small Flask service, python/tile_server.py, serves map images out of local files so the tactical map draws perfectly with no internet. The browser asks for /tiles/{tileset}/{z}/{x}/{y}.png, the server pulls that square out of a local MBTiles database, and the map fills in — exactly as if it were talking to an online map provider, except everything is on the Pi.",
+  "in_this_chapter": [
+    "What a map tile is and why FieldCommand serves its own",
+    "How MBTiles stores tiles and the one coordinate flip that matters",
+    "The tileset layout and the endpoints the server exposes",
+    "How a single tile request is validated, fetched, and returned",
+    "Why a missing tile returns a transparent pixel instead of an error",
+    "How the front end (tiles.js) consumes tiles same-origin via nginx — and the recent change from an absolute URL",
+    "How the browser detects offline vs. online sources and picks a default"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "IN ONE SENTENCE",
+      "text": "`python/tile_server.py` is a tiny web service that hands the map its picture tiles out of local `.mbtiles` files at `/tiles/{tileset}/{z}/{x}/{y}.png`, so the tactical map works fully offline — and `html/lib/tiles.js` is the browser-side code that finds those tiles and falls back to online maps only when the internet is actually there."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "The tactical map is the centerpiece of FieldCommand, and a map is really just a grid of small square images called **tiles**. Normally a web map downloads those tiles from an online provider like OpenStreetMap. But FieldCommand runs in a field with no internet, so it cannot rely on any online provider. Instead it serves the tiles itself, from files already on the Raspberry Pi, using a small service: [python/tile_server.py](python/tile_server.py)."},
+    {"p": "The service is a **Flask** web application listening on port 8083. Its job is narrow and mechanical: when the map in the browser needs the tile at a given zoom level and grid position, it asks this server for it by URL, and the server reads that exact square out of a local database and sends back the image. To the mapping library in the browser, this looks identical to talking to a real online tile provider — same URL shape, same PNG images — except the round trip never leaves the Pi. The file's own header spells out the contract:"},
+    {"code": [
+      "\"\"\"",
+      "FieldCommand — Offline Map Tile Server",
+      "Serves MBTiles databases as XYZ tile endpoints for Leaflet.js",
+      "Port 8083  —  http://localhost:8083/tiles/{tileset}/{z}/{x}/{y}.png",
+      "",
+      "MBTiles stores tiles in TMS format (Y-flipped).",
+      "We flip Y back to XYZ/Slippy format for Leaflet.",
+      "\"\"\""
+    ]},
+    {"callout": {"kind": "note", "label": "JARGON, IN PLAIN WORDS",
+      "text": "A **tile** is one small square image of the map (usually 256×256 pixels). A web map is a grid of them. **Zoom/x/y** identify one tile: `z` is how far in you are zoomed, and `x`/`y` are its column and row in the grid at that zoom. **MBTiles** is a single SQLite file that holds thousands of these tile images. **Leaflet** is the JavaScript map library running in the browser. **Flask** is a small Python web-server framework. **Same-origin** means the browser asks for tiles from the same web address it loaded the page from, so no cross-site rules get in the way."}},
+
+    {"h1": "Why Serve Our Own Tiles — the 'Why' Behind It"},
+    {"p": "The alternative to serving tiles locally is depending on the internet, and for an emergency-communications appliance that is a non-starter. During the exact events FieldCommand is built for — storms, outages, remote deployments — the internet is often the first thing to fail. If the map went blank whenever connectivity dropped, the tool would be useless precisely when it is needed most. So the tiles for the operating area are downloaded ahead of time into MBTiles files, and this server makes them available with no network at all."},
+    {"p": "Serving them through a standard tile URL, rather than some custom scheme, is a deliberate choice: it means the browser-side map code is ordinary Leaflet and can just as easily point at an online provider when the internet **is** available. The offline path and the online path are the same shape, so switching between them is a matter of which URL the layer uses — not two different code paths. That symmetry is what lets `tiles.js` treat offline and online sources as interchangeable, covered later in this chapter."},
+
+    {"h1": "How It Works — The One Coordinate Flip"},
+    {"p": "There is a historical wrinkle in map tiling that this server exists partly to smooth over. MBTiles files store tiles in **TMS** order, where the Y axis counts from the bottom up. Leaflet and most online providers use **XYZ** (also called Slippy) order, where Y counts from the top down. If the server handed the browser's Y straight to the database, the map would be flipped upside down. So there is exactly one small function that converts the browser's Y into the database's row number:"},
+    {"code": [
+      "def xyz_to_tms_y(z: int, y: int) -> int:",
+      "    \"\"\"Convert XYZ tile Y to TMS tile_row (MBTiles stores TMS).\"\"\"",
+      "    return (1 << z) - 1 - y"
+    ]},
+    {"p": "The formula reads: at zoom `z` there are `2^z` rows (`1 << z` is a fast way to write two-to-the-power-of-`z`), numbered `0` to `2^z − 1`, and flipping top-to-bottom is subtracting the incoming `y` from the last row number. Every tile fetch runs through this one line, and it is the single most important correctness detail in the file."},
+    {"callout": {"kind": "note", "label": "JARGON, IN PLAIN WORDS",
+      "text": "**TMS** (Tile Map Service) and **XYZ/Slippy** are two conventions for numbering the rows of map tiles. They agree on everything except which end the Y axis starts counting from — TMS from the bottom, XYZ from the top. The `1 << z` is a bit-shift: it computes `2` raised to the power `z` very quickly. Flip the row, and a bottom-counted number becomes a top-counted one."}},
+
+    {"h1": "How It Works — Tilesets and the Endpoints"},
+    {"p": "A **tileset** is one map style for one area — for example USGS topographic, or satellite imagery. Each tileset is a single file named `{tileset}.mbtiles`, and they all live together in the tile directory (by default `/opt/fieldcommand/tiles`, overridable by an environment variable). The server discovers tilesets simply by listing that folder for `.mbtiles` files — drop a new file in and it appears, with no code change:"},
+    {"code": [
+      "TILE_DIR  = os.environ.get('FC_TILE_DIR',  '/opt/fieldcommand/tiles')",
+      "",
+      "def list_tilesets() -> List[str]:",
+      "    \"\"\"Return names of all available MBTiles files.\"\"\"",
+      "    if not os.path.isdir(TILE_DIR):",
+      "        return []",
+      "    return [",
+      "        f[:-8] for f in os.listdir(TILE_DIR)",
+      "        if f.endswith('.mbtiles') and os.path.isfile(os.path.join(TILE_DIR, f))",
+      "    ]"
+    ]},
+    {"p": "On top of that folder, the server exposes a small, predictable set of endpoints. The map uses the tile endpoint constantly; the others are for discovery and health:"},
+    {"table": {
+      "headers": ["Endpoint", "What it returns", "Who calls it"],
+      "rows": [
+        ["`GET /tiles/`", "JSON list of available tilesets with their names, zoom range, and bounds.", "The browser, to discover which offline maps exist."],
+        ["`GET /tiles/{tileset}/metadata.json`", "One tileset's metadata in TileJSON-compatible form.", "Map tooling that wants a tileset's details."],
+        ["`GET /tiles/{tileset}/{z}/{x}/{y}.png`", "One tile image (PNG or JPEG).", "Leaflet, once per visible tile, as the operator pans and zooms."],
+        ["`GET /health`", "JSON status: tile directory, every tileset, and its tile count and zoom range.", "The health monitor and installer checks."]
+      ],
+      "widths": [2.5, 2.6, 1.9]
+    }},
+    {"p": "Just like the FCC and main databases, this server gives each thread its own SQLite connection so many tile requests can run at once. The connections are tuned purely for fast read-only serving — notably `synchronous=OFF`, which is safe here because the server never writes to a tileset, only reads:"},
+    {"code": [
+      "def get_db(tileset: str) -> object:",
+      "    \"\"\"Get or create a thread-local SQLite connection for the tileset.\"\"\"",
+      "    db_path = os.path.join(TILE_DIR, f'{tileset}.mbtiles')",
+      "    if not os.path.isfile(db_path):",
+      "        return None",
+      "    ...",
+      "            conn = sqlite3.connect(db_path, check_same_thread=False)",
+      "            conn.row_factory = sqlite3.Row",
+      "            conn.execute('PRAGMA journal_mode=WAL')",
+      "            conn.execute('PRAGMA synchronous=OFF')",
+      "            conn.execute('PRAGMA cache_size=2000')    # 2000 pages × 4KB = 8MB cache",
+      "            conn.execute('PRAGMA temp_store=MEMORY')"
+    ]},
+
+    {"h1": "How It Works — Serving One Tile"},
+    {"p": "The tile route is where everything comes together. When Leaflet requests a tile, the handler validates the request, checks the browser's cache, fetches the tile, and returns it — with a fallback for anything it cannot find. First, it guards the coordinates. A zoom outside the valid range is a hard error, but a tile position outside the grid is simply answered with a transparent pixel rather than an error, because the map should never break on an edge request:"},
+    {"code": [
+      "@app.route('/tiles/<tileset>/<int:z>/<int:x>/<int:y>.png')",
+      "@app.route('/tiles/<tileset>/<int:z>/<int:x>/<int:y>.jpg')",
+      "def serve_tile(tileset, z, x, y):",
+      "    # Validate zoom range",
+      "    if z < 0 or z > 22:",
+      "        abort(400)",
+      "    # Validate tile coordinates",
+      "    max_coord = (1 << z)",
+      "    if x < 0 or x >= max_coord or y < 0 or y >= max_coord:",
+      "        return Response(TRANSPARENT_PNG, 200, { ... })"
+    ]},
+    {"p": "Next it fetches the actual image. The fetch is a single indexed lookup into the MBTiles `tiles` table — and this is where the Y-flip from earlier is applied, turning the browser's XYZ `y` into the TMS `tile_row` the file stores:"},
+    {"code": [
+      "def fetch_tile(tileset: str, z: int, x: int, y: int) -> Optional[bytes]:",
+      "    db = get_db(tileset)",
+      "    if not db:",
+      "        return None",
+      "    tms_y = xyz_to_tms_y(z, y)",
+      "    row = db.execute(",
+      "        'SELECT tile_data FROM tiles WHERE zoom_level=? AND tile_column=? AND tile_row=?',",
+      "        (z, x, tms_y)",
+      "    ).fetchone()",
+      "    return bytes(row['tile_data']) if row else None"
+    ]},
+    {"p": "The most important design decision in the whole file is what happens when a tile is **not** found — for example, a corner of the map the operator zoomed into that was never downloaded. The server does not return a 404 error, because Leaflet would draw an ugly broken-image box for every missing square. Instead it returns a 1×1 transparent PNG with a `200 OK`, so the map simply shows empty space there and keeps working. A special `X-Tile-Miss` header marks it as a miss for debugging without disturbing the map:"},
+    {"code": [
+      "    data = fetch_tile(tileset, z, x, y)",
+      "",
+      "    if data is None:",
+      "        # Return transparent pixel — allows Leaflet to continue without error",
+      "        return Response(TRANSPARENT_PNG, 200, {",
+      "            'Content-Type':  'image/png',",
+      "            'Cache-Control': f'public, max-age={CACHE_TTL}',",
+      "            'X-Tile-Miss':   '1',",
+      "        })"
+    ]},
+    {"callout": {"kind": "important", "label": "WHY A MISS IS A PIXEL, NOT AN ERROR",
+      "text": "Returning a transparent `200` for a missing tile is the difference between a map with a few blank patches and a map covered in broken-image icons. The operator sees a clean map that simply lacks detail where no tiles were downloaded. Never change a tile miss to a 404 or 500 — Leaflet treats those as failures and the map degrades badly."}},
+    {"p": "When a tile **is** found, the server detects whether the stored bytes are PNG or JPEG (MBTiles can hold either) and sets the right content type, along with caching headers and an ETag so the browser can skip re-downloading a tile it already has:"},
+    {"code": [
+      "def detect_format(data: bytes) -> str:",
+      "    \"\"\"Detect whether tile data is PNG or JPEG.\"\"\"",
+      "    if data[:4] == b'\\x89PNG':",
+      "        return 'image/png'",
+      "    if data[:2] == b'\\xff\\xd8':",
+      "        return 'image/jpeg'",
+      "    return 'image/png'"
+    ]},
+
+    {"h1": "How the Front End Consumes Tiles — tiles.js"},
+    {"p": "The browser side lives in [html/lib/tiles.js](html/lib/tiles.js), a shared module every map page loads. It defines every tile source — offline and online — in one `SOURCES` table, probes what is actually available, and builds the Leaflet layer control. The single most important line sits right at the top, and it reflects a recent, deliberate change:"},
+    {"code": [
+      "const FC_TILES = (() => {",
+      "    const TILE_SERVER = '';  // same-origin: tiles served at /tiles/... via nginx"
+    ]},
+    {"callout": {"kind": "warning", "label": "THE RECENT CHANGE — ABSOLUTE URL TO SAME-ORIGIN",
+      "text": "`TILE_SERVER` used to be an absolute address like `http://<pi-ip>:8083`, pointing the browser straight at the tile server's own port. It is now an empty string, so every tile URL becomes a **same-origin** path like `/tiles/usgs_topo/{z}/{x}/{y}.png`, which nginx routes to the tile server behind the scenes. This matters: same-origin means no hard-coded IP address or port in the page, no cross-origin (CORS) complications, and tiles that keep working no matter what address the operator used to reach FieldCommand. If you ever see tiles fail to load, confirm this is still `''` and that nginx still proxies `/tiles/` to port 8083 — do not 'fix' it by putting the absolute URL back."}},
+    {"p": "Every offline source builds its URL from that same `TILE_SERVER` prefix, so flipping the prefix flips them all at once. The offline USGS and Esri sources point at the local `/tiles/...` path; the online sources point at real providers on the internet:"},
+    {"code": [
+      "        usgs_topo: {",
+      "            label:       '🗺 USGS Topo (Offline)',",
+      "            group:       'offline',",
+      "            url:         `${TILE_SERVER}/tiles/usgs_topo/{z}/{x}/{y}.png`,",
+      "            attribution: 'USGS National Map — Public Domain',",
+      "            maxZoom:     18,",
+      "            offline:     true,",
+      "        },",
+      "        ...",
+      "        osm: {",
+      "            label:       '🌐 OpenStreetMap (Online)',",
+      "            group:       'online',",
+      "            url:         'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',",
+      "            offline:     false,",
+      "        },"
+    ]},
+    {"p": "Before it builds any layers, `tiles.js` runs two probes in parallel — one asking the local tile server what it has, one checking whether the internet is reachable — and waits for both. The tile-server probe hits the same `/tiles` listing endpoint the server exposes, with a short timeout so a missing server fails fast rather than hanging the map:"},
+    {"code": [
+      "    async function probeTileServer() {",
+      "        try {",
+      "            const res = await fetch(`${TILE_SERVER}/tiles`, {",
+      "                signal: AbortSignal.timeout(2000),",
+      "            });",
+      "            if (!res.ok) return false;",
+      "            const data = await res.json();",
+      "            _availableOffline = (data.tilesets || []).map(t => t.id);",
+      "            _tileServerOnline = true;",
+      "            return true;",
+      "        } catch (e) {",
+      "            _tileServerOnline = false;",
+      "            _availableOffline = [];",
+      "            return false;",
+      "        }",
+      "    }"
+    ]},
+    {"p": "With both probe results in hand, it chooses a default base layer by a fixed preference order — offline tiles always win over online ones, because in the field the local copy is both faster and always available. The preferred default is the USGS Imagery+Topo hybrid, chosen specifically for McHenry County field operations; only if no offline tileset is present does it fall back to an online source:"},
+    {"code": [
+      "    function getBestDefault() {",
+      "        const offlinePreference = ['usgs_imgtopo', 'usgs_imagery', 'usgs_topo',",
+      "                                   'esri_imagery', 'esri_street', 'esri_topo',",
+      "                                   'esri_relief'];",
+      "        for (const id of offlinePreference) {",
+      "            if (_availableOffline.includes(id)) return id;",
+      "        }",
+      "        if (_internetAvailable) return 'usgs_topo_online';  // USGS online when no offline tiles",
+      "        return null;  // No tiles available",
+      "    }"
+    ]},
+    {"p": "The layer control is then assembled offline-first: every offline tileset the server actually reported is added, then the online sources if the internet was reachable. And if nothing at all is available — no tile server, no internet — the code does not leave a broken map; it adds a labeled blank grey layer so the map still pans and zooms and the operator sees a clear instruction:"},
+    {"code": [
+      "        if (Object.keys(baseLayers).length === 0) {",
+      "            const blank = L.tileLayer('', {",
+      "                attribution: 'No tiles available — run download_tiles.sh',",
+      "            });",
+      "            baseLayers['(No tiles — run download_tiles.sh)'] = blank;",
+      "            defaultLayer = blank;",
+      "        }"
+    ]},
+    {"p": "The result is a map that degrades gracefully at every level: it prefers local tiles, uses online ones when they exist, and even with neither it stays interactive and tells the operator exactly what to do. All of that behavior rests on the tile server exposing a simple, predictable `/tiles/...` contract that the browser can probe and consume the same way whether the source is a file on the Pi or a provider across the internet."},
+
+    {"h1": "Why It Matters / Design Takeaways"},
+    {"bullets": [
+      "__Offline is the default, not the fallback.__ Tiles are served from local MBTiles files so the tactical map works with zero internet — and `getBestDefault` always prefers those local tiles over online ones.",
+      "__One coordinate flip is the whole correctness story.__ `xyz_to_tms_y` converts the browser's XYZ Y to the MBTiles TMS row; get that wrong and every map is upside down.",
+      "__A miss is a pixel, not an error.__ Missing tiles return a transparent `200` so Leaflet keeps drawing a clean map instead of broken-image boxes.",
+      "__Same-origin `/tiles/...` via nginx.__ `TILE_SERVER` is now `''`, so tile URLs carry no hard-coded IP or port and keep working no matter how the operator reached FieldCommand — a deliberate change from the old absolute URL.",
+      "__Drop-in tilesets.__ New maps appear just by placing a `.mbtiles` file in the tile directory; the server lists the folder, no code change needed."
+    ]},
+    {"callout": {"kind": "important", "label": "MAINTAINER'S RULE",
+      "text": "Keep the tile contract stable: the server serves `/tiles/{tileset}/{z}/{x}/{y}.png` from local MBTiles, flips Y with `xyz_to_tms_y`, and returns a transparent pixel for any miss; the browser reaches it same-origin with `TILE_SERVER = ''` proxied by nginx. Do not reintroduce an absolute tile URL, do not turn a tile miss into a 404/500, and do not remove the Y-flip. If you add a tileset, add its file to the tile directory and a matching entry to `SOURCES` in `tiles.js` (and to `offlinePreference` if it should be a candidate default) — then load a map page and confirm the tiles draw right-side-up both offline and online before you consider it done."}}
+  ]
+}

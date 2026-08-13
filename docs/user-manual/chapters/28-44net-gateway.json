@@ -1,0 +1,114 @@
+{
+  "order": 28,
+  "title": "Amateur Packet Radio Network (AMPRNet) / 44Net Gateway",
+  "subtitle": "The optional gateway that puts every device on your network onto the worldwide amateur-radio IP network (the 44.0.0.0/8 block) — and the status page that shows whether it's up.",
+  "in_this_chapter": [
+    "Whether this chapter even applies to your deployment",
+    "What AMPRNet / 44Net is, in plain terms",
+    "Why a licensed amateur-radio group has to own it",
+    "What having a 44Net gateway lets you do",
+    "Opening the Gateway status page and reading the tunnel light",
+    "The status cards, routes, peers, and access log",
+    "The Tunnel Control buttons and why they're locked down",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "This is an **optional** add-on for groups led by licensed amateur-radio operators. A second Raspberry Pi (the **gateway Pi** at `192.168.50.2`) holds an encrypted tunnel to the worldwide amateur-radio internet. Open the **AMPRNet / 44Net Gateway** page to see whether the tunnel is **UP** or **DOWN**, your assigned 44.x.x.x address, and who's connected. The page auto-refreshes every 30 seconds. Turning the tunnel on or off can only be done sitting at the gateway Pi itself."}},
+
+    {"callout": {"kind": "warning", "label": "DOES THIS EVEN APPLY TO YOU?",
+      "text": "This whole chapter applies **only** if a licensed amateur-radio group leads or is a key partner in your deployment. If {{org}} is a public-safety agency, municipality, or served organization **without** a licensed ham group involved, the 44Net gateway does not apply — skip this chapter. FieldCommand runs fully without it. Every ICS form, net logger, map, and report works on your normal network with no dependency on AMPRNet whatsoever."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "**AMPRNet** — the Amateur Packet Radio Network, also called **44Net** — is a private slice of the internet reserved for amateur radio. Years ago the block of addresses beginning with **44** (written `44.0.0.0/8`) was permanently set aside for hams worldwide. A **gateway** is simply a doorway onto that network. FieldCommand's gateway is a **separate, dedicated Raspberry Pi** (the gateway Pi, at `192.168.50.2`) that holds an encrypted **tunnel** — think of it as a private, protected pipe — out to the amateur-radio network's main gateway on the internet."},
+    {"p": "When that tunnel is up, **every device on your network** can reach amateur stations, Winlink gateways, and APRS servers that live on 44.x.x.x addresses — over the ham network rather than the commercial internet. This page, the **AMPRNet / 44Net Gateway** page, is your window onto that: it doesn't set the gateway up, it **shows you whether it's working** and lets an operator at the gateway Pi turn it on or off."},
+    {"callout": {"kind": "note", "label": "THE GATEWAY PI IS ON ITS OWN",
+      "text": "The gateway Pi is completely separate from the main FieldCommand server. If it's switched off, unplugged, or never deployed, **nothing else is affected** — the rest of the system keeps running normally. It's a bolt-on, not a foundation."}},
+
+    {"h1": "A Licensed Amateur-Radio Group Must Own This"},
+    {"p": "A 44Net address is assigned to a specific licensed amateur callsign and is governed by the amateur-radio rules (Part 97). That means the registration, the setup, and all day-to-day use have to be led by the amateur-radio group — not the served agency, not an IT department. In practice a licensed technical lead registers the group at **portal.ampr.org** under a club or personal callsign (for example **{{club}}**), requests a small block of addresses, and configures the gateway Pi. Expect the approval to take a few weeks. Full setup steps live in the Installation Guide."},
+    {"table": {
+      "headers": ["Your situation", "Deploy a 44Net gateway?"],
+      "rows": [
+        ["An amateur-radio emergency group leads or co-leads the deployment", "Yes — a licensed operator registers and maintains it under their callsign."],
+        ["An amateur-radio club runs the communications section", "Yes — a club callsign (for example {{club}}) is the natural choice."],
+        ["Licensed hams are supporting partners only", "Maybe — only if those operators fully own the registration and upkeep."],
+        ["Public-safety agency only, no ham group involved", "No — an amateur license is required to register. It cannot be run by a non-licensed agency."]
+      ],
+      "widths": [3.4, 3.2]
+    }},
+
+    {"h1": "What a 44Net Gateway Lets You Do"},
+    {"table": {
+      "headers": ["Capability", "What it means in the field"],
+      "rows": [
+        ["**Winlink over the ham network**", "Reach Winlink radio-email gateways at 44.x.x.x addresses without touching the commercial internet."],
+        ["**APRS over the ham network**", "Reach the APRS position-reporting servers on their 44.x.x.x addresses the same way."],
+        ["**Link two FieldCommand sites**", "Two deployments that both have a 44Net gateway can share net-log and status data directly over the ham network."],
+        ["**Reach any 44Net station worldwide**", "Any amateur station anywhere with a 44.x.x.x address becomes directly reachable from your network."],
+        ["**Permanent fixed addresses**", "Your block of 44.x.x.x addresses is yours for good — it never changes, no matter your internet provider or location."]
+      ],
+      "widths": [2.4, 4.2]
+    }},
+    {"callout": {"kind": "important", "label": "THE HAM RULES STILL APPLY",
+      "text": "Everything crossing the 44Net gateway is amateur-radio traffic under Part 97: no encrypting the **content** of messages (the tunnel's own protection of the connection is fine and expected), no commercial traffic, and station identification is required. Only licensed operators may use it."}},
+
+    {"h1": "Opening the Gateway Status Page"},
+    {"steps": [
+      "From the dashboard, open **AMPRNet / 44Net Gateway** (or go to `http://192.168.50.1/amprgate.html`).",
+      "At the very top you'll see a small **Last polled** line and a big **hero banner** — the tunnel light.",
+      "The page fills itself in from the gateway Pi and refreshes on its own every **30 seconds**. You can force a refresh with the **⟳ Refresh Status** button lower down."
+    ]},
+    {"p": "The **hero banner** is the one thing to read first. It has three states:"},
+    {"table": {
+      "headers": ["Banner", "Meaning"],
+      "rows": [
+        ["🛰 Green — **TUNNEL UP — AMPRNet Connected**", "The gateway is on the ham network. Your 44.x.x.x address is shown beneath it."],
+        ["⚠ Red — **TUNNEL DOWN**", "The gateway Pi is reachable but the tunnel isn't connected right now."],
+        ["🔄 Amber — **Gateway Unreachable**", "The gateway Pi itself isn't answering — most often it's powered off or unplugged."]
+      ],
+      "widths": [3.1, 3.5]
+    }},
+    {"screenshot": "The AMPRNet Gateway page with a green TUNNEL UP hero banner and the status cards below"},
+
+    {"h1": "The Status Cards"},
+    {"p": "Below the banner is a row of small cards, each a single live number about the gateway's health. You don't set any of these — they just report."},
+    {"table": {
+      "headers": ["Card", "What it shows"],
+      "rows": [
+        ["**AMPRNet Address**", "The 44.x.x.x address assigned to your gateway."],
+        ["**Last Handshake**", "How long ago the tunnel last exchanged a keep-alive with the far end. Recent is good."],
+        ["**Data Received / Data Sent**", "How much traffic has moved in and out through the tunnel."],
+        ["**Gateway CPU Temp**", "The temperature of the gateway Pi's processor — a heat check."],
+        ["**Gateway Memory**", "Memory used out of total on the gateway Pi."],
+        ["**IP Forwarding**", "Whether the Pi is passing traffic through. Shows a green **✓ Enabled** or a red **✗ DISABLED** — it must be enabled for routing to work."],
+        ["**Gateway Uptime**", "How long the gateway Pi has been running since its last reboot."]
+      ],
+      "widths": [2.1, 4.5]
+    }},
+
+    {"h1": "Routes, Peers, and the Access Log"},
+    {"p": "Three tables further down give the detail behind the summary cards:"},
+    {"bullets": [
+      "__Active Routes.__ Lists each network the gateway is carrying traffic for, the path it goes **via**, and a green **Active** or red **Not routed** status dot. If the tunnel is up you should see the 44Net route marked Active.",
+      "__Connected Peers.__ Lists other stations connected through the tunnel — each peer's key, its endpoint address, which addresses it's allowed to use, when it last made contact, and whether it's **Connected** or **Idle**.",
+      "__Access Log.__ A running list of recent gateway logins and station identifications, kept for the Part 97 requirement to log who used the station. It scrolls, newest activity included."
+    ]},
+
+    {"h1": "Tunnel Control — and Why It's Locked Down"},
+    {"p": "At the bottom is a **Tunnel Control** section with buttons — **▲ Bring Tunnel UP**, **▼ Bring Tunnel DOWN**, **↺ Restart Tunnel**, **⟳ Refresh Status**, and a link to **🛰 Open Gateway Dashboard**. Only **Refresh Status** and the dashboard link work from an ordinary operator's laptop or phone. The three tunnel buttons are deliberately restricted."},
+    {"callout": {"kind": "important", "label": "TURNING THE TUNNEL ON/OFF NEEDS PHYSICAL ACCESS",
+      "text": "Bringing the tunnel **up**, **down**, or **restarting** it can only be done by someone **sitting at the gateway Pi's own keyboard**, in its browser, logged in with a valid callsign. It cannot be done from operator laptops or phones on the network. This is on purpose — it keeps control of a licensed radio resource in the hands of a licensed operator physically present at the equipment. If you press one of these buttons from a regular device, the page will tell you it requires access to the gateway Pi itself."}},
+    {"p": "The **About This Gateway** table at the very bottom is a quick reference card: the gateway Pi's address (`192.168.50.2`), its status link, your 44Net block, the tunnel's far-end endpoint, what it routes, and a link to the amateur-radio address portal (`portal.ampr.org`). It's informational — nothing to change there."},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__The banner says “Gateway Unreachable” (amber).__ The gateway Pi isn't answering. Check that it's **powered on and plugged into the network**. The main FieldCommand system is unaffected either way.",
+      "__The banner says “TUNNEL DOWN” (red).__ The gateway Pi is up but the tunnel isn't connected. An operator at the gateway Pi keyboard can use **Bring Tunnel UP** or **Restart Tunnel**. If it won't come up, the internet path to the far-end endpoint may be out.",
+      "__The tunnel buttons do nothing from my laptop.__ That's expected. Tunnel control only works from the browser **on the gateway Pi itself**, logged in with a callsign. Refresh Status and the dashboard link are the only controls meant for regular devices.",
+      "__IP Forwarding shows a red ✗ DISABLED.__ Routing won't work until it's enabled on the gateway Pi. This is a setup item — see the Installation Guide's gateway steps.",
+      "__There's no 44Net route in Active Routes.__ Usually the tunnel is down. Get the banner green first; the route should then show Active.",
+      "__I can't register for an address.__ Registration at `portal.ampr.org` requires a valid amateur-radio license and callsign, and approval takes a few weeks. This must be done by the group's licensed technical lead."
+    ]}
+  ]
+}

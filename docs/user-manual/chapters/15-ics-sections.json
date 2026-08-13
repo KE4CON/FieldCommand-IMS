@@ -1,0 +1,108 @@
+{
+  "order": 15,
+  "title": "Incident Command System (ICS) Platform Overview — Five-Section Structure",
+  "subtitle": "How FieldCommand organizes an incident into the five ICS sections, how the shared ICS form page works, and how General Info fills the header on every form at once.",
+  "in_this_chapter": [
+    "The five ICS sections and what each one does",
+    "Command Staff vs. General Staff — who reports to whom",
+    "Where each section's forms live and who develops them",
+    "The shared ICS form page — variants, saving, and digital signatures",
+    "The General Info screen — enter once, auto-fill every form",
+    "Single Incident Commander vs. Unified Command",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "The Incident Command System (ICS) splits an incident into five sections: **Command, Operations, Planning, Logistics, and Finance/Admin**. FieldCommand follows that structure — the form buttons in an incident are grouped by section. Fill in the **📋 General Info** screen once per operational period and it copies the incident name, dates, commander, and section chiefs onto every ICS form automatically. Open any form, type, and it saves on its own; sign the **Prepared By** and **Approved By** lines right on the touchscreen."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "The Incident Command System (ICS) is the standard way the United States organizes any incident, defined by the National Incident Management System (NIMS). Its core idea is simple: no matter how big or small the event, the work is divided into five sections, each with a clear job. FieldCommand implements that full five-section structure so your paperwork and your organization chart line up with what every trained responder expects."},
+    {"p": "This chapter explains what the five sections are, which FieldCommand forms belong to each, and the two screens you'll touch most when doing ICS paperwork — the shared **ICS form page** (where you fill out any individual form) and the **General Info** screen (where you type the shared header once instead of on every form)."},
+
+    {"h1": "The Five ICS Sections"},
+    {"p": "Every incident, from a one-operator net to a full county activation, is organized around these five sections. A small incident may have one person wearing several of these hats; a large one staffs each separately. FieldCommand keeps the structure the same either way."},
+    {"table": {
+      "headers": ["Section", "Plain-language job", "Key FieldCommand forms"],
+      "rows": [
+        ["**Command**", "Sets the objectives and is in charge of the whole incident. Led by the Incident Commander (IC).", "ICS-201 Incident Briefing, ICS-202 Objectives, ICS-207 Organization Chart, ICS-208 Safety Message/Plan"],
+        ["**Operations**", "Does the actual field work — the teams, crews, and resources carrying out the plan.", "ICS-204 Assignment List, ICS-211 Check-In List, ICS-219 Resource Status (T-Cards), ICS-210 Resource Status Change"],
+        ["**Planning**", "Tracks the situation and resources, and assembles the Incident Action Plan (IAP) for the next period.", "ICS-203 Organization Assignment List, ICS-209 Incident Status Summary, ICS-215 Operational Planning Worksheet, ICS-215A IAP Safety Analysis"],
+        ["**Logistics**", "Provides everything the incident needs — communications, medical support, facilities, supplies, and vehicles.", "ICS-205 Radio Communications Plan, ICS-205A Communications List, ICS-206 Medical Plan, ICS-213RR Resource Request"],
+        ["**Finance / Admin**", "Tracks time, costs, and records so the incident can be paid for and documented.", "ICS-214 Activity Log, ICS-220 Air Operations Summary, ICS-221 Demobilization Check-Out"]
+      ],
+      "widths": [1.4, 2.6, 2.5]
+    }},
+    {"p": "In an incident's workspace (Chapter 5), the ICS form buttons are laid out under colored dividers with these same section names, plus a **Communications Unit** group for the ICS-213 General Message and the ICS-309 Communications Log. A record added in one section is visible everywhere it's relevant — a resource entered in Operations shows up in Logistics and Finance too, because they all read from the same incident."},
+
+    {"h1": "Command Staff vs. General Staff"},
+    {"p": "Two roles sit beside the Incident Commander rather than inside a section. Knowing the difference keeps your ICS-203 organization chart correct."},
+    {"table": {
+      "headers": ["Group", "Who's in it", "Reports to"],
+      "rows": [
+        ["**Command Staff**", "Safety Officer (SOFR), Public Information Officer (PIO), and Liaison Officer (LNO)", "Directly to the Incident Commander — **not** to a section"],
+        ["**General Staff**", "The four Section Chiefs — Operations (OSC), Planning (PSC), Logistics (LSC), and Finance/Admin (FSC)", "The Incident Commander; each runs their own section"]
+      ],
+      "widths": [1.7, 3.3, 1.5]
+    }},
+    {"callout": {"kind": "note", "label": "WHO DEVELOPS A FORM ISN'T ALWAYS WHO USES IT",
+      "text": "A few forms are prepared by one section and used by another. The **ICS-204 Assignment List** is developed by the Resources Unit in Planning but distributed to and used by Operations supervisors. The **ICS-205, 205A, 206, and 309** are developed by the Communications and Medical units (which live in Logistics) and then folded into the IAP by Planning. The **ICS-214 Activity Log** is kept by supervisors in every section, and Finance/Admin collects them for the cost record. FieldCommand doesn't force this on you — it's simply how the standard forms flow."}},
+
+    {"h1": "The Shared ICS Form Page"},
+    {"p": "Every individual ICS form — 201, 202, 204, 205, and the rest — opens on the same **ICS form page**. You reach it by clicking a form button inside an incident. The page top shows a badge with the form number (like **ICS-204**), the form's full name, and a **Form Variant** selector; on the right are **💾 Save** and **🖨 Print** buttons and a link back to the incident. A matching action bar with **💾 Save Form** and **🖨 Print / Export** sits at the bottom."},
+    {"h2": "Form Variants"},
+    {"p": "The **Form Variant** pills — **FEMA**, **USCG**, and **NWCG** — pick which agency's version of the form you're filling out. Most all-hazards and emergency-communications work uses **FEMA**. The page defaults to the variant set on the incident (which itself came from your Setup default), so you usually don't touch this. Change it only when {{served_the}} specifically expects a different one."},
+    {"table": {
+      "headers": ["Variant", "Full name", "When to use it"],
+      "rows": [
+        ["**FEMA**", "Federal Emergency Management Agency", "The all-hazards default — the right choice for most incidents"],
+        ["**USCG**", "United States Coast Guard", "Coast Guard incidents that use the CG form numbers"],
+        ["**NWCG**", "National Wildfire Coordinating Group", "Wildland-fire incidents that use the wildfire form set"]
+      ],
+      "widths": [1.2, 3.0, 2.3]
+    }},
+    {"h2": "Saving and Digital Signatures"},
+    {"p": "Click **💾 Save** (top or bottom) to store the form; a **✓ Saved** indicator confirms it. Forms are tied to the incident and the operational period, so the same form number for a different period is a separate record."},
+    {"p": "Fields for **Prepared By** and **Approved By** are special — each shows a **Sign** button. Tap it and a signature pad appears; sign with a finger, stylus, or mouse, then tap **✓ Accept Signature** to capture it onto the form (or **✕ Clear signature** to redo it). The captured signature prints on the form, so an on-site IAP package carries real approvals, not just typed names."},
+    {"callout": {"kind": "note", "label": "PRINT MEANS PRINT OR PDF",
+      "text": "The **🖨 Print** / **🖨 Print / Export** button opens a clean, print-formatted version of the form. From the print dialog you can send it to a printer or save it as a Portable Document Format (PDF) file — the same button does both."}},
+
+    {"h1": "General Info — Enter Once, Fill Every Form"},
+    {"p": "The single biggest time-saver in the ICS section is the **General Information** screen. Reached from the gold **📋 GENERAL INFO** button in an incident's operational-period bar, it collects the header information that would otherwise be re-typed on 20-plus forms — and copies it to all of them at once. The header even states it plainly: __enter once, auto-fills all 29 ICS forms.__"},
+    {"p": "A period selector (◀ **OP PERIOD** ▶) at the top right sets which operational period you're editing, because this information changes from one shift to the next. The screen is divided into labeled sections:"},
+    {"table": {
+      "headers": ["General Info section", "What you enter"],
+      "rows": [
+        ["🚨 **Incident Identity**", "Incident Name (required), Incident Number, Type, Jurisdiction, Location/Address, Latitude, Longitude, and the ICS Variant"],
+        ["🕐 **Operational Period**", "The From and To date/time for this period"],
+        ["⭐ **Command**", "Incident Commander (IC), Deputy IC, Safety Officer (SO), Public Information Officer (PIO), and Liaison Officer (LNO)"],
+        ["⚙️ **General Staff — Section Chiefs**", "Operations (OSC), Planning (PSC), Logistics (LSC), and Finance/Admin (FSC) Section Chiefs"],
+        ["👤 **Key Unit Leaders**", "Resources (RESL), Situation (SITL), Documentation (DOCL), Demobilization (DMOB), Communications (COML), and Medical (MEDL) Unit Leaders, plus Prepared By and Approved By — used to auto-fill signature blocks"],
+        ["🌤 **Weather**", "Temperature, Wind, Humidity, Sky/Conditions, Sunrise, Sunset, and a Forecast box — with a **Fetch NWS** button that pulls the current National Weather Service forecast when the internet is up"]
+      ],
+      "widths": [2.3, 4.2]
+    }},
+    {"steps": [
+      "Open **📋 GENERAL INFO** from the incident's period bar (or the **📋 General Info** link on any ICS form page).",
+      "Confirm the **OP PERIOD** selector shows the right period.",
+      "Fill in the sections top to bottom — at minimum the **Incident Name** and the command/staff names.",
+      "Click **💾 SAVE & PROPAGATE TO ALL FORMS**. A green confirmation shows the save time, and every ICS form for this period now carries these values in its header.",
+      "Starting the next shift? Click **📋 Copy to Next Period** to carry the names forward while clearing the period-specific dates and weather."
+    ]},
+    {"callout": {"kind": "tip", "label": "IT ALSO SAVES ITSELF",
+      "text": "General Info auto-saves a few seconds after you stop typing, and it keeps a local copy on your device so nothing is lost if the connection drops. The **Fetch NWS** weather pull and the sunrise/sunset calculation need latitude and longitude filled in first."}},
+
+    {"h1": "Single Incident Commander vs. Unified Command"},
+    {"p": "The command structure is documented on the **ICS-203 Organization Assignment List**, and General Info's Command section feeds it. For a **Single Incident Commander** incident, one IC's name sits at the top of the chart. For a **Unified Command** incident, the participating agencies are listed together at the command level. FieldCommand handles both structures identically — the ICS-203, ICS-202, and every downstream form behave the same way regardless. See Chapter 5 for how to set each one up when you create the incident."},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__A form opens with a blank header — no incident name or dates.__ Fill in and save the **📋 General Info** screen for that operational period. The header on individual forms is populated from General Info; if you skipped it, the fields come up empty.",
+      "__I updated a name in General Info but an old form still shows the old name.__ Re-save General Info with **💾 SAVE & PROPAGATE TO ALL FORMS**, then reopen the form. Propagation happens on save; a form left open from before won't refresh on its own.",
+      "__The wrong form variant is showing (FEMA/USCG/NWCG).__ The page uses the incident's variant by default. Click the correct **Form Variant** pill at the top of the form, or change the incident's variant from its workspace (Chapter 5).",
+      "__The Sign button won't capture my signature.__ Sign inside the pad area, then tap **✓ Accept Signature** — the signature isn't saved until you accept it. Use **✕ Clear signature** to start over. Signatures are available on the Prepared By and Approved By fields.",
+      "__Fetch NWS says weather is unavailable.__ The National Weather Service pull needs an internet connection and requires the incident **Latitude** and **Longitude** to be filled in first. Offline, type the weather in by hand.",
+      "__I changed the period selector and my entries disappeared.__ Each operational period has its own General Info. Switching periods loads that period's data; your earlier entries are safe under the period you typed them in. Use **📋 Copy to Next Period** to carry names forward.",
+      "__My form didn't save.__ Watch for the **✓ Saved** indicator after clicking **💾 Save**. If it doesn't appear, confirm you're connected to the FieldCommand Wi-Fi and the incident service is running, then save again."
+    ]}
+  ]
+}

@@ -1,0 +1,145 @@
+{
+  "order": 6,
+  "title": "Pre-Planned Event Templates",
+  "subtitle": "Ready-made incident setups you can drop in place in seconds — plus the Meeting Scheduler that plans ICS meetings and prints agendas.",
+  "in_this_chapter": [
+    "What a template is and why it saves you time",
+    "The Activate tab vs. the Manage Templates tab",
+    "The built-in templates and what each one carries",
+    "Activating a template into a live incident",
+    "Building and editing your own templates",
+    "Exporting and importing templates to share them",
+    "The Meeting Scheduler — planning meetings, attendees, agendas, and minutes",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "Open **Event Templates** from the dashboard. On the **⚡ Activate** tab, click a template card (like **Shelter Activation**), type an **Incident Name**, and click **⚡ Activate Template**. FieldCommand instantly creates a new incident already loaded with objectives, resource T-cards, radio channels, and an org chart from that template. To change what a template contains, use the **✏ Manage Templates** tab. Nothing about a template is locked — every value stays editable after you activate it."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "An **event template** is a pre-built incident setup you save ahead of time and drop in when an activation starts. Instead of creating a blank incident and typing objectives, adding resources, and entering radio channels by hand every time, you activate a template and all of that appears at once — pre-filled and ready to edit."},
+    {"p": "Templates are ideal for the incident types you handle again and again: a shelter opening, a search callout, a severe-weather activation. You set them up once — with your local objectives, your usual resource list, and your standard channels — and from then on a two-click activation gives every operator the same consistent starting point. Think of a template as a rubber stamp for a whole incident."},
+    {"callout": {"kind": "note", "label": "A TEMPLATE IS A STARTING POINT, NOT A CAGE",
+      "text": "Activating a template creates a normal incident. Everything it filled in — objectives, resources, channels, org chart — is fully editable afterward, exactly as if you'd typed it yourself. The template just spares you the typing."}},
+
+    {"h1": "Opening Event Templates — the Two Tabs"},
+    {"p": "The **Event Templates** page opens with a **PLAN** badge and two tabs across the top:"},
+    {"table": {
+      "headers": ["Tab", "What it's for"],
+      "rows": [
+        ["**⚡ Activate**", "Browse the template gallery and turn a template into a live incident. This is the everyday tab."],
+        ["**✏ Manage Templates**", "Create, edit, reorder, delete, export, and import templates. This is where you tailor them to your group."]
+      ],
+      "widths": [2.0, 4.5]
+    }},
+    {"p": "The header also carries a **+ New Template** button, a **📥 Import JSON** button, and an **📤 Export All** button (covered further down), plus the **← Dashboard** link."},
+
+    {"h1": "The Built-In Templates"},
+    {"p": "FieldCommand ships with six built-in templates covering the most common incident types. Each appears as a card in the Activate gallery showing an icon, a name, a short description, and a count of its objectives, resources, and channels. A small **built-in** tag marks the ones that came with the system. Use any of them as-is, or edit them to match your local protocols."},
+    {"table": {
+      "headers": ["Template", "What it pre-loads"],
+      "rows": [
+        ["**Shelter Activation**", "Shelter-management objectives, cot and supply resource types, registration and medical channels, {{served}} coordination section"],
+        ["**Search & Rescue**", "Search-and-rescue objectives, field-team and K9 resource types, search-sector channels, base-camp and medical branches"],
+        ["**Severe Weather**", "Damage-assessment objectives, utility and debris resource types, shelter and Emergency Operations Center (EOC) coordination channels, public-information branch"],
+        ["**Mass Gathering / Event**", "Crowd-management objectives, medical and security resource types, venue and dispatch channels, medical and operations branches"],
+        ["**HazMat / Spill**", "Decontamination and zoning objectives, HazMat-team resource types, hot/warm/cold-zone channels, safety-officer emphasis"],
+        ["**Planned Exercise / Drill**", "Training objectives, evaluator and observer resource types, an exercise-control channel, and it is pre-tagged as a scenario (🧪)"]
+      ],
+      "widths": [2.0, 4.5]
+    }},
+
+    {"h1": "Activating a Template"},
+    {"p": "Activating is a two-step flow on the **⚡ Activate** tab: pick a template, then fill in the few details that are unique to this run."},
+    {"steps": [
+      "On the **⚡ Activate** tab, click the card for the template you want. The page switches to a configuration view with a **← Back** button and the template name at the top.",
+      "Fill in the **Incident Details** — see the table below. **Incident Name** is the only required field.",
+      "Check the **What Will Be Created** preview — it lists the exact objectives, safety message, resources, and channels the template will drop in, so there are no surprises.",
+      "Click the big blue **⚡ Activate Template** button. FieldCommand creates the incident and builds its ICS-202, ICS-203, ICS-205, and resource T-cards from the template.",
+      "When it finishes, a green success line appears with quick links — **→ ICS-202**, **→ ICS-203**, **→ ICS-205**, **→ T-Cards**, and **→ Dashboard**. Click one to jump straight to that piece. The page does **not** navigate there on its own, so you land wherever you choose."
+    ]},
+    {"screenshot": "The template configuration view with the Incident Details form and the What Will Be Created preview"},
+    {"table": {
+      "headers": ["Field", "What to type", "Notes"],
+      "rows": [
+        ["**Incident Name** *(required)*", "A name for this activation", "Example: `Shelter Alpha — Lincoln School`"],
+        ["**Incident Commander**", "Who's in charge, or `TBD`", "Optional"],
+        ["**Location / Facility**", "Where the incident is", "Optional"],
+        ["**Jurisdiction**", "The area or authority", "Optional"],
+        ["**Op Period Start / End**", "Start and end of the first operational period", "Pre-filled to now and 12 hours out; adjust as needed"],
+        ["**Mark as training scenario 🧪**", "Tick this for a drill", "A scenario incident is safe to wipe later with the Beta Reset (Chapter 5). Some templates, like Planned Exercise / Drill, default this on."]
+      ],
+      "widths": [2.3, 2.6, 2.6]
+    }},
+    {"callout": {"kind": "note", "label": "CHANNEL FREQUENCIES ARE PLACEHOLDERS",
+      "text": "A template's radio channels come in with names and functions, but you should confirm the actual frequencies for your area on the ICS-205 Radio Communications Plan after activating. The preview reminds you of this."}},
+
+    {"h1": "Creating and Editing Templates"},
+    {"p": "The **✏ Manage Templates** tab lists every template with **✏ Edit**, **📤** (export), and **⚡ Activate** buttons. To build a new one, click **+ New Template** in the header; to change an existing one, click its **✏ Edit** button. Either way the template editor opens — a single scrolling form divided into sections."},
+    {"table": {
+      "headers": ["Editor section", "What you set"],
+      "rows": [
+        ["**Basic info**", "**Template Name** (required), **Incident Type Label**, **Icon** (an emoji), **Sort Order** (controls its place in the gallery), and a **Summary** shown on the card"],
+        ["**ICS-202 Objectives**", "The list of incident objectives. Click **+ Add Objective** to add a line, the **✕** to remove one; they renumber automatically."],
+        ["**ICS-202 Safety Message**", "A default safety message that lands on the ICS-202"],
+        ["**Pre-loaded Resources**", "The T-cards to create. Each row has a **Name**, a **Type** (Personnel, Crew, Engine, Vehicle, Equipment, Helicopter, Other), and a **Qty**. Click **+ Add** for more."],
+        ["**ICS-205 Default Channels**", "The radio channels. Each row: **Channel Name**, **RX Freq**, **TX Freq**, **Tone**, **Mode** (FM/NFM/AM/USB/LSB/DIG), and **Function** (Command/Tactical/Medical/Logistics/Liaison/Other)"],
+        ["**ICS-203 Default Org**", "Default org-chart positions — Ops Section Chief, Safety Officer, Public Info Officer, a Branch I label, and Division A–D labels"],
+        ["**Scenario default**", "A checkbox to make every incident from this template default to a training scenario 🧪"]
+      ],
+      "widths": [2.1, 4.4]
+    }},
+    {"steps": [
+      "Make your changes in any section — edits are live in the form.",
+      "Click **SAVE TEMPLATE** at the bottom. The template list refreshes with your changes.",
+      "To remove a custom template, open it and click **Delete**. Built-in templates can be edited but **not** deleted — the Delete button is hidden for them, and their edits are kept safe and won't be overwritten by system updates."
+    ]},
+
+    {"h1": "Sharing Templates — Export and Import"},
+    {"p": "Templates travel as plain JSON files, so you can hand a polished template to another FieldCommand system or keep a backup."},
+    {"bullets": [
+      "__Export one template.__ Click the **📤 Export JSON** button inside the editor, or the **📤** button on its row in Manage Templates. A `.json` file downloads.",
+      "__Export everything.__ Click **📤 Export All** in the header to download all your templates in one file, named with today's date.",
+      "__Import.__ Click **📥 Import JSON** in the header and pick a template file. FieldCommand adds the templates and tells you how many it imported."
+    ]},
+
+    {"h1": "The Meeting Scheduler"},
+    {"p": "Reached from the **📅 Meeting Scheduler** link in an incident's Planning section (Chapter 5), the Meeting Scheduler plans the standard ICS meetings for an incident, tracks who must attend, prints agendas, and records minutes. It is tied to whichever incident you opened it from — the incident name shows in the header."},
+    {"h2": "The Planning-P Strip"},
+    {"p": "Across the top runs the **Planning-P strip** — the recognized cycle of ICS meetings shown left to right with arrows: **Incident Briefing → Tactics Meeting → Planning Meeting → Ops Briefing → Agency Reps → Command Staff**. Each step shows its scheduled time and lights up when a meeting of that type exists (blue for scheduled, and it marks as done once completed). Click a step to jump to that meeting."},
+    {"h2": "Scheduling a Meeting"},
+    {"steps": [
+      "Click **+ Schedule Meeting**. The **📅 SCHEDULE MEETING** box opens.",
+      "Pick a **Meeting Type** from the grouped dropdown (Planning-P cycle meetings, Public Information meetings, Operational briefings, or Other). FieldCommand auto-fills a title, a suggested **Chair / Facilitator**, the **Required Attendees** by ICS position, and a starter **Agenda** for that meeting type.",
+      "Set the **Date & Time** and **Operational Period**, and optionally a **Location / Room**.",
+      "Adjust attendees — tick or untick required positions and type in the assigned person's name; add anyone else under **Additional / Optional Attendees**. Edit or add **Agenda Items** (each with a duration) as needed.",
+      "Click **SAVE MEETING**. It appears in the list, grouped by operational period."
+    ]},
+    {"table": {
+      "headers": ["Meeting type group", "Examples"],
+      "rows": [
+        ["Planning P Cycle", "Incident Briefing (ICS-201), Tactics Meeting, Planning Meeting, Operations Briefing, Agency Representative Meeting, Command Staff Meeting"],
+        ["Public Information", "JIC Coordination Meeting, Media Briefing / Press Conference, Community Information Meeting, Social Media Coordination"],
+        ["Operational", "Shift Briefing, Resource / Logistics Briefing, Finance / Admin Briefing, Demobilization Briefing"],
+        ["Other", "Training / Drill, Hot Wash / After Action, Other Meeting"]
+      ],
+      "widths": [1.9, 4.6]
+    }},
+    {"p": "Each meeting card shows the time, location, chair, status, and attendee chips (required attendees are outlined in amber). The card's buttons are **✏ Edit**, **📝 Minutes**, **🖨 Print Agenda**, and **✕** to delete."},
+    {"h2": "Minutes and Printing"},
+    {"p": "Click **📝 Minutes** on a meeting to record decisions and action items, and to set its status to **Scheduled**, **Completed**, or **Cancelled**. Click **🖨 Print Agenda** to open a clean, printable agenda page: it lists the meeting details, a required-attendees table with a **Present** column to check off, an optional-attendees table, the numbered agenda with durations and a total-time line, and any minutes already recorded — ready to print or hand out."},
+    {"callout": {"kind": "note", "label": "MEETINGS ARE PART OF THE INCIDENT RECORD",
+      "text": "Like everything else on the ICS side, scheduled meetings, attendees, agendas, and minutes are saved with the incident and archived along with it. They are a permanent part of the activation's documentation."}},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__The template gallery is empty or shows an error.__ The template list comes from the incident service on the Pi. Confirm you're connected to the FieldCommand Wi-Fi and the dashboard loads; if the service is still starting, wait a moment and reload the page.",
+      "__I clicked Activate Template and it wouldn't proceed.__ **Incident Name** is required on the configuration view. Type a name, then click **⚡ Activate Template** again.",
+      "__After activating, I'm still on the templates page.__ That's on purpose — activation shows success links (→ ICS-202, → T-Cards, → Dashboard, and so on) and lets you choose where to go instead of jumping automatically. Click whichever link you want.",
+      "__The Delete button is missing on a template.__ It's a **built-in** template. Built-ins can be edited but not deleted. If you don't want it in the gallery, lower its priority with a high **Sort Order**, or create your own alongside it.",
+      "__My template's radio frequencies are blank on the ICS-205.__ Templates seed channel names and functions but you confirm the actual frequencies per activation. Open the ICS-205 and fill them in for your area.",
+      "__Import failed with an invalid-JSON message.__ The file you picked isn't a valid FieldCommand template export. Re-export it from the source system with **📤 Export JSON** or **📤 Export All**, then import that file.",
+      "__The Meeting Scheduler says no incident is selected.__ Open it from inside an incident (the **📅 Meeting Scheduler** link in the Planning section), not directly — it needs to know which incident the meetings belong to."
+    ]}
+  ]
+}

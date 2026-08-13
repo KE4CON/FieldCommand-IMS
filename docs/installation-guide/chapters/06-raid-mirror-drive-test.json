@@ -1,0 +1,106 @@
+{
+  "order": 6,
+  "title": "The Mirror & the Pull-a-Drive Test",
+  "subtitle": "What the one-command setup quietly built for you — two solid-state drives holding identical copies of everything — and the ten-minute test that proves it will actually save you when a drive dies.",
+  "in_this_chapter": [
+    "What a mirror is, in plain language, and why it protects your data",
+    "What the setup built in Stage 2 (the mirror, the copied operating system, the boot order, the first-boot install)",
+    "Why the SD card is deliberately kept as a fallback",
+    "Why the pull-a-drive test is non-negotiable",
+    "The pull-a-drive test, step by step, exactly as the setup prints it",
+    "Re-adding the drive that was out and watching it rebuild",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "The setup built a **mirror** — two drives keeping an identical copy of everything, so the server survives one drive dying. Prove it works: power off, pull the microSD card and **one** drive, power on — it must boot and FieldCommand must come up on the one remaining drive. Power off, swap which drive is out, power on — it must boot on the other alone. Then power off, put both back, power on, and re-add the drive that was out with **`sudo mdadm /dev/md0 --add <that drive's p2>`**, watching **`cat /proc/mdstat`** rebuild. If it passes both pulls, your mirror is real."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "In the previous chapter, the one-command setup did a lot of work you never had to watch: it built a **mirror** across two solid-state drives, copied the whole operating system onto it, told the Pi to start up from those drives, and set an installer to run itself the first time the mirror booted. This chapter has two parts. First, a plain-language tour of what all that means. Second — and this is the part **only you can do** — the **pull-a-drive test**, the short, hands-on check that proves the mirror will actually protect the server when a real drive fails one day in the field."},
+    {"p": "You do not need to understand the technical machinery to run the test — the steps are printed for you at the end of the setup, word for word, and repeated here with an explanation of each one. But read the first half so you know **why** you're pulling drives out of a working server: it feels wrong the first time, and it isn't."},
+    {"callout": {"kind": "note", "label": "WHO DOES THIS",
+      "text": "This is the last job of the person building the server, done once at the workbench before the equipment ever goes to the field. It takes about ten minutes. Everyone else just uses the finished, tested server — they never see any of this."}},
+
+    {"h1": "What a Mirror Is, and Why It Protects You"},
+    {"p": "A **mirror** — the formal name is **Redundant Array of Independent Disks level 1 (RAID 1)** — means two drives that hold an **identical copy of everything**, kept in step automatically. Every time the server writes a file, it writes it to **both** drives at the same moment. The two drives are always the same, byte for byte."},
+    {"p": "Here is why that matters. A **solid-state drive (SSD)** — the small, fast storage card the server keeps its data on — is reliable, but nothing lasts forever. Drives fail without warning, usually at the worst time: during an activation, in the field, far from a spare. On an ordinary single-drive computer, a dead drive means the whole system stops and everything on it is gone. During a real incident, that is a disaster."},
+    {"p": "With a mirror, one drive can die completely and **the server keeps running on the other one**, with every incident record, form, map, and setting intact. Nobody at the incident even needs to know it happened. You replace the dead drive later, at your leisure, and the mirror copies everything back automatically. That is the entire reason FieldCommand is built on two drives instead of one: so a single hardware failure is a shrug, not an emergency."},
+    {"callout": {"kind": "important", "label": "A MIRROR IS NOT A BACKUP",
+      "text": "A mirror protects you from a **drive dying**. It does not protect you from someone deleting the wrong file, or from a mistake being copied — because whatever happens gets written to both drives at once. A mirror keeps the server **running** through a hardware failure; it is not a substitute for keeping backup copies of your important data somewhere else. Both are worth having, and they do different jobs."}},
+
+    {"h1": "What the Setup Built in Stage 2"},
+    {"p": "During Stage 2 of the one-command setup (the \"heavy lifting\" stage), four things happened. You don't run any of these yourself — the setup did all of it — but knowing what each one means helps you understand what the pull-a-drive test is checking:"},
+    {"table": {
+      "headers": ["What the setup built", "In plain language", "Why it matters"],
+      "rows": [
+        ["**The RAID 1 mirror across both SSDs**", "It joined the two drives into one mirrored pair so they always hold the same thing.", "This is the fault tolerance itself — the thing that lets one drive fail without stopping the server."],
+        ["**A copy of the running operating system onto the mirror**", "It copied the entire working system — the operating system (OS), the FieldCommand software, everything — from the microSD card onto the mirrored drives.", "The server now lives on the fault-tolerant mirror, not on the single card. The card was only ever the starting point."],
+        ["**A new boot order — drives first, card as fallback**", "It told the Pi 5 to start up from the fast solid-state drives first, and to fall back to the microSD card only if the drives can't be used.", "Day to day, the Pi runs entirely from the mirror. The card sits there quietly as a safety net (more on this below)."],
+        ["**A one-time first-boot installer**", "It set up a service that runs the FieldCommand installer **automatically, exactly once**, the first time the mirror boots — then switches itself off so it never runs again.", "You got a fully installed, fully configured server with no extra steps — and no risk of it re-installing on every reboot."]
+      ],
+      "widths": [2.1, 2.7, 2.0]
+    }},
+    {"callout": {"kind": "note", "label": "\"RAID 1,\" \"MIRROR,\" AND \"THE ARRAY\" ALL MEAN THE SAME THING",
+      "text": "You'll see three names for the same object. A **mirror** is the everyday word. **RAID 1** is the technical name (Redundant Array of Independent Disks, level 1). **The array** — and its system name **`/dev/md0`** — is how the Pi refers to the mirrored pair internally. When the test tells you to type `/dev/md0`, that is simply \"the mirror.\""}},
+
+    {"h1": "Why the SD Card Is Kept as a Fallback"},
+    {"p": "You might expect the setup to erase the microSD card once the server moves onto the mirror. It deliberately does not. The Pi's start-up order is set to try the solid-state drives **first**, and fall back to the card only if the drives can't start the system. Leaving a working card in the slot means that even in a strange failure the Pi has one more way to come up."},
+    {"p": "That fallback is exactly why the first thing the pull-a-drive test tells you to do is **remove the microSD card**. If you left it in, the Pi might quietly boot from the **card** instead of the mirror — and you'd learn nothing about whether the mirror works. Pulling the card forces the Pi to prove it can run on a single remaining drive, with no safety net."},
+
+    {"h1": "Why the Pull-a-Drive Test Is Non-Negotiable"},
+    {"p": "The setup **builds** the mirror. It cannot **prove** the mirror works — and the gap between those two things is exactly where field disasters hide. A mirror can be built correctly on paper and still fail to boot on one drive because of a firmware quirk, a loose cable, a drive seated a hair short, or a boot file that didn't copy to the second drive. The only way to know is to actually pull a drive out, with the power off, and watch the server come back up without it."},
+    {"p": "This is a small amount of work for an enormous amount of confidence — about ten minutes at the bench. In return you get the certain knowledge that when a drive dies during a real activation, the server will keep running exactly as designed, because you already watched it do so."},
+    {"callout": {"kind": "important", "label": "A MIRROR YOU HAVE NOT TESTED BY PULLING A DRIVE IS A MIRROR YOU CANNOT RELY ON.",
+      "text": "This is the single most important sentence in the whole installation. An untested mirror gives you a false sense of safety — you **think** you're protected, so you don't keep other backups, and then the one time it matters, the mirror doesn't come up and you've lost everything. Do not skip this test. Do not do it \"later.\" Do it now, on the bench, before this server ever goes to an incident."}},
+
+    {"h1": "The Pull-a-Drive Test — Step by Step"},
+    {"p": "When the setup finishes building the mirror, it prints these exact instructions on screen before it reboots. They are reproduced here word for word, with an explanation of what you should see at each stage. You'll need to reach the drives, so have the Pi somewhere you can safely power it off and get at the two SSD slots."},
+
+    {"h2": "Part 1 — Boot on one drive alone"},
+    {"steps": [
+      "Shut the server down cleanly: open a terminal and run **`sudo poweroff`**, and wait for the Pi to fully power down.",
+      "Remove the **microSD card** AND **one** of the two SSDs. (It doesn't matter which SSD you pull first — call the one you removed \"drive A.\")",
+      "Power the Pi back on.",
+      "Watch it start up. **The Pi must boot and FieldCommand must come up on the remaining SSD alone** — the one drive you left in (\"drive B\"). Give it a minute; a mirror running on one drive can take slightly longer to start.",
+      "Confirm FieldCommand is actually working: from another device on the Wi-Fi, open the server address in a browser and check the dashboard loads normally. It should look and behave exactly as it did with both drives in."
+    ]},
+    {"callout": {"kind": "note", "label": "WHAT YOU JUST PROVED",
+      "text": "The server booted and ran with drive A completely gone. That is the failure you're protecting against — a dead drive — and you just watched the server shrug it off. But you've only tested **one** of the two drives so far. A mirror that boots on drive B but not on drive A is still a broken mirror, so keep going."}},
+
+    {"h2": "Part 2 — Boot on the other drive alone"},
+    {"steps": [
+      "Shut the server down again with **`sudo poweroff`** and wait for it to fully power off.",
+      "**Swap which SSD is out**: put drive A back in, and take drive B out. (Leave the microSD card out for this part too.) Now the server has only the drive that was **removed** during Part 1.",
+      "Power the Pi back on.",
+      "Again, **it must boot on the other drive alone** — this time on drive A. Wait for it, then confirm the FieldCommand dashboard loads from another device just as before."
+    ]},
+    {"callout": {"kind": "important", "label": "BOTH PULLS MUST PASS — NOT JUST ONE",
+      "text": "You have to see the server boot on **each** drive by itself, because a mirror is only as good as its weakest half. If it boots fine on drive A but won't come up on drive B (or the other way around), the boot files didn't make it onto both drives correctly, and the mirror will not save you if the wrong drive is the one that dies. See Troubleshooting below before you trust it."}},
+
+    {"h2": "Part 3 — Put both drives back and rebuild the mirror"},
+    {"p": "You've now proven the server boots on either drive alone. The last part puts the mirror back together. Because you ran the server on one drive at a time, the drive that was **out** is now behind — it missed whatever changed while it was removed. You tell the mirror to catch that drive back up:"},
+    {"steps": [
+      "Shut the server down one more time with **`sudo poweroff`**.",
+      "**Reinsert both SSDs** and reinsert the **microSD card**, so everything is back the way it started.",
+      "Power the Pi on and let it boot normally.",
+      "Re-add the drive that was out to the mirror. Open a terminal and run: **`sudo mdadm /dev/md0 --add <that drive's p2>`** — replacing `<that drive's p2>` with the second partition of the drive you're re-adding (for example `/dev/nvme1n1p2`). See the Troubleshooting note below on finding the right `p2`.",
+      "Watch the mirror rebuild by running: **`cat /proc/mdstat`**. You'll see a progress bar and a percentage climbing toward 100%. When it finishes, both drives are identical again and the mirror is whole."
+    ]},
+    {"code": [
+      "sudo mdadm /dev/md0 --add /dev/nvme1n1p2",
+      "cat /proc/mdstat"]},
+    {"p": "The rebuild runs in the background — you can keep using the server while it works, and it survives a reboot if you shut down before it finishes. Once **`cat /proc/mdstat`** shows both drives in sync with no recovery percentage, the pull-a-drive test is complete and your mirror is proven. The server is ready for the field."},
+    {"callout": {"kind": "tip", "label": "DO A DRY RUN OF THE REAL THING",
+      "text": "This test is also a rehearsal for the day a drive really fails. If a drive dies during an activation, the recovery is exactly Part 3: power off, fit a fresh drive, power on, run the same **`sudo mdadm /dev/md0 --add …`** command, and let it rebuild. Because you practiced it here on the bench, you'll know exactly what to do when it counts."}},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__The Pi won't boot at all with one drive out.__ First make sure you actually removed the **microSD card** as well — if the card is still in, the Pi may boot from the card instead of testing the mirror, which defeats the test. If the card is out and the Pi still won't start on the single drive, the boot files likely didn't copy to that drive correctly. Power off, put **both** drives back in (and the card), boot normally, and re-run the one-command setup so it rebuilds the mirror cleanly — then test again.",
+      "__It boots on one drive but not the other.__ This is the same problem as above, seen from the other side: the boot files made it onto one drive but not both. Don't trust the mirror. Put both drives back, boot normally, and re-run the setup to rebuild, then repeat the pull test until **both** single-drive boots succeed.",
+      "__The rebuild seems stuck / it's taking a very long time.__ A rebuild copies the whole drive, so it genuinely takes a while — often many minutes. Run **`cat /proc/mdstat`** again: if the percentage is still climbing, even slowly, it's working — just be patient. If it truly hasn't moved at all after a good while, run **`sudo mdadm --detail /dev/md0`** to check the array's state, and see the array-health note below.",
+      "__I don't know which partition is the drive's \"p2.\"__ Each SSD is split into two partitions. The **first** (`p1`, the small one) is the boot partition; the **second** (`p2`, the large one) is the part that belongs to the mirror. So the mirror partition is always the drive's name followed by **`p2`** — for the first drive that's **`/dev/nvme0n1p2`**, and for the second it's **`/dev/nvme1n1p2`**. To see the drives and their partitions plainly, run **`lsblk`**: it lists each drive with its `p1` and `p2` underneath. Add the **`p2`** of whichever drive you pulled.",
+      "__How do I check the mirror's health at any time?__ Two commands tell you everything. **`cat /proc/mdstat`** gives a quick one-look summary — you want to see both drives listed as `[UU]` (both Up), and no rebuild percentage running. **`sudo mdadm --detail /dev/md0`** gives the full report: look for **State: clean** or **active**, and **both** devices shown as `active sync`. If either command shows a drive as `removed`, `faulty`, or the state as `degraded`, the mirror is running on one drive — re-add or replace the missing drive as in Part 3.",
+      "__After a real drive failure, what do I actually do?__ Exactly Part 3 of the test: power off, remove the dead SSD and fit a healthy replacement of the same size (or larger), power on, then run **`sudo mdadm /dev/md0 --add <the new drive's p2>`** and watch **`cat /proc/mdstat`** rebuild. Because you rehearsed it on the bench, this is familiar ground, not a crisis."
+    ]}
+  ]
+}

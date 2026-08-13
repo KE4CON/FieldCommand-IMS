@@ -1,0 +1,122 @@
+{
+  "order": 10,
+  "title": "Barcode & Quick Response (QR) code Scan Check-In",
+  "subtitle": "Check people in fast with a phone or tablet camera — scan a badge, the roster fills the form, tap Check In. No camera? Type the ID instead.",
+  "in_this_chapter": [
+    "What Scan Check-In is and what it speeds up",
+    "The four ways to check someone in: hardware scanner, take-photo, live camera, and manual entry",
+    "Why a handheld 2D barcode scanner is the most reliable choice",
+    "Opening the page and starting the camera",
+    "Reading the screen — viewfinder, controls, form, and history",
+    "What happens when someone is found on the roster (and when they aren't)",
+    "The check-in form fields explained",
+    "The order the roster is searched",
+    "Which browsers support camera scanning",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "Open **Scan Check-In** on a phone or tablet. Tap **📷 Start Camera** and point it at the person's QR code or barcode. Their details fill the form by themselves — glance at them, then tap **✓ Check In**. No camera or code? Type their **member ID, callsign, or radio ID** in the manual box and tap **Look Up**. Tap **Scan Next Person** and repeat."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "**Scan Check-In** is the fast way to check people in at an activation using nothing but a smartphone or tablet camera. Point the camera at a member's **QR code** (Quick Response code — the square dot pattern) or **barcode**, and FieldCommand reads it, looks the person up in the roster, and fills their check-in form automatically. Tap one button and they're in. It's built for the check-in table at a staging area, an EOC (Emergency Operations Center), or a shelter, where a line of people needs to be logged quickly and accurately."},
+    {"p": "It does all of this **completely offline**. The scanning uses the browser's own built-in **BarcodeDetector** — a camera-reading feature baked into the browser itself — so there is no app to install, no external library, and no internet connection required. It reads QR codes plus several common barcode formats: Code 128, Code 39, EAN-13, EAN-8, Data Matrix, PDF417, and Aztec."},
+    {"callout": {"kind": "note", "label": "IT TIES INTO THE ICS-211 CHECK-IN LIST",
+      "text": "Each person you check in here is filed against an **incident** and operational **period**, and flows into that incident's **ICS-211** (the Incident Command System Check-In List). Scan Check-In is normally opened from an incident's ICS-211 share link, which carries the incident along in the web address so every scan lands in the right place."}},
+
+    {"h1": "The Ways to Check Someone In"},
+    {"p": "There are four ways to get a code into FieldCommand, and they all end at the same place — a filled-in form you confirm with **✓ Check In**. Pick whichever fits your table and your device; you can mix them freely during one event."},
+    {"table": {
+      "headers": ["Method", "How it works", "Best for"],
+      "rows": [
+        ["**Handheld barcode scanner** *(most reliable)*", "A **USB or Bluetooth 2D barcode scanner** — the handheld kind stores use — plugged into or paired with the check-in device. It reads the QR code or barcode and **types the value** straight into the manual box, which the page keeps **auto-focused** for exactly this. Works on **any device and any browser**, because to the computer it's just a keyboard.", "A staffed check-in table where you want speed and zero fuss"],
+        ["**Take Photo of QR**", "Tap the take-photo control, which opens the phone's camera to snap a single still picture of the code; FieldCommand reads the code from that photo.", "A phone that can't run the live viewfinder but can still take pictures (Android/Chromium)"],
+        ["**Live camera viewfinder**", "Tap **📷 Start Camera** and hold the code in view; the page reads it automatically, checking the picture about **4 times a second**. The same code won't log twice within 3 seconds, so a code lingering in view can't create duplicates. Needs the secure **HTTPS** connection (the padlock).", "Busy tables; members who carry a printed QR code or badge"],
+        ["**Manual ID entry**", "Type a member ID, callsign, or radio ID in the manual box and press **Enter** or tap **Look Up**. It does the same roster lookup the camera does, and always works everywhere.", "When there's no camera or scanner, or for walk-ins who have no code"]
+      ],
+      "widths": [1.6, 3.6, 1.4]
+    }},
+    {"callout": {"kind": "tip", "label": "A HANDHELD 2D SCANNER IS THE SUREST BET",
+      "text": "If you're staffing a check-in table, an inexpensive **USB or Bluetooth 2D barcode scanner** is the most reliable choice by a wide margin. It needs no camera permission, no special browser, and no secure-connection setup — it simply acts like a keyboard and types the code into the box, which the page keeps ready and focused for you. It works the same on a phone, tablet, or laptop and on any browser, so it sidesteps every camera limitation described later in this chapter. Point, beep, done. Keep the manual box as your always-available backup."}},
+    {"callout": {"kind": "note", "label": "TAKE-PHOTO AND LIVE CAMERA ARE PHONE FEATURES",
+      "text": "**Take Photo of QR** and the **live camera viewfinder** both use a phone or tablet camera, and both work on **Android with Chrome, Edge, or Samsung Internet**. Neither works in **iPhone/iPad Safari** — that's a limitation of that browser, covered in \"Which Browsers Can Scan\" below. On an iPhone, use a **handheld scanner** or the **manual ID entry** box instead; both work fine there."}},
+
+    {"h1": "Opening the Page and Starting the Camera"},
+    {"steps": [
+      "Open **Scan Check-In** — usually from an incident's **ICS-211** share link, or from the dashboard.",
+      "At the top, a bar shows the **camera viewfinder** with a white targeting frame and a moving scan line.",
+      "Tap **📷 Start Camera**. The first time, your browser asks permission to use the camera — tap **Allow**.",
+      "If the device has more than one camera (front and rear), pick the **rear-facing** one from the **camera dropdown** next to the buttons — it's easier to aim at a badge someone is holding.",
+      "The status line reads **Scanning…** once the camera is live. Tap **⏹ Stop Camera** to turn it off."
+    ]},
+    {"screenshot": "The Scan Check-In viewfinder with the targeting frame and scan line, the Start/Stop Camera buttons, and the camera-select dropdown"},
+
+    {"h1": "Reading the Screen"},
+    {"p": "From top to bottom, the page is laid out for one-handed use at a check-in table:"},
+    {"bullets": [
+      "**Camera viewfinder** — the live camera picture with a white corner frame to aim inside and a status line at the bottom (*Point camera at QR code or barcode*, then *Scanning…*, then *✓ Scanned:* the code).",
+      "**Camera controls** — **Start Camera**, **Stop Camera**, and the camera-select dropdown.",
+      "**Manual ID entry** — a text box to type a member ID, callsign, or radio ID, with a **Look Up** button, for when scanning isn't an option.",
+      "**Check-in form** — appears after a scan or lookup resolves, pre-filled where possible (covered below).",
+      "**Success box** — a big green **✅ CHECK-IN COMPLETE** confirmation after you submit.",
+      "**Recent Check-Ins This Session** — a running list of the last few people you checked in on this device, so you can see your progress.",
+      "**Incident badge** — a small line at the bottom naming the incident and period these check-ins belong to."
+    ]},
+
+    {"h1": "When Someone Is Found — and When They Aren't"},
+    {"p": "As soon as a code is scanned or an ID is looked up, FieldCommand searches the roster and one of two things happens:"},
+    {"table": {
+      "headers": ["Result", "What you see"],
+      "rows": [
+        ["**Found on the roster**", "A green banner shows the person's **name, ID, and agency**, tagged as a **✓ Roster member** or **👤 Visitor**. The form's **Name**, **ID**, and **Agency** fields fill in with green borders, and a **suggested ICS position** is selected if the roster has one. Review it, then tap **✓ Check In**."],
+        ["**Not on the roster**", "A **not-found** banner appears (*\"…\" not in roster. Fill in details manually.*). The scanned code drops into the **ID** field, and the cursor jumps to the **Name** field so you can type their details. Then tap **✓ Check In** as usual."]
+      ],
+      "widths": [1.9, 4.6]
+    }},
+    {"p": "Either way, tapping **✓ Check In** files the person, shows the full-screen **✅ CHECK-IN COMPLETE** box with their name and check-in time, and — on phones that support it — gives a short **vibrate** so you know it worked without staring at the screen. Tap **Scan Next Person** to clear everything and move to the next person in line."},
+
+    {"h1": "The Check-In Form Fields"},
+    {"table": {
+      "headers": ["Field", "What to enter"],
+      "rows": [
+        ["**Full Name** *(required)*", "The person's name. **Required** — you cannot check someone in without it."],
+        ["**Callsign / ID**", "Their callsign, member ID, or unit number. Fills in from the scan when they're on the roster."],
+        ["**Agency**", "The organization they're with (example: `{{org_abbr}}` or a mutual-aid agency)."],
+        ["**ICS Position**", "Their role, from the list — Incident Commander, the Section Chiefs, Branch Director, Division/Group Supervisor, Net Control, Amateur Radio Operator, Emergency Medical, Volunteer, or Other. Pre-selected when the roster suggests one."],
+        ["**Resource Type**", "What kind of resource they are — Personnel, Amateur Radio, Engine, Crew, Vehicle, Equipment, or Other."]
+      ],
+      "widths": [2.2, 4.3]
+    }},
+
+    {"h1": "The Order the Roster Is Searched"},
+    {"p": "When you scan a code or type an ID, FieldCommand tries to match it against several roster fields in turn, stopping at the first match. That way one scanner reads a member badge, an amateur callsign, or a public-safety unit number without you telling it which is which:"},
+    {"table": {
+      "headers": ["Search order", "Field checked", "Example value"],
+      "rows": [
+        ["1st", "barcode_id (the badge/QR value)", "{{mid}} (or a badge number if set)"],
+        ["2nd", "member_id", "{{mid}}"],
+        ["3rd", "callsign", "{{club}}"],
+        ["4th", "radio_id", "412"]
+      ],
+      "widths": [1.3, 2.6, 2.6]
+    }},
+
+    {"h1": "Which Browsers Can Scan"},
+    {"callout": {"kind": "important", "label": "CAMERA SCANNING NEEDS THE RIGHT BROWSER",
+      "text": "Camera scanning relies on the browser's built-in **BarcodeDetector**, which is available on **Chrome** (Android and desktop), **Edge**, and **Samsung Internet**. It is **not** available on **iPhone/iPad Safari** or **Firefox**. On those browsers the **Start Camera** button is disabled and the status line tells you so — but the **manual ID entry** box still works normally, so you can always check people in by typing. For a scanning table, an Android phone or a Chrome/Edge device is the safe choice."}},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__The Start Camera button is grayed out.__ Your browser doesn't support camera scanning (most often iPhone/iPad Safari or Firefox). Use a **handheld barcode scanner** or the **manual ID entry** box, or switch to Chrome, Edge, or Samsung Internet on an Android device.",
+      "__I'm on an iPhone and can't scan.__ iPhone/iPad Safari does not support the live camera or take-photo scanning — that's an Apple browser limitation, not a fault. The **manual ID entry** box works normally on an iPhone, and a **handheld USB/Bluetooth barcode scanner** is the best fix for a busy iPhone-based table since it just types the code in.",
+      "__My handheld barcode scanner isn't entering anything.__ A 2D scanner acts like a keyboard, so first click into the **manual ID entry** box to make sure it has focus, then scan. Confirm the scanner is plugged in (or paired over Bluetooth) and set to **2D** mode so it can read QR codes, not just old-style 1D barcodes. Test it in any text box — if it doesn't type there either, it's a scanner or pairing issue, not FieldCommand.",
+      "__The camera opens for a still photo instead of a live viewfinder.__ On some phones the take-photo option snaps a single picture of the code rather than scanning continuously — that's expected and works the same; just frame the code clearly and take the shot. For continuous scanning, use **Start Camera** on a supported browser (Chrome, Edge, or Samsung Internet).",
+      "__I tapped Start Camera but see a black box or a camera error.__ The browser needs camera permission — reload and tap **Allow** when asked. Make sure no other app is using the camera, and that the page was opened over the FieldCommand address, since browsers only allow the camera on trusted connections.",
+      "__The camera is on but won't read the code.__ Hold the code flat and steady inside the white frame, fill the frame with it, and give it good light. Glare and motion blur are the usual culprits. If it still won't read, type the ID by hand.",
+      "__It says the person isn't in the roster.__ Their code doesn't match any roster field. Fill in the **Name** and **Agency** by hand and tap **✓ Check In** — the check-in still records; it's just entered manually.",
+      "__Check-in failed / server error.__ The page couldn't reach the FieldCommand service. Confirm the device is on the FieldCommand Wi-Fi and the server is running, then tap **✓ Check In** again.",
+      "__The same person scanned twice.__ The page ignores a repeat of the same code within 3 seconds to prevent exactly this. If a true duplicate slips through, it can be cleaned up on the incident's ICS-211 list.",
+      "__The bottom says *No incident selected*.__ Open Scan Check-In from the incident's **ICS-211 share link** so the incident and period travel with it; otherwise check-ins have nowhere to file."
+    ]}
+  ]
+}

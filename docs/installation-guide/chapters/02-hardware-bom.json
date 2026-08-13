@@ -1,0 +1,167 @@
+{
+  "order": 2,
+  "title": "What You Need — Hardware & Bill of Materials",
+  "subtitle": "The complete shopping list for a FieldCommand command post: the two servers, the network gear, the operator workstations, printers, backup drives, and the optional extras — with exact models and what each part is for.",
+  "in_this_chapter": [
+    "How to read this parts list",
+    "The two Raspberry Pi 5 servers (application server + gateway)",
+    "Networking — the router, mesh nodes, and switch",
+    "Extending Wi-Fi coverage for larger venues",
+    "Operator workstations and monitors",
+    "Backup drives, GPS, and cables",
+    "Printers (monochrome, color, and portable)",
+    "The full bill of materials, at a glance",
+    "Amateur-radio equipment (optional, Part 2)",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "Gather two **Raspberry Pi 5** computers (16 GB), an enclosure with two mirrored solid-state drives for the main one, three **ASUS RT-BE58 Go** Wi-Fi routers, one **UniFi Switch Lite 16 PoE** network switch, four **{{workstation}}** workstations with monitors, a printer, and a backup drive. That's a full command post. Amateur-radio gear is a separate optional category you can skip entirely if your group has no licensed operators. The tables below give the exact models and the reason for each."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "This chapter is the shopping list. It names every piece of hardware in a FieldCommand command post, tells you the exact model to look for, and — just as importantly — explains **why** each part is there, so you can make sensible substitutions or trim the list to fit your budget and your mission. Nothing here is a surprise: every item was introduced in the Overview chapter; this is where you get the specifics."},
+    {"p": "You do not need to be a computer person to use this list. Read each table's \"Purpose\" column to understand what a part does, then buy (or check off) the model named. Where a part is optional, the table says so plainly. Prices, where shown, are rough guides only and move around a lot — treat any \"~$\" figure as a ballpark, not a quote."},
+    {"callout": {"kind": "note", "label": "HOW TO READ THIS LIST",
+      "text": "**Required** items are the minimum for a working core system. **Recommended** items are ones almost every group will want. **Optional** items add capability you may or may not need. The single biggest optional block is the **Amateur Radio Equipment** category at the end — an entire group of parts that non-ham deployments skip completely."}},
+
+    {"h1": "The Two Servers — Raspberry Pi 5 Units"},
+    {"p": "FieldCommand runs on two Raspberry Pi 5 computers. One is the **application server** that runs all the tools; the other is the **44Net / AMPRNet gateway** for amateur-radio groups. They use the same base computer so you can keep a single type of spare part on hand. The important difference is the enclosure and drives: the application server holds its data on **two mirrored drives** for reliability, while the gateway needs only a single modest drive."},
+    {"table": {
+      "headers": ["Unit", "Computer & enclosure", "Storage", "Role"],
+      "rows": [
+        ["**FieldCommand application server**", "Raspberry Pi 5 — 16 GB memory (RAM), in a **Pironman MAX 5** tower enclosure (holds two M.2 solid-state drives, has a small display and cooling fans)", "**2 × 1 TB NVMe SSD**, set up as a **RAID 1 mirror** (two drives holding an identical copy, so one can fail without data loss)", "Runs every FieldCommand service: web server, forms, net logging, maps, roster, offline library, health monitor. Fixed address `192.168.50.1`."],
+        ["**44Net / AMPRNet gateway**", "Raspberry Pi 5 — 16 GB memory (RAM), in a compact **Argon NEO 5 M.2** case (small, quiet, passively cooled)", "**256 GB M.2 SATA SSD** (holds the operating system, the tunnel configuration, and routing tables)", "Dedicated amateur-radio internet gateway. Completely independent of the application server. Fixed address `192.168.50.2`."]
+      ],
+      "widths": [1.7, 2.3, 1.6, 1.4]
+    }},
+    {"callout": {"kind": "note", "label": "ACRONYMS, IN PLAIN WORDS",
+      "text": "**RAM** (Random Access Memory) is a computer's short-term working memory. **SSD** (Solid-State Drive) is fast storage with no moving parts. **NVMe** and **SATA** are two ways an SSD connects — NVMe is faster; SATA is cheaper and plenty for the gateway. **RAID 1** means two drives kept as identical mirror copies so one can fail with no data loss. The one-command setup chapter builds and tests that mirror for you."}},
+    {"callout": {"kind": "tip", "label": "BUDGET TIP FOR THE GATEWAY",
+      "text": "The gateway does very little compared to the main server. If money is tight, an **8 GB** Raspberry Pi 5 works fine for the gateway-only role. Matching both units at 16 GB is only about keeping your spare parts interchangeable."}},
+
+    {"h1": "Networking — Router, Mesh, and Switch"},
+    {"p": "The network is what ties every device together into EMCOMM-NET. Neither Raspberry Pi makes the Wi-Fi — that is the router's job. Wired devices connect through the switch. Here is the core networking gear:"},
+    {"table": {
+      "headers": ["Device", "Model / spec", "Purpose"],
+      "rows": [
+        ["**Wi-Fi router**", "ASUS RT-BE58 Go — Wi-Fi 7, 2.5 G LAN uplink, USB-C 18 W power — **quantity 3 recommended** (1 primary + 2 mesh nodes)", "Broadcasts the EMCOMM-NET Wi-Fi, hands out addresses to devices, and (when present) routes the optional internet connection. Travel-sized and rugged."],
+        ["**Network switch**", "Ubiquiti UniFi Switch Lite 16 PoE — 16 gigabit ports, 8 with Power over Ethernet (PoE), 2 fiber uplink ports", "Wires the two Pis, the workstations, the laptop, and a printer together at full speed, with room to spare. The PoE ports can power cameras or extra access points without a separate power brick."],
+        ["**Ethernet cables**", "CAT 6 patch cables, roughly 1–6 ft, about 10 of them", "Connect the router to the switch, both Pis, the laptop, the printer, and the four workstations. Buy lengths that suit your table layout."]
+      ],
+      "widths": [1.4, 3.0, 2.6]
+    }},
+    {"callout": {"kind": "note", "label": "WHAT \"POE\" MEANS",
+      "text": "**PoE** (Power over Ethernet) means a single network cable carries both data **and** electrical power. It lets you run a camera or a Wi-Fi access point from just one cable, with no nearby power outlet — handy in a bare EOC room or a tent."}},
+
+    {"h1": "Extending Wi-Fi Coverage for Larger Venues"},
+    {"p": "A single router covers a normal room easily. For a big building, a shelter, or an outdoor staging area, you add one or two more of the **same** ASUS routers as \"mesh nodes\" — extra Wi-Fi points that repeat the exact same EMCOMM-NET network. Devices move between them automatically with no reconnecting and no password re-entry. Because every router is identical, any one of them can serve as the primary."},
+    {"table": {
+      "headers": ["Deployment scenario", "Recommended setup"],
+      "rows": [
+        ["Single room, under 2,500 sq ft", "1 × RT-BE58 Go primary only — no extension needed"],
+        ["Multi-room EOC or large shelter, 2,500–7,500 sq ft", "1 primary + 1 mesh node — wired backhaul through the switch"],
+        ["Large building or campus, 7,500–20,000 sq ft", "1 primary + 2 mesh nodes — wired backhaul through the switch"],
+        ["Outdoor search-and-rescue staging area", "1 primary at the command post + 1–2 mesh nodes at field positions, run on battery"]
+      ],
+      "widths": [3.0, 3.5]
+    }},
+    {"callout": {"kind": "tip", "label": "WIRED \"BACKHAUL\" IS BEST WHEN YOU CAN",
+      "text": "\"Backhaul\" is the link that carries traffic from a mesh node back to the main router. Running a CAT 6 Ethernet cable from the switch to each mesh node (a **wired** backhaul) gives full speed and rock-solid reliability. Wireless backhaul works too and is fine when running a cable isn't practical — for battery-powered field positions, for example."}},
+
+    {"h1": "Operator Workstations"},
+    {"p": "For the staff working the whole shift at the command post, FieldCommand includes dedicated workstations — one per operator seat. These are always-connected wired stations, so they never drop out. Remember from the Overview chapter that they are **recommended, not required**: any phone, tablet, or laptop on EMCOMM-NET is also a full station. The workstation model is the one part of the build that differs between editions."},
+    {"table": {
+      "headers": ["Item", "Model / spec", "Purpose"],
+      "rows": [
+        ["**Operator workstation × 4**", "{{workstation}} — a complete computer built into a keyboard, one per operator station", "The permanent seats for net control, planning, and other command-post roles."],
+        ["**Workstation monitor × 4**", "Raspberry Pi Monitor 15.6\" Full HD touchscreen — built-in speakers, kickstand, powered over USB-C", "One screen per workstation. Touchscreen makes forms and maps easy to work with."],
+        ["**Video & power cables**", "One micro-HDMI-to-HDMI cable and one 27 W USB-C power supply per station", "Connects each workstation to its monitor and powers it. Often the monitor can power the workstation over USB-C, simplifying cabling."]
+      ],
+      "widths": [1.9, 2.9, 1.7]
+    }},
+
+    {"h1": "Backup, Location, and Connectivity Extras"},
+    {"p": "A handful of small accessories protect your data and add useful capability. The two backup items are strongly recommended; the rest are genuinely optional."},
+    {"table": {
+      "headers": ["Item", "Required?", "Purpose"],
+      "rows": [
+        ["USB flash drive, 32 GB or larger, **labeled `FIELDCOMMAND`**", "Recommended", "Plug it in and FieldCommand instantly backs up all live data to it — a one-second insurance policy. The label is what triggers the automatic backup."],
+        ["External USB hard drive, 1 TB or larger (e.g. LaCie Rugged)", "Recommended", "Holds the full incident archive and a complete system backup. A rugged model survives drops and crushing in the field. Label it `FIELDCOMMAND` for automatic backups too."],
+        ["2D barcode / QR-code scanner (USB or Bluetooth keyboard-wedge)", "Recommended", "Speeds up a staffed check-in table: scan an operator's QR access card instead of typing. Must be a **2D imager** (see the note below). Needs no drivers and no camera — it types the scanned code like a keyboard. Roughly $50–100."],
+        ["USB GPS receiver (u-blox or GlobalSat puck)", "Optional", "Gives the system a live position for the tactical map and location-based weather alerts."],
+        ["Powered USB hub (4- or 7-port, **with its own power supply**)", "Optional", "Needed only if you connect several USB devices at once (GPS + backup drive + radio interface). It **must** be a powered hub — unpowered ones cause instability."],
+        ["Avery 5371 business-card sheets", "Optional", "For printing operator access cards — 10 cards per sheet, laser or inkjet."]
+      ],
+      "widths": [2.6, 1.1, 2.8]
+    }},
+    {"callout": {"kind": "important", "label": "THE SCANNER MUST BE A \"2D\" MODEL TO READ QR CODES",
+      "text": "There are two kinds of handheld scanner, and only one reads the square QR codes FieldCommand puts on operator access cards. A **1-dimensional (1D)** scanner reads only the old-style striped **linear barcodes** — the kind on a grocery item — and **cannot** read a QR code. A **2-dimensional (2D)** scanner (also called a **2D imager**) reads both the striped barcodes **and** square QR codes. **Buy a 2D model.** When shopping, look for the words \"2D\", \"QR\", or \"imager\" in the product name; avoid anything that says \"laser\" or \"1D\" only. Either **USB** (plug-in) or **Bluetooth** (wireless) is fine — both types act as a \"keyboard wedge,\" meaning the scanned code simply appears in whatever box the cursor is in, exactly as if you had typed it. No software or driver is needed."}},
+    {"p": "The FieldCommand server also needs an internet source **only if** you want the optional live extras (weather alerts, propagation data). The wide-area-network (WAN) source depends on your edition: {{cell_primary}} or {{sat_fallback}}. Site Ethernet or a tethered phone also work. The core system runs perfectly with no WAN at all."},
+
+    {"h1": "Printers"},
+    {"p": "Printing ICS forms, maps, and Incident Action Plans on paper is a core part of running an incident. FieldCommand shares one printer across the whole EMCOMM-NET network using the built-in printing system (installed automatically), so any operator can print to it. Pick the printer that suits your operation — you do not need all of these, just one."},
+    {"table": {
+      "headers": ["Category", "Example models", "Best for"],
+      "rows": [
+        ["**Monochrome laser**", "Brother HL-L2350DW (recommended); HP LaserJet Pro M15w / P1102w", "The everyday workhorse — fast, cheap per page, excellent Linux support. Best all-around choice for text forms."],
+        ["**Color multifunction laser**", "Brother MFC-L3770CDW; HP Color LaserJet Pro MFP M479fdw; Canon imageCLASS MF743Cdw", "Print, scan, copy, and fax in one. Prints color maps and IAP packages. Good for a permanent EOC install."],
+        ["**Portable / battery-powered**", "Canon PIXMA TR150 (built-in battery); HP OfficeJet 200", "Field deployments with no wall power — a shelter, a tent, a vehicle. Runs on a charge."]
+      ],
+      "widths": [1.7, 2.9, 1.9]
+    }},
+    {"callout": {"kind": "note", "label": "USB OR WI-FI — EITHER WORKS",
+      "text": "You can plug a printer into the FieldCommand server by USB and it becomes shared across EMCOMM-NET automatically, **or** connect a Wi-Fi printer directly to EMCOMM-NET. Both approaches are covered in the printer-setup chapter."}},
+
+    {"h1": "The Full Bill of Materials, at a Glance"},
+    {"p": "This table gathers the core parts (Part 1) into one place so you can shop or check them off in a single pass. Amateur-radio equipment is listed separately in the next section because most of it is optional."},
+    {"table": {
+      "headers": ["Item", "Model / spec", "Quantity"],
+      "rows": [
+        ["Raspberry Pi 5 — 16 GB (application server)", "Raspberry Pi 5 Model B, 16 GB RAM", "1"],
+        ["Pironman MAX 5 enclosure", "Tower case, dual M.2 NVMe, display, active cooling", "1"],
+        ["NVMe SSD (for the mirror)", "1 TB M.2 2280 PCIe NVMe (e.g. WD Blue SN580, Samsung 980)", "2"],
+        ["Raspberry Pi 5 — 16 GB (44Net gateway)", "Raspberry Pi 5 Model B, 16 GB RAM (8 GB works for gateway-only)", "1"],
+        ["Argon NEO 5 M.2 case", "Compact, passively cooled, M.2 SATA slot", "1"],
+        ["M.2 SATA SSD (gateway)", "256 GB M.2 SATA SSD", "1"],
+        ["Raspberry Pi 27 W USB-C power supply", "Official Raspberry Pi 27 W USB-C supply — one per Pi", "2"],
+        ["MicroSD card (initial setup)", "32 GB Class 10 / A1 microSD", "1"],
+        ["ASUS RT-BE58 Go router", "Wi-Fi 7 travel router (1 primary + 2 mesh nodes)", "3"],
+        ["UniFi Switch Lite 16 PoE", "Ubiquiti USW-Lite-16-PoE — 16-port gigabit, 8 × PoE", "1"],
+        ["CAT 6 Ethernet cables", "1–6 ft patch cables", "~10"],
+        ["{{workstation}} operator workstation", "Keyboard computer, one per operator station", "4"],
+        ["Raspberry Pi Monitor 15.6\"", "Full HD IPS touchscreen — one per workstation", "4"],
+        ["USB flash drive, labeled FIELDCOMMAND", "32 GB+ USB 3.0 — auto-backup trigger", "1"],
+        ["External USB hard drive", "1 TB+ (e.g. LaCie Rugged) — archive & full backup", "1"],
+        ["2D barcode / QR scanner (optional, recommended)", "USB or Bluetooth 2D imager / keyboard-wedge — for a staffed check-in table", "1"],
+        ["Printer (choose one)", "Monochrome, color MFP, or portable — see printer table", "1"]
+      ],
+      "widths": [2.4, 3.2, 0.9]
+    }},
+
+    {"h1": "Amateur-Radio Equipment (Optional — Part 2)"},
+    {"callout": {"kind": "warning", "label": "SKIP THIS ENTIRE CATEGORY IF YOU HAVE NO HAMS",
+      "text": "Every item below is needed **only** if a licensed amateur-radio group is leading or partnering in the deployment. If FieldCommand is being deployed by a public-safety agency or a served organization **without** licensed amateur-radio operators, skip this whole category. The core system in Part 1 is unaffected."}},
+    {"p": "For groups that do use amateur radio, these are the parts that enable the ham features. They are covered in full in Part 2 of this guide; the table here is just so you can plan and purchase alongside the rest."},
+    {"table": {
+      "headers": ["Item", "Needed when", "Purpose"],
+      "rows": [
+        ["USB radio interface — Digirig Mobile", "Using APRS", "A tiny combined sound and control interface that connects a radio to the Pi, enabling APRS transmit and receive."],
+        ["USB radio interface — SignaLink USB (alternative)", "Using APRS", "A widely used sound interface; needs a radio-specific audio cable. Interchangeable with the Digirig for this role."],
+        ["Mobilinkd TNC4 (Bluetooth alternative)", "Using APRS", "A wireless APRS interface — useful when no USB port is free or for very portable setups."],
+        ["Rig interface cable", "Using any radio interface", "The radio-specific audio and push-to-talk cable joining the interface to your transceiver. Buy the one for your radio model."],
+        ["Windows laptop", "Using HF (high-frequency) radio", "Any Windows 10/11 laptop, for Winlink Express and JS8Call. Connects to the radio by USB. See Part 2E."]
+      ],
+      "widths": [2.3, 1.5, 2.9]
+    }},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__Do I really need two Raspberry Pi 5 units?__ Only if you want amateur-radio features. The **second** Pi is the optional 44Net/AMPRNet gateway. A non-ham group buys just **one** Pi 5 (the application server) and skips the gateway entirely.",
+      "__Can I use a single drive instead of two?__ Yes, but you lose the safety of the mirror. The two-drive **RAID 1** setup means one drive can fail with no data loss — strongly recommended for a system running real incidents. With one drive, a drive failure loses everything since the last backup.",
+      "__The exact Pi 5 or SSD model I want is out of stock or oddly expensive.__ Prices and stock for Raspberry Pi 5 units and NVMe drives swing with memory-chip shortages. Any Raspberry Pi 5 (16 GB, or 8 GB for the gateway) and any reputable 1 TB M.2 NVMe drive will work — the specific brands named are examples, not requirements.",
+      "__Do I have to buy the four workstations?__ No. They are recommended dedicated seats, but any phone, tablet, or laptop on EMCOMM-NET is a full station (see the Overview chapter). Buy as many or as few workstations as your command post needs.",
+      "__Which printer should I get if I only buy one?__ For most groups, a monochrome laser (e.g. Brother HL-L2350DW) is the best single choice — fast, inexpensive to run, and well supported. Add a color or portable model only if your mission specifically needs color maps or battery printing.",
+      "__My USB devices behave strangely when several are plugged in.__ Use a **powered** USB hub (one with its own power adapter). Unpowered hubs can't supply enough power for a GPS, a backup drive, and a radio interface at once, which causes dropouts."
+    ]}
+  ]
+}

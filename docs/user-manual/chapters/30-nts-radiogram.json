@@ -1,0 +1,124 @@
+{
+  "order": 30,
+  "title": "National Traffic System (NTS) Radiogram Generator",
+  "subtitle": "The form that turns a plain message into a properly formatted ARRL radiogram — the standard way hams pass written traffic when phones and internet are down.",
+  "in_this_chapter": [
+    "What a radiogram is and when you'd send one",
+    "Opening the NTS Radiogram Generator",
+    "Filling in the Preamble (the header)",
+    "Precedence and Handling Instructions, explained plainly",
+    "The Address, the 25-word Message Text, and the Signature",
+    "The auto-fill helpers and the automatic word count (check)",
+    "Generating, printing, saving, and copying the radiogram",
+    "The saved-radiogram log",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "Open **NTS Radiogram Generator**. Fill in the **message number**, **precedence**, **station of origin**, **place** and **date/time**, the **addressee**, and the **message text** (25 words max — the count fills in for you). Click **Generate Radiogram** to see the finished form, then **Print** it, **Save to Log**, or **Copy Text** to read it on the air. Passing traffic on the air requires a licensed operator with a callsign."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "A **radiogram** is a short written message sent in a fixed, standard format so any amateur-radio operator can copy it exactly and pass it along — word for word — until it reaches the person it's meant for. It's the format of the **National Traffic System (NTS)**, the long-running amateur-radio message-relay network run under the American Radio Relay League (ARRL). During disasters, when telephones and internet are out, radiograms carry health-and-welfare messages (*“we're safe, everyone's fine”*) and priority traffic out of the affected area."},
+    {"p": "The **NTS Radiogram Generator** is a fill-in-the-blanks form. You type the parts of the message; it lays them out in the exact radiogram order, counts the words for you, and produces a clean copy you can print, save, read on the air, or hand to a relay operator. It saves you from memorizing the format and from miscounting words."},
+    {"callout": {"kind": "important", "label": "A HAM TRAFFIC-HANDLING FEATURE",
+      "text": "Anyone can *fill in* a radiogram, but **sending it on the air is amateur radio** and requires a properly licensed operator with a callsign (for example **{{club}}**). The form is signed with a station-of-origin callsign for that reason."}},
+
+    {"h1": "Opening the Generator"},
+    {"steps": [
+      "From the dashboard (or the Net Control page), open **NTS Radiogram** — or go to `http://192.168.50.1/nts.html`.",
+      "The **📋 NTS Radiogram Generator** page opens. It's a form in four cards — **Preamble**, **Address**, **Message Text**, **Signature** — with the finished radiogram and a saved-message log below.",
+      "The top-right has two quick buttons: **↺ New Form** clears everything to start fresh, and **📂 Load Saved** jumps down to your saved radiograms."
+    ]},
+    {"screenshot": "The NTS Radiogram Generator with the Preamble, Address, Message Text, and Signature cards"},
+
+    {"h1": "The Preamble (Header)"},
+    {"p": "The first card, **Preamble (Header)**, is the message's routing label — the numbers and codes every relay operator reads first. Starred fields are required."},
+    {"table": {
+      "headers": ["Field", "What to type"],
+      "rows": [
+        ["**Message Number** *", "A number for this message (for example `001`). Use the **🔢 Auto-fill Msg #** button to get the next number automatically."],
+        ["**Precedence** *", "How urgent this message is — Routine, Welfare, Priority, or Emergency (see the table below)."],
+        ["**Handling Instructions**", "An optional code (HXA–HXG) telling the delivering station how to handle it (see the table below)."],
+        ["**HX Supplement**", "Extra detail some handling codes need — a number of hours or a name."],
+        ["**Station of Origin** *", "The callsign of the station that first put this message into the system. Typed in capitals automatically."],
+        ["**Check (word count)** *", "The number of words in the message text. **You don't type this** — it counts itself as you write."],
+        ["**Place of Origin** *", "Where the message started, like `{{city_ex}} {{state_ex}}`."],
+        ["**Date / Time Filed** *", "When the message was filed, like `0930 JUN 7`. The **⏰ Auto-fill Date/Time** button fills the current time for you."]
+      ],
+      "widths": [2.2, 4.4]
+    }},
+
+    {"h2": "Precedence — How Urgent Is It?"},
+    {"p": "Pick the one that matches the message. When you choose, a plain-language reminder of what it means appears just below the field."},
+    {"table": {
+      "headers": ["Choice", "Use it for"],
+      "rows": [
+        ["**R — Routine**", "Normal message traffic with no urgency. Most messages."],
+        ["**W — Welfare**", "A message about the health and welfare of a person — the classic *“we're okay”* traffic sent after a disaster."],
+        ["**P — Priority**", "Important messages with some urgency; official or government traffic."],
+        ["**E — Emergency**", "Life-or-death urgency, a disaster declaration, or official emergency government communications. Use sparingly."]
+      ],
+      "widths": [1.9, 4.7]
+    }},
+
+    {"h2": "Handling Instructions (Optional)"},
+    {"p": "These optional **HX** codes tell whoever finally delivers the message how to handle it. Leave it on **None** unless you specifically need one. If a code needs a detail (like a number of hours), put that in the **HX Supplement** box."},
+    {"table": {
+      "headers": ["Code", "Means"],
+      "rows": [
+        ["HXA", "Collect on delivery (a reply may be collected)."],
+        ["HXB", "Cancel the message if not delivered within a set number of hours."],
+        ["HXC", "Report the date and time the message was delivered."],
+        ["HXD", "Report the identity of the station that delivered it, back to the originating station."],
+        ["HXE", "The delivering station should get and pass back a reply."],
+        ["HXF", "Hold the message for arrival of a person/date."],
+        ["HXG", "Deliver by mail or phone if convenient; otherwise cancel — no expense."]
+      ],
+      "widths": [1.2, 5.4]
+    }},
+
+    {"h1": "Address, Message Text, and Signature"},
+    {"p": "The **Address** card is who the message is going to: **Addressee Name** (required), plus optional **Phone Number**, **Street Address**, **City**, and **State / Zip** — enough for the delivering station to make contact."},
+    {"p": "The **Message Text** card is the message itself, and it has one firm rule:"},
+    {"callout": {"kind": "warning", "label": "25 WORDS, AND SPELL OUT PUNCTUATION",
+      "text": "Radiogram text is limited to **25 words**. As you type, a live counter shows **Word count: N / 25 max** and turns **red** with an *“over limit”* note if you go over — and the generator won't finish until you're back to 25 or fewer. Use plain words and avoid punctuation: the traditional way to mark a full stop is to say the word **X** in place of a period. Example: `ARRIVED SAFELY X EVERYONE FINE X WILL CALL WHEN SETTLED X LOVE`."}},
+    {"p": "The **Signature** card is who the message is from: **Sender Name / Callsign** and an optional **Phone / Email**. If you leave the signature name blank, the finished radiogram uses the station-of-origin callsign instead."},
+
+    {"h1": "The Helper Buttons and the Automatic Check"},
+    {"p": "Three buttons under the form save you typing and arithmetic:"},
+    {"bullets": [
+      "__⏰ Auto-fill Date/Time.__ Fills the **Date / Time Filed** field with the current time in the radiogram's usual format.",
+      "__🔢 Auto-fill Msg #.__ Looks at your saved radiograms and fills **Message Number** with the next one in sequence.",
+      "__The Check counts itself.__ The **Check (word count)** field is read-only and updates automatically from the message text — you never count words by hand."
+    ]},
+
+    {"h1": "Generating, Printing, and Saving"},
+    {"p": "When the form is filled in, click **📋 Generate Radiogram**. The form is hidden and a clean, black-on-white **radiogram preview** appears, headed *ARRL NATIONAL TRAFFIC SYSTEM — RADIOGRAM*, with the preamble, precedence, address, message text, signature, and a small received/sent/relay footer for handling operators to fill in. (If a required field is missing or the text is over 25 words, it tells you instead of generating.) A row of buttons appears with it:"},
+    {"table": {
+      "headers": ["Button", "What it does"],
+      "rows": [
+        ["**🖨 Print Radiogram**", "Prints just the radiogram (the form and menus drop away) — good for a paper traffic form."],
+        ["**💾 Save to Log**", "Saves this radiogram to the on-page log (and sends a copy to the server) so you can reopen it later."],
+        ["**📋 Copy Text**", "Copies the radiogram as plain text to your clipboard — handy for reading it on the air or pasting elsewhere."],
+        ["**📻 Send to Net Log**", "A pointer to log this message's traffic over in the Net Control page's Traffic Log."],
+        ["**← Edit**", "Returns to the form to make changes."]
+      ],
+      "widths": [2.0, 4.6]
+    }},
+
+    {"h1": "The Saved-Radiogram Log"},
+    {"p": "At the bottom, **Saved Radiograms** is a table of everything you've saved on this device — showing the message number, a colored **precedence** badge, the addressee (**To**), the **origin**, the **date filed**, and the **check**. Each row has a **Load** button to pull that message back into the form (to resend or adjust) and an **✕** to delete it. A **Clear All** button empties the whole list. The list holds your most recent radiograms so a busy traffic session stays organized."},
+    {"callout": {"kind": "note", "label": "SAVED ON THIS DEVICE",
+      "text": "The saved log lives in the browser on the device you're using (a copy is also sent to the server when you save). If you switch to a different tablet or laptop, its own saved list may look different. Print or copy anything you must not lose."}},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__Generate Radiogram won't do anything / it pops up a message.__ A required field is empty. Fill in **Message #**, **Station of Origin**, **Addressee Name**, and **Message Text**, then try again.",
+      "__It says the text is over the limit.__ Radiogram text is capped at **25 words**. Shorten it — drop non-essential words and use the word **X** for periods — until the count is 25 or fewer.",
+      "__The Check field won't let me type in it.__ That's correct — the check is the word count and fills itself from the message text.",
+      "__The Precedence reminder doesn't match what I meant.__ Re-pick the Precedence; the plain-language reminder below the field updates to match your choice.",
+      "__A saved radiogram is gone / looks different on another device.__ The saved log is stored per device. Use **Print** or **Copy Text** for anything you need to keep for certain.",
+      "__I need to actually pass this on the air.__ Sending traffic is a licensed-operator activity. The form prepares the message; a licensed amateur transmits it, typically through a net (see the Net Control chapter)."
+    ]}
+  ]
+}

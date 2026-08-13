@@ -1,0 +1,162 @@
+{
+  "order": 10,
+  "title": "The Reference Library Server — reference_server.py",
+  "subtitle": "One small service, python/reference_server.py, is FieldCommand's filing cabinet. It takes uploaded reference documents — plans, maps, frequency lists, forms — stores the file on disk and its details in the database, and serves them back with categories, sections, tags, and a downloads count. It is built to handle files far too big for the other services.",
+  "in_this_chapter": [
+    "What the reference library is and why it is its own service",
+    "How it is reached — localhost only, through nginx at /svc/5056",
+    "Where files live on disk and how metadata lives in the ref_documents table",
+    "How an upload is parsed, validated, stored, and recorded",
+    "Why the large-upload path needs client_max_body_size raised in nginx",
+    "How a document is served back and how the downloads counter works",
+    "Categories, sections, and tags — how the browse/search endpoints work",
+    "Design takeaways and the maintainer's rule"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "IN ONE SENTENCE",
+      "text": "`python/reference_server.py` is a small Hypertext Transfer Protocol (HTTP) service on port 5056 that stores uploaded reference files on disk, keeps their details in the `ref_documents` database table, and serves them back — organized by category, section, and tag, and counting every download — kept separate from the main Application Programming Interface (API) because reference files can be very large."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "An incident runs on paper as much as radio: the county plan, the shelter roster template, a band plan, a road-closure map, a scanned mutual-aid agreement. The reference library is where all of that lives so anyone on the network can pull it up. It is [python/reference_server.py](python/reference_server.py), and its own header sums it up: \"FieldCommand Reference Library Server — Port 5056 (SQLite via db.py).\" It does two jobs — it **stores** an uploaded file (the bytes on disk, the details in the database) and it **serves** files back with enough structure (categories, sections, tags, search) that an operator can actually find the one they need."},
+    {"p": "It is a **separate service** for one main reason: **size**. The main API deals in small things — a member photo, a logo, a form's fields. Reference documents are the opposite: multi-megabyte Portable Document Format (PDF) manuals, map bundles, even short audio or video clips. Mixing large uploads into the main API would slow every other request and force a large body limit onto services that should never accept one. Giving the library its own process and its own generous limit keeps the fast services fast."},
+    {"callout": {"kind": "note", "label": "JARGON, IN PLAIN WORDS",
+      "text": "**Metadata** is the information *about* a file — its title, category, who it applies to, when it expires — as opposed to the file's actual contents. **multipart/form-data** is the way a web browser packages a file upload: the file bytes and the text fields are bundled together in one request, separated by a **boundary** marker. A **SHA-256** is a fingerprint of the file's contents used to spot duplicates. **nginx** is the web server that forwards browser requests to the right internal service."}},
+
+    {"h1": "How It Is Reached — localhost Only, Through nginx"},
+    {"p": "Like every FieldCommand service, the library binds only to localhost and is reached through nginx. The last lines of the file show it starting the database (via `db.startup()`) and then binding to `127.0.0.1`:"},
+    {"code": [
+      "if __name__ == \"__main__\":",
+      "    db.startup()",
+      "    log.info(f\"Reference Library on port 5056 — {FILES_DIR}\")",
+      "    # Localhost only — reached via nginx at /svc/5056 over HTTPS.",
+      "    HTTPServer(('127.0.0.1',5056),RefsHandler).serve_forever()"
+    ]},
+    {"p": "The nginx block for `/svc/5056/` is where the large-upload story starts. Two settings matter: a longer read timeout (uploading a big file over a field link is slow) and, crucially, `client_max_body_size` raised to 200 megabytes (MB). nginx's default limit is only 1 MB, so without this line every real reference upload would be rejected before it ever reached the service:"},
+    {"code": [
+      "location /svc/5056/ {   # reference library (large uploads)",
+      "    proxy_pass            http://127.0.0.1:5056/;",
+      "    proxy_set_header      Host $host;",
+      "    proxy_read_timeout    120;",
+      "    client_max_body_size  200M;",
+      "}"
+    ]},
+    {"callout": {"kind": "warning", "label": "TWO LIMITS MUST AGREE",
+      "text": "There are **two** size limits, and they must match. nginx enforces `client_max_body_size 200M`, and the service enforces its own `MAX_UPLOAD = 200 * 1024 * 1024`. If you raise one, raise the other. If nginx's limit is lower, big uploads fail with a confusing nginx 413 error the app never sees; if the service's limit is lower, the file uploads fully and is then rejected — a slow, wasteful failure. Keep the pair in lockstep."}},
+
+    {"h1": "How It Works — Where Files and Metadata Live"},
+    {"p": "The library keeps the **file** and the **facts about the file** in two different places, on purpose. The bytes go to disk in a folder owned by the data layer; the details go into a single database row. The disk paths come straight from `db.py`, so the library never invents its own locations:"},
+    {"code": [
+      "FILES_DIR = db.FILES_DIR   # /opt/fieldcommand/data/refs/files",
+      "THUMB_DIR = db.THUMB_DIR   # /opt/fieldcommand/data/refs/thumbs",
+      "MAX_UPLOAD = 200 * 1024 * 1024",
+      "ALLOWED_EXT = {'.pdf','.doc','.docx','.xls','.xlsx','.ppt','.pptx',",
+      "               '.txt','.md','.csv','.jpg','.jpeg','.png','.gif',",
+      "               '.zip','.kml','.kmz','.gpx','.mp3','.mp4'}"
+    ]},
+    {"p": "The metadata lives in the `ref_documents` table, defined once in the data layer. Note how the two array-like fields — `sections` and `tags` — are stored as JavaScript Object Notation (JSON) text, and how the row carries its own accounting fields (`downloads`, `last_downloaded`, `size_bytes`, `sha256`):"},
+    {"code": [
+      "CREATE TABLE IF NOT EXISTS ref_documents (",
+      "    id              TEXT PRIMARY KEY,",
+      "    title           TEXT NOT NULL DEFAULT '',",
+      "    filename        TEXT NOT NULL DEFAULT '',",
+      "    stored_name     TEXT NOT NULL DEFAULT '',",
+      "    category        TEXT NOT NULL DEFAULT 'other',",
+      "    sections        TEXT NOT NULL DEFAULT '[\"amateur\"]',  -- JSON array",
+      "    tags            TEXT NOT NULL DEFAULT '[]',            -- JSON array",
+      "    ...",
+      "    size_bytes      INTEGER DEFAULT 0,",
+      "    sha256          TEXT DEFAULT '',",
+      "    uploaded        TEXT NOT NULL,",
+      "    downloads       INTEGER NOT NULL DEFAULT 0,",
+      "    last_downloaded TEXT",
+      ");"
+    ]},
+    {"callout": {"kind": "note", "label": "WHY filename AND stored_name ARE SEPARATE",
+      "text": "`filename` is the name the operator sees and downloads as (`McHenry_County_EOP.pdf`). `stored_name` is the safe, unique name the bytes actually live under on disk (`ref_18f2a9c0e11.pdf`). Splitting them means two files with the same human name never collide, a malicious filename can never escape the folder, and the download can still present the friendly name. Never store an uploaded file under its raw original name."}},
+
+    {"h1": "How It Works — The Upload"},
+    {"p": "A browser sends the file and its metadata together as one `multipart/form-data` POST to `/refs/upload`. The service parses that bundle itself with a small hand-written `parse_multipart()` — splitting on the boundary marker and separating the named text fields from the named file part. The upload handler then walks a clear sequence: reject anything that is not a real file, validate the extension, enforce the size limit, write the bytes, and record the row."},
+    {"p": "Validation happens before anything is written. The extension must be on the allow-list, and the size must be under the limit — the same 200 MB ceiling nginx enforces:"},
+    {"code": [
+      "if 'file' not in files: return self.send_err('No file in upload',400)",
+      "f=files['file']",
+      "orig=safe_name(f['filename']); ext=Path(orig).suffix.lower()",
+      "if ext not in ALLOWED_EXT: return self.send_err(f'File type not allowed: {ext}',400)",
+      "data=f['data']",
+      "if len(data)>MAX_UPLOAD: return self.send_err('File too large',400)"
+    ]},
+    {"p": "Only after validation does the service mint an id, derive the safe `stored_name` from it, and write the bytes to disk. The id is time-based and hex-encoded, so it is unique and sorts by upload order:"},
+    {"code": [
+      "doc_id=f\"ref_{int(time.time()*1000):x}\"",
+      "stored=f\"{doc_id}{ext}\"; dest=FILES_DIR/stored",
+      "dest.write_bytes(data)"
+    ]},
+    {"p": "The row is then inserted with every field the browser supplied, plus the computed ones. The two array fields are serialized with the data layer's shared `jdump()` helper, the content fingerprint is computed with `file_hash()`, and the upload time is stamped with the shared `utcnow()` — so the library formats time and JSON identically to every other service:"},
+    {"code": [
+      "c.execute(\"\"\"INSERT INTO ref_documents",
+      "    (id,title,filename,stored_name,category,sections,description,",
+      "     tags,source,applies_to,revision,expires,content_type,",
+      "     size_bytes,sha256,uploaded)",
+      "    VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)\"\"\",",
+      "    (doc_id, fields.get('title','').strip() or orig,",
+      "     orig, stored, fields.get('category','other'),",
+      "     jdump(sections), fields.get('description','').strip(),",
+      "     jdump(tags), ... len(data), file_hash(dest), utcnow()))",
+      "c.commit()"
+    ]},
+    {"p": "One nicety: if the upload is a PDF, a thumbnail is generated on a **background thread** so the operator's upload returns immediately instead of waiting for image rendering. If thumbnailing fails (or the tool is absent), it fails silently and the document simply has no preview — a missing thumbnail is never allowed to fail an upload:"},
+    {"code": [
+      "if ext=='.pdf':",
+      "    threading.Thread(target=try_thumbnail,",
+      "                     args=(dest,THUMB_DIR/f\"{doc_id}.png\"),daemon=True).start()"
+    ]},
+
+    {"h1": "How It Works — Serving a File and Counting Downloads"},
+    {"p": "Getting a document back is two endpoints: `/refs/{id}` returns the metadata as JSON, and `/refs/{id}/file` streams the actual bytes. The file endpoint does one small stateful thing on the way out — it increments the `downloads` counter and stamps `last_downloaded`, so the library can show which references people actually use:"},
+    {"code": [
+      "fp=FILES_DIR/row['stored_name']",
+      "if not fp.exists(): return self.send_err('File missing',404)",
+      "c.execute(\"UPDATE ref_documents SET downloads=downloads+1,last_downloaded=? WHERE id=?\",",
+      "          (utcnow(),doc_id)); c.commit()",
+      "data=fp.read_bytes()",
+      "mime=row['content_type'] or mimetypes.guess_type(row['filename'])[0] or 'application/octet-stream'",
+      "self.send_response(200)",
+      "self.send_header('Content-Type',mime)",
+      "self.send_header('Content-Disposition',f'attachment; filename=\"{row[\"filename\"]}\"')"
+    ]},
+    {"p": "The counter is done with a single SQL `downloads=downloads+1`, not by reading the number into Python and writing it back. Letting the database do the increment in one statement is what keeps the count correct even if two people download the same file at the same moment. Notice too that the download is served under the friendly `filename`, while the bytes were read from the safe `stored_name` — the split from earlier paying off."},
+
+    {"h1": "How It Works — Categories, Sections, and Tags"},
+    {"p": "Browsing is what makes a pile of files a library. The service exposes small read endpoints for the facets an operator filters by. Categories and their counts come straight from SQL grouping:"},
+    {"code": [
+      "elif path == '/refs/categories':",
+      "    rows=c.execute(\"SELECT category,COUNT(*) cnt FROM ref_documents GROUP BY category\").fetchall()",
+      "    return self.send_json({'categories':{r['category']:r['cnt'] for r in rows}})"
+    ]},
+    {"p": "The main listing endpoint `/refs` does the coarse filtering (by category) in SQL, then does the finer filtering — by **section** (amateur vs. ICS), by **tag**, and by free-text **search** — in Python, because those live inside the JSON columns and are easiest to match after parsing. Each document's `sections` and `tags` are decoded with the shared `jload()` before being returned:"},
+    {"code": [
+      "if tag:",
+      "    rows=[r for r in rows if tag in jload(r.get('tags'),[]) ]",
+      "if q:",
+      "    rows=[r for r in rows if q in (",
+      "        (r.get('title','') or '')+(r.get('description','') or '')+",
+      "        (r.get('source','') or '')+(r.get('tags','') or '')).lower()]",
+      "for r in rows:",
+      "    r['sections']=jload(r.get('sections'),[r.get('section','amateur')])",
+      "    r['tags']=jload(r.get('tags'),[])"
+    ]},
+    {"callout": {"kind": "note", "label": "WHY SECTIONS EXIST",
+      "text": "A document belongs to one or more **sections** — `amateur`, `ics`, or both. This lets the same library serve two audiences from one store: an amateur-radio operator browsing band plans and an incident-staff member browsing ICS forms each see the subset relevant to them, without two separate libraries to maintain. On upload, the special value `both` is expanded to `['amateur','ics']`."}},
+
+    {"h1": "Why It Matters / Design Takeaways"},
+    {"bullets": [
+      "__Separated for size.__ Reference documents can be hundreds of megabytes, so the library is its own service with its own raised body limit — the fast, small services never carry that weight.",
+      "__File and facts split cleanly.__ Bytes live on disk under a safe unique name; details live in one `ref_documents` row under the friendly name — no collisions, no path-escape risk, friendly downloads.",
+      "__Validate before you write.__ Extension allow-list and size limit are checked before a single byte hits the disk, and the service's limit mirrors nginx's so the two never disagree.",
+      "__The database keeps the count honest.__ Downloads are incremented with one SQL statement, so concurrent downloads never lose a tick.",
+      "__Shared helpers, consistent data.__ Time, JSON, and paths all come from the data layer (`utcnow`, `jdump`, `jload`, `FILES_DIR`), so the library stores data exactly like every other service."
+    ]},
+    {"callout": {"kind": "important", "label": "MAINTAINER'S RULE",
+      "text": "Keep the file and its metadata in step, and keep the two size limits equal. Never store an upload under its raw original name — always mint a safe `stored_name` and serve back under `filename`. When you change `MAX_UPLOAD`, change nginx's `client_max_body_size` to match in the same commit. Add a new file type only by extending `ALLOWED_EXT`, and get paths, timestamps, and JSON only from `db.py` — never hard-code a folder or format the library should be sharing with the rest of the system."}}
+  ]
+}

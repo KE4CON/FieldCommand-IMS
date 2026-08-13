@@ -1,0 +1,116 @@
+{
+  "order": 18,
+  "title": "TNC & Modem Setup (Optional)",
+  "subtitle": "The hardware that connects a radio to the Pi — USB TNCs, a Bluetooth TNC, and the SCS PACTOR modem — plus the stable device names that keep a TNC and a GPS from being confused for each other.",
+  "in_this_chapter": [
+    "What a TNC is and who this chapter is for",
+    "The USB TNC options (Digirig Mobile, SignaLink USB)",
+    "The Bluetooth option (Mobilinkd TNC4)",
+    "The SCS PACTOR modem, and when you'd want it",
+    "A quick table matching each option to its best use",
+    "Rig interface cables — the radio-specific link",
+    "Stable device names with udev — why /dev/tnc0 matters",
+    "Verifying the device name is correct",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "A **Terminal Node Controller (TNC)** is the little box that connects a radio to a computer so they can trade digital data. Pick one: a **Digirig Mobile** or **SignaLink USB** (both plug into the Pi over Universal Serial Bus, or USB), a **Mobilinkd TNC4** (wireless, over Bluetooth), or an **SCS PACTOR modem** (top-tier High Frequency performance for Winlink). You also need a **radio-specific cable** between the TNC and your transceiver. FieldCommand automatically gives your USB TNC the stable name **`/dev/tnc0`** so it never gets confused with your GPS — verify with `ls -la /dev/tnc0`."}},
+
+    {"callout": {"kind": "important", "label": "THIS WHOLE CHAPTER IS OPTIONAL — HAM GROUPS ONLY",
+      "text": "Part 2 of this guide is only for groups that include a **licensed amateur-radio operator**. If nobody in {{org}} holds an amateur-radio license, **skip this chapter** — none of this hardware is needed, and FieldCommand runs fully without it. A TNC or modem exists to put signals **on the air**, and transmitting on the amateur bands is **illegal without a proper license**. Everything here must be operated by someone licensed with privileges on the bands and modes being used."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "A **Terminal Node Controller (TNC)** is the piece of hardware that sits between a **radio** and a **computer**. On one side it speaks to the radio in sound — the tones and warbles that travel over the air. On the other side it speaks to the computer in data. It also handles **Push To Talk (PTT)** — the signal that keys the radio's transmitter at the right moment. Without a TNC, the Pi and the radio have no common language; with one, the Pi can send and receive Automatic Packet Reporting System (APRS) position beacons, run VHF Packet Winlink, and more."},
+    {"p": "This chapter covers the hardware choices — which TNC or modem to use, how each connects, and the cables you need — and one small-but-important piece of housekeeping: making sure the Pi always calls your TNC by the **same name**, even though it and other USB devices can look almost identical to the operating system. Get the hardware and the naming right once, and the software just works."},
+    {"callout": {"kind": "note", "label": "WHO DOES THIS",
+      "text": "This is a one-time hardware job for the licensed operator building the radio station. You choose one TNC (or the PACTOR modem), cable it to your radio, plug it into the Pi, and confirm the device name. After that, the APRS and Winlink software use it without further fuss."}},
+
+    {"h1": "The Hardware Options"},
+    {"p": "There are four common ways to connect a radio to the Pi (or, for PACTOR, to the Windows laptop). You only need **one**. Which one depends on your radio, your budget, and whether you want High Frequency (HF) performance or simple Very High Frequency (VHF) APRS and Packet."},
+    {"h2": "USB TNCs — Digirig Mobile and SignaLink USB"},
+    {"p": "The two most common choices both plug into the Pi over a USB cable:"},
+    {"bullets": [
+      "__Digirig Mobile.__ A small, modern all-in-one interface: it carries both the audio and the radio-control (Computer Aided Transceiver, or CAT) connection in one compact unit. It's an excellent, inexpensive choice for APRS transmit and receive (paired with the Direwolf software) and for VHF Packet Winlink (paired with Pat). Radio-specific cables are sold by model at **digirig.net**.",
+      "__SignaLink USB.__ A long-established, very widely supported USB audio interface from Tigertronics. It handles the audio path and generates PTT itself. It needs a **separate Tigertronics cable made for your exact radio**. Choose this if you want the most battle-tested, well-documented option in the hobby."
+    ]},
+    {"h2": "The Bluetooth Option — Mobilinkd TNC4"},
+    {"p": "The **Mobilinkd TNC4** is a Bluetooth APRS TNC — no USB cable to the computer at all. It pairs wirelessly with the YAAC APRS program on the Pi, or with an APRSdroid app on a phone. Reach for it when a USB port is scarce, or when you want the TNC physically at the radio and the computer a short distance away without a cable run."},
+    {"h2": "The SCS PACTOR Modem — Top-Tier HF Winlink"},
+    {"p": "**PACTOR** is a high-performance HF digital mode used heavily in Winlink work. On weak or noisy HF paths it moves data noticeably faster and more reliably than the software VARA HF modem, and it is the only path to PACTOR level 4. **SCS (Special Communications Systems)** makes the only PACTOR-licensed modems. A PACTOR modem connects between the HF radio (such as the IC-7300) and the **Windows laptop** (not the Pi). It is genuinely optional — VARA HF serves most groups well — but for serious HF message handling it is the gold standard."},
+    {"table": {
+      "headers": ["SCS model", "PACTOR level", "Notes"],
+      "rows": [
+        ["SCS Tracker DSP TNC", "1 / 2 / 3", "Entry-level PACTOR TNC; good for most Winlink work."],
+        ["SCS PTC-IIIusb", "1 / 2 / 3", "Also does Packet, AMTOR, RTTY. Around $650."],
+        ["SCS P4dragon DR-7400", "1 / 2 / 3 / 4", "Compact, proven PACTOR 4 modem; a good entry point to level 4. Around $1,100."],
+        ["SCS PXdragon DR-9400 (flagship)", "1 / 2 / 3 / 4", "Current top model; USB-C plus LAN, up to 10,500 bits per second on PACTOR 4."]
+      ],
+      "widths": [2.5, 1.5, 2.5]
+    }},
+    {"callout": {"kind": "note", "label": "PACTOR 3 AND 4 COST EXTRA",
+      "text": "PACTOR **1 and 2** are free to all licensed amateurs. PACTOR **3 and 4** require a separate one-time license fee paid to SCS, on top of your normal Winlink account. Levels 1 and 2 are plenty to get on the air and pass traffic; add 3/4 later if your nets need the extra throughput."}},
+
+    {"h1": "Matching a TNC to Its Best Use"},
+    {"p": "Use this table to pick quickly. Again, you only need one."},
+    {"table": {
+      "headers": ["Option", "Connects via", "Best for"],
+      "rows": [
+        ["Digirig Mobile", "USB to the Pi", "APRS and VHF Packet Winlink on a budget; audio + CAT in one small unit."],
+        ["SignaLink USB", "USB to the Pi", "APRS and Packet where the most widely-supported, well-documented interface is wanted."],
+        ["Mobilinkd TNC4", "Bluetooth (wireless)", "APRS when a USB port is unavailable, or when you want no cable to the computer."],
+        ["SCS PACTOR modem", "USB / LAN to the Windows laptop", "Highest-performance HF Winlink on marginal paths; the only route to PACTOR 4."]
+      ],
+      "widths": [1.9, 2.2, 2.4]
+    }},
+
+    {"h1": "Rig Interface Cables — the Radio-Specific Link"},
+    {"p": "Whatever TNC you pick, it still needs the right **cable to your specific radio**. This cable carries the receive audio, the transmit audio, and the PTT keying line between the TNC and the transceiver. There is no universal cable — the plugs and pinout differ from radio to radio, so the cable is chosen by **radio model**:"},
+    {"bullets": [
+      "__Digirig:__ order the matching cable for your exact radio model at **digirig.net**.",
+      "__SignaLink USB:__ order the matching **Tigertronics** cable for your exact radio (a separate cable per rig).",
+      "__SCS PACTOR modem:__ the audio and PTT cables are typically **included with the modem**; you connect it to the radio's accessory (ACC) jack."
+    ]},
+    {"callout": {"kind": "tip", "label": "LET VARA AND PACTOR SHARE ONE RADIO",
+      "text": "If you run **both** VARA HF (over the radio's USB audio) and a PACTOR modem on the **same** IC-7300, point the PACTOR modem at the radio's **ACC (accessory) jack** for its audio, and leave VARA on the USB audio path. With the two audio paths kept separate, both can stay wired up at once — you just operate one mode at a time."}},
+
+    {"h1": "Stable Device Names — Why /dev/tnc0 Matters"},
+    {"p": "Here is the subtle problem that this section solves. When you plug a USB device into the Pi, Linux gives it a plain, first-come-first-served name like **`/dev/ttyUSB0`**. Plug in a second USB device and it becomes **`/dev/ttyUSB1`**. The catch: **which device gets which number can change** depending on the order things were plugged in or powered up. So the TNC you told your software was at `ttyUSB0` might be at `ttyUSB1` the next time you boot — and suddenly APRS or Winlink is talking to the wrong device, or to nothing at all."},
+    {"p": "It gets worse in one specific, real case. The popular **Digirig Mobile TNC** and a common **GPS receiver** use the **same USB chip** (a Silicon Labs CP2102). To the operating system they look nearly identical, so the plain `ttyUSB` numbers are especially likely to swap between them. That is a recipe for the TNC and the GPS constantly trading places."},
+    {"p": "FieldCommand fixes this with **udev rules** — small instructions that tell Linux, \"whenever you see *this* device, always give it *this* name.\" The installer puts these rules in place for you. Instead of the shifting `ttyUSB` numbers, your TNC always answers to the fixed name **`/dev/tnc0`** (plus a friendly alias like `/dev/digirig` or `/dev/signalink`), and the GPS always answers to **`/dev/gps0`** — no matter what order anything was plugged in. Your software points at `/dev/tnc0` once and never has to change."},
+    {"callout": {"kind": "note", "label": "HOW THE RULE TELLS A DIGIRIG FROM A GPS",
+      "text": "Because the Digirig and the GPS share the same chip, the udev rule can't tell them apart by chip alone. It looks deeper — at the USB **product description string**. The Digirig identifies itself with the text **\"Digirig Mobile\"**, so the TNC rule matches only that, and the GPS rule specifically **excludes** Digirig. The result: the Digirig always becomes `/dev/tnc0` and the GPS always becomes `/dev/gps0`, even though they use identical chips."}},
+    {"p": "The installer copies the TNC rules into place and reloads them automatically, so on a normal FieldCommand build you don't have to do anything. The `/dev/tnc0` name simply appears the moment you plug the TNC in. The commands below are for **verifying** it worked, or for adding a TNC the rules don't yet recognize."},
+
+    {"h1": "Verifying the Device Name"},
+    {"p": "After plugging the TNC into the Pi, confirm it received the stable name. Two quick commands do it:"},
+    {"code": [
+      "# 1) Confirm the stable symlink exists and see what it points to:",
+      "ls -la /dev/tnc0",
+      "#    Expected: /dev/tnc0 -> ttyUSB0  (an arrow to the real device)",
+      "#    Also check the GPS, if you have one, so they didn't collide:",
+      "ls -la /dev/gps0",
+      "",
+      "# 2) If /dev/tnc0 is missing, look at the raw device's USB IDs so you",
+      "#    can see what it actually is (vendor, product, and product string):",
+      "udevadm info -a -n /dev/ttyUSB0 | grep -E \"idVendor|idProduct|product\"",
+      "",
+      "# 3) After adding or editing a rule, reload the rules and re-trigger:",
+      "sudo udevadm control --reload-rules && sudo udevadm trigger"
+    ]},
+    {"p": "In the APRS software (YAAC), you then simply point the serial TNC port at **`/dev/tnc0`** — because that name never changes, you set it once and it keeps working across reboots and re-plugs."},
+    {"callout": {"kind": "tip", "label": "IF YOUR TNC ISN'T ONE OF THE LISTED MODELS",
+      "text": "The rules already cover Digirig, SignaLink, and common FTDI-chip TNCs. If you have a different TNC, run `lsusb` and the `udevadm info` command above to read its **idVendor** and **idProduct** values, then add a matching line to `/etc/udev/rules.d/99-fieldcommand-tnc.rules` that assigns `SYMLINK+=\"tnc0\"`. Reload with the command in step 3. There's a commented example in that file to copy."}},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__The TNC isn't detected at all.__ Confirm the USB cable is fully seated and, for a powered TNC, that it's switched on. Run `lsusb` — your device should appear in the list. If it doesn't, try a different USB cable (some are charge-only with no data wires) or a different port on the Pi's powered USB hub.",
+      "__/dev/tnc0 doesn't exist even though the device shows in lsusb.__ The udev rule didn't match. Read the device's IDs with `udevadm info -a -n /dev/ttyUSB0 | grep -E \"idVendor|idProduct|product\"`, compare them to the rules in `/etc/udev/rules.d/99-fieldcommand-tnc.rules`, add or fix a matching line, then run `sudo udevadm control --reload-rules && sudo udevadm trigger` and re-plug the TNC.",
+      "__My software points at the wrong device / the TNC and GPS keep swapping.__ This is exactly what the stable names prevent — so stop using `/dev/ttyUSB0` or `/dev/ttyUSB1` in your software and use **`/dev/tnc0`** (for the TNC) and **`/dev/gps0`** (for the GPS) instead. Those names always follow the right device.",
+      "__Two devices are fighting over the same name.__ Only one device can own `/dev/tnc0`. If you truly run two TNCs, give the second one its own symlink (for example `tnc1`) by adding a separate, more specific rule matched on that device's serial number, so each gets a distinct, stable name.",
+      "__The radio won't key (no PTT / it never transmits).__ Check the **rig interface cable** is the correct one for your radio model and fully plugged in at both ends. For a Digirig or SignaLink, confirm the software's PTT method matches how the TNC keys (CAT versus a hardware line). A wrong or half-seated cable is the usual cause.",
+      "__Audio is distorted or the far end can't decode me.__ Transmit audio is too loud. Turn the drive down — on the IC-7300 lower the **USB MOD Level** toward 40%, or reduce the TNC's output level — and make sure **speech compression is OFF**. On receive, if the software's level meter is pinned to the top, lower the input level in the software.",
+      "__The SCS PACTOR modem doesn't respond.__ Confirm you selected the correct COM port for the modem in Winlink Express, that the USB (or LAN) cable is seated, and try the modem's lower default baud rate if the higher one is silent. In a terminal to the modem, the `ver` command should return its firmware version and model — no response there means a cabling or port problem, not a radio one."
+    ]}
+  ]
+}

@@ -1,0 +1,117 @@
+{
+  "order": 8,
+  "title": "EMCOMM-NET & Static IP — How Everyone Connects",
+  "subtitle": "The moment it all comes together for the operator: join one Wi-Fi network, open a browser, and every FieldCommand tool is there — no app, no internet, no per-device setup. This chapter explains the simple addressing behind that, and what to change (carefully) if you ever must.",
+  "in_this_chapter": [
+    "The three-step way any device connects",
+    "Why there's no app and no internet needed",
+    "The static IP scheme — who lives at which address",
+    "How the server's address is set and served",
+    "What to change if you truly must (and the warning that goes with it)",
+    "Trusting the security certificate (HTTPS)",
+    "Verifying a client can reach the dashboard",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "On any phone, tablet, or laptop: **(1)** join the Wi-Fi network named **EMCOMM-NET**, **(2)** open a web browser, **(3)** type **`http://192.168.50.1`** and press Go. The FieldCommand dashboard appears. That's the entire connection process — no app to install, no internet, nothing to set up on the device. It works the same for everyone, every time."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "This is the chapter your operators actually live in. Everything built in the previous chapters — the server, the mirror, the router, the switch — exists so that this final step is dead simple: a person walks up with a device they already own, joins one Wi-Fi network, opens a browser, and works. No accounts, no app store, no cell signal, no fiddling. This chapter explains how that works and the small, fixed set of addresses that make it reliable."},
+    {"p": "The whole system is designed around a single promise: **if you can open a web page, you can use FieldCommand.** The tools are ordinary web pages served by the FieldCommand Pi. Any modern browser on any device — Android, iPhone, iPad, Windows, Mac, Linux — reaches them the same way. There is nothing to download and nothing to keep updated on the operator's device."},
+    {"callout": {"kind": "note", "label": "WHO DOES THIS",
+      "text": "The three connection steps are done by **every operator**, on their own device, every time they arrive — and they need no training to do it. The addressing scheme further down is set up **once** by whoever builds the server; operators never touch it."}},
+
+    {"h1": "How Any Device Joins — Three Steps"},
+    {"p": "This is the process to teach every operator. It is identical on every kind of device, so you can put it on a card by the door:"},
+    {"steps": [
+      "**Join the Wi-Fi.** Open the device's Wi-Fi settings and connect to the network named **EMCOMM-NET**. Enter the password when asked (your team sets this; the factory example is `fieldcommand2026`, which you should change for real operations).",
+      "**Open a web browser.** Any browser works — Chrome, Safari, Edge, Firefox. It does not matter which.",
+      "**Go to the server.** In the address bar type **`http://192.168.50.1`** exactly — including the `http://` at the front — and press Enter or Go. The FieldCommand dashboard loads, and the operator is working."
+    ]},
+    {"callout": {"kind": "important", "label": "NO APP, NO INTERNET, NO PER-DEVICE SETUP",
+      "text": "There is deliberately **nothing to install**. FieldCommand is not an app — it's a set of web pages the server hands to your browser. It needs **no internet**, because everything runs on the local EMCOMM-NET. And it needs **no setup on each device** — the router hands out the network address automatically the moment a device joins. A brand-new phone that has never seen the system before is fully working within seconds of joining EMCOMM-NET."}},
+    {"p": "Because the address is served automatically, an operator never types their own device's address or configures anything. They only ever type the **server's** address, `http://192.168.50.1`, to reach the tools. Everything else is handled for them."},
+
+    {"h1": "The Static IP Scheme — Who Lives Where"},
+    {"p": "Every device on a network has an **Internet Protocol (IP) address** — its unique number on the network. On EMCOMM-NET, a few important machines are given **fixed** (static) addresses that never change, while everyday devices get a temporary one automatically. Fixed addresses matter because operators and other services need to always find the server at the same place. Here is the full scheme:"},
+    {"table": {
+      "headers": ["Address", "Who has it", "Fixed or automatic?"],
+      "rows": [
+        ["**192.168.50.1**", "**FieldCommand server** (the main Pi) — where every tool lives; this is the address operators type", "**Fixed** (static)"],
+        ["**192.168.50.2**", "**44Net gateway Pi** — the amateur-radio (AMPRNet) gateway; only present if you run 44Net", "**Fixed** (static)"],
+        ["**192.168.50.254**", "**The ASUS router itself** — its own admin page, kept separate so the server's address stays clean", "**Fixed** (static)"],
+        ["**192.168.50.100 – 192.168.50.200**", "**Everyday client devices** — phones, tablets, laptops. Each gets the next free address in this pool automatically when it joins", "**Automatic** (DHCP pool)"],
+        ["**192.168.50.3 – 192.168.50.23** (selected)", "**Optional reserved devices** — e.g. the Windows laptop, the network printer, and workstations, when a group wants their address pinned", "**Reserved** (by choice)"]
+      ],
+      "widths": [2.3, 3.5, 1.2]
+    }},
+    {"callout": {"kind": "note", "label": "THE POOL COMES STRAIGHT FROM THE CONFIGURATION",
+      "text": "The client pool **192.168.50.100–192.168.50.200** and the fact that all clients are pointed at **192.168.50.1** as their gateway and name server are set in the network's Dynamic Host Configuration Protocol (DHCP) configuration. Every device that joins is told, automatically: \"your gateway is 192.168.50.1, and you're on the same 192.168.50.x network as the server.\" That's why a fresh device just works."}},
+    {"p": "The upshot for a human: **you only ever need to remember one address — `192.168.50.1`.** That's the server, that's where the tools are, and that's the only thing anyone types."},
+
+    {"h1": "How the Server's Address Is Set and Served"},
+    {"p": "Two small pieces of configuration make the address stable, and both are handled for you during installation. You don't have to do anything with them — this section is here so you understand what's under the hood if you ever need to look."},
+    {"table": {
+      "headers": ["Piece", "What it does", "Set where"],
+      "rows": [
+        ["**The Pi's static IP**", "Pins the FieldCommand server to **192.168.50.1** on its wired Ethernet connection, so it's always found at the same place", "Set on the Pi during installation (its wired network profile)"],
+        ["**The router's DHCP + Wi-Fi**", "Broadcasts the **EMCOMM-NET** name and hands every joining device an address from the **.100–.200** pool, pointed at the server", "Set once on the ASUS router (earlier setup step)"]
+      ],
+      "widths": [2.0, 3.8, 1.2]
+    }},
+    {"p": "In other words, the **server** claims a fixed address, and the **router** makes sure every other device can find it. Once both are in place — which the installer arranges — the connect-in-three-steps experience simply works, activation after activation, with no further attention."},
+
+    {"h1": "What to Change If You Truly Must"},
+    {"p": "For almost every group, the defaults — the **EMCOMM-NET** network name and the **192.168.50.1** server address — are exactly right and should be left alone. They're plain, they're memorable, and everything is already wired to expect them. But if your situation forces a change (for example, a name clash with another network on site), it is possible. Do it carefully."},
+    {"callout": {"kind": "warning", "label": "CHANGE THE NAME OR THE ADDRESS IN BOTH PLACES, OR NOBODY CONNECTS",
+      "text": "The Wi-Fi network name (**SSID**) and the server address are how every operator's device finds the system. They are configured in **two** places that must agree: on the **router** (which broadcasts the name and hands out addresses) and on the **FieldCommand server** itself (its Setup screen and its static address). If you change one and not the other, they no longer match — and when they don't match, **operators cannot connect at all.** Change both, together, or change neither."}},
+    {"p": "If you do change them, follow this rule: pick the new name and address, set them on the **router** first (its Wi-Fi name, and the address it expects the server to use), then set the matching values on the **server** — its static IP and the **Server Address** and **Wi-Fi Network Name** fields on the Setup screen. Then reconnect a test device to the new name and confirm the new address loads before you rely on it. If anything goes wrong, the safest move is to put both back to the defaults (`EMCOMM-NET` and `http://192.168.50.1`)."},
+    {"callout": {"kind": "note", "label": "THE ROUTER ADMIN LIVES SEPARATELY, ON PURPOSE",
+      "text": "The router keeps its own admin page at **192.168.50.254**, deliberately separated from the server's **192.168.50.1**. That way the address operators type for the tools (`192.168.50.1`) stays clean and never collides with the router's settings page. Leave that separation in place."}},
+
+    {"h1": "Trusting the Security Certificate (HTTPS)"},
+    {"p": "FieldCommand serves its tools over **HTTPS** — the secure, encrypted kind of web connection, marked by a **padlock** in the browser's address bar. This is turned on automatically when the server is built (see the one-command setup chapter), so member and operator information is never sent in plain readable text across the Wi-Fi. You don't turn anything on; it's already there. The address becomes **`https://192.168.50.1`** (note the **`s`** after `http`), and if anyone types the plain **`http://192.168.50.1`** the server automatically forwards them to the secure address — so the three connection steps still work exactly as written."},
+    {"p": "There is just **one** small, one-time step per device to make the padlock look completely clean, and it depends on how the server was built:"},
+    {"table": {
+      "headers": ["How the server was built", "What each device does (once)", "What the operator sees"],
+      "rows": [
+        ["**Private local CA** (the default, recommended)", "Install the server's root certificate — a file named **`fieldcommand-ca.crt`** — on the device one time. After that, the padlock is clean with no warnings, forever.", "A normal, clean padlock — just like any major website."],
+        ["**Self-signed** (built with `TLS_SELF_SIGNED=1`)", "Nothing to install. The first time the device connects, tap through a one-time **\"not secure\" / \"your connection is not private\"** warning to accept it.", "A one-time warning screen on the first visit, then normal use."]
+      ],
+      "widths": [2.0, 3.5, 1.6]
+    }},
+    {"callout": {"kind": "note", "label": "WHAT A \"CERTIFICATE AUTHORITY\" IS, IN PLAIN WORDS",
+      "text": "A **Certificate Authority (CA)** is simply a trusted \"stamp\" that vouches for a server's identity, so the browser shows a clean padlock instead of a warning. FieldCommand runs its own tiny private CA on the server. Installing its root file, **`fieldcommand-ca.crt`**, on a device teaches that device to trust the FieldCommand server — and only the FieldCommand server. It gives no access to anything else and involves no internet."}},
+    {"p": "Here is the one-time install of the root certificate on a device (only needed for the default private-CA build). Do this once per phone, tablet, or computer:"},
+    {"steps": [
+      "Join **EMCOMM-NET** and, in a browser, go to **`https://192.168.50.1/fieldcommand-ca.crt`**. The file **`fieldcommand-ca.crt`** downloads. (Whoever builds the server can also copy it straight from the server at **`/opt/fieldcommand/html/fieldcommand-ca.crt`** onto a USB drive to hand around.)",
+      "Open the downloaded file and follow the device's prompt to install or trust it. On **Windows**, double-click it, choose **Install Certificate → Local Machine → Trusted Root Certification Authorities**. On **macOS**, open it in **Keychain Access**, then set it to **Always Trust**. On **iPhone/iPad**, it installs as a **profile** in **Settings → General → VPN & Device Management**, then you switch it on under **Settings → General → About → Certificate Trust Settings**. On **Android**, use **Settings → Security → Encryption & credentials → Install a certificate → CA certificate**.",
+      "Reload **`https://192.168.50.1`**. The padlock is now clean, with no warning. You never have to do this again on that device."
+    ]},
+    {"callout": {"kind": "tip", "label": "THE ONE-TIME WARNING IS SAFE TO ACCEPT ON YOUR OWN NETWORK",
+      "text": "If your server was built in **self-signed** mode, the first-visit **\"not secure\"** warning is expected and harmless here. It appears only because the certificate wasn't issued by one of the big public authorities — not because anything is wrong. On your own private EMCOMM-NET, tap **Advanced** and then **Proceed / Continue** (the exact words vary by browser) to accept it once. The connection is still fully encrypted."}},
+
+    {"h1": "Verifying a Client Can Reach the Dashboard"},
+    {"p": "Before you hand the system to operators, prove it from a device you're holding — ideally one that has never touched the system, to confirm the from-scratch experience really is that simple:"},
+    {"steps": [
+      "On a phone or laptop, open Wi-Fi settings and join **EMCOMM-NET**. Watch for it to show as connected.",
+      "Open any web browser and go to **`http://192.168.50.1`** (type the `http://` too).",
+      "Confirm the **FieldCommand dashboard** loads. If it does, this device — and any device like it — is good to go.",
+      "*(Optional check for builders.)* Look at the device's own Wi-Fi details; its address should be somewhere in **192.168.50.100–192.168.50.200**, confirming the router handed it one from the pool."
+    ]},
+    {"callout": {"kind": "tip", "label": "MAKE IT EVEN EASIER — SET IT AS THE HOME PAGE",
+      "text": "On a fixed operator workstation, you can set the browser's start page to `http://192.168.50.1` so the dashboard opens the instant the browser launches — one less thing for an operator to type. On a Pi 500 workstation running Chromium, that's **Settings → On startup → Open a specific page → `http://192.168.50.1`**."}},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__I can't reach `192.168.50.1`.__ First, confirm the device is actually **joined to EMCOMM-NET** (not your phone's cellular data or a different Wi-Fi). Then confirm you typed the address exactly, **with `http://` in front**. If the Wi-Fi is right and the address still won't load, the **server may be off or unplugged** — check the FieldCommand Pi has power and is cabled into switch Port 2 (previous chapter).",
+      "__I left off the `http://` and it searched the web instead.__ Some browsers treat `192.168.50.1` on its own as a search. Type the full **`http://192.168.50.1`** — with the `http://` — and it will load the page instead of searching. The server automatically forwards you to the secure **`https://`** address, so you don't have to type the `s` yourself.",
+      "__The browser says \"Not secure\" or \"Your connection is not private.\"__ This is about the security certificate, not a real problem on your own EMCOMM-NET. If the server was built the default way (private CA), install the root certificate **`fieldcommand-ca.crt`** on this device once — see \"Trusting the Security Certificate\" above — and the warning goes away for good. If the server was built in self-signed mode, this warning is expected on each device's first visit; tap **Advanced** then **Proceed / Continue** to accept it once. The download link for the root file is **`https://192.168.50.1/fieldcommand-ca.crt`**.",
+      "__My device got the wrong IP address.__ If a device shows an address that is **not** in the `192.168.50.x` range, it probably didn't get one from the router. Turn its Wi-Fi off and on to rejoin EMCOMM-NET and pick up a fresh address from the pool. If it still gets the wrong range, it may be stuck on a different network or have a manually-set address — remove any manual IP setting so it uses **automatic (DHCP)**.",
+      "__It works when I'm plugged in with a cable but not over Wi-Fi.__ The wired side is fine, so the issue is the **Wi-Fi**. Confirm the **ASUS router** is powered and broadcasting **EMCOMM-NET**, that you joined that exact network, and that you're in range (add a mesh node if coverage is weak — see the previous chapter). Remember the Pi itself does not make Wi-Fi; the router does.",
+      "__Everyone suddenly can't connect after someone changed a setting.__ The **Wi-Fi name or server address** was very likely changed on one side but not the other. They must match in both the **router** and the **server**. Put both back to the defaults — **`EMCOMM-NET`** and **`http://192.168.50.1`** — and have everyone rejoin.",
+      "__The page loads but looks half-broken or out of date.__ Do a hard refresh in the browser (pull down to refresh on a phone, or Ctrl+F5 / Cmd+Shift+R on a computer). The server tells browsers not to cache the main pages, so a refresh pulls the current version cleanly."
+    ]}
+  ]
+}

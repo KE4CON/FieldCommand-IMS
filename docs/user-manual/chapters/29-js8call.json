@@ -1,0 +1,75 @@
+{
+  "order": 29,
+  "title": "JS8Call — High Frequency (HF) Digital Messaging",
+  "subtitle": "The weak-signal keyboard-messaging mode that gets short text through when voice and faster data can't — and the dashboard tile that opens it.",
+  "in_this_chapter": [
+    "What JS8Call is and when you'd reach for it",
+    "The one thing to understand: it runs on a separate Windows laptop",
+    "Opening JS8Call from the FieldCommand dashboard tile",
+    "Setting the laptop's address the first time",
+    "What JS8Call gives you during an emergency",
+    "Group calls, heartbeats, and how it ties back to the incident log",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "**JS8Call** is a text-messaging mode for ham radio that gets through when signals are extremely weak. It runs on a **separate Windows laptop** connected to an HF radio — not on the FieldCommand server. On the dashboard, the **📡 JS8Call** tile opens that laptop's JS8Call screen in your browser. The first time you tap it, you type in the laptop's address; after that the tile just opens it. Copying JS8Call needs no callsign, but **transmitting requires a licensed operator**."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "**JS8Call** is a way to send short typed messages over amateur radio on the High Frequency (HF) bands — the long-distance shortwave bands. Its trick is that it copies **extremely weak signals**, far weaker than you could ever understand by voice and weaker than most other data modes need. When the bands are poor, the power is low, or the antenna is a compromise, JS8Call often still gets a short message through. That makes it a favorite fallback for emergency communications when nothing faster will connect."},
+    {"p": "It works like a slow group text chat on the radio: you type a line, it goes out as tones, and other stations listening on the same frequency see it appear. Messages can also be **relayed** — a station that hears you can hold your message and pass it along later when the station you're trying to reach comes within range."},
+    {"callout": {"kind": "important", "label": "TRANSMITTING IS A LICENSED-OPERATOR FEATURE",
+      "text": "JS8Call sends on amateur-radio frequencies, so **transmitting requires a properly licensed amateur-radio operator** with a callsign (for example **{{club}}**). Anyone can *listen*, but keying the radio is a licensed activity. Like the other ham features, the dashboard tile is only present when a callsign has been set in Setup (Chapter 3)."}},
+
+    {"h1": "It Runs on a Separate Windows Laptop"},
+    {"p": "This is the one thing to get straight: **JS8Call is not part of the FieldCommand server.** It is its own program, running on a **Windows laptop** that is plugged into the incident's HF radio (for example an IC-7300 radio with a small USB sound-card interface such as a Digirig). That laptop sits on the same Wi-Fi network as everything else. FieldCommand simply provides a convenient **link** to JS8Call's built-in web screen so you can glance at it from the dashboard — it doesn't run the mode or store its messages itself."},
+    {"screenshot": "The FieldCommand dashboard with the purple 📡 JS8Call tile highlighted"},
+
+    {"h1": "Opening JS8Call from the Dashboard"},
+    {"p": "On the dashboard, find the purple **📡 JS8Call** tile. It reads *“HF digital messaging via keyboard.”* The small line at the bottom of the tile is a status hint:"},
+    {"table": {
+      "headers": ["The tile shows", "Meaning"],
+      "rows": [
+        ["*⚠ Windows laptop — tap to configure IP*", "FieldCommand doesn't yet know the laptop's address. Tap the tile once to enter it."],
+        ["*📡 Windows: 192.168.50.x*", "The address is set. Tapping the tile opens JS8Call's screen for that laptop."]
+      ],
+      "widths": [3.3, 3.3]
+    }},
+    {"steps": [
+      "Tap the **📡 JS8Call** tile.",
+      "The first time, a small box asks for **the IP address of the Windows laptop running JS8Call** (for example `192.168.50.2`). You can find that address by running `ipconfig` on the Windows laptop.",
+      "Type it in and confirm. FieldCommand remembers it on this device, and the tile's hint line updates to show the address.",
+      "The laptop's JS8Call web screen opens in a new browser tab (it lives on **port 2442** of that laptop). From here on, tapping the tile just opens it — no need to type the address again."
+    ]},
+    {"callout": {"kind": "note", "label": "CHANGING OR CLEARING THE ADDRESS",
+      "text": "Tap the tile and type a **different** address to point it at another laptop, or **leave the box empty and confirm** to forget the address — the tile returns to *“tap to configure IP.”* The address is remembered per device, so each operator's tablet or phone may need setting once."}},
+
+    {"h1": "What JS8Call Gives You in an Emergency"},
+    {"table": {
+      "headers": ["Capability", "What it does for you"],
+      "rows": [
+        ["**Keyboard messaging**", "Live, chat-style typed messages between stations. No callsign is needed just to read what comes in."],
+        ["**Store and forward (relay)**", "A message can be held by a station that hears it and passed on when the destination is finally in range."],
+        ["**Heartbeat beacons**", "The station can quietly announce itself now and then, which also shows who can currently hear whom (useful propagation information)."],
+        ["**Group messaging**", "A message addressed to a group name — such as **@EMCOMM**, **@ARES**, or **@RACES** — reaches every station monitoring that group."],
+        ["**Extreme weak-signal reach**", "Copies signals down to roughly **-24 dB** signal-to-noise — well below what voice or faster data modes can manage."]
+      ],
+      "widths": [2.2, 4.4]
+    }},
+
+    {"h1": "How It Ties Back to the Incident"},
+    {"p": "Because JS8Call runs in its own program, its messages don't flow automatically into the FieldCommand incident record yet. When an important message comes across — say a request or a status report — the operator reads it in JS8Call and **types the key details into the matching FieldCommand tool**: an ICS-213 General Message (Chapter on ICS forms) or the Net Control logger. That keeps the message in the incident's paper trail alongside everything else. A future FieldCommand update is planned to pull JS8Call traffic into the incident log directly; for now it's a quick manual copy."},
+    {"callout": {"kind": "note", "label": "IT'S ON THE PRE-FLIGHT CHECKLIST",
+      "text": "JS8Call appears as an optional item on the deployment **pre-flight checklist**: confirm JS8Call is running on the Windows laptop, its web screen is reachable on port 2442, the frequency is set, and the heartbeat is configured. Ticking it there is a good habit before you rely on it."}},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__There's no JS8Call tile on the dashboard.__ It's a licensed-operator feature. Make sure a **Club / Station Callsign** is set in Setup (Chapter 3) and the JS8Call module is enabled.",
+      "__Tapping the tile opens a blank page or won't connect.__ The address may be wrong, or JS8Call isn't running. Confirm the Windows laptop is on, JS8Call is open, and its web/API server is enabled on **port 2442**. Re-enter the laptop's address by tapping the tile.",
+      "__I don't know the laptop's IP address.__ On the Windows laptop, open a Command Prompt and run `ipconfig`; use the address on the same `192.168.50.x` network as FieldCommand.",
+      "__I set it up on my tablet but my phone still says “tap to configure IP.”__ The address is remembered per device. Enter it once on each device you use.",
+      "__Messages aren't showing up in the incident record.__ That's expected for now — JS8Call traffic is copied into an ICS-213 or the Net Control logger by hand. Direct ingestion is planned for a future release.",
+      "__I can read messages but can't send.__ Transmitting requires a licensed amateur operator and a properly configured radio. Reading is open to anyone; keying the radio is not."
+    ]}
+  ]
+}

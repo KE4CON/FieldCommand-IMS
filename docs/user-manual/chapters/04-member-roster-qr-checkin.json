@@ -1,0 +1,220 @@
+{
+  "order": 4,
+  "title": "Member Roster & Quick Response (QR) code Check-In Codes",
+  "subtitle": "The central personnel list — who your people are, what they can do, and how to check them in fast with a printed Quick Response (QR) code or a self-service arrival form.",
+  "in_this_chapter": [
+    "What the roster is and why it feeds everything else",
+    "Opening the roster and finding your way around the two tabs",
+    "Reading a member card at a glance",
+    "The three identifiers: callsign, radio ID, and member ID",
+    "Adding, editing, and deleting members",
+    "Adding a member photo (upload or phone camera)",
+    "Bulk-loading your membership with a CSV file",
+    "Personal QR check-in codes — printing and saving them",
+    "Printing laminate-ready member ID cards",
+    "The Activation tab: checking people in during an event",
+    "Walk-in check-in for people not on the roster",
+    "The field check-in page volunteers fill in themselves",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "Open **Member Roster** from the dashboard. The **Directory** tab lists everyone; click **+ Add Member** to add a person, or click a card to edit them. Click the **QR** button on any card to show, print, or save that person's personal check-in code. The **Activation** tab is where you check people in during a real event — click a name to check them in, or use **+ Walk-In Check-In** for someone not on the list. Volunteers can also check themselves in from a phone using the field check-in page."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "The **Member Roster** is FieldCommand's central list of people. It holds your regular members, occasional participants, and mutual-aid visitors, each with their identifiers, certifications, equipment, and contact details. It is worth setting up carefully because the rest of the system leans on it: net loggers pull names and callsigns from here, check-in is fastest when a person is already in the roster, and every member gets a personal **QR code** — a small square barcode — that lets them check in almost instantly at an activation."},
+    {"p": "Everything the roster stores lives on the server only. Phone numbers, emails, and emergency contacts are kept locally and are never sent anywhere outside your own system."},
+    {"callout": {"kind": "note", "label": "TWO KINDS OF \"CHECK-IN\" IN THIS CHAPTER",
+      "text": "There are two ways people get counted as present, and both are covered here. The **Activation tab** inside the roster is where an operator checks members in from the console. The **field check-in page** is a separate mobile-friendly form a volunteer opens on their own phone to sign themselves in. They feed the same purpose — an accurate list of who is on scene — from two directions."}},
+
+    {"h1": "Opening the Roster"},
+    {"p": "From the dashboard, tap the **👥 Member Roster** card (it appears in several modes). The roster opens with a top bar of controls and two tabs. The controls, left to right:"},
+    {"table": {
+      "headers": ["Control", "What it does"],
+      "rows": [
+        ["**🔍 Search box**", "Filters the list as you type — matches name, callsign, radio ID, or member ID."],
+        ["**+ Add Member**", "Opens the blank Add Member form to enter a new person."],
+        ["**📥 Import CSV ⓘ**", "Bulk-loads members from a spreadsheet file. Hover the ⓘ for the exact column list."],
+        ["**📤 Export CSV**", "Downloads the whole roster as a spreadsheet file for backup or sharing."],
+        ["**🖨 Print**", "Prints the current roster view."]
+      ],
+      "widths": [2.1, 5.5]
+    }},
+    {"p": "Just below sit the two tabs: **📋 Directory** (the full member list, with a live count) and **✅ Activation** (the check-in board for an active event, also with a count). Click a tab to switch between them."},
+    {"screenshot": "The Member Roster Directory tab: search and action buttons across the top, the Directory/Activation tabs, and a grid of member cards"},
+
+    {"h1": "Reading a Member Card"},
+    {"p": "In the Directory tab, each person is a **card**. At a glance a card shows a round avatar with the person's first initial, their name, and a small blue badge for their license class if they have one. Below the name sit colored identifier badges and a row of small dots:"},
+    {"bullets": [
+      "**📻 (green)** — the person's amateur-radio callsign, if they have one",
+      "**📡 (blue)** — their radio ID or unit number, for {{ps_short}} radio systems",
+      "**🪪 (purple)** — their member ID, your group's own internal number",
+      "**Colored dots** — a quick certification summary; a green dot means they hold that certification, a gray dot means they don't (hover a dot to see which certification it is)"
+    ]},
+    {"p": "On the right edge of each card is a **QR** button (covered below). Click anywhere else on the card to open that member for editing."},
+
+    {"h1": "The Three Identifiers"},
+    {"p": "FieldCommand deliberately keeps three separate ID fields because a person can be known three different ways, and any one of them can be blank. Understanding the difference saves confusion later."},
+    {"table": {
+      "headers": ["Identifier", "What it is", "Example"],
+      "rows": [
+        ["**Callsign**", "An amateur-radio callsign issued by the Federal Communications Commission (FCC). Leave it blank for members who are not licensed hams. The club's shared callsign is {{club}}.", "a personal callsign such as `KE4CON`"],
+        ["**Radio ID / Unit #**", "The unit number a person is known by on a {{ps_short}} trunked or Project 25 (P25) radio system. Used by every kind of member, not just hams.", "`Unit 412`"],
+        ["**Member ID**", "Your organization's own internal membership number — the roster's primary way of telling people apart. This is the number a personal QR code is built from by default.", "{{mid}}"]
+      ],
+      "widths": [1.9, 4.3, 1.4]
+    }},
+    {"callout": {"kind": "note", "label": "BLANK CALLSIGNS ARE EXPECTED",
+      "text": "Non-licensed volunteers are full members of the roster — they simply have no callsign. Leave that field empty. The roster, check-in, and resource tools all work fine for members with no callsign; only the amateur-radio net logging cares about it."}},
+
+    {"h1": "Adding and Editing a Member"},
+    {"p": "Click **+ Add Member** to open the member form, or click an existing card to edit that person. The form is grouped into labeled sections. You do not have to fill in everything — a name is enough to start."},
+    {"table": {
+      "headers": ["Section", "Fields", "Notes"],
+      "rows": [
+        ["**Identifiers**", "Callsign · Radio ID / Unit # · Member ID", "Any combination; all three may be blank except you'll want at least one way to identify the person."],
+        ["**Personal Info**", "First Name · Last Name · License Class", "License Class is a dropdown: Amateur Extra, General, Technician, Novice, Advanced, GMRS, or **No amateur license**."],
+        ["**Contact**", "Phone · Email · Address · Grid Square · Emergency Contact", "Grid Square is a Maidenhead locator (a short code hams use for location). All stored locally only."],
+        ["**Roles**", "Net Control (NCS) · Operator · Liaison · Emergency Coordinator (EC)", "Check every role that applies. Roles show as badges on the card."],
+        ["**Certifications**", "ICS-100/200/300/400/700/800 · EmComm I/II · CPR/AED · First Aid · CERT", "Check what the person holds; these drive the green cert dots on the card."],
+        ["**Equipment**", "HF Radio · VHF/UHF · Digital · Packet · PACTOR Modem · VARA HF · VARA FM · APRS · Winlink · Go-Box · Generator · Battery/Solar · Vehicle Mount", "Check the gear the member can bring, so you can find capabilities fast when tasking."],
+        ["**Notes**", "Free text", "Anything else worth recording about the person."]
+      ],
+      "widths": [1.5, 4.4, 1.7]
+    }},
+    {"steps": [
+      "Click **+ Add Member** (or click a card to edit).",
+      "Fill in at least a name, plus whichever identifiers, certifications, and equipment apply.",
+      "Click **Save Member**. The person appears in the Directory immediately.",
+      "To remove someone, open their card and click the red **Delete** button, then confirm. Deleting a member does not erase past net-log or check-in history."
+    ]},
+
+    {"h1": "Adding a Member Photo"},
+    {"p": "Each member can have a **photo**. It shows in place of the plain initial avatar and, more usefully, it prints on the member's ID card (covered below). Adding a photo is optional, but a photo is what turns a plain roster entry into a real photo credential someone can wear."},
+    {"p": "The photo control lives in the member editor. Open a member's card (or start a new one with **+ Add Member**) and look for the **Take / upload photo** control near the top of the form."},
+    {"steps": [
+      "Open the member in the editor and click **Take / upload photo**.",
+      "On a **computer**, this opens a file picker — choose a photo already saved on the device (a JPG or PNG image works fine).",
+      "On a **phone or tablet**, you're offered the choice to **take a new photo** with the camera or pick one from the device's photo library. To take one, allow the camera when asked, frame the person, and snap it.",
+      "The photo appears as a preview. FieldCommand automatically **shrinks (resizes)** it to a sensible size, so you don't need to worry about a huge image file — just pick or shoot the picture.",
+      "Click **Save Member**. The photo is now stored with that person and will appear on their ID card."
+    ]},
+    {"callout": {"kind": "note", "label": "PHOTOS STAY ON YOUR SERVER",
+      "text": "Like everything else in the roster, a member's photo is kept on your own server only — it is never uploaded to the internet. To change a photo later, open the member and use the **Take / upload photo** control again; the new picture replaces the old one."}},
+    {"callout": {"kind": "tip", "label": "USING THE CAMERA NEEDS THE SECURE CONNECTION",
+      "text": "Taking a photo with a phone camera works only over FieldCommand's secure **HTTPS** connection (the padlock — see Chapter 2). If the camera won't open, make sure the address in your browser starts with `https://`. You can always **upload** an existing photo instead, which works on any connection."}},
+
+    {"h1": "Bulk-Loading Members with CSV"},
+    {"p": "If you already keep your membership in a spreadsheet, you can load everyone at once instead of typing them in. **CSV** stands for comma-separated values — a plain spreadsheet saved as simple text, which any spreadsheet program can produce with **Save As → CSV**."},
+    {"p": "Click **📥 Import CSV** and choose your file. The only required column is **member_id**; every other column is optional. Hovering the **ⓘ** next to the button shows the full list."},
+    {"table": {
+      "headers": ["Column", "Required?", "Meaning"],
+      "rows": [
+        ["`member_id`", "**Yes**", "Your internal member number, for example {{mid}}. Used to tell people apart."],
+        ["`callsign`", "No", "Amateur-radio callsign; leave blank for non-ham members."],
+        ["`radio_id`", "No", "{{ps_mode}} radio ID / unit number."],
+        ["`first_name` / `last_name`", "No", "The person's name."],
+        ["`role` or `roles`", "No", "One role, or several separated by semicolons."],
+        ["`phone` · `email` · `grid` · `license_class`", "No", "Contact details, grid square, and license class."]
+      ],
+      "widths": [2.3, 1.0, 4.3]
+    }},
+    {"callout": {"kind": "tip", "label": "RE-IMPORTING IS SAFE",
+      "text": "Importing the same file again **updates** existing members rather than creating duplicates, because FieldCommand matches on the member ID (falling back to callsign or radio ID). Members already in the roster who are not in the file are left untouched. Use **📤 Export CSV** first to keep a backup before a big import."}},
+
+    {"h1": "Personal QR Check-In Codes"},
+    {"p": "Every member has a personal **QR code** — a small square barcode that a check-in operator can scan with a camera to sign the person in instantly, no typing. The **QR** button on each member card opens that person's code."},
+    {"steps": [
+      "In the Directory, click the **QR** button on a member's card.",
+      "A window opens showing the person's name, their code, and the QR image. When the server has internet, a real scannable QR image is generated. When offline, the window instead shows the member's ID in large text as a manual-entry fallback — an operator can just type or read it.",
+      "Click **🖨 Print** for a clean printable sheet with the QR code, the member's name, and the check-in web address — good for ID badges or a check-in binder.",
+      "Click **💾 Save PNG** to download the code as an image the member can keep on their phone."
+    ]},
+    {"callout": {"kind": "note", "label": "WHERE THE CODE GETS SCANNED",
+      "text": "These personal codes are read by FieldCommand's camera **Scan Check-In** page, which turns a phone or tablet camera into a check-in scanner (covered in its own chapter). By default a member's QR code is built from their member ID. If your group uses physical facility badges, the code can be set to match a badge number instead, so a badge swipe checks the person in."}},
+
+    {"h1": "Printing Member ID Cards"},
+    {"p": "FieldCommand can print proper **member ID cards** — the kind of photo credential a volunteer clips to a lanyard. Each card is two-sided and sized to slip into a standard badge holder or to laminate, and it pulls everything it needs from the roster and from your Setup branding, so the cards come out correct for your own organization automatically."},
+    {"p": "There are two ways to print them. To print a stack for the whole group, use the **🪪 Print ID Cards** button at the top of the roster. To print just one person's card, open that member in the editor and click the **ID Card** button there."},
+    {"h2": "What's on the card"},
+    {"p": "Each card has a **front** and a **back**:"},
+    {"table": {
+      "headers": ["Side", "What it shows"],
+      "rows": [
+        ["**Front**", "The member's **photo**, their **name**, their identifiers (**callsign**, **member ID**, and **radio ID** — whichever they have), and a scannable **QR code** so the card itself works as a check-in badge."],
+        ["**Back**", "The **Wi-Fi network name** and **dashboard address** so the member can get connected, plus the **Wi-Fi password** if you entered one in Setup. All of this comes from your Setup screen (Chapter 3)."]
+      ],
+      "widths": [1.4, 6.2]
+    }},
+    {"callout": {"kind": "note", "label": "THE CARD BACK COMES FROM SETUP",
+      "text": "The access details on the back of the card — Wi-Fi name, Wi-Fi password, and dashboard address — are taken straight from the **System & Network** section of Setup (Chapter 3). If you left the **Wi-Fi Password** field blank there, the back simply omits the password. Fill it in if you want members to be able to join without asking, or leave it out if you'd rather the password not travel around on printed cards."}},
+    {"h2": "Who gets a card"},
+    {"p": "A card is built around a photo, so the rule is simple: a person can have a card once they have a **photo** on file."},
+    {"bullets": [
+      "**Regular members** get cards — add each person's photo (above), then print.",
+      "**Walk-ins and mutual-aid visitors** get a card **only if they have a photo**. Most won't, since they're often added quickly with just a name; that's fine — they simply won't have a card printed.",
+      "A member with **no photo** is skipped when printing cards, because a photo credential with no face on it isn't much of a credential."
+    ]},
+    {"steps": [
+      "Make sure the members you want cards for have **photos** added.",
+      "On the roster, click **🪪 Print ID Cards** (or, for a single person, open their editor and click **ID Card**).",
+      "Your browser's print window opens, showing the laminate-ready cards laid out two-sided. Print them on card stock or regular paper.",
+      "Cut them out and laminate or slot them into badge holders. Because the front carries a QR code, a finished card doubles as the member's check-in badge."
+    ]},
+    {"callout": {"kind": "tip", "label": "A CARD IS ALSO A CHECK-IN BADGE", "text": "The QR code on the front of the card is the member's personal check-in code. That means at an event you can scan the card itself to sign the person in (Chapter 10) — no separate printout needed. One card handles identity, network access, and check-in all at once."}},
+    {"callout": {"kind": "note", "label": "PAIR A HANDHELD SCANNER FOR THE FASTEST TABLE",
+      "text": "At a staffed check-in table, the quickest way to read these cards is an inexpensive **USB or Bluetooth 2D barcode scanner** — the handheld kind stores use. Plug it in (or pair it over Bluetooth) to the check-in device; it acts just like a keyboard, so there's nothing to install. Point it at the card's QR code and it types the code straight into the check-in box for you. This works on any device and is covered in full in Chapter 10."}},
+
+    {"h1": "The Activation Tab — Checking People In"},
+    {"p": "During a real event, switch to the **✅ Activation** tab. This is the operator's check-in board, and it shows two side-by-side columns: **Roster — Click to Check In** on the left (everyone you can check in) and **Activated Personnel** on the right (everyone currently signed in, with a live count)."},
+    {"steps": [
+      "Use the **Search member to check in…** box to find a person quickly.",
+      "Click a person's row (or their **Check In** button) on the left. You'll be asked for an **assignment** — type where they're going or what they're doing, or leave it blank.",
+      "The person moves to the **Activated Personnel** list on the right, marked **Active**.",
+      "Change anyone's status any time using the dropdown next to their name: **Active**, **Standby**, or **Released**. Releasing someone drops them from the active count.",
+      "Click **📤 Export Log** to download the activation log as a CSV for the incident record."
+    ]},
+    {"callout": {"kind": "note", "label": "STATUS MEANINGS",
+      "text": "**Active** = on scene and working. **Standby** = present but not currently assigned. **Released** = done and signed out. The count at the top of the tab reflects everyone who is Active or on Standby — released people no longer count as present."}},
+
+    {"h1": "Walk-In Check-In"},
+    {"p": "Not everyone who shows up will be in your roster — mutual-aid responders and first-time volunteers arrive unannounced. Click **+ Walk-In Check-In** on the Activation tab to sign one in without adding them to the permanent roster first."},
+    {"steps": [
+      "Click **+ Walk-In Check-In**.",
+      "Enter what you know: **Callsign or Radio ID**, **Name**, **Organization**, and **Assignment**. A callsign or a name is enough.",
+      "Click **Check In Walk-In**. The person appears in Activated Personnel with an amber **WALK-IN** badge so it's clear they're a guest.",
+      "If the walk-in turns out to be a keeper, click the **+ Roster** button next to their name to save them into the permanent roster."
+    ]},
+
+    {"h1": "The Field Check-In Page"},
+    {"p": "FieldCommand also has a mobile-friendly **Incident Check-In** page that volunteers fill in themselves on their own phones when they arrive — useful when a line forms and one operator can't keep up. It is opened from a link tied to a specific incident (often shared as a QR code or a bookmark at the check-in table), and it is built to be big-buttoned and easy to thumb through on a phone."},
+    {"p": "At the top it shows which **incident**, **operational period** (the current work shift), and **check-in location** the form is for, so the volunteer knows they're signing into the right event. Then it collects:"},
+    {"table": {
+      "headers": ["Field", "What the volunteer enters"],
+      "rows": [
+        ["**Full Name** *(required)*", "Their name — the only required field."],
+        ["**Callsign / Radio ID / Badge #**", "Any identifier they have."],
+        ["**Agency / Home Unit**", "Who they came from."],
+        ["**ICS Position / Role**", "Picked from a grouped menu of standard ICS roles (Command, Operations, Planning, Logistics, Finance, and field roles)."],
+        ["**Resource Type**", "What kind of resource they are — Personnel, Vehicle, Amateur Radio, Medical Unit, and so on."],
+        ["**Equipment / Vehicle**", "Any gear or vehicle they bring, if relevant."],
+        ["**Notes**", "Anything the check-in recorder should know."]
+      ],
+      "widths": [2.5, 5.1]
+    }},
+    {"p": "When they tap **✓ Check In**, they get a big green **Check-In Complete** confirmation with the time, and a button to **Check In Another Person** for the next in line. Their entry flows straight into the incident's **ICS-211** check-in list and the T-card board at the command post. Lower on the same page, an operator sees a live **Currently Checked In** list with a **Check Out** button next to each person for when they leave."},
+    {"callout": {"kind": "important", "label": "THE FIELD PAGE NEEDS AN INCIDENT",
+      "text": "The field check-in page only works when opened through its incident link — that is how it knows which incident to file people under. If it opens with a \"No incident specified\" warning and a disabled button, the link is missing the incident information; get a fresh link from the console. And as always, the device must be connected to **EMCOMM-NET** to reach the server."}},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__The roster says \"Cannot reach API\" and no members load.__ The page can't reach the server. Confirm your device is connected to **EMCOMM-NET** and the server is running, then reload the page.",
+      "__A CSV import didn't add anyone.__ Every row needs a **member_id** value, and the first line of the file must be the column headers. Rows with no member ID, callsign, and name are skipped. Fix the file and import again.",
+      "__Re-importing created duplicate people.__ Duplicates happen only when the matching identifier changed between imports. Keep the **member_id** consistent for each person across imports and re-imports will update rather than duplicate.",
+      "__The QR window shows a plain code instead of a scannable square.__ That's the offline fallback — the scannable image needs internet to generate. The code shown is still valid; an operator can type it in manually at check-in, or reconnect the server to the internet to get the image.",
+      "__I checked someone in twice by accident.__ The system blocks a second active check-in for the same member and warns \"Member already checked in.\" If a duplicate slipped in as a walk-in, set the extra one to **Released**.",
+      "__A walk-in I saved to the roster is missing details.__ Saving a walk-in creates a minimal record from what was entered at check-in. Open the new card in the Directory and fill in the rest.",
+      "__The field check-in page won't submit / says it can't reach the server.__ The device isn't on EMCOMM-NET, or the incident link is incomplete. Reconnect to EMCOMM-NET (address range 192.168.50.x) and use a fresh incident link from the console."
+    ]}
+  ]
+}

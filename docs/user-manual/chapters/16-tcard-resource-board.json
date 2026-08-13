@@ -1,0 +1,149 @@
+{
+  "order": 16,
+  "title": "Incident Command System (ICS) Operations Section — T-Card Resource Board",
+  "subtitle": "The Resource Board — a live card wall of every person, vehicle, radio, and piece of gear on the incident, with a NIMS typing library behind it so everyone means the same thing by \"Engine\" or \"Crew\".",
+  "in_this_chapter": [
+    "What the Resource Board is and what it replaces",
+    "Opening the board and reading the count tiles at the top",
+    "What each resource card shows you",
+    "Adding, editing, and deleting a resource",
+    "Changing a resource's status with one click",
+    "Filtering and searching a long board",
+    "Bringing resources in from a spreadsheet (Import CSV) and sending them back out (Export CSV)",
+    "The NIMS Resource Typing Library — a shared dictionary of resource types",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "Open **Resources** from the top navigation. Click **+ Add Resource**, type a name, pick a **Type** and **Status**, and **Save** — a card appears on the board. Click the colored **status pill** on any card to move it through Available → Assigned → Staging → Out of Service → Demobilized. Use the **filter bar** to narrow a busy board, and **Export CSV** / **Import CSV** to move the whole list in or out."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "During an incident, the Operations Section has to know — at a glance — what it has to work with. How many radios are on the shelf? Which vehicle is already out on a task? Is the generator running or broken? The paper way to do this is the **T-card rack**: a physical board full of little cards, one per resource, that you slide between labeled pockets as things change. The **Resource Board** in FieldCommand is the digital version of that rack. Every resource is a **card**; the whole team sees the same board on their own screens, and it updates the moment anyone changes it."},
+    {"p": "Think of it as a shared, always-current inventory of everything and everyone assigned to the incident. It answers three questions at once: **what do we have, what state is it in, and where is it.** Because it lives on the server, there is no arguing over which printout is the latest — the board is the latest."},
+    {"callout": {"kind": "note", "label": "TWO PAGES, ONE JOB",
+      "text": "This chapter covers two linked screens. **Resources** (the board, `resources.html`) is the live list of your actual gear and people. The **NIMS Resource Typing Library** (`resource_types.html`) is the reference dictionary that defines what each standard resource *type* means. You track real resources on the first; you look up or add type definitions on the second."}},
+
+    {"h1": "Opening the Resource Board"},
+    {"steps": [
+      "On any device connected to the FieldCommand Wi-Fi, open a web browser.",
+      "Go to the dashboard at **http://192.168.50.1** and click **Resources** in the top navigation bar (it sits between Roster and Tactical).",
+      "The **📦 RESOURCE BOARD** page opens. Across the top is a row of **count tiles**; below that a **filter bar**; below that the cards themselves, grouped by type."
+    ]},
+    {"screenshot": "The Resource Board with its count tiles across the top, the filter bar, and resource cards grouped under type headings"},
+
+    {"h1": "Reading the Count Tiles"},
+    {"p": "The strip of boxes at the very top is a running tally of the whole board. It updates automatically as cards are added or their status changes, so it doubles as an at-a-glance status report for the Operations Section Chief."},
+    {"table": {
+      "headers": ["Tile", "What it counts"],
+      "rows": [
+        ["**Available**", "Resources ready to be assigned right now"],
+        ["**Assigned**", "Resources currently out on a task"],
+        ["**Staging**", "Resources standing by in a staging area, not yet tasked"],
+        ["**Out of Service**", "Resources that are broken, resting, or otherwise unusable"],
+        ["**Demobilized**", "Resources that have been released from the incident"],
+        ["**Total**", "Every resource on the board, regardless of status"]
+      ],
+      "widths": [2.0, 4.5]
+    }},
+
+    {"h1": "What a Resource Card Shows"},
+    {"p": "Each card is one resource. A colored bar down the left edge tells you its status at a glance (green = available, amber = assigned, blue = staging, red = out of service, gray = demobilized). The card shows only the fields you filled in — blank fields are simply left off, so a bare-bones card stays clean."},
+    {"table": {
+      "headers": ["On the card", "What it means"],
+      "rows": [
+        ["**Name** (with a type icon)", "The resource's designation — for example `IC-7300 HF Radio` or `Team Alpha`"],
+        ["**Type badge**", "The category, shown top-right (Radio, Vehicle, Personnel, and so on)"],
+        ["**Owner**", "Who owns or brought the resource — often a callsign like `W8XYZ`"],
+        ["**Qty**", "How many, if more than one (a single item hides this)"],
+        ["**Location**", "Where the resource physically is right now"],
+        ["**Assigned**", "The person or callsign it is assigned to"],
+        ["**Task**", "The job it is doing — for example `Shelter comms`"],
+        ["**ID/Serial**", "A serial number or asset tag, if you entered one"],
+        ["**Contact**", "A phone number or contact for the resource"],
+        ["**Status pill**", "The colored, clickable badge — click it to cycle the status"],
+        ["**Updated**", "How long ago the card last changed (\"5m ago\")"]
+      ],
+      "widths": [2.4, 4.1]
+    }},
+
+    {"h1": "Adding a Resource"},
+    {"steps": [
+      "Click **+ Add Resource** at the top right of the board. The **ADD RESOURCE** window opens.",
+      "Type a **Resource Name / Description** — this is the only required field (the placeholder shows an example, `IC-7300 HF Radio`).",
+      "Pick a **Type** from the dropdown: Personnel, Vehicle, Radio, Generator, Antenna, Computer/Tablet, Medical, Shelter/Tent, Repeater, or Other.",
+      "Pick a **Status** (defaults to Available). Fill in any of the optional fields — Owner / Callsign, Quantity, Current Location, Assigned To, Assignment / Task, Notes, Identifier / Serial #, Contact / Phone.",
+      "Click **Save Resource**. The card appears on the board under its type heading, and the count tiles update."
+    ]},
+    {"callout": {"kind": "note", "label": "ONLY THE NAME IS REQUIRED",
+      "text": "You can add a resource with nothing but a name and fill in the rest later. If you Save with a blank name, FieldCommand reminds you that the name is required — everything else is optional."}},
+
+    {"h1": "Changing Status the Fast Way"},
+    {"p": "You do not have to open the edit window just to move a resource along. The colored **status pill** on each card is a button. Click it and the status advances one step through the cycle: **Available → Assigned → Staging → Out of Service → Demobilized → back to Available.** The card's left-edge color and the top count tiles update instantly. This is the digital equivalent of sliding a T-card from one pocket to the next."},
+    {"p": "To change several fields at once — reassign it, move its location, add a task — click **✏ Edit** on the card instead. The same window you used to add it reopens as **EDIT RESOURCE**, pre-filled with what is already there. Make changes and click **Save Resource**."},
+
+    {"h1": "Filtering and Searching"},
+    {"p": "On a large incident the board can hold dozens of cards. The **filter bar** narrows it without deleting anything:"},
+    {"bullets": [
+      "**Type** dropdown — show only one category, such as Radio.",
+      "**Status** dropdown — show only one status, such as Available.",
+      "**Search** box — type any text and the board keeps only cards whose name, owner, location, or notes contain it.",
+      "**Clear** button — resets all three filters and shows the whole board again."
+    ]},
+    {"p": "Filters stack: choosing Type = Vehicle **and** Status = Assigned shows only assigned vehicles. The count tiles always reflect the full board, not the filtered view, so they stay a reliable total."},
+
+    {"h1": "Removing a Resource"},
+    {"p": "To take a resource off the board entirely, click the red **✕** button on its card and confirm. This deletes the card. If a resource is only leaving the incident — not being deleted from the record — it is usually better to set its status to **Demobilized** (using the status pill) so it stays visible in the history of the board."},
+
+    {"h1": "Moving the List In and Out (CSV)"},
+    {"p": "The two buttons at the top left of the board, **⬇ Export CSV** and **⬆ Import CSV**, let you move the whole resource list between FieldCommand and a spreadsheet program. CSV (Comma-Separated Values) is a plain table file that Excel, Google Sheets, and most incident-management systems can read."},
+    {"p": "**Export CSV** downloads a file called `resources.csv` containing every resource and all its fields — handy for a backup, a printed inventory, or handing data to another system."},
+    {"p": "**Import CSV** is smarter than a straight paste. After you pick a file, a mapping window opens so you can line up the spreadsheet's columns with FieldCommand's fields:"},
+    {"steps": [
+      "Click **⬆ Import CSV** and choose a `.csv` file from your device.",
+      "The **IMPORT RESOURCES FROM CSV** window shows the file name, how many data rows it found, and a **Column Mapping** grid.",
+      "For each FieldCommand field (name, type, status, owner, and so on), the tool guesses the matching spreadsheet column — for example it recognizes \"unit name\", \"agency\", or \"quantity\". Correct any guess using its dropdown, or set it to **(skip)**.",
+      "Check the **Preview (first 5 rows)** table to confirm the columns line up.",
+      "Click **Import [N] Resources**. Status words like \"deployed\" and type words like \"engine\" are normalized to FieldCommand's standard values automatically. Rows without a name are skipped, and rows that share a serial number update the existing card instead of duplicating it."
+    ]},
+    {"callout": {"kind": "tip", "label": "IMPORT IS FORGIVING",
+      "text": "You do not need to reformat a spreadsheet before importing. The mapping step and the automatic status/type cleanup are built to accept lists exported from other agencies and tools — just check the preview before you commit."}},
+
+    {"h1": "The NIMS Resource Typing Library"},
+    {"p": "Behind the board sits a reference screen: the **NIMS Resource Typing Library** (`resource_types.html`). National Incident Management System (NIMS) resource *typing* is the nationwide standard that makes \"Type 1 Engine\" or \"Type 2 Hand Crew\" mean the same thing to every agency. This library is FieldCommand's copy of those definitions, so when you request or log a resource, everyone is speaking the same language. It draws from the Federal Emergency Management Agency (FEMA) Resource Typing Library Tool (RTLT)."},
+    {"p": "The page lists resource types as expandable cards, grouped and color-coded by mission category — Fire / HazMat, Search and Rescue, Medical / EMS, Law Enforcement, Public Works, Mass Care, Communications, Incident Management, Transportation, Logistics, UAS / Unmanned, and Other."},
+    {"table": {
+      "headers": ["Control", "What it does"],
+      "rows": [
+        ["**Search box**", "Filters the library by name, capability, or description text"],
+        ["**Category chips**", "Click a colored category button to show only that mission area; **All** shows everything"],
+        ["**Click a card**", "Expands it to reveal the full definition"],
+        ["**Expand All / Collapse All**", "Opens or closes every card at once"],
+        ["**+ Add Custom Type**", "Creates your own resource type for something the standard list does not cover"]
+      ],
+      "widths": [2.4, 4.1]
+    }},
+    {"p": "An expanded card can show several labeled sections: **📖 What It Is** (the plain definition), **📐 Minimum Standards / Specifications**, **✅ Capability Summary**, **📦 When to Order This Resource**, and a red **⚠ Common Confusion / Watch Points** box that flags the mistakes people make with that type. Cards you create yourself carry a **CUSTOM** tag and an edit (**✏**) button."},
+
+    {"h1": "Adding a Custom Resource Type"},
+    {"steps": [
+      "On the NIMS Resource Typing Library page, click **+ Add Custom Type**.",
+      "Fill in **Kind / Name** (required) — for example `Rescue Team` — and optionally a **Type Level** (Type I, Type II, and so on).",
+      "Pick a **Category** and, if useful, a **Min Personnel** count.",
+      "Add any of the detail fields: Full Description, Capability Summary, Metrics / Specifications, What It Is, Minimum Standards, When to Order, and Common Confusion / Pitfalls.",
+      "Click **SAVE RESOURCE TYPE**. It joins the library under its category with a CUSTOM tag, and you can edit or expand it like any other."
+    ]},
+    {"callout": {"kind": "note", "label": "TYPES ARE DEFINITIONS, RESOURCES ARE REAL THINGS",
+      "text": "Adding a type to the library does **not** put a resource on the board. The library defines what a \"Rescue Team\" is; the board tracks your actual Rescue Team, its status, and where it is. Define the type once, then add as many real resources of that type as you have."}},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__The board is empty or says \"No resources found\".__ Either nothing has been added yet, or a filter is hiding everything. Click **Clear** in the filter bar; if it is still empty, add a resource with **+ Add Resource**.",
+      "__I can't Save a new resource.__ The **Resource Name / Description** is required. Type a name, then Save again — every other field can be left blank.",
+      "__A card vanished after I changed a filter.__ It is filtered out, not deleted. Click **Clear** to show the whole board. The count tiles still include it, so compare the Total tile to what you see on screen.",
+      "__Clicking the status pill jumped past the status I wanted.__ The pill cycles one step per click through the five statuses; keep clicking to come back around, or use **✏ Edit** and pick the exact status from the dropdown.",
+      "__My CSV import brought in odd type or status values.__ Re-open **⬆ Import CSV**, and in the Column Mapping step make sure the Type and Status columns point at the right spreadsheet columns. Unrecognized values are kept as-is; fix them by editing the affected cards.",
+      "__The NIMS Resource Typing Library shows \"Could not load resource types — API offline\".__ The library loads from the FieldCommand server. Confirm your device is on the FieldCommand Wi-Fi and the server at 192.168.50.1 is running, then reload the page.",
+      "__A resource left the incident but I want to keep the record.__ Don't delete it — set its status to **Demobilized** with the status pill. Deleting (the red ✕) removes it permanently."
+    ]}
+  ]
+}

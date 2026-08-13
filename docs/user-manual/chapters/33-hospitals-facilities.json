@@ -1,0 +1,115 @@
+{
+  "order": 33,
+  "title": "Hospital Proximity & Facilities Directory",
+  "subtitle": "Two address books for an incident: one that ranks nearby hospitals by how fast you can get a patient there (by air or road), and one that keeps every EOC, shelter, staging area, and command post at your fingertips.",
+  "in_this_chapter": [
+    "What the two pages are and how they differ",
+    "Hospital Proximity: setting the incident location and picking a helicopter",
+    "Sorting hospitals by air miles, air time, drive time, trauma level, and more",
+    "Reading a hospital card and its capability badges",
+    "Adding, editing, importing, and exporting hospitals (including CMS import)",
+    "Facilities Directory: types, statuses, and the detail card",
+    "Adding and editing a facility, and its radio/frequency fields",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "**Hospital Proximity** ranks the hospitals you've entered by how quickly you can reach each one from the incident. Type the **incident latitude/longitude** (or tap **📍 Use GPS**), pick a **helicopter type**, and the list re-sorts by air miles, flight time, and drive time. **Facilities Directory** is a separate address book for EOCs, shelters, staging areas, and command posts — search, filter by type, and tap a card for full details. Add hospitals and facilities with the **+ Add** buttons; both can import and export a spreadsheet (CSV) file."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "During an incident you often need two different kinds of location list. The first answers *\"where do we take a patient, and how fast can we get there?\"* — that's the **Hospital Proximity** page. The second answers *\"where is the shelter / the staging area / the command post, and what's its phone and radio?\"* — that's the **Facilities Directory**. They're separate pages with separate jobs, so this chapter covers each in turn."},
+    {"p": "Both are built to work fully offline on the local FieldCommand server — no internet needed to store or read your data. One optional feature on the hospital page (importing from a public federal database) does reach out to the internet, and it's clearly marked; everything else runs on the Pi."},
+
+    {"h1": "Hospital Proximity — Setting the Incident Location"},
+    {"p": "Open **Hospital Proximity** (the **MEDICAL** badge in the header). The magic of this page is distance sorting, and that only works once it knows *where the incident is*. The **📍 Incident Location** bar near the top is how you tell it:"},
+    {"table": {
+      "headers": ["Control", "What it does"],
+      "rows": [
+        ["**Latitude / Longitude** fields", "Type the incident's decimal coordinates here. The list re-ranks the instant you enter them."],
+        ["**↓ From General Info** button", "Pulls the coordinates already entered on the incident's General Info form, so you don't retype them."],
+        ["**📍 Use GPS** button", "Asks your device for its current GPS position and fills in the coordinates automatically — handy when the device is at or near the scene."],
+        ["**Status text**", "Confirms *✓ Distances calculated from …* once coordinates are set, or reminds you to enter them."]
+      ],
+      "widths": [2.4, 4.8]
+    }},
+    {"callout": {"kind": "note", "label": "NO COORDINATES, NO DISTANCE SORT",
+      "text": "Until you set an incident location, the page still lists your hospitals but can't rank them by distance — the air-miles and drive-time numbers stay blank. Enter coordinates (any of the three ways above) to unlock the sorting."}},
+
+    {"h1": "Air Transport — Picking a Helicopter"},
+    {"p": "The **🚁 Air Transport** bar sets which aircraft the flight-time estimate assumes. The **Helicopter Type** dropdown lists common air-ambulance models with their cruising speeds — for example *Air Methods Standard (Bell 407) — 155 mph* — or choose **Custom speed…** to type your own miles-per-hour. Whatever you pick, the page adds a realistic **8 minutes** for scene liftoff and **5 minutes** for the hospital approach on top of the raw flight time, so the **Helo Time** figure is a door-to-door estimate rather than pure air time."},
+    {"callout": {"kind": "note", "label": "THE NUMBERS ARE ESTIMATES",
+      "text": "Air miles are straight-line (\"as the crow flies\"). Ground miles assume roads are about 1.3× the straight-line distance, and drive time assumes roughly 45 mph average. These are planning estimates to compare options quickly — not dispatch-grade routing."}},
+
+    {"h1": "Sorting and Filtering the List"},
+    {"p": "The **Sort by** row of buttons re-orders the hospital list. Whichever is active is highlighted, and each card gets a **#rank** number once a location is set:"},
+    {"table": {
+      "headers": ["Sort button", "Orders hospitals by"],
+      "rows": [
+        ["**✈ Air Miles**", "Straight-line distance from the incident (the default)"],
+        ["**🚁 Air Time**", "Estimated door-to-door helicopter time"],
+        ["**🚗 Ground Miles**", "Estimated road distance"],
+        ["**⏱ Drive Time**", "Estimated driving time"],
+        ["**🏥 Trauma Level**", "Trauma designation, Level I first, ties broken by distance"],
+        ["**🔥 Burn Center First**", "Burn centers to the top, then by trauma level"]
+      ],
+      "widths": [2.2, 5.0]
+    }},
+    {"p": "On the right side of that row are extra filters: a **Search** box (matches any text on a card), a **Helipad only** checkbox, and a **Trauma only** checkbox. Combine them to narrow a long list — for example, *helipad-equipped Level I centers, sorted by air time.*"},
+
+    {"h1": "Reading a Hospital Card"},
+    {"p": "Each hospital shows as a card with a colored left edge by trauma level (red = Level I, amber = Level II, blue = Level III). The card packs in:"},
+    {"bullets": [
+      "**Name** and, once a location is set, its **#rank** in the current sort.",
+      "**Capability badges** — quick chips such as *Trauma Level I*, *🔥 Burn Center*, *🚁 Helipad*, *👶 Peds Trauma*, *🧠 Stroke*, *❤️ Cardiac*, and *ICU* — so you can see a facility's strengths at a glance.",
+      "**Distance block** — four figures: **Air Miles**, **Helo Time**, **Ground Mi**, and **Drive Est** (only shown once an incident location is set).",
+      "**Phone chips** — tap the green **📞** chip to dial the switchboard, or the red **🚑 ED** chip to dial the emergency department directly.",
+      "**Address, county, and any notes** you've recorded (diversion status, special capabilities, and the like)."
+    ]},
+    {"screenshot": "A hospital card showing the name with a rank badge, capability chips, the four-cell distance block, and tap-to-call phone chips"},
+
+    {"h1": "Adding, Importing, and Exporting Hospitals"},
+    {"p": "The page starts empty until you add the hospitals in your response area. There are three ways to get them in, all reached from buttons in the header:"},
+    {"bullets": [
+      "**+ Add Hospital** — opens a form. Only the **Hospital Name** is required; everything else (address, phone, direct ED line, latitude/longitude, trauma level, and the capability checkboxes for burn, helipad, peds, stroke, cardiac) is optional but makes the sorting and badges more useful. The same form appears when you click **✏ Edit** on a card, with a **Delete** button added.",
+      "**📥 Import CSV** — bulk-load hospitals from a spreadsheet file. The importer flexibly matches columns (a *name* column is the only must-have) so a registry export from your state Emergency Medical Services (EMS) office usually just works.",
+      "**📤 Export CSV** — save your current hospital list out to a spreadsheet file, for backup or to share with another FieldCommand server."
+    ]},
+    {"p": "There's also a **🏛 Import from CMS** button. This pulls hospital names, addresses, and phone numbers from the public **Centers for Medicare & Medicaid Services (CMS)** provider dataset — no account needed, but it does require internet. You search by **State** (required) and optional **County**, choose **Acute Care** and/or **Critical Access** types, review the results, and import all or just the ones you tick."},
+    {"callout": {"kind": "important", "label": "CMS DATA HAS NO COORDINATES OR TRAUMA LEVEL",
+      "text": "The CMS dataset does **not** include latitude/longitude or trauma level — those come from a different authority (trauma designations are maintained by the American College of Surgeons, not CMS). So hospitals imported from CMS will have **blank coordinates and blank trauma level**, and won't sort by distance until you edit each one and fill those in. For ready-to-use geocoded, trauma-rated data, ask your state EMS office for their registry and import it as a CSV instead."}},
+
+    {"h1": "Facilities Directory — What It Holds"},
+    {"p": "The **Facilities Directory** (the 🏥 link) is the second page — a broader address book for every operational location that isn't a hospital-you're-transporting-to. It groups facilities by type, each with its own color accent:"},
+    {"table": {
+      "headers": ["Type", "Typical use"],
+      "rows": [
+        ["**EOC**", "Emergency Operations Center — the coordination hub"],
+        ["**Hospital**", "A medical facility recorded here for reference/contact"],
+        ["**Shelter**", "Mass-care or evacuation shelter"],
+        ["**Staging Area**", "Where resources gather before assignment"],
+        ["**Supply Depot**", "Materials and equipment cache"],
+        ["**Command Post**", "The on-scene Incident Command Post"],
+        ["**Other**", "Anything that doesn't fit the categories above"]
+      ],
+      "widths": [2.0, 5.2]
+    }},
+    {"p": "The **toolbar** across the top lets you **Search** by name/address/notes, filter by **Type**, and filter by **Status** — **Active** (green dot), **Standby** (amber), or **Inactive** (gray). Two buttons on the right export the list to a spreadsheet (**⬇ CSV**) or send it to the printer (**🖨 Print**)."},
+
+    {"h1": "Reading and Editing a Facility"},
+    {"p": "Facilities show as cards grouped under type headings. Each card shows the name, address, a status dot, and quick chips for its **radio frequency** (📻), **phone** (📞), **generator** (⚡), **ADA** accessibility (♿), and **capacity** (👥). Click any card to open its **detail panel** with the full record — coordinates, both phone numbers (tap-to-dial), primary and secondary frequencies with tone, capacity, contact person, on-site ham callsign, and notes. From the detail panel you can **✏ Edit**, **🗑 Delete**, or **📋 Copy Address** to the clipboard."},
+    {"p": "Click **+ Add Facility** (or **✏ Edit** on an existing one) to open the form. Only the **Facility Name** and **Type** are required. The form is radio-aware — beyond the usual address and phone fields it captures **Primary/Secondary Frequency (MHz)**, a **CTCSS Tone**, an on-site **Ham Callsign**, plus **Generator** and **ADA Accessible** status — which is exactly the information a communications team needs when standing up a site. Click **💾 Save** to store it."},
+    {"callout": {"kind": "note", "label": "SAVED ON THE SERVER, CACHED ON YOUR DEVICE",
+      "text": "Facilities live on the FieldCommand server so every device sees the same list, and a copy is cached in your browser so the page still works if the server is briefly unreachable. A fresh server seeds a few example facilities to show the layout — edit or delete them and add your own."}},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__My hospitals show up but with no distances or ranking.__ You haven't set an incident location. Enter **Latitude/Longitude** in the Incident Location bar, or use **↓ From General Info** or **📍 Use GPS**. Distances also need each hospital to have its own coordinates saved.",
+      "__A hospital I imported from CMS won't sort by distance.__ CMS data comes in without coordinates or trauma level. Click **✏ Edit** on that hospital, add its **Latitude/Longitude** (and trauma level if you know it), and Save — it will then rank with the rest.",
+      "__The Import from CMS search fails.__ That feature needs the internet. Confirm you have a WAN connection (Chapter 24), enter a valid 2-letter **State** code, and pick at least one hospital type. For offline use, import a CSV instead.",
+      "__The helicopter times seem off.__ Check the **Helicopter Type** dropdown — a slower or faster aircraft shifts every estimate. Remember the figure includes a fixed 8-minute liftoff and 5-minute approach on top of flight time, and that air miles are straight-line.",
+      "__I don't see the facility I just added.__ Check the **Type** and **Status** filters in the toolbar — an active filter can hide it. Clear the search box and set both filters to *All*.",
+      "__My facilities disappeared on another device.__ Facilities sync through the server; if a device was offline when you added one, it may only be in that device's local cache. Reopen the page while connected to the FieldCommand server so it can sync.",
+      "__Cannot reach server.__ Both pages talk to the local FieldCommand server. Make sure your device is on the FieldCommand Wi-Fi and the Pi is powered up, then reload the page."
+    ]}
+  ]
+}

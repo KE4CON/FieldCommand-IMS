@@ -1,0 +1,177 @@
+{
+  "order": 7,
+  "title": "Building the FCC Database — build_fcc_db.py",
+  "subtitle": "One standalone script, python/build_fcc_db.py, turns the Federal Communications Commission's giant public license dump into a single searchable file, fcc.db. It runs by hand, never from the app, and produces the read-only database the main server uses to look up any United States amateur radio operator by callsign, name, or state.",
+  "in_this_chapter": [
+    "What the FCC database is and why FieldCommand ships a tool to build it",
+    "Why it lives in its own file, separate from the incident database",
+    "Where the source data comes from and how it is downloaded",
+    "How the pipe-delimited ULS files are parsed and loaded in batches",
+    "The three tables (EN, HD, AM), the generated callsign column, and the indexes",
+    "How the build swaps in the new file atomically and keeps a backup",
+    "How the main API queries it read-only, and the maintainer's rule"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "IN ONE SENTENCE",
+      "text": "`python/build_fcc_db.py` downloads the Federal Communications Commission (FCC) amateur license dump, parses its pipe-delimited files, and loads roughly 800,000 records into a self-contained `fcc.db` that the app only ever reads — so an operator with no internet can still identify any United States ham by callsign."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "When a station checks into a net, the operator wants to see who is behind the callsign — the licensee's name, their city and state, their license class. That information is public and it lives in the FCC's **Universal Licensing System (ULS)** database. But the ULS is an online system, and FieldCommand is built to run in a field with no internet. So FieldCommand ships its own copy of the amateur portion of that data, packaged as a single SQLite file called `fcc.db`, and it ships a script that builds that file: [python/build_fcc_db.py](python/build_fcc_db.py)."},
+    {"p": "The script has one job. It takes the FCC's official bulk download — a ZIP file named `l_amat.zip` that contains the entire United States amateur radio license roster — and transforms it into a fast, indexed database the main server can search in milliseconds. It is run **by a person**, on a bench with internet, before the appliance is deployed or when the operator wants fresher data. It is never invoked by the running application, and the application never writes to the file it produces. That one-way relationship is the whole design, and everything below follows from it."},
+    {"callout": {"kind": "note", "label": "JARGON, IN PLAIN WORDS",
+      "text": "The **Federal Communications Commission (FCC)** is the United States agency that licenses radio operators. Its **Universal Licensing System (ULS)** is the public database of every license. A **bulk data dump** is a big downloadable file containing the whole database at once, instead of you querying it one record at a time. **Pipe-delimited** means the columns in each line are separated by the `|` character instead of commas. **SQLite** is a database that is just a single file on disk — no server to run."}},
+
+    {"h1": "Why It Is a Separate File — the 'Why' Behind the Design"},
+    {"p": "FieldCommand keeps all its live incident data — nets, check-ins, forms, the roster — in one database, `fieldcommand.db`, described in the data-layer chapter. The FCC data deliberately does **not** go in there. It gets its own file, `fcc.db`, for three concrete reasons, and each one traces back to how the two datasets differ."},
+    {"table": {
+      "headers": ["Reason", "Live incident data (fieldcommand.db)", "FCC license data (fcc.db)"],
+      "rows": [
+        ["Size", "Small — kilobytes to a few megabytes for a whole incident.", "Huge — hundreds of megabytes for ~800,000 records with three tables."],
+        ["Who writes it", "The app, constantly, from many threads.", "Nobody. It is built once by a script and only ever read after that."],
+        ["How you refresh it", "Never rebuilt — it grows as the incident runs.", "Rebuilt wholesale by re-running the script against a newer FCC dump."]
+      ],
+      "widths": [1.4, 2.6, 2.6]
+    }},
+    {"p": "Mixing the two would be a mistake. A backup of a running incident should be a tiny, fast file copy — if the ~800,000-record reference table were inside it, every backup would drag hundreds of megabytes of unchanging government data along with it. Keeping `fcc.db` separate means the incident database stays small and quick to copy, while the reference database can be swapped out and rebuilt independently without touching a single byte of live data. The script writes to a fixed default path that sits alongside the main data but stands on its own:"},
+    {"code": [
+      "FCC_URL = \"https://data.fcc.gov/download/pub/uls/complete/l_amat.zip\"",
+      "DEFAULT_ZIP = \"/opt/fieldcommand/data/l_amat.zip\"",
+      "DEFAULT_DB  = \"/opt/fieldcommand/data/fcc.db\""
+    ]},
+    {"callout": {"kind": "note", "label": "WHY REBUILD-ONLY MATTERS",
+      "text": "Because the app never writes to `fcc.db`, the server can open it read-only and never worry about locking, corruption from a half-finished write, or migrations. The file is a fixed, known-good artifact. All the complexity of building it is contained in this one script, run at a time when a human is watching — not at 2 a.m. in a shelter."}},
+
+    {"h1": "How It Works — Getting the Source Data"},
+    {"p": "The script can supply its own input. If the ZIP file is not already on disk (or the operator passes `--download` to force a fresh copy), it fetches the current dump straight from the FCC. This is the one moment the tool needs internet, and it is why the tool is run on a bench beforehand rather than in the field. The download prints a live percentage so the person watching knows it is working, because the file is large:"},
+    {"code": [
+      "def download_fcc(zip_path):",
+      "    print(f\"Downloading FCC ULS database from {FCC_URL}\")",
+      "    print(\"This file is ~200MB and may take several minutes...\")",
+      "    Path(zip_path).parent.mkdir(parents=True, exist_ok=True)",
+      "    def progress(count, block, total):",
+      "        pct = min(100, count * block * 100 // total) if total and total > 0 else 0",
+      "        print(f\"\\r  {pct}% ({count*block//1024//1024}MB/{total//1024//1024}MB)\", end=\"\", flush=True)",
+      "    urllib.request.urlretrieve(FCC_URL, zip_path, reporthook=progress)"
+    ]},
+    {"p": "The decision of whether to download at all is made in `main()`. It is deliberately forgiving: if you point it at a ZIP that already exists, it uses that file and skips the network entirely, so a rebuild from a saved dump needs no internet. Only a missing file or an explicit `--download` triggers the fetch:"},
+    {"code": [
+      "    if args.download or not zip_path.exists():",
+      "        if not zip_path.exists():",
+      "            print(f\"ZIP not found at {zip_path}, downloading...\")",
+      "        download_fcc(str(zip_path))",
+      "",
+      "    build_db(str(zip_path), args.db)"
+    ]},
+    {"p": "Inside the ZIP are many `.DAT` files — one per kind of ULS record. FieldCommand only needs three of them, so the extractor pulls exactly those three and ignores the rest. This keeps the temporary working directory small and the load fast:"},
+    {"code": [
+      "    with zipfile.ZipFile(zip_path) as z:",
+      "        names = z.namelist()",
+      "        for name in names:",
+      "            if name.upper() in (\"EN.DAT\",\"HD.DAT\",\"AM.DAT\"):",
+      "                print(f\"  Extracting {name}...\")",
+      "                z.extract(name, tmp_dir)"
+    ]},
+    {"table": {
+      "headers": ["File", "What it holds", "Why FieldCommand wants it"],
+      "rows": [
+        ["`EN.DAT`", "Entity records — the licensee's name, address, city, state, ZIP.", "This is the core 'who is this callsign' answer. It is the only file treated as required."],
+        ["`HD.DAT`", "License header — status (active/expired/cancelled) and key dates.", "Lets the app show whether a license is currently valid."],
+        ["`AM.DAT`", "Amateur-specific detail — operator class (Technician, General, Extra), region.", "Shows the operator's privileges/class next to their name."]
+      ],
+      "widths": [1.1, 2.9, 2.6]
+    }},
+    {"p": "`EN.DAT` is the only file the script insists on. If it is missing, the build stops immediately, because a database with no names would be useless. The other two are optional — if they are absent the script warns and carries on, producing a database that still answers 'who is this' but without status or class:"},
+    {"code": [
+      "    if not en_file:",
+      "        print(\"ERROR: EN.DAT not found in ZIP\")",
+      "        sys.exit(1)"
+    ]},
+
+    {"h1": "How It Works — The Tables and the Clever Callsign Column"},
+    {"p": "The build creates three tables that mirror the three files: `en`, `hd`, and `am`. Each has `unique_system_id` as its primary key — the ULS's own stable identifier that ties an entity, a header, and an amateur record together for the same license. The `en` table carries one detail worth calling out, because it is what makes callsign search fast and case-proof:"},
+    {"code": [
+      "        CREATE TABLE IF NOT EXISTS en (",
+      "            record_type TEXT,",
+      "            unique_system_id TEXT PRIMARY KEY,",
+      "            ...",
+      "            call_sign TEXT,",
+      "            callsign TEXT GENERATED ALWAYS AS (UPPER(call_sign)) VIRTUAL,",
+      "            ...",
+      "        )"
+    ]},
+    {"p": "There are two columns for the callsign. `call_sign` holds the raw value exactly as the FCC supplied it. `callsign` is a **generated column** — the database computes it automatically as the upper-cased version of `call_sign`, and it is never stored on disk (`VIRTUAL`). This means the app can search for a callsign without caring whether the user typed `ke4con`, `Ke4Con`, or `KE4CON`; the query matches against the always-upper-case `callsign` column and always finds the record. The operator never has to think about case, and there is no second copy of the data to keep in sync."},
+    {"callout": {"kind": "note", "label": "JARGON, IN PLAIN WORDS",
+      "text": "A **generated column** is a column whose value the database calculates from other columns instead of you storing it. `GENERATED ALWAYS AS (UPPER(call_sign)) VIRTUAL` tells SQLite: 'whenever anyone reads `callsign`, hand them the upper-cased `call_sign` — don't waste disk space storing it.' A **primary key** is the column that uniquely identifies each row. An **index** is a lookup structure that lets the database jump straight to matching rows instead of scanning all 800,000."}},
+    {"p": "Immediately after the tables, the script builds three indexes on `en`. Without them, every callsign lookup would read the entire table; with them, a lookup is near-instant. The indexes match exactly the three ways the app searches — by callsign, by state, and by last name:"},
+    {"code": [
+      "    conn.execute(\"CREATE INDEX IF NOT EXISTS idx_en_callsign ON en(callsign)\")",
+      "    conn.execute(\"CREATE INDEX IF NOT EXISTS idx_en_state ON en(state)\")",
+      "    conn.execute(\"CREATE INDEX IF NOT EXISTS idx_en_last ON en(last_name)\")"
+    ]},
+
+    {"h1": "How It Works — Loading 800,000 Records Without Melting the Pi"},
+    {"p": "The load is the heart of the script. Each `.DAT` file is plain text with fields separated by the pipe character, so the parser is Python's built-in CSV reader told to use `|` as the delimiter. Two details make it robust against messy government data. First, the files are read as `latin-1` with `errors=\"replace\"`, so an odd byte in an address never crashes the whole import. Second, every row is padded to the exact column count before insert, so a line that is missing its trailing fields still loads cleanly:"},
+    {"code": [
+      "        with open(filepath, \"r\", encoding=\"latin-1\", errors=\"replace\") as f:",
+      "            reader = csv.reader(f, delimiter=\"|\")",
+      "            for row in reader:",
+      "                # Pad row to column count",
+      "                padded = (row + [\"\"] * len(insert_cols))[:len(insert_cols)]",
+      "                batch.append(padded)"
+    ]},
+    {"p": "The generated `callsign` column is not something the script inserts — the database fills it in. So before building the insert statement, the loader reads the table's real columns and drops the generated one from the list, so the number of placeholders matches the number of values it actually supplies:"},
+    {"code": [
+      "        cols = [row[1] for row in conn.execute(f\"PRAGMA table_info({table})\")]",
+      "        # Remove generated columns",
+      "        insert_cols = [c for c in cols if c != \"callsign\"]",
+      "        placeholders = \",\".join(\"?\" * len(insert_cols))",
+      "        sql = f\"INSERT OR REPLACE INTO {table} ({','.join(insert_cols)}) VALUES ({placeholders})\""
+    ]},
+    {"p": "Rows are not inserted one at a time — that would be painfully slow for 800,000 of them. They are collected into batches of 10,000 and written in a single `executemany` call, then committed, then the batch is cleared. This is the single biggest reason the build finishes in a reasonable time on a Raspberry Pi:"},
+    {"code": [
+      "        batch = []",
+      "        BATCH_SIZE = 10000",
+      "        ...",
+      "                if len(batch) >= BATCH_SIZE:",
+      "                    conn.executemany(sql, batch)",
+      "                    conn.commit()",
+      "                    batch = []",
+      "        if batch:",
+      "            conn.executemany(sql, batch)",
+      "            conn.commit()"
+    ]},
+    {"p": "The database connection itself is tuned for one-time bulk writing, not for the careful concurrent access the live app needs. Because nothing else is touching this file while it builds, the script can safely turn `synchronous` off and hand SQLite a large cache — settings you would never use on the live incident database, but which are exactly right for a throwaway build that will be atomically swapped into place at the end:"},
+    {"code": [
+      "    conn.execute(\"PRAGMA journal_mode=WAL\")",
+      "    conn.execute(\"PRAGMA synchronous=NORMAL\")",
+      "    conn.execute(\"PRAGMA temp_store=MEMORY\")",
+      "    conn.execute(\"PRAGMA cache_size=-64000\")"
+    ]},
+
+    {"h1": "How It Works — Swapping In the New File Safely"},
+    {"p": "The whole build never writes directly to the final `fcc.db`. It builds into a temporary file (`fcc.db.tmp`), and only at the very end, once every record is loaded and the connection is closed, does it move the finished file into place. If an existing `fcc.db` is there, it is renamed to `.bak` first — so a failed or interrupted build can never leave the operator with a corrupt or half-written database, and there is always a backup of the previous good copy:"},
+    {"code": [
+      "    conn.close()",
+      "",
+      "    # Replace old db with new",
+      "    if db_path.exists():",
+      "        db_path.replace(str(db_path) + \".bak\")",
+      "    Path(tmp_db).replace(db_path)"
+    ]},
+    {"callout": {"kind": "important", "label": "WHY THE .tmp / .bak DANCE IS NON-NEGOTIABLE",
+      "text": "A rename on the same filesystem is atomic — it either fully happens or does not happen at all. Building into `fcc.db.tmp` and renaming last means the live `fcc.db` is only ever replaced by a complete, finished file. Never 'simplify' this by having the script write straight into `fcc.db`; an interrupted build would then destroy the working database an operator may be depending on."}},
+
+    {"h1": "How the Main API Uses the Result"},
+    {"p": "From the running server's side, all of the above is invisible. The application opens `fcc.db` read-only and issues simple `SELECT` queries against the indexed columns — matching an upper-cased callsign against the generated `callsign` column, or filtering `en` by `state` or `last_name`, and joining to `hd` and `am` on `unique_system_id` for status and class. Because the file is never written by the app, there is no locking to coordinate and no migration ever to run: the database is a fixed reference the API simply reads. This is the payoff of keeping the build in its own script — the query path stays trivially simple precisely because all the hard work happened once, ahead of time, in `build_fcc_db.py`."},
+
+    {"h1": "Why It Matters / Design Takeaways"},
+    {"bullets": [
+      "__Reference data is not app data.__ The ~800,000-record FCC roster is huge, rebuild-only, and never written by the app, so it lives in its own `fcc.db` — keeping backups of live incident data small and fast.",
+      "__Build offline, use offline.__ The one moment internet is needed is the FCC download, done by a person on a bench. After that, an operator with no connectivity can still identify any United States ham.",
+      "__Speed comes from three choices.__ A generated upper-case `callsign` column makes search case-proof, three indexes make lookups instant, and 10,000-row batches make the load finish on a Pi.",
+      "__Atomic swap protects the operator.__ Building into `.tmp`, backing up the old file to `.bak`, and renaming last means an interrupted build can never corrupt the working database."
+    ]},
+    {"callout": {"kind": "important", "label": "MAINTAINER'S RULE",
+      "text": "`build_fcc_db.py` is a bench tool, not part of the running app — keep it that way. Never call it from the server, and never make the server write to `fcc.db`. If you add a ULS file or column, extend the relevant `CREATE TABLE` and let the padding/`insert_cols` logic carry it — do not remove the generated `callsign` column or the `.tmp`/`.bak` rename. After any change, run a full build and confirm the finished `fcc.db` opens and a known callsign (case-insensitively) returns the right name, status, and class before you consider it done."}}
+  ]
+}

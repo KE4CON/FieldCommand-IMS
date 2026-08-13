@@ -1,0 +1,120 @@
+{
+  "order": 10,
+  "title": "Printing — Sharing a Printer with CUPS",
+  "subtitle": "How FieldCommand shares one printer with every device on the network so anyone can print an ICS form, the Incident Action Plan, or a map — plus a list of printers that just work.",
+  "in_this_chapter": [
+    "What CUPS is and why one shared printer matters at an incident",
+    "The two ways to connect a printer (USB into the server, or on the Wi-Fi network)",
+    "Adding a printer on the CUPS admin page, step by step",
+    "Logging in with the fieldcommand account",
+    "Setting the printer as the default and picking the right driver",
+    "A table of recommended, well-supported printer models",
+    "Printing a test page to prove it works",
+    "That LibreOffice and every app on the workstations use the same printer",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "The FieldCommand server already runs the **Common Unix Printing System (CUPS)** — the software that shares one printer with the whole team. Plug a printer into the server by USB, **or** put a Wi-Fi/Ethernet printer on the `EMCOMM-NET` network. Then, from any device, open a browser to **http://192.168.50.1:631**, click **Administration → Add Printer**, log in as **`fieldcommand`** with your server password, pick your printer, choose its driver, tick **Share This Printer** and **set it as the default**, and click **Print Test Page**. Everyone on `EMCOMM-NET` — every browser, LibreOffice, every app — can now print to it."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "At a real incident, paper still matters. Section chiefs sign a printed **Incident Command System (ICS)** form; the **Incident Action Plan (IAP)** goes out as a stapled packet at the start of each operational period; briefings hand out printed maps; the check-in and resource boards get printed and pinned to the wall. If only the one laptop next to the printer can print, everyone crowds around that one machine — and that is the last thing you want during an activation. You want **any** operator, at **any** workstation, to hit Print and have the page come out on the shared printer across the room."},
+    {"p": "That is exactly what the server sets up for you. During installation, FieldCommand installs the **Common Unix Printing System (CUPS)** — the standard, long-proven software that manages printers and shares them over a network. You set up **one** printer on the server, and CUPS makes it available to every device on the `EMCOMM-NET` network at once: the Windows laptop, the operator workstations, tablets, and phones. No operator has to install a driver — they just pick the shared printer and print."},
+    {"callout": {"kind": "note", "label": "WHO DOES THIS",
+      "text": "Adding the printer is a one-time job for whoever sets up the server — the same person who ran the setup in the earlier chapters. Everyone else simply picks the shared printer in their print box and prints. They never touch the CUPS admin page."}},
+    {"callout": {"kind": "note", "label": "\"CUPS\" AND \"PRINT SERVER\" MEAN THE SAME THING HERE",
+      "text": "When this guide says the **print server**, it means CUPS running on the FieldCommand server. It is already installed and running — you do not install it. Your only job is to tell it which printer you're using, which is what this chapter covers."}},
+
+    {"h1": "First, Connect the Printer — Two Ways"},
+    {"p": "Before CUPS can share a printer, the printer has to be reachable. There are two ways to connect one, and both work well. Pick whichever fits your gear:"},
+    {"table": {
+      "headers": ["Way to connect", "How it works", "Best when"],
+      "rows": [
+        ["**USB into the server**", "You plug the printer's Universal Serial Bus (USB) cable straight into a spare USB port on the FieldCommand server (or into a powered USB hub on it). CUPS shares that USB printer out to the whole network.", "You have a plain USB printer, or you want the printer physically next to the server."],
+        ["**On the network (Wi-Fi or Ethernet)**", "The printer joins the `EMCOMM-NET` network on its own — over Wi-Fi, or with a network (Ethernet) cable to the switch. It gets its own address on the network and CUPS talks to it there.", "You have a Wi-Fi or Ethernet printer, or you want the printer somewhere away from the server."]
+      ],
+      "widths": [1.9, 3.5, 1.9]
+    }},
+    {"callout": {"kind": "tip", "label": "A NETWORK PRINTER IS THE LEAST FUSS FOR A PERMANENT SETUP",
+      "text": "If your printer has built-in Wi-Fi or an Ethernet port, joining it to `EMCOMM-NET` is usually the smoothest choice — especially a color **multifunction printer (MFP)**, an all-in-one that prints, scans, copies, and often faxes, living permanently at your **Emergency Operations Center (EOC)**. Use the printer's own control-panel menu to join the `EMCOMM-NET` Wi-Fi (enter the Wi-Fi password when it asks), or run a network cable from the printer to a spare port on the switch. Either way, the next section is the same — you still add it in CUPS so it becomes the one shared printer everyone uses."}},
+
+    {"h1": "Open the CUPS Admin Page"},
+    {"p": "CUPS has a simple web page for adding and managing printers. You reach it in a browser from any device on `EMCOMM-NET` — you do not need to be sitting at the server."},
+    {"steps": [
+      "On any device connected to the `EMCOMM-NET` Wi-Fi, open a web browser.",
+      "In the address bar, type the CUPS address exactly — **http://192.168.50.1:631** — and press Enter. (That `:631` on the end is the printing port; it is what tells the browser you want the print server, not the main FieldCommand dashboard.)",
+      "The CUPS home page opens. Along the top you'll see tabs including **Administration**. Click **Administration**.",
+      "On the Administration page, click the **Add Printer** button."
+    ]},
+    {"callout": {"kind": "note", "label": "WHY THE ADDRESS ENDS IN :631",
+      "text": "The main FieldCommand dashboard lives at **http://192.168.50.1**. The print server lives at the **same** address with **:631** added. Leave off the `:631` and you'll land on the dashboard instead of the printer page — a very common mix-up, so type it in full."}},
+
+    {"h1": "Log In as fieldcommand"},
+    {"p": "The moment you click **Add Printer**, CUPS asks who you are — because adding a printer changes the server, and it only lets an administrator do that."},
+    {"steps": [
+      "A small login box pops up asking for a username and password.",
+      "For the **User Name**, type **`fieldcommand`** (all lowercase). This is the server's own administrator account.",
+      "For the **Password**, type the password you set for the server when you imaged the card back in the early setup chapters. It is the **same** password you'd use to log in to the server itself.",
+      "Click **OK** (or **Log In**). CUPS now lets you continue adding the printer."
+    ]},
+    {"callout": {"kind": "important", "label": "IT'S THE SERVER PASSWORD — NOT A SEPARATE ONE",
+      "text": "There is no special \"CUPS password.\" The account is **`fieldcommand`** and the password is the one you chose for the server during setup. If you don't know it, it's whatever was entered as the password when the server's card was imaged. Write it down somewhere safe — you'll want it any time you add or change a printer."}},
+
+    {"h1": "Pick the Printer and Its Driver"},
+    {"p": "After you log in, CUPS walks you through a few short screens. Take them one at a time:"},
+    {"steps": [
+      "**Choose the printer.** CUPS lists the printers it can see. A USB printer plugged into the server appears under **Local Printers**. A Wi-Fi or Ethernet printer on `EMCOMM-NET` appears under the network/discovered list. Click the round button next to your printer, then click **Continue**.",
+      "**Name and share it.** Give it a plain **Name** (for example, `FieldCommand-Printer`), and optionally a Description and Location. **Tick the box marked \"Share This Printer.\"** This is the box that makes the printer available to everyone on the network — don't skip it. Click **Continue**.",
+      "**Choose the driver.** CUPS suggests a driver — the small piece of software that speaks your printer's language. Usually the right one is already highlighted; leave it as CUPS suggests, or pick the entry that matches your make and model most closely. Click **Add Printer**.",
+      "**Set default options.** On the options screen, set **Paper Size** to **Letter** (the United States standard), and set any other defaults you want. Click **Set Default Options**."
+    ]},
+    {"callout": {"kind": "tip", "label": "MAKE IT THE DEFAULT SO PRINT JUST WORKS",
+      "text": "Back on the printer's page in CUPS, open the **Maintenance** or **Administration** drop-down for that printer and choose **Set as Server Default**. This makes your printer the one that comes up automatically everywhere, so operators can hit Print without hunting through a list. Do this once and you're done."}},
+    {"callout": {"kind": "warning", "label": "THE RIGHT DRIVER IS WHAT SEPARATES CLEAN PAGES FROM GARBAGE",
+      "text": "If you force a driver that doesn't match your printer, pages may come out as jumbled characters, half-printed, or covered in stray symbols. When in doubt, accept the driver CUPS recommends for your exact model, or choose the closest match to your make and model. The recommended printers below were chosen specifically because their drivers install cleanly and correctly."}},
+
+    {"h1": "Recommended Printers That Just Work"},
+    {"p": "Not every printer plays nicely with a Linux print server. The models below were chosen because their drivers install cleanly with CUPS and they hold up to field use. You don't have to buy one of these — but if you're picking a printer for FieldCommand, start here. Each one connects by USB **or** over the network, so it works with either connection method above."},
+    {"table": {
+      "headers": ["Printer", "Type", "Connects by", "Why it's a good pick"],
+      "rows": [
+        ["**Brother HL-L2350DW**", "Monochrome (black-and-white) laser", "USB or Wi-Fi", "The best all-round choice for most deployments. Excellent driver support out of the box, fast, compact, prints double-sided, and durable. Around $130."],
+        ["**HP LaserJet Pro M15w / P1102w**", "Monochrome laser", "USB or Wi-Fi", "Full support through HP's Linux driver, which installs automatically with CUPS. Fast, reliable, and very low cost per page. Around $150."],
+        ["**Brother MFC-L3770CDW**", "Color laser multifunction printer (MFP) — print, scan, copy, fax", "USB, Wi-Fi, or Ethernet", "Prints color ICS maps and full IAP packets clearly. Full Linux support. A strong choice for a permanent EOC. Around $400."],
+        ["**HP Color LaserJet Pro MFP M479fdw**", "Color laser MFP", "USB, Wi-Fi, or Ethernet", "HP's Linux driver works with CUPS out of the box. Great for IAP packets with color-coded sections. Around $500."],
+        ["**Canon imageCLASS MF743Cdw**", "Color laser MFP", "USB, Wi-Fi, or Ethernet", "Good Linux driver, handles both letter and legal paper. A solid fit for a permanent EOC installation. Around $450."],
+        ["**Canon PIXMA TR150**", "Portable color inkjet — built-in battery", "USB or Wi-Fi", "Runs on a rechargeable battery, about 200 pages per charge — for field stations with no wall power. Letter size. Around $200."],
+        ["**HP OfficeJet 200**", "Portable inkjet — optional battery", "USB or Wi-Fi", "Larger paper tray than the TR150; an optional battery accessory frees it from wall power. Good for shelter check-in stations and mobile command posts. Around $180."]
+      ],
+      "widths": [1.8, 1.6, 1.3, 3.0]
+    }},
+    {"callout": {"kind": "note", "label": "MONO LASER FOR FORMS, COLOR MFP FOR MAPS, PORTABLE FOR THE FIELD",
+      "text": "A quick way to choose: a **monochrome laser** (like the Brother HL-L2350DW) is the cheap, reliable workhorse for the mountain of black-and-white ICS forms and IAP text. A **color laser MFP** (like the Brother MFC-L3770CDW) earns its keep when you print color maps and color-coded plans at a fixed EOC. A **portable, battery-powered** printer (like the Canon PIXMA TR150) is for deployments with no shore power — a shelter or a mobile command post."}},
+
+    {"h1": "Print a Test Page"},
+    {"p": "Before you trust the printer in the middle of an activation, prove it works. CUPS has a one-click test built in:"},
+    {"steps": [
+      "On the CUPS admin page, click the **Printers** tab at the top and click the name of the printer you just added.",
+      "Open the **Maintenance** drop-down and choose **Print Test Page**.",
+      "A CUPS test page should print within a few seconds — a page with color bars, alignment marks, and text. If it comes out clean and readable, your printer is set up correctly."
+    ]},
+    {"p": "For a real-world test, open any FieldCommand page that has a **Print** button — for example the **Print Center** — and print one ICS form. Watch that it comes out on the shared printer and looks right. That confirms the whole path works, from the app all the way to paper."},
+
+    {"h1": "Every App Uses This Same Printer"},
+    {"p": "Here's the payoff. Because CUPS shares the printer to the whole system, you set it up **once** and everything uses it. FieldCommand's own **Print** buttons print to it. So does everything else on the workstations: **LibreOffice** (the free office suite for letters, spreadsheets, and documents), the web browser, the map viewer — any program with a Print command finds the same shared printer in its list. So when someone types up a quick memo in LibreOffice, or a section chief prints a resource spreadsheet, it lands on the same printer as the ICS forms and the IAP, with no extra setup. One printer, one setup, the whole team and every program printing to it."},
+    {"callout": {"kind": "tip", "label": "OTHER DEVICES FIND IT AUTOMATICALLY",
+      "text": "The server also advertises the shared printer over the network so most devices discover it on their own. A Windows laptop finds it under **Settings → Printers & scanners → Add a printer**. A Mac finds it under **System Settings → Printers & Scanners → +**. Apple iPads and iPhones can print to it straight from the Share → Print menu (no setup at all). On the Raspberry Pi workstations, the printer simply appears in the browser's print box. In every case they're using the one printer you set up here."}},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__My printer isn't in the list when I click Add Printer.__ For a **USB** printer: make sure it's powered on and the USB cable is firmly seated at both ends, then reload the page — a printer that's off or asleep won't show up. For a **network** printer: make sure it has actually joined `EMCOMM-NET` (check its own screen shows it's connected to that Wi-Fi, or that its network cable is plugged into the switch) and that it's powered on. Give it a minute after it connects, then reload the Add Printer page.",
+      "__The login box won't accept my username and password.__ The username is **`fieldcommand`** in all lowercase, and the password is the **server's** password — the one set when the card was imaged, the same one you'd use to log in to the server. There is no separate CUPS password. Retype both carefully (passwords are case-sensitive).",
+      "__I can't reach http://192.168.50.1:631 at all — the page won't load.__ Two things to check. First, make sure your device is connected to the `EMCOMM-NET` Wi-Fi, not some other network. Second, make sure you typed the address in full **with the `:631` on the end** — without it you'll get the main dashboard or an error, not the print server.",
+      "__The pages print as garbage — jumbled characters, stray symbols, or half a page.__ This is almost always the wrong driver. Go back into CUPS, open the printer, choose **Modify Printer**, and step through until you can pick the driver again — select the one that matches your exact make and model, or accept the one CUPS recommends. Print a test page to confirm.",
+      "__My color printer only prints in black and white.__ Open the printer in CUPS, go to **Set Default Options**, and look for a **Color Mode** (or similar) setting — make sure it's set to **Color**, not Grayscale or Black. Also confirm you picked the **color** driver for your model, and that the printer has color toner or ink installed and not empty.",
+      "__I plugged in a USB printer but the server doesn't detect it.__ Unplug it and plug it back into a different USB port on the server. If it's on a USB hub, use a **powered** hub (one with its own power adapter) — an unpowered hub often can't drive a printer. Power the printer off and on, wait for it to finish warming up, then reload the Add Printer page.",
+      "__Everyone else can't find the shared printer on their devices.__ Confirm you ticked **Share This Printer** when you added it. Open the printer in CUPS and check that sharing is on. Also make sure the other devices are on the `EMCOMM-NET` network — a device on a different network can't see the shared printer.",
+      "__There's no printing at all this activation and I want to skip it.__ That's fine — printing is optional. FieldCommand runs perfectly without a printer; you just won't be able to print forms until one is added. You can add a printer any time later by following this chapter."
+    ]}
+  ]
+}

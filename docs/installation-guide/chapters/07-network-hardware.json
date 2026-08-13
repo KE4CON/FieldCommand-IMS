@@ -1,0 +1,108 @@
+{
+  "order": 7,
+  "title": "Network Hardware — Router, Switch & Coverage",
+  "subtitle": "The Wi-Fi router, the wired switch, and the mesh nodes that build EMCOMM-NET — the private field network everyone connects to. What each box does, how they cable together, and how to make the signal reach every corner of your building.",
+  "in_this_chapter": [
+    "What the network hardware is and why neither Pi runs the Wi-Fi",
+    "The ASUS RT-BE58 Go router — the access point and address hander-outer",
+    "The UniFi Switch Lite 16 PoE and its exact port layout",
+    "Extending coverage with two more routers as AiMesh nodes",
+    "A deployment-scenario table — how many nodes for your space",
+    "Cabling it all together, step by step",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "One **ASUS RT-BE58 Go** router makes the **EMCOMM-NET** Wi-Fi and hands out addresses. One **UniFi Switch Lite 16 PoE** is the wiring hub — plug the router into **Port 1**, the FieldCommand Pi into **Port 2**, the 44Net gateway Pi into **Port 3**, and everything else into the ports after that. For a bigger building, add one or two more identical ASUS routers as **AiMesh nodes** (wired into switch **Ports 11 and 12**); they all broadcast the same **EMCOMM-NET** name, so devices roam without reconnecting. That's the whole network."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "FieldCommand runs on its own private network with no dependence on the internet. That network is called **EMCOMM-NET** (short for **emergency communications network**), and this chapter is about the three kinds of box that build it: a **router** that broadcasts the Wi-Fi, a **switch** that ties the wired gear together, and — for larger spaces — extra routers that spread the Wi-Fi signal further. Get these three cabled correctly and every phone, tablet, and laptop in the room can reach the FieldCommand tools by opening a web browser. Nothing here requires internet; the network works completely on its own."},
+    {"p": "An important design choice sits underneath everything in this chapter: **neither Raspberry Pi runs the Wi-Fi.** The two Pi computers (the FieldCommand server and the 44Net gateway) are wired-only. All the Wi-Fi — making the signal, giving out addresses, letting devices roam — is handled by the dedicated **ASUS** router. This keeps the servers focused on serving the app and lets a purpose-built router do the job it's good at, which means a stronger, more reliable signal for everyone."},
+    {"callout": {"kind": "note", "label": "WHO DOES THIS",
+      "text": "This is a one-time bench-and-site job for whoever builds and deploys the kit. You cable it once, and from then on operators simply join the **EMCOMM-NET** Wi-Fi and start working. The next chapter covers exactly how a device connects and how addresses are assigned."}},
+    {"callout": {"kind": "note", "label": "A NOTE ON WHERE THE INTERNET COMES FROM",
+      "text": "EMCOMM-NET runs fine with no internet at all. If you do want an upstream connection for the features that use it, the primary source is {{cell_primary}} with {{sat_fallback}} as an automatic backup, both feeding the router's WAN port. That setup has its own chapter later in this guide — this chapter is only about the local network, so we won't cover the upstream wiring here."}},
+
+    {"h1": "The ASUS RT-BE58 Go — The Access Point and DHCP Server"},
+    {"p": "The **ASUS RT-BE58 Go** is a small, travel-sized **Wi-Fi 7** router. In the FieldCommand kit it plays two roles at once, and it's worth knowing both by name:"},
+    {"table": {
+      "headers": ["Role", "In plain words", "What it does for you"],
+      "rows": [
+        ["**Access point (AP)**", "The thing that makes the Wi-Fi signal", "It broadcasts the **EMCOMM-NET** wireless network on both the 2.4 GHz and 5 GHz bands, so any device in range can join."],
+        ["**Dynamic Host Configuration Protocol (DHCP) server**", "The thing that hands out addresses", "When a device joins EMCOMM-NET, the router automatically gives it an Internet Protocol (IP) address — its number on the network — from the pool **192.168.50.100** through **192.168.50.200**. The operator does nothing."],
+        ["**Wide Area Network (WAN) gateway** *(optional)*", "The doorway to the outside", "If you connect an upstream internet source, the router routes traffic to it. This is optional and covered in a later chapter."]
+      ],
+      "widths": [1.9, 2.2, 2.9]
+    }},
+    {"p": "You power the router over **Universal Serial Bus Type-C (USB-C)** at 18 watts — a standard phone-style adapter, or a USB-C power bank when you're running on batteries in the field. Its fast 2.5-gigabit local network (LAN) port connects to the switch. That is the whole physical footprint of the router: power in, one cable to the switch, and Wi-Fi out to the room."},
+    {"callout": {"kind": "important", "label": "THE ROUTER, NOT THE PI, IS THE ACCESS POINT",
+      "text": "If you have ever set up a Raspberry Pi to be its own Wi-Fi hotspot, forget that here. The FieldCommand Pi is a **wired client** only — it plugs into the switch with an Ethernet cable and never broadcasts Wi-Fi. All Wi-Fi comes from the ASUS router. This is deliberate: a real router gives a stronger, more reliable signal and frees the Pi to run the app."}},
+
+    {"h1": "The UniFi Switch Lite 16 PoE — The Wiring Hub"},
+    {"p": "The **UniFi Switch Lite 16 PoE** is the central wiring hub for the whole deployment. A switch is simply a box with many Ethernet sockets (ports) that lets all your wired devices talk to each other. This one has **16 gigabit ports**: **8** of them supply **Power over Ethernet (PoE)** — meaning they can send electricity down the same network cable that carries data, so a camera or a future access point needs no separate power brick — and **8** are ordinary data-only ports. It also has **2** high-speed fiber (SFP) uplink slots you won't need for a basic build. Its included 45-watt power supply runs the whole thing."},
+    {"p": "The ports are assigned to specific devices. Wiring them in this exact order keeps everyone's address predictable and makes fault-finding easy. Here is the layout:"},
+    {"table": {
+      "headers": ["Port", "What plugs in here", "Notes"],
+      "rows": [
+        ["**Port 1**", "**ASUS RT-BE58 Go** router (LAN uplink)", "The router's link into the wired world. All wired devices reach the internet and each other through this."],
+        ["**Port 2**", "**FieldCommand Pi 5** (the main server)", "Fixed address **192.168.50.1** — every browser tool lives here."],
+        ["**Port 3**", "**44Net gateway Pi 5**", "Fixed address **192.168.50.2** — the amateur-radio (AMPRNet) gateway. Optional; only if you run 44Net."],
+        ["**Port 4**", "**Windows laptop**", "Winlink / JS8Call station. Can also join by Wi-Fi instead."],
+        ["**Port 5**", "**Color multifunction printer (MFP)**", "The shared network printer. Can also join by Wi-Fi instead."],
+        ["**Ports 6–9**", "**Operator workstations** (up to four Pi 500s)", "One workstation per port."],
+        ["**Port 10**", "**Satellite dish** *(optional)*", "Only if you use a satellite upstream source."],
+        ["**Ports 11–12**", "**AiMesh nodes** (extra ASUS routers)", "The wired backhaul for coverage extension — see below."],
+        ["**Ports 13–16**", "**Spare**", "Room to grow — plug in anything else you bring."]
+      ],
+      "widths": [1.3, 2.7, 3.0]
+    }},
+    {"callout": {"kind": "tip", "label": "WHAT POWER OVER ETHERNET BUYS YOU",
+      "text": "The eight PoE ports carry both data and power on one cable (a 45-watt budget across them). That means devices like security cameras, extra UniFi access points, or other PoE gear can be powered straight from the switch — no separate power adapter and no outlet needed at the far end of the cable. For a basic FieldCommand build you may never use this, but it's there when you expand."}},
+
+    {"h1": "Extending Coverage — AiMesh Nodes"},
+    {"p": "One ASUS router covers a single room easily. For anything larger — a multi-room emergency operations center (EOC), a whole building, or an outdoor staging area — a single router's Wi-Fi won't reach every corner. The fix is **AiMesh**, ASUS's built-in feature for chaining identical routers together into one seamless network."},
+    {"p": "The standard FieldCommand deployment ships **three** identical ASUS RT-BE58 Go routers: **one primary** (connected to the switch and any upstream source) and **two AiMesh nodes** that repeat the signal in other areas. Because all three broadcast the **same EMCOMM-NET name (SSID)** and the same password, a phone or laptop moves from one to the next automatically — no reconnecting, no re-entering the password, no awareness of which router it's actually using. The technical term for the Wi-Fi network's name is the **Service Set Identifier (SSID)**; here it's always **EMCOMM-NET**."},
+    {"callout": {"kind": "important", "label": "USE WIRED BACKHAUL — RUN A CABLE TO EACH NODE",
+      "text": "Each mesh node connects back to the primary through the switch with a real Ethernet cable — a **CAT 6 patch cable** from a spare **UniFi switch port (11 or 12)** to the node's LAN port. This wired link between routers is called the **backhaul**. A wired backhaul is far faster and more reliable than letting the nodes talk over Wi-Fi, and it means the mesh doesn't eat into the Wi-Fi speed your operators are using. Always cable the nodes when you can."}},
+    {"p": "Pairing a node takes under five minutes on site: cable it into the switch, power it up, open the primary router's **AiMesh** page, and let it adopt the node. The primary then pushes the EMCOMM-NET name, password, and settings to the node automatically. You place the node where its coverage is needed and confirm a phone still shows full signal at the farthest point."},
+
+    {"h1": "How Many Nodes Do I Need?"},
+    {"p": "Match the number of routers to the size and shape of the space you're covering. Use this as a starting guide, then walk the far corners with a phone on EMCOMM-NET to confirm the signal holds:"},
+    {"table": {
+      "headers": ["Your space", "Recommended setup"],
+      "rows": [
+        ["**Single-room EOC** (under 2,500 square feet)", "**1 primary router only** — no extension needed."],
+        ["**Multi-room EOC or large shelter** (2,500–7,500 square feet)", "**1 primary + 1 node** — wired backhaul via switch **Port 11**."],
+        ["**Large building or campus** (7,500–20,000 square feet)", "**1 primary + 2 nodes** — wired backhaul via switch **Ports 11 and 12**."],
+        ["**Outdoor search-and-rescue (SAR) staging area**", "**1 primary at the command post + 1–2 nodes at field positions**, each on battery power."]
+      ],
+      "widths": [3.3, 3.7]
+    }},
+    {"callout": {"kind": "note", "label": "YOU DON'T HAVE TO DEPLOY ALL THREE",
+      "text": "Bring what the space needs. A small activation in one room runs perfectly on the single primary router — leave the two nodes in the case. Add a node only when a phone starts dropping bars at the edge of your coverage."}},
+
+    {"h1": "Cabling It All Together"},
+    {"p": "Here is the physical build, in order. You can do this on a bench first and it will work the same way on site. Use ordinary Ethernet patch cables (CAT 6 is recommended)."},
+    {"steps": [
+      "Set the **UniFi Switch Lite 16 PoE** where it can stay — this is your hub. Plug its included **45-watt power supply** into an outlet (or your power system) and let it boot.",
+      "Cable the **ASUS RT-BE58 Go** router's **LAN port** to switch **Port 1**. Power the router from its **USB-C 18-watt** adapter (or a USB-C power bank in the field).",
+      "Cable the **FieldCommand Pi 5** to switch **Port 2**. This Pi is the main server and will live at address **192.168.50.1**.",
+      "If you run the amateur-radio gateway, cable the **44Net gateway Pi 5** to switch **Port 3** (address **192.168.50.2**). Skip this if you're not using 44Net.",
+      "Cable the rest as you need them: the **Windows laptop** to **Port 4**, the **network printer** to **Port 5**, and up to four **operator workstations** to **Ports 6–9**. Any of these can instead join over EMCOMM-NET Wi-Fi.",
+      "If you're extending coverage, cable each **AiMesh node** into **Port 11** (and **Port 12** for a second node), power it, and pair it from the primary router's AiMesh page.",
+      "Leave the upstream internet source disconnected for now — that belongs to its own chapter. EMCOMM-NET works without it."
+    ]},
+    {"callout": {"kind": "note", "label": "WHY THIS ORDER OF PORTS MATTERS",
+      "text": "The switch ports are matched to fixed addresses (Port 2 → 192.168.50.1, Port 3 → 192.168.50.2, and so on). Following the layout keeps every device's address predictable, so if something ever goes quiet you know exactly which port and which address to check. The next chapter explains the addressing scheme in full."}},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__No Wi-Fi at all — I don't see EMCOMM-NET on my phone.__ First confirm the **ASUS router** has power (its lights are on) and that its **LAN port is cabled to switch Port 1**. Remember the Pi does **not** make Wi-Fi, so a running Pi with a dark router still means no signal. If the router is powered and cabled but there's still no network name, it may not be configured yet — routing configuration is covered in an earlier setup step; the router must be broadcasting **EMCOMM-NET** before any device can join.",
+      "__A device joins EMCOMM-NET but can't reach the tools.__ The Wi-Fi is fine but the wired side may be broken. Check that the **FieldCommand Pi is cabled to switch Port 2** and powered, and that the **switch itself has power**. The next chapter walks through confirming a device can reach the dashboard at `http://192.168.50.1`.",
+      "__A mesh node won't pair.__ Make sure the node is **cabled into switch Port 11 or 12** (wired backhaul) and powered on, then open the **primary router's AiMesh page** and start adoption there — you pair from the primary, not from the node. Give it a minute; the primary pushes the settings automatically. If it still won't appear, power-cycle the node and try the pairing once more.",
+      "__Coverage is weak in one part of the building.__ You've outgrown a single router for that space. Add an **AiMesh node** near the weak area (see the how-many-nodes table), cable its backhaul to a spare switch port, and pair it. Walk the far corner with a phone on EMCOMM-NET afterward to confirm full bars.",
+      "__A mesh node shows connected but everything is slow.__ Check that its **backhaul is wired**, not wireless — a node repeating over Wi-Fi is much slower and eats into everyone's speed. Run a CAT 6 cable from the node's LAN port back to a spare switch port and re-check.",
+      "__I ran out of ports.__ Ports **13–16** are spare by design. If those are full too, the switch has 16 ports total — move rarely-used wired gear onto EMCOMM-NET Wi-Fi instead, which frees ports for the things that must be wired."
+    ]}
+  ]
+}

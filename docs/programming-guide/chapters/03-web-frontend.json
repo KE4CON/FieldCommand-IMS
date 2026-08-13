@@ -1,0 +1,159 @@
+{
+  "order": 3,
+  "title": "The Web Front End — Static HTML/JS, No Framework",
+  "subtitle": "Every screen a FieldCommand operator touches is a plain HTML file with its own inline JavaScript, styled by one shared theme.css and served straight off disk. There is no build step, no bundler, and no framework — you edit a file and reload the page.",
+  "in_this_chapter": [
+    "What the front end is and why it is deliberately plain",
+    "Why there is no build step, no framework, and no npm",
+    "How a single page is put together — theme.css, inline script, shared lib includes",
+    "The two shared JavaScript libraries every map/identity page pulls in",
+    "How a page talks to the back end: same-origin /svc/<port> fetch calls",
+    "Why the front end migrated off absolute host:port URLs",
+    "The trade-offs of this approach and the maintainer's rule"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "IN ONE SENTENCE",
+      "text": "FieldCommand's user interface is roughly 56 hand-written HTML pages that share one `theme.css` and a couple of small `lib/*.js` includes, each page carrying its own inline `<script>` that fetches data from the back end over same-origin `/svc/<port>/...` URLs — no framework, no build step, edit-and-reload."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "The FieldCommand front end is the collection of screens in `/opt/fieldcommand/html`: the station dashboard (`index.html`), the roster, net control, the Incident Command System (ICS) forms, the resource and cost pages, the tactical map, setup, and about fifty more. Each screen is a **single, self-contained HTML file**. Open `roster.html` in an editor and you see the whole page — its markup, a `<style>` block for anything page-specific, and one `<script>` block with all of that page's behavior. There is no separate JavaScript project, no compiled bundle, and nothing to `npm install`. The browser loads the file nginx hands it and runs it as-is."},
+    {"p": "This is a deliberate design choice, not a shortcut. FieldCommand runs on a Raspberry Pi in a field, a shelter, or an Emergency Operations Center (EOC) with no internet and, frequently, no one on site who can rebuild a JavaScript project. The front end has to be something a volunteer can open, read, fix, and reload with nothing but a text editor and a browser. Plain HTML and plain JavaScript are exactly that: what you see in the file is what runs, and a reload is the entire deploy process."},
+    {"callout": {"kind": "note", "label": "JARGON, IN PLAIN WORDS",
+      "text": "A **framework** (React, Vue, Angular) is a large JavaScript library you build your app on top of; it usually needs a **build step** — a program that bundles and transforms your source into files the browser can run. A **bundler** (webpack, Vite) is that program. FieldCommand uses none of them: the files you write are the files the browser runs."}},
+
+    {"h1": "Why No Build Step — the 'Why' Behind the Choice"},
+    {"p": "A modern JavaScript build pipeline buys you convenience — typed code, module bundling, minification, hot reload — at the cost of a toolchain that must be installed, kept up to date, and re-run every time you change a line. On a purpose-built offline appliance that cost is the wrong trade. If the interface only ran after a successful `npm run build`, then a broken dependency, a missing Node version, or a corrupt `node_modules` on the Pi would mean no dashboard during an actual incident. Removing the build step removes that entire class of failure."},
+    {"p": "The offline-first, edit-and-reload model has three concrete payoffs. **First, transparency:** a maintainer can read any screen top to bottom in one file and see exactly what it does. **Second, resilience:** there is nothing to compile, so nothing about the interface can fail to compile in the field. **Third, longevity:** plain HTML and JavaScript from today will still open and run in a browser years from now, with no framework version to chase. The price paid for those wins is covered honestly in the trade-offs section below — this is a real engineering decision with two sides, not a free lunch."},
+
+    {"h1": "How It Works — the Anatomy of One Page"},
+    {"p": "Every page follows the same simple skeleton. It links the one shared stylesheet, adds only the styles unique to that page, writes its markup, and then includes its shared libraries and its own inline script at the bottom. Here is the top of a real page, `roster.html` — note the single shared `theme.css` link:"},
+    {"code": [
+      "<!DOCTYPE html>",
+      "<html lang=\"en\">",
+      "<head>",
+      "<meta charset=\"UTF-8\">",
+      "<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">",
+      "<title>Incident Management — Station Dashboard</title>",
+      "<link rel=\"stylesheet\" href=\"theme.css\">",
+      "<style>",
+      "/* only the styles unique to THIS page live here */",
+      "</style>"
+    ]},
+    {"p": "At the **bottom** of the same page come the shared includes and the page's own logic. The shared library is pulled in with an ordinary `<script src>` — no import system, no module resolver — and the page's behavior follows in a second inline `<script>`:"},
+    {"code": [
+      "<script src=\"/lib/identity.js\"></script>",
+      "<script>",
+      "const API = \"/svc/5050\";",
+      "// ... this page's own functions: loadRoster(), filterMembers(), ...",
+      "</script>"
+    ]},
+    {"p": "That is the whole pattern, repeated across all ~56 pages: **shared look** from `theme.css`, **shared cross-page behavior** from `lib/*.js`, and **per-page behavior** in an inline `<script>`. There is no shared application shell and no router — each page is its own small program, and navigation between pages is ordinary links to other `.html` files."},
+
+    {"h1": "How It Works — the Shared theme.css"},
+    {"p": "The one thing every page truly shares is its appearance, and that lives entirely in `theme.css`. The file opens by declaring a set of **design tokens** — Cascading Style Sheets (CSS) custom properties on `:root` — so that colors, fonts, spacing, and shadows are defined once and referenced everywhere. A page never hard-codes the EOC navy; it uses the variable:"},
+    {"code": [
+      ":root {",
+      "  --bg:     #f0f4f8;   /* page background — cool grey     */",
+      "  --panel:  #ffffff;   /* card surface                    */",
+      "  --line:   #c8d8e8;   /* borders                         */",
+      "  --txt:    #1a2535;   /* primary text — deep navy        */",
+      "  --muted:  #4a5e78;   /* secondary text                  */",
+      "  --eoc:    #1a3a6b;   /* primary brand — FEMA ICS blue   */",
+      "  --accent: #d97706;   /* gold accent for badges          */",
+      "  --font-ui:  -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;",
+      "  --font-hd:  'Oswald', 'Arial Narrow', Arial, sans-serif;",
+      "  --shadow-sm: 0 1px 3px rgba(26,58,107,0.08), 0 1px 2px rgba(26,58,107,0.05);",
+      "}"
+    ]},
+    {"p": "Because these tokens are plain CSS variables, the same values are reachable from inline styles in JavaScript too — the identity badge, for example, falls back gracefully with `var(--eoc,#1a3a6b)` so it looks right even on a page that somehow loaded without the stylesheet. `theme.css` also defines the shared components every page reuses — `.section-card`, `.btn` and its color variants (`.btn-primary`, `.btn-success`, `.btn-danger`), badges, tables — plus a full print stylesheet, so the ICS forms print cleanly. The file's own header states the rule plainly: __all shared components defined here — no more inline duplication__."},
+    {"callout": {"kind": "note", "label": "JARGON, IN PLAIN WORDS",
+      "text": "A **CSS custom property** (or **design token**) is a named value like `--eoc: #1a3a6b` you set once and reuse with `var(--eoc)`. Change the definition and every element using it updates at once. The `var(--eoc, #1a3a6b)` form supplies a fallback color to use if the variable is not defined."}},
+    {"callout": {"kind": "warning", "label": "ONE ONLINE DEPENDENCY LIVES IN theme.css",
+      "text": "The very top of `theme.css` has an `@import url('https://fonts.googleapis.com/...Oswald...')` for the heading font. On a truly offline LAN that import simply fails and the browser falls back to the next font in `--font-hd` ('Arial Narrow'), so nothing breaks — but be aware it is the one place the otherwise offline-first front end reaches for the public internet. If you want zero external calls, host the font locally and change this line."}},
+
+    {"h1": "How It Works — the Shared lib Includes"},
+    {"p": "Only two behaviors are genuinely common across many pages, so only two shared scripts exist in `html/lib/`. Each is written as an **Immediately Invoked Function Expression (IIFE)** that exposes a single global object — `FC_ID` and `FC_TILES` — and nothing else, so pages get a clean, small public interface with no globals leaking out."},
+    {"table": {
+      "headers": ["Shared library", "Global it exposes", "What it does"],
+      "rows": [
+        ["`lib/identity.js`", "`FC_ID`", "Remembers who the operator is (callsign / member ID / radio ID) in the browser's `localStorage`, renders the 'On as:' header badge, and pops the 'Identify Yourself' picker. Every page that logs an action asks `FC_ID` who did it."],
+        ["`lib/tiles.js`", "`FC_TILES`", "Builds the map's base-layer control for any Leaflet page: it probes the offline tile server first, falls back to online sources when the internet is reachable, and picks the best default basemap."]
+      ],
+      "widths": [1.7, 1.3, 3.5]
+    }},
+    {"p": "`identity.js` is a good example of why sharing it matters: identity is needed on the roster, net control, the ICS logs, and more, and it must behave identically on all of them. It stores one object under a versioned key and offers a tiny read-only Application Programming Interface (API) the pages call:"},
+    {"code": [
+      "const STORE_KEY = 'fc_operator_identity_v3';",
+      "const API       = '/svc/5050';",
+      "// ...",
+      "return {",
+      "    init, showPicker,",
+      "    getCallsign:  () => _id?.callsign  || '',",
+      "    getDisplayId: () => bestId(_id || {}),   // callsign → radio_id → member_id → name",
+      "    isVisitor:    () => ['visitor','mutual_aid'].includes(_id?.member_type),",
+      "    // ...",
+      "};"
+    ]},
+    {"p": "Note that even a shared library talks to the back end the same same-origin way a page does — `const API = '/svc/5050'`. `tiles.js` follows the identical convention for the map tile server, with `const TILE_SERVER = ''` and URLs built as `/tiles/{z}/{x}/{y}.png`, all same-origin. That consistency is the whole point of the next section."},
+
+    {"h1": "How It Works — Talking to the Back End (Same-Origin /svc)"},
+    {"p": "Every page needs data, and every page gets it the same way: a `fetch()` to a **same-origin** path that begins with `/svc/<port>/`. The page declares one constant naming the service it uses, then builds all its calls from it. From `roster.html`:"},
+    {"code": [
+      "const API = \"/svc/5050\";",
+      "",
+      "async function loadRoster() {",
+      "  try {",
+      "    const r = await fetch(`${API}/api/roster`);",
+      "    const data = await r.json();",
+      "    allMembers  = data.members || [];",
+      "    activations = data.activations || [];",
+      "    filterMembers();",
+      "  } catch(e) {",
+      "    document.getElementById(\"memberList\").innerHTML =",
+      "      '<div style=\"color:var(--red)\">Cannot reach API</div>';",
+      "  }",
+      "}"
+    ]},
+    {"p": "Writes look the same, just with a method and a body — the standard `fetch` shape used everywhere in the code:"},
+    {"code": [
+      "await fetch(`${API}/api/roster/members`, {",
+      "  method:  \"POST\",",
+      "  headers: { \"Content-Type\": \"application/json\" },",
+      "  body:    JSON.stringify(m)",
+      "});"
+    ]},
+    {"p": "The `/svc/<port>/` prefix is not a real folder on disk — it is a routing convention. nginx sees a request for `/svc/5050/api/roster`, strips the `/svc/5050/` part, and forwards `/api/roster` to the Python service listening on `127.0.0.1:5050`. The next chapter walks that proxy configuration in detail. For the front end, the important fact is that **`5050` is the main API / Federal Communications Commission (FCC) service, `5051` is the health monitor, `5055` is the ICS platform, and `5056` is the reference library** — and a page selects which back end it wants simply by which port it names in its `API` constant. You can see that in the earlier grep of every page: `roster.html`, `netcontrol.html`, and `starcom.html` name `/svc/5050`; `channel_library.html` names `/svc/5055`; `wan-status.html` names `/svc/5051`; `refs.html` names `/svc/5056`."},
+    {"callout": {"kind": "note", "label": "JARGON, IN PLAIN WORDS",
+      "text": "**Same-origin** means a request goes to the exact same protocol, host, and port the page itself was loaded from. Because `/svc/5050/...` has no `http://` and no host in it, the browser sends it back to wherever the page came from. That sidesteps browser cross-origin (CORS) restrictions and, crucially, mixed-content blocking on an HTTPS page."}},
+
+    {"h1": "Why It Was Migrated Off Absolute host:port URLs"},
+    {"p": "The front end did not always call `/svc/<port>`. Earlier, pages fetched the back end directly at an absolute address like `http://192.168.50.1:5050/api/roster`. That worked over plain HTTP, but it broke the moment the dashboard was served over HTTPS: a secure page is not allowed to fetch an insecure `http://...:5050` resource, so the browser blocks it as **mixed content**. Hard-coding the host also meant the interface only worked when it was reached at that one address."},
+    {"p": "Switching every call to the relative `/svc/<port>/` form fixes both problems at once. The nginx configuration file states the goal in its own header comment: the services are __reached same-origin at /svc/<port>/... so the app works identically over http (dev) and https (production) with no mixed-content. The front end no longer calls http://host:<port> directly.__ Because the calls are now relative, the same HTML works whether you open it at `http://localhost`, `https://192.168.50.1`, or `https://fieldcommand.local` — the browser always sends the request back to the same origin, and nginx routes it onward."},
+    {"callout": {"kind": "important", "label": "WHY THIS IS A ONE-WAY DOOR",
+      "text": "Never reintroduce an absolute `http://host:port` fetch in a page, even 'just for a quick test.' A single absolute-URL call will silently fail under HTTPS with a mixed-content error that is easy to misdiagnose as a dead back end. If a new page needs a service, copy the `const API = '/svc/<port>'` pattern from an existing page — do not invent a new addressing scheme."}},
+
+    {"h1": "The Trade-Offs, Stated Honestly"},
+    {"p": "This approach is simple and transparent, and it is offline-proof. Those are exactly the properties an emergency appliance needs, and they are real, earned wins — but they come with real costs a maintainer should know going in:"},
+    {"table": {
+      "headers": ["What you gain", "What you give up"],
+      "rows": [
+        ["No build step — edit a file, reload the browser, done. Nothing to compile in the field.", "No bundling or minification — each page ships its full source, and shared code that is not in a `lib/` file gets copy-pasted between pages."],
+        ["Full transparency — the whole screen is readable in one file with a plain text editor.", "No type checking — a typo in a property name is only caught at runtime, in the browser, on that page."],
+        ["Offline-proof — no toolchain, no `node_modules`, nothing that can fail to install on the Pi.", "No shared component system — a change to a repeated markup pattern may need editing in several pages by hand."],
+        ["Longevity — plain HTML/JS keeps working with no framework version to upgrade.", "Manual consistency — the discipline of always using `theme.css` tokens and the `/svc` convention is enforced by convention, not by a compiler."]
+      ],
+      "widths": [2.6, 2.6]
+    }},
+    {"p": "The honest summary: FieldCommand trades developer conveniences (types, bundling, hot module reload) for operational guarantees (nothing to build, nothing to install, everything readable). For a device that must come up and stay up in an emergency with no internet and no build server, that trade is the right one — but it means the shared conventions in this chapter are the only thing keeping ~56 independent pages coherent, so they must be honored every time."},
+
+    {"h1": "Why It Matters / Design Takeaways"},
+    {"bullets": [
+      "__No build step is a feature, not a gap.__ Edit-and-reload means the interface can never fail to compile in the field, and any volunteer with a text editor can read and fix a screen.",
+      "__One stylesheet, two libraries, many pages.__ Shared look lives in `theme.css` design tokens; shared behavior lives in `FC_ID` and `FC_TILES`; everything else is a page's own inline script.",
+      "__Same-origin `/svc/<port>` is the one way pages reach the back end.__ It works identically over HTTP and HTTPS, avoids mixed-content blocking, and lets a page pick its back end just by naming a port.",
+      "__The conventions are the architecture.__ With no framework to enforce structure, the `theme.css` tokens and the `/svc` addressing pattern are what keep 56 hand-written pages consistent."
+    ]},
+    {"callout": {"kind": "important", "label": "MAINTAINER'S RULE",
+      "text": "When you add or change a page: keep it a single self-contained HTML file; link the shared `theme.css` and use its `var(--...)` tokens rather than hard-coding colors; put cross-page behavior in a `lib/*.js` include, not copy-pasted script; and reach the back end only through a `const API = '/svc/<port>'` same-origin `fetch`. Never hard-code an absolute `http://host:port` URL — it will break the page the instant the dashboard is served over HTTPS."}}
+  ]
+}

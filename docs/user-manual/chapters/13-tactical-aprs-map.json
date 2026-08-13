@@ -1,0 +1,149 @@
+{
+  "order": 13,
+  "title": "Tactical Automatic Packet Reporting System (APRS) Map",
+  "subtitle": "A live map of every APRS station your radios can hear — vehicles, field teams, weather stations, and repeaters — pulled together from radio and internet feeds into one situational-awareness picture.",
+  "in_this_chapter": [
+    "What the Tactical Map is and where its data comes from",
+    "The offline caveat you need to know about",
+    "The top bar: station count, Refresh, KML export",
+    "The layer buttons down the left side",
+    "Reading a station marker and its popup",
+    "The Stations tab — searching and filtering",
+    "The Messages tab — sending and receiving APRS messages",
+    "The Markers tab — placing your own map pins",
+    "The Sources tab — where the stations come from",
+    "The Settings tab — your station, sources, and display",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "Open the **Tactical Map**. Stations that your radios and feeds are hearing appear as markers, brightest when heard recently. Click a marker for details. Use the **layer buttons** (top-left of the map) to show or hide each source, the **Stations** tab to search, the **Messages** tab to send an APRS text, and the **Markers** tab to drop your own pins for the EOC, shelters, and command posts."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "The **Tactical Map** is FieldCommand's main situational-awareness screen. Automatic Packet Reporting System (APRS) is a ham-radio system where stations beacon their position, speed, and a short comment over the air. This map collects those beacons and plots every station on a moving map — so you can watch field teams, vehicles, and mobile resources move in real time, all in one place."},
+    {"p": "It pulls stations from up to three sources at once and merges them so each station shows up only once, even if more than one source heard it:"},
+    {"table": {
+      "headers": ["Source", "What it is", "Needs internet?"],
+      "rows": [
+        ["**Direwolf (RF)**", "APRS heard directly off the radio, decoded by Direwolf software and served through APRS Command. This is your true off-air picture.", "**No** — works fully offline"],
+        ["**YAAC**", "APRS from YAAC (Yet Another APRS Client), another program that can decode your radio's packets. An alternate or additional radio feed.", "**No** — works offline"],
+        ["**APRS-IS**", "The worldwide APRS internet feed (via the aprs.fi service). Fills in stations beyond radio range.", "**Yes** — internet required"]
+      ],
+      "widths": [1.5, 3.9, 1.1]
+    }},
+    {"callout": {"kind": "warning", "label": "OFFLINE CAVEAT — THE BASE MAP MAY NOT DRAW WITHOUT INTERNET",
+      "text": "The station markers are the offline part and always plot. The **background map image** (the streets and terrain) is a separate matter. In the current build the mapping library and default map tiles load from the internet, so with no internet the base map may come up blank while your markers still float on top. For a true no-internet map, an administrator downloads offline map tiles onto the Pi (there's a `download_tiles.sh` step for exactly this). See the Settings tab's **Map Tiles** note."}},
+
+    {"h1": "The Top Bar"},
+    {"p": "Across the top, the **📡 TACTICAL MAP** bar shows a live **Stations** count (how many unique stations are on the map right now) and a UTC clock. Two buttons live here:"},
+    {"table": {
+      "headers": ["Button", "What it does"],
+      "rows": [
+        ["**⟳ Refresh**", "Immediately re-polls every source for fresh station data, instead of waiting for the next automatic refresh."],
+        ["**⬇ KML**", "Exports the current stations to a KML file — a map format you can open in Google Earth or share with other mapping tools."]
+      ],
+      "widths": [1.7, 4.8]
+    }},
+
+    {"h1": "The Layer Buttons"},
+    {"p": "Down the top-left corner of the map is a stack of **layer buttons**. Each one turns a category of markers on or off, so you can declutter the map to just what you care about. A lit (colored) button means that layer is showing."},
+    {"table": {
+      "headers": ["Button", "Shows / does"],
+      "rows": [
+        ["**🟢 Direwolf**", "Stations heard off the radio via Direwolf."],
+        ["**🔵 YAAC**", "Stations from the YAAC feed."],
+        ["**🟣 APRS-IS**", "Stations from the internet APRS feed."],
+        ["**📌 Overlays**", "Your own hand-placed markers (from the Markers tab)."],
+        ["**⬡ My Station**", "Your own station's position marker."],
+        ["**◎ Range Ring**", "A distance circle around your station, so you can judge how far out a station is. Radius is set in Settings."],
+        ["**🛤 Track**", "Draws the movement trail of the station you're tracking, so you can see where it's been."],
+        ["**📡 Repeaters**", "Overlays repeaters from the FieldCommand Repeater Database onto the map."],
+        ["**🗺 SARTopo**", "Shows a search-and-rescue planning overlay (sectors, assignments, zones) imported on the SARTopo Import page."]
+      ],
+      "widths": [1.7, 4.8]
+    }},
+    {"callout": {"kind": "note", "label": "SARTOPO OVERLAYS ARE IMPORTED SEPARATELY",
+      "text": "The **SARTopo** layer shows planning data (search sectors, assignments, exclusion zones) that you export from SARTopo/CalTopo as a GeoJSON file and bring in on the **SARTopo Import** page. Once imported, it stays on the map through refreshes; toggle it here with the 🗺 SARTopo button."}},
+
+    {"h1": "Station Markers and Popups"},
+    {"p": "Each station is drawn with its standard APRS symbol (a car, a house, a weather station, and so on — the app translates APRS symbols into easy-to-read emoji). Two things about a marker tell you its story at a glance:"},
+    {"bullets": [
+      "__Fill color = how recently it was heard (age).__ Bright green means fresh (heard within the last ~15 minutes), amber means aging (roughly 15–60 minutes), and gray means old (over an hour). A faded marker is a station you haven't heard from in a while.",
+      "__Border color = which source heard it.__ Green border = Direwolf, blue = YAAC, purple = APRS-IS, and white = heard by more than one source. The Legend in the Settings tab spells this out."
+    ]},
+    {"p": "Click any marker to open its popup, which lays out everything known about the station:"},
+    {"table": {
+      "headers": ["In the popup", "Meaning"],
+      "rows": [
+        ["**Callsign** + source tags", "The station's callsign and which feeds heard it."],
+        ["**Symbol / Type**", "Its APRS symbol and category (Mobile, Fixed, Weather, Digi, iGate)."],
+        ["**Comment**", "The free-text status the operator is beaconing."],
+        ["**Speed / Course**", "How fast it's moving and which direction (only if it's moving)."],
+        ["**Altitude**", "Reported altitude, if any."],
+        ["**Path**", "The digipeater path the packet traveled — useful for judging how it reached you."],
+        ["**Freq**", "A voice frequency the station is advertising, if included."],
+        ["**Last heard**", "When the most recent beacon arrived, and how long ago."]
+      ],
+      "widths": [2.1, 4.4]
+    }},
+    {"p": "Two buttons sit at the bottom of the popup: **🛤 Track** starts drawing that station's movement trail, and **✉ Message** opens the Messages tab pre-addressed to that callsign."},
+    {"screenshot": "The Tactical Map with colored station markers and an open popup showing a mobile station's details and Track / Message buttons"},
+
+    {"h1": "The Sidebar Tabs"},
+    {"p": "On the right is a sidebar with five tabs: **Stations**, **Msgs**, **Markers**, **Sources**, and **⚙ (Settings)**. Each has a badge count where relevant."},
+
+    {"h2": "Stations Tab"},
+    {"p": "A searchable, sortable list of every station on the map, newest-heard first. The filter bar at the top lets you narrow it down: a **search box** (matches callsign or comment text), a **source** dropdown (All / Direwolf / YAAC / APRS-IS), and a **type** dropdown (All / Mobile / Fixed / Weather / Digi / iGate). Each list row shows the symbol, callsign, source badges, comment, how long ago it was heard, and its coordinates. Click a row to pan the map to that station."},
+
+    {"h2": "Messages Tab (Msgs)"},
+    {"p": "APRS can carry short text messages, and this tab is where you read and send them. Received messages appear in the list, unread ones marked with a green edge. To send one, use the **SEND APRS MESSAGE** form at the bottom:"},
+    {"table": {
+      "headers": ["Field", "What to enter"],
+      "rows": [
+        ["**To callsign**", "The station you're messaging (example: `W8ABC`)."],
+        ["**Message text**", "Your message. APRS caps a single message at **67 characters** — the box won't let you exceed it."],
+        ["**Via**", "Which radio path to send through — **Via Direwolf** or **Via YAAC**."]
+      ],
+      "widths": [1.8, 4.7]
+    }},
+    {"p": "Click **Send** to transmit. A small status line reports whether it went out. Note that sending an APRS message goes out over the air on amateur radio, so it requires a properly licensed station and callsign set up in the Settings tab."},
+
+    {"h2": "Markers Tab"},
+    {"p": "Here you drop your own reference pins on the map — things APRS won't beacon, like the EOC, shelters, and command posts. In the **ADD MARKER** section:"},
+    {"steps": [
+      "Type a **Label** (for example `Shelter A`).",
+      "Pick a **Type** from the dropdown — 🏛 EOC, 🏠 Shelter, 🚐 Staging Area, 🎯 Command Post, 🏥 Medical, 📡 Repeater, 🔥 Fire / Hazmat, 🚔 Law Enforcement, or 📌 Custom.",
+      "Set the location: either type **Latitude** and **Longitude**, or click **🗺 Pick on Map** and then click the spot on the map.",
+      "Optionally add **Notes**.",
+      "Click **+ Add Marker**. The pin appears immediately and is listed under **PLACED MARKERS**."
+    ]},
+    {"p": "Your placed markers persist on the map. **🗑 Clear All Markers** removes them all at once."},
+
+    {"h2": "Sources Tab"},
+    {"p": "A status panel for each data feed — **Direwolf RF**, **YAAC**, and **APRS-IS** — showing whether each is connected, its address, and how many stations it's supplying. A **⟳ Poll** button on each forces an immediate check. At the bottom, the **MERGED DATASET** box summarizes how the sources combined: total unique stations, how many were seen by both radio feeds, and how many came from each source alone. For APRS-IS you can paste an optional **aprs.fi API key** to enable the internet feed (leave it blank to keep APRS-IS off)."},
+
+    {"h2": "Settings Tab (⚙)"},
+    {"p": "Everything about how the map behaves and where it looks for data:"},
+    {"table": {
+      "headers": ["Section", "What you set"],
+      "rows": [
+        ["**My Station**", "Your own callsign, latitude, and longitude, plus a **Center on Station** button. If the Pi has a live Global Positioning System (GPS) fix, these fill in automatically."],
+        ["**APRS Sources**", "The address and ports where the radio feeds live (the RF/Direwolf host and port, and the YAAC port)."],
+        ["**Display**", "Auto-refresh interval (15s up to Manual only), map-tile info, the **station age threshold** (how many minutes counts as \"fresh\"), the range-ring radius in kilometers, whether to show emoji symbols or plain dots, and whether to show callsign labels."],
+        ["**Legend**", "A reference key for the age colors (fresh/aging/old), your station, overlays, and the source border colors."]
+      ],
+      "widths": [1.7, 4.8]
+    }},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__The map background is blank but markers still show.__ That's the offline caveat: the base map tiles couldn't load from the internet. Your station data is fine. Have an administrator download offline tiles onto the Pi (the `download_tiles.sh` step), then switch to them with the map's layer control.",
+      "__No stations appear at all.__ Check the **Sources** tab. If Direwolf and YAAC show disconnected, the radio feeds aren't reaching the map — confirm the addresses/ports in **Settings → APRS Sources** and that Direwolf/APRS Command is running. With no internet, APRS-IS will be empty by design.",
+      "__A station I expect isn't showing.__ It may not have beaconed recently, may be out of radio range (and APRS-IS is off), or may be filtered out. Clear the filters on the **Stations** tab and click **⟳ Refresh**.",
+      "__Everything looks faded/gray.__ Those stations simply haven't been heard recently. If they're all gray, your feeds may have stopped — check the **Sources** tab and refresh.",
+      "__I can't send an APRS message.__ Sending needs a licensed station: set your **callsign** in **Settings → My Station**, keep messages under 67 characters, and make sure the **Via** feed (Direwolf or YAAC) is actually connected.",
+      "__APRS-IS stays empty.__ It needs internet and an **aprs.fi API key** entered on the **Sources** tab. Without both, the internet feed stays off — which is expected in a no-internet deployment.",
+      "__My SARTopo overlay isn't visible.__ Confirm you imported it on the **SARTopo Import** page, then turn on the **🗺 SARTopo** layer button on the map."
+    ]}
+  ]
+}

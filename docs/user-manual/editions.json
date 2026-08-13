@@ -1,0 +1,28 @@
+{
+  "_comment": "PUBLIC edition config: the World (generic public-service) edition only. The ESV edition's token VALUES are private and live in docs/internal/editions_esv.json (gitignored); build.py merges it in when present. Chapter text uses {{token}} placeholders. Author copyright stays in every edition; only deploying-org branding differs.",
+  "World": {
+    "infix": "",
+    "label": "World Edition",
+    "private": false,
+    "tokens": {
+      "org": "your organization",
+      "org_the": "your organization",
+      "served": "your served agency",
+      "served_the": "your served agency",
+      "org_abbr": "your org's short form",
+      "agency_abbr": "your agency's short form",
+      "ps_mode": "Public Safety",
+      "ps_short": "public service",
+      "ps_logger": "public-safety net logger",
+      "ps_checkin": "public-service check-in",
+      "club": "your club callsign",
+      "mid": "MEM-042",
+      "workstation": "Raspberry Pi 500",
+      "cell_primary": "a cellular modem (primary internet)",
+      "sat_fallback": "a satellite link (fallback internet)",
+      "city_ex": "your city",
+      "county_ex": "your county",
+      "state_ex": "your state"
+    }
+  }
+}

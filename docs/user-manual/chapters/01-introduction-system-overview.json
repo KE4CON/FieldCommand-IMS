@@ -1,0 +1,116 @@
+{
+  "order": 1,
+  "title": "Introduction & System Overview",
+  "subtitle": "What FieldCommand IMS is, what problem it solves, and a guided tour of the dashboard you land on when you open it.",
+  "in_this_chapter": [
+    "What FieldCommand IMS is and why it works when the internet is gone",
+    "What you see the moment the dashboard loads",
+    "The three dashboard modes and how to switch between them",
+    "How tool cards work — clicking through to a tool",
+    "The status sidebar: station health, services, and internet",
+    "Weather alerts and radar at the top of the screen",
+    "The \"enter once, fill every form\" idea behind the whole system",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "FieldCommand IMS is an incident-management system that runs on a small computer and makes its own Wi-Fi, so it keeps working with **no internet, no cell service, and no power grid**. You use it from a web browser on any phone, tablet, or laptop — no app to install, no login. When you open it you land on the **dashboard**: a grid of **tool cards** you tap to open tools, a row of three **mode** buttons at the top, and a **status sidebar** on the right showing how the server is doing."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "When a real disaster hits, the tools everyone leans on tend to fail at the worst possible moment. Cell towers go down, the internet goes dark, and the power grid quits. The cloud software an emergency operations center depends on is suddenly unreachable, and the incident falls back to paper forms, a whiteboard, and whatever one tired person can keep in their head. **FieldCommand IMS exists to remove that failure point.**"},
+    {"p": "FieldCommand IMS is a complete Incident Command System (ICS) and National Incident Management System (NIMS) tool that carries everything it needs inside one small server — a Raspberry Pi. The Pi broadcasts its own private Wi-Fi network (named **EMCOMM-NET** by default), runs a web server, and stores all your data locally. Any device that joins that Wi-Fi and opens a browser gets the full set of tools instantly. There is nothing to download and no account to create.", "widths": []},
+    {"p": "Because it never depends on the outside world, it does not break when the outside world breaks. When internet **is** available, a few extra features switch on by themselves — live weather alerts, radar, and other online data. When the internet drops, those features quietly pause and everything else keeps running exactly as before. The system is built to lose connectivity without losing your incident."},
+    {"callout": {"kind": "note", "label": "WHO THIS MANUAL IS FOR",
+      "text": "You do not need to be a computer person, and you do not need a radio license, to use most of {{org_the}}. If a term looks like alphabet soup, this manual spells it out the first time it appears. The parts that legally require a licensed amateur-radio operator are clearly marked, and they are the only parts that need one."}},
+
+    {"h1": "What You See First — the Dashboard"},
+    {"p": "Point your browser at the server address (by default **http://192.168.50.1** — Chapter 2 walks through connecting) and the **Station Dashboard** loads. It is the home screen for the whole system, and every tool is one tap away from here. From top to bottom you see:"},
+    {"table": {
+      "headers": ["What you see", "Where it is", "What it does"],
+      "rows": [
+        ["**Callsign badge**", "Top-left of the dark hero bar", "Shows your station's name in large letters. Until setup is done it reads **EMCOMM-NET**; after setup it shows {{club}} and your organization name underneath."],
+        ["**Clocks**", "Top-right of the hero bar", "A big primary clock and a smaller secondary clock. In Amateur Radio mode the big one is **UTC** (the worldwide radio time standard); in the other modes the big one is your **local** time. Both run live, second by second."],
+        ["**Mode pill**", "Under the clocks", "A small colored tag telling you which of the three modes is active right now."],
+        ["**Mode switcher**", "The row of three big buttons below the hero bar", "Switches the dashboard between Amateur Radio, Public Safety, and ICS views (see below)."],
+        ["**Weather + Radar row**", "Top of the main column", "Live National Weather Service (NWS) alerts and a link to animated radar — when internet is available."],
+        ["**Tool cards**", "The grid filling the main column", "Each card opens one tool. Grouped under labeled headings like Operations, Public Safety, and Forms & Traffic."],
+        ["**Status sidebar**", "The narrow column on the right", "Live health of the server — temperature, memory, disk, internet, GPS — plus a services list and quick links."]
+      ],
+      "widths": [2.0, 2.4, 3.2]
+    }},
+    {"screenshot": "The FieldCommand Station Dashboard: dark hero bar with callsign badge and clocks, the three mode buttons, tool-card grid, and the status sidebar on the right"},
+    {"callout": {"kind": "note", "label": "A YELLOW BANNER ON A BRAND-NEW SYSTEM",
+      "text": "If the server has never been set up, a yellow banner appears near the top saying **FieldCommand IMS is not configured** with a link to run the setup wizard. That is normal on a fresh system — everything still works, the banner is just a reminder. Setup is covered in Chapter 3."}},
+
+    {"h1": "The Three Modes"},
+    {"p": "The three big buttons under the hero bar — **📻 Amateur Radio**, **🚔 {{ps_mode}}**, and **🏛 ICS / Incident Command** — are **modes**. A mode simply decides which tool cards are shown, so the screen stays uncluttered and you see the tools that fit what you are doing. Switching modes never hides or deletes anything; the tools you are not looking at are still there, one button away."},
+    {"table": {
+      "headers": ["Mode", "What it shows", "Best for"],
+      "rows": [
+        ["**📻 Amateur Radio**", "Net control logging, callsign lookup, APRS mapping, Winlink, JS8Call, propagation, radiogram traffic forms", "Ham-radio net operations run by licensed operators"],
+        ["**🚔 {{ps_mode}}**", "The {{ps_short}} net logger, radio-ID roster, resource-tracking map, facilities directory, observer view", "{{ps_mode}} radio nets and unit tracking"],
+        ["**🏛 ICS / Incident Command**", "The full incident-command platform — Command, Operations, Planning, Logistics, and Finance tools plus every ICS form", "Running an actual incident with formal ICS paperwork"]
+      ],
+      "widths": [2.2, 3.4, 2.0]
+    }},
+    {"callout": {"kind": "important", "label": "THE AMATEUR RADIO MODE CAN BE GRAYED OUT — ON PURPOSE",
+      "text": "The amateur-radio features legally require a licensed operator. If your group set up the system with **no callsign** (because no one holds an amateur license), the **📻 Amateur Radio** button appears dimmed with a small lock, and that is correct — every incident-management and public-safety tool still works normally. A callsign can be added later in Setup, which lights the button up. See Chapter 3."}},
+    {"p": "The mode you pick also changes the primary clock: Amateur Radio mode puts **UTC** front and center because radio operators log in UTC worldwide, while ICS and Public Safety modes put your **local** time front and center, which is what incident paperwork uses."},
+
+    {"h1": "Tool Cards — How You Open Things"},
+    {"p": "Almost everything in FieldCommand IMS is reached by tapping a **tool card**. Each card is a small tile with an icon, a name, and a one-line description of what it does. A few cards also show a small tag in the corner — that tag names the technical service or port behind the tool, which you can safely ignore unless you are troubleshooting. Tap a card and the tool opens."},
+    {"p": "Cards are grouped under section labels so related tools sit together. In Amateur Radio mode, for example, you see headings like **⚡ Operations**, **🚨 Public Safety**, **📋 Forms & Traffic**, and **📚 Reference**. A card marked with a small **↗** opens in a new browser tab because it is a separate mini-application (the live APRS map and the offline Wikipedia library are examples)."},
+    {"callout": {"kind": "tip", "label": "IF A CARD OPENS A BLANK OR ERROR PAGE",
+      "text": "A card that points to a separate service can only work if that service is running and, in a few cases, if a piece of hardware (like a radio) is attached. If a card opens to nothing, it usually means that optional piece is not set up on your system — it does not mean the whole dashboard is broken. Come back to the dashboard with your browser's Back button."}},
+
+    {"h1": "The Status Sidebar"},
+    {"p": "The narrow column on the right is the **STATION STATUS** panel — a live readout of the server's health that refreshes on its own. You do not act on it; you glance at it to confirm the system is healthy."},
+    {"table": {
+      "headers": ["Readout", "Plain meaning"],
+      "rows": [
+        ["**DMS bar**", "The Dead Man's Switch status. \"Disarmed\" means the net-inactivity watchdog is off. Covered in its own chapter."],
+        ["**CPU Temp**", "How hot the server's processor is, in degrees Celsius. A normal number means the Pi is comfortable."],
+        ["**Memory**", "How much of the server's working memory is in use, as a percentage."],
+        ["**Disk**", "How full the storage drive is, as a percentage."],
+        ["**Internet**", "A green dot means the server currently reaches the internet; red means it does not (and that is fine — see below)."],
+        ["**GPS Fix**", "Green if an attached GPS receiver has a location lock; amber if not."],
+        ["**Updated**", "The time of the last health check, so you know the numbers are current."],
+        ["**SERVICES**", "A row of small dots, one per background service (nginx, Direwolf, Chrony, and so on), showing which are running."]
+      ],
+      "widths": [1.9, 5.7]
+    }},
+    {"p": "Below the status panel is a small **internet indicator** and a **QUICK LINKS** panel with shortcuts to a few common pages — Observer Mode, the Pre-flight Check, the Print Center, and Callsign Lookup."},
+
+    {"h1": "Weather and Radar"},
+    {"p": "Across the top of the main column sit two live widgets. The **⚡ NWS WEATHER ALERTS** panel pulls active National Weather Service warnings and watches for your area and lists them, color-coded by severity. Next to it, the **NWS RADAR** card links to an animated radar loop. Both of these need internet, so they only fill in when the server is online; offline, the weather panel shows a \"Waiting for internet connection\" note and the rest of the dashboard carries on. A small **⟳** refresh button on the weather panel forces an immediate re-check."},
+
+    {"h1": "Offline First — What Keeps Working"},
+    {"p": "The single most important idea in this whole system: **losing the internet does not take FieldCommand IMS down.** A red \"Offline\" internet dot only means the handful of features that pull live outside data are paused — weather alerts, radar, and a couple of internet radio feeds. Everything that matters for running an incident keeps working with no change at all:"},
+    {"bullets": [
+      "All ICS forms and the Incident Action Plan (IAP) — the master plan for an operational period",
+      "The T-card resource board and personnel check-in",
+      "Both net loggers (amateur and {{ps_short}})",
+      "The member roster and Quick Response (QR) code check-in",
+      "Callsign lookup, which uses a copy of the national license database stored right on the server",
+      "The offline maps, the reference library, and the print center"
+    ]},
+    {"callout": {"kind": "note", "label": "GRACEFUL, AUTOMATIC RECOVERY",
+      "text": "You never have to do anything to \"go offline\" or \"come back online.\" When internet returns, the paused features light back up on their own within a minute or two. When it drops again, they pause again. The system handles the switch quietly in the background."}},
+
+    {"h1": "Enter Once, Fill Every Form"},
+    {"p": "One design idea runs through the entire ICS side of FieldCommand IMS and is worth understanding up front: **you enter shared incident facts one time, and they flow into every form automatically.** The dashboard's **📋 General Info** card (in ICS mode) opens the page where this happens."},
+    {"p": "On the **General Information** page you type the incident's name, number, and type; the operational period dates; the incident commander and section chiefs; the key unit leaders; and current weather. A single **💾 Save & Propagate to All Forms** button pushes those values into all of the ICS forms for that incident at once. Change a name here, and every form that uses it updates immediately — you never retype the incident commander's name onto twenty separate forms. The page even fetches current conditions from the National Weather Service and calculates sunrise and sunset from the incident's coordinates when you click **Fetch NWS**."},
+    {"callout": {"kind": "tip", "label": "YOU CAN EXPLORE BEFORE YOU COMMIT",
+      "text": "A fresh FieldCommand system is fully working the moment it powers on. Nothing is locked behind setup — you can open the dashboard, tap through the tools, and practice freely before you ever configure the system for your group. This is the ideal way to get comfortable before a real activation."}},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__The dashboard won't load at all.__ Your device is probably on the wrong Wi-Fi. Connect to **EMCOMM-NET** and type the full address including `http://` — for example `http://192.168.50.1`. Chapter 2 covers connecting step by step.",
+      "__The weather panel just says \"Waiting for internet connection.\"__ That is expected when the server is offline. Weather and radar need the internet; the rest of the dashboard works without it. Watch the sidebar **Internet** dot — when it turns green, the weather panel fills in on its own.",
+      "__The 📻 Amateur Radio button is dimmed and won't respond.__ That happens when no station callsign is configured, and it is by design — the ham features need a licensed operator. Use the other modes normally, or add a callsign in Setup (Chapter 3) to enable it.",
+      "__A yellow \"not configured\" banner is at the top.__ The system has not been through Setup yet. Everything still works; the banner is a reminder. Run the setup wizard (Chapter 3) when you are ready, and the banner goes away.",
+      "__I tapped a card and got a blank or broken page.__ That card points to an optional or separate service that isn't set up on this system, or a needed piece of hardware isn't attached. Tap your browser's Back button to return to the dashboard; the rest of the system is unaffected.",
+      "__The sidebar numbers or service dots aren't updating.__ The health readout polls the server every few seconds. If it stalls, the server may be busy starting up (give it a minute after power-on) or your connection to EMCOMM-NET may have dropped — reconnect and reload the page."
+    ]}
+  ]
+}

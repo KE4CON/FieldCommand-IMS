@@ -1,0 +1,238 @@
+{
+  "order": 19,
+  "title": "The Install and Boot Chain — how a Pi becomes a FieldCommand server",
+  "subtitle": "Two scripts turn a freshly-flashed Raspberry Pi into a running FieldCommand server. Phase 1, fieldcommand-setup.sh, builds a boot-from-RAID-1 mirror across two SSDs and copies the operating system onto it. Phase 2, install.sh, runs once on the first boot from that mirror and stands up everything else — packages, code, the HTTPS certificate, nginx, the firewall, the background services, and the stable device names.",
+  "in_this_chapter": [
+    "The two phases, and why the install is split in two",
+    "How Phase 1 builds the RAID-1 mirror and hands off to Phase 2",
+    "How a systemd 'first-boot' service runs the installer exactly once",
+    "What install.sh actually installs, in order",
+    "Why the TLS certificate must exist before nginx is tested",
+    "How the firewall keeps the core APIs off the wire",
+    "Why systemd runs the services and udev names the devices",
+    "Design takeaways and the maintainer's rule"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "IN ONE SENTENCE",
+      "text": "`fieldcommand-setup.sh` mirrors two SSDs and copies the operating system onto them, then a one-shot systemd service on the first boot runs `install.sh`, which installs the packages, deploys the code, makes the HTTPS certificate, configures nginx and the firewall, and registers the background services and stable device names — so an operator runs one command and walks away."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "A FieldCommand server does not arrive as a finished appliance. It starts life as a plain Raspberry Pi 5 with Raspberry Pi Operating System (OS) flashed to a microSD card. Turning that into a hardened, self-healing incident server — one that boots even if a disk dies, serves the dashboard over Hypertext Transfer Protocol Secure (HTTPS), and brings up a dozen background services on their own — is the job of the **install and boot chain**. It is two shell scripts that hand off to each other, plus a small set of systemd unit files and udev rules they lay down along the way."},
+    {"p": "The whole point is that a volunteer with no Linux background runs **one** command and answers a few questions once. Everything after that is hands-off: the Pi reboots itself as many times as it needs to, resumes where it left off, and finishes by presenting a working dashboard. This chapter follows that chain from the first command to the last service starting, and explains why each piece is where it is."},
+    {"callout": {"kind": "note", "label": "JARGON, IN PLAIN WORDS",
+      "text": "**RAID 1** (Redundant Array of Independent Disks, level 1) means two disks holding identical copies of the same data — a mirror — so the server keeps running if one disk fails. **systemd** is the program Linux uses to start and supervise background services and to run things at boot. **udev** is the part of Linux that reacts when hardware is plugged in — it can, for example, give a device a fixed name. **nginx** is the web server that faces the browser. **TLS** (Transport Layer Security) is the encryption behind the padlock in HTTPS."}},
+
+    {"h1": "Why Two Phases — the 'Why' Behind the Split"},
+    {"p": "The install is deliberately cut into two scripts because the two halves do fundamentally different kinds of work, and the machine is a different machine between them. **Phase 1** (`fieldcommand-setup.sh`) is disk surgery: it erases two Solid-State Drives (SSDs), builds a mirror across them, and copies the running OS onto that mirror. It has to run from the microSD card, because you cannot rebuild the disk you are booted from. **Phase 2** (`install.sh`) is ordinary software setup: install packages, copy code, write config. It has to run from the finished mirror, because that is where FieldCommand will actually live."},
+    {"p": "So the split is not stylistic — it follows the hardware. Phase 1 ends by rebooting the Pi off the SD card and onto the new SSD mirror; Phase 2 begins on that first boot. The scripts themselves say so up front. Phase 1's header lays out the entire arc:"},
+    {"code": [
+      "#   From there it is hands-off. It will:",
+      "#     1. Make sure the Pi can see BOTH NVMe SSDs behind the Pironman PCIe switch",
+      "#     2. Build a true boot-from-RAID-1 mirror across the two SSDs and copy the",
+      "#        running OS onto it  (the corrected \"Step 1B\" from the Install Guide).",
+      "#     3. Reboot into the SSD mirror and, on that first boot, automatically run",
+      "#        the FieldCommand installer (install.sh) with your answers.",
+      "#     4. Finish and tell you to run the one test only you can do by hand:",
+      "#        the pull-a-drive failover test."
+    ]},
+    {"p": "Notice step 3: Phase 1's real deliverable is not just a mirror — it is a mirror that will **run Phase 2 by itself**. The bridge between them is a config file plus a systemd service, and getting that handoff right is the heart of the chain."},
+
+    {"h1": "How It Works — Phase 1 Builds the Mirror"},
+    {"p": "Phase 1 gathers the operator's answers once (callsign, coordinates, Wi-Fi name, server address, and so on), then partitions and mirrors the two drives. The mirror-building is mechanical and careful: identical partition tables on both SSDs, a RAID-1 array across the large partitions, an ext4 filesystem on the array, and then a full copy of the live OS onto it with `rsync`:"},
+    {"code": [
+      "info \"Creating the RAID 1 root array across ${A2} + ${B2}\"",
+      "run bash -c \"yes | mdadm --create --verbose /dev/md0 --level=1 --raid-devices=2 --metadata=1.2 '$A2' '$B2'\"",
+      "",
+      "info \"Formatting: ext4 on the array, FAT32 on each boot partition\"",
+      "run mkfs.ext4 -F -L fc-root /dev/md0",
+      "",
+      "info \"Mounting the array and copying the running OS onto it (this takes a while)\"",
+      "run rsync -aHAXx --info=progress2 \\",
+      "    --exclude='/mnt/*' --exclude='/media/*' --exclude='/lost+found' \\",
+      "    / /mnt/root/"
+    ]},
+    {"p": "After the copy, Phase 1 points the copied OS at the array — it rewrites `cmdline.txt` to `root=/dev/md0`, writes an `/etc/fstab` for the array, records the array in `mdadm.conf` so it assembles at boot, and rebuilds the initial RAM filesystem inside the copy (via `chroot`) so the kernel can even find the mirror early in boot. All of that is so the Pi can boot from the mirror instead of the card. It then sets the Pi 5 bootloader to try the SSDs first but keep the SD card as a fallback, using a comment that documents the magic number so the next maintainer is not left guessing:"},
+    {"code": [
+      "set_boot_order_nvme() {",
+      "    # BOOT_ORDER nibbles read right-to-left: 6=NVMe, 1=SD, 4=USB-MSD, f=retry.",
+      "    # 0xf416 = try NVMe, then SD, then USB, then loop — SD stays as a safety net."
+    ]},
+    {"callout": {"kind": "note", "label": "WHY THE SD CARD STAYS BOOTABLE",
+      "text": "The boot order keeps the microSD card as a fallback on purpose. If a mirror build goes wrong or a drive later fails to assemble, pulling power and booting the card gets the operator back to a known-good starting point in the field, with no laptop and no re-imaging. A field appliance should never have a single click that bricks it."}},
+
+    {"h1": "How It Works — the Handoff to Phase 2"},
+    {"p": "Before it reboots, Phase 1 does three things that together arrange for Phase 2 to run itself. First, it stages a copy of the whole repository onto the array so the installer source travels with the OS. Second, it writes the operator's saved answers next to it as a config file. Third, it installs a **one-shot systemd service** into the array that will run the installer on the first boot:"},
+    {"code": [
+      "info \"Staging the FieldCommand installer on the array ($ARRAY_SRC)\"",
+      "run mkdir -p \"/mnt/root$ARRAY_SRC\"",
+      "run rsync -a --exclude='.git' \"$REPO_ROOT/\" \"/mnt/root$ARRAY_SRC/\"",
+      "write_config_file \"/mnt/root$ARRAY_SRC/fieldcommand.conf\"",
+      "install_firstboot_service   # writes into /mnt/root"
+    ]},
+    {"p": "The service it writes is the single most important piece of the handoff, and it is worth reading in full because every line earns its place. It is a `oneshot` service that runs the installer with the saved answers, and it is engineered so it can **never** turn into a boot loop:"},
+    {"code": [
+      "[Unit]",
+      "Description=FieldCommand first-boot installer (runs once from the SSD mirror)",
+      "After=network-online.target multi-user.target",
+      "Wants=network-online.target",
+      "ConditionPathExists=$ARRAY_SRC/scripts/install.sh",
+      "ConditionPathExists=!$ARRAY_SRC/.firstboot-done",
+      "",
+      "[Service]",
+      "Type=oneshot",
+      "# Disable ourselves first so a failure can never boot-loop.",
+      "ExecStartPre=/bin/systemctl disable fc-firstboot.service",
+      "ExecStart=/usr/bin/env bash $ARRAY_SRC/scripts/install.sh --config $ARRAY_SRC/fieldcommand.conf",
+      "ExecStartPost=/usr/bin/touch $ARRAY_SRC/.firstboot-done",
+      "StandardOutput=journal+console",
+      "StandardError=journal+console",
+      "TimeoutStartSec=0",
+      "",
+      "[Install]",
+      "WantedBy=multi-user.target"
+    ]},
+    {"p": "There are three independent safety belts here, and understanding them is understanding the whole design:"},
+    {"table": {
+      "headers": ["Line", "What it guarantees"],
+      "rows": [
+        ["`After=network-online.target` + `Wants=network-online.target`", "The installer waits until the network is actually up, because it downloads packages, map tiles, and the Federal Communications Commission (FCC) database. Starting it earlier would fail on the very first thing it tries."],
+        ["`ConditionPathExists=!$ARRAY_SRC/.firstboot-done`", "The service skips itself entirely if the 'done' marker exists. Combined with the `ExecStartPost` that creates that marker on success, the installer runs at most once."],
+        ["`ExecStartPre=/bin/systemctl disable fc-firstboot.service`", "It removes its own boot hook *before* doing any work. So even if the installer crashes halfway, the next boot will not run it again — the belt-and-suspenders partner to the `.firstboot-done` marker."],
+        ["`TimeoutStartSec=0`", "No timeout. A full install (packages, a ~600 megabyte FCC database, gigabytes of offline content) can legitimately take an hour or more; systemd must not kill it partway."]
+      ],
+      "widths": [3.0, 3.5]
+    }},
+    {"callout": {"kind": "warning", "label": "WHY THE INSTALLER DISABLES ITSELF FIRST",
+      "text": "`ExecStartPre` runs `systemctl disable` on the service *before* `ExecStart` runs the installer. This ordering is intentional and load-bearing: a first-boot installer that fails partway must not re-trigger on the next boot, or a single bad download could trap the Pi in an endless reboot-and-retry cycle in the field. If you ever edit this unit, keep the disable in `ExecStartPre` — never move it to `ExecStartPost`, where a crash would skip it."}},
+    {"p": "One more detail shows how carefully the two phases are kept apart. Phase 1 can also be launched from a desktop auto-start icon; that launcher must **not** survive onto the mirror, or the migrated system would try to re-run Phase 1. So Phase 1 deletes it from the copy before unmounting:"},
+    {"code": [
+      "# The migrated system boots from the mirror and finishes via the first-boot",
+      "# installer service — it must NOT also carry the desktop auto-start launcher,",
+      "# or the setup would try to re-run there. Remove it from the array copy.",
+      "run rm -f /mnt/root/etc/xdg/autostart/fieldcommand-setup.desktop"
+    ]},
+
+    {"h1": "How It Works — What install.sh Does, in Order"},
+    {"p": "When the mirror boots for the first time, the `fc-firstboot` service launches `install.sh --config …`. Because a config file was passed, the installer runs fully unattended — the same `ask` helper that would prompt a human simply takes the saved default instead. From here the installer works top to bottom, and the order matters. It installs system packages, creates the `fieldcommand` service account, builds a Python virtual environment, copies the Python services and the web frontend into `/opt/fieldcommand`, and patches the operator's coordinates and callsign into the Hypertext Markup Language (HTML). Then it reaches the three steps that stand up the network face of the server, and their sequence is the part most worth understanding."},
+
+    {"h2": "1. The firewall — the core APIs are never on the wire"},
+    {"p": "The installer configures the Uncomplicated Firewall (ufw) to open only what belongs on the local network: Secure Shell (SSH) on 22, and the web ports 80 and 443. The four core Application Programming Interface (API) services are pointedly **left closed**, because they are only ever reached through nginx over HTTPS:"},
+    {"code": [
+      "ufw allow 80/tcp    comment \"nginx HTTP (redirects to HTTPS)\" 2>>\"$FC_LOG\" || true",
+      "ufw allow 443/tcp   comment \"nginx HTTPS\" 2>>\"$FC_LOG\" || true",
+      "# Core API services (5050 FCC, 5051 Health, 5055 ICS, 5056 Refs) are bound to",
+      "# 127.0.0.1 and reached ONLY through nginx (/svc/<port>) over HTTPS. They are",
+      "# deliberately NOT opened on the LAN, so operator PII is never on the wire in",
+      "# cleartext. (Do not re-add ufw allow rules for 5050/5051/5055/5056.)"
+    ]},
+    {"callout": {"kind": "important", "label": "TWO LOCKS, NOT ONE",
+      "text": "The core services are protected two ways at once: each binds only to `127.0.0.1` (so the operating system will not carry its traffic off the box), and the firewall never opens its port anyway. Either alone would do the job; both together mean a single mistake — a service accidentally binding to all interfaces, or a stray `ufw allow` — cannot by itself expose operator Personally Identifiable Information (PII) in cleartext. Do not 'simplify' by removing one."}},
+
+    {"h2": "2. The TLS certificate — it must exist before nginx is tested"},
+    {"p": "This is the ordering rule the chapter title hints at. nginx is configured to serve HTTPS, and its config points at `/etc/fieldcommand/tls/server.crt` and `server.key`. If those files are missing, `nginx -t` (the configuration test) fails and nginx will not start. So the installer generates the certificate **first**, by calling `fc-gen-cert.sh`, and only then configures and tests nginx. The installer's own comment states the requirement outright:"},
+    {"code": [
+      "step \"Generating TLS certificate (HTTPS)\"",
+      "# nginx serves the dashboard over HTTPS. On this closed LAN (no public domain) we",
+      "# create our own certificate: a private local Certificate Authority by default",
+      "# (install its root on devices once for a warning-free padlock), or a single",
+      "# self-signed cert if TLS_SELF_SIGNED=1. Must exist before 'nginx -t' below.",
+      "command -v openssl >/dev/null 2>&1 || apt-get install -y openssl 2>>\"$FC_LOG\" || true",
+      "CERT_ARGS=\"--ip ${SERVER_IP:-192.168.50.1}\"",
+      "[[ \"${TLS_SELF_SIGNED:-0}\" == \"1\" ]] && CERT_ARGS=\"$CERT_ARGS --self-signed\"",
+      "if bash \"$SCRIPT_DIR/fc-gen-cert.sh\" $CERT_ARGS 2>>\"$FC_LOG\"; then"
+    ]},
+    {"p": "Because there is no public domain name on a closed emergency-communications network, no public Certificate Authority (CA) can issue a certificate. `fc-gen-cert.sh` solves that by being its own certificate authority. By default it creates a private local root CA and signs a server certificate with it; operators install the root once on their devices for a clean padlock. The key trick that makes the certificate valid for `https://192.168.50.1` is putting the server's Internet Protocol (IP) address into the certificate's Subject Alternative Name (SAN):"},
+    {"code": [
+      "SAN=\"subjectAltName=IP:${IP},IP:127.0.0.1,DNS:${HOST},DNS:localhost\"",
+      "",
+      "echo \"==> Generating the server certificate signed by the local CA…\"",
+      "openssl req -newkey rsa:2048 -nodes \\",
+      "    -keyout \"$SRV_KEY\" -out \"$TLS_DIR/server.csr\" \\",
+      "    -subj \"/O=FieldCommand IMS/CN=${HOST}\""
+    ]},
+    {"p": "The generator is also idempotent and long-lived: it refuses to overwrite an existing certificate unless `--force` is passed (regenerating would invalidate the trust operators already installed), and it uses `DAYS=3650` — about ten years — so a field unit never silently expires between deployments. Both choices come straight from the file:"},
+    {"code": [
+      "DAYS=3650   # ~10 years, so field units never silently expire",
+      "",
+      "if [[ -f \"$SRV_CRT\" && -f \"$SRV_KEY\" && \"$FORCE\" != \"1\" ]]; then",
+      "    echo \"Certificate already present at $SRV_CRT — leaving it in place.\"",
+      "    echo \"(Use --force to regenerate; this invalidates any already-installed trust.)\"",
+      "    exit 0",
+      "fi"
+    ]},
+
+    {"h2": "3. nginx — one front door, many services behind it"},
+    {"p": "With the certificate in place, the installer drops in the nginx site file, tests it, and restarts nginx. The test can only pass because the certificate already exists:"},
+    {"code": [
+      "cp \"$SCRIPT_DIR/../udev/nginx-fieldcommand.conf\" /etc/nginx/sites-available/fieldcommand",
+      "ln -sf /etc/nginx/sites-available/fieldcommand /etc/nginx/sites-enabled/fieldcommand",
+      "rm -f /etc/nginx/sites-enabled/default",
+      "nginx -t 2>>\"$FC_LOG\" && success \"nginx config valid\" || warn \"nginx config test failed — check manually\""
+    ]},
+    {"p": "The nginx config is what turns a scatter of localhost-only services into a single tidy HTTPS site. Port 80 does nothing but redirect to 443, and the core services are exposed same-origin under `/svc/<port>/` so the browser never has to talk to a raw port or hit a mixed-content wall. The trailing slash on `proxy_pass` quietly strips the prefix, so each backend sees exactly the path it expects:"},
+    {"code": [
+      "location /svc/5055/ {   # ICS platform",
+      "    proxy_pass         http://127.0.0.1:5055/;",
+      "    proxy_set_header   Host $host;",
+      "    proxy_set_header   X-Real-IP $remote_addr;",
+      "    proxy_read_timeout 30;",
+      "}"
+    ]},
+    {"callout": {"kind": "note", "label": "WHY NO HSTS HERE",
+      "text": "The nginx config deliberately omits the usual Strict-Transport-Security header. On a public site HSTS is good practice, but with a self-signed or local-CA certificate it would forbid the browser's one-time 'trust this certificate' click-through and lock operators out of their own appliance. The config carries a comment saying exactly this, so no one 'hardens' it back in by reflex."}},
+
+    {"h1": "How It Works — systemd Runs the Services, udev Names the Devices"},
+    {"p": "The last stretch of the installer registers the parts that make FieldCommand a real appliance rather than a set of scripts: background services that start at boot and restart on crash, and stable names for hardware that could otherwise land on a different device node each time it is plugged in. These are two different jobs, and Linux already has a purpose-built tool for each — systemd for services, udev for devices. FieldCommand uses both rather than reinventing either."},
+    {"p": "The service units are copied into `/etc/systemd/system/`, then enabled so they come up on every boot. Each Python service is a tiny, uniform unit — run as the unprivileged `fieldcommand` user, restart automatically, log to the journal:"},
+    {"code": [
+      "[Unit]",
+      "Description=FieldCommand ICS Platform Server (Port 5055)",
+      "After=network.target",
+      "",
+      "[Service]",
+      "Type=simple",
+      "User=fieldcommand",
+      "Group=fieldcommand",
+      "WorkingDirectory=/opt/fieldcommand",
+      "ExecStart=/opt/fieldcommand/venv/bin/python /opt/fieldcommand/python/ics_platform_server.py",
+      "Restart=always",
+      "RestartSec=5",
+      "StandardOutput=journal",
+      "StandardError=journal",
+      "SyslogIdentifier=ics-platform",
+      "",
+      "[Install]",
+      "WantedBy=multi-user.target"
+    ]},
+    {"p": "`Restart=always` with `RestartSec=5` is the appliance behavior in one line: if a service dies at 3 a.m. in a shelter, systemd brings it back five seconds later with no human involved. Running as `User=fieldcommand` (a locked-down account created earlier in the installer, `useradd -r -s /bin/false`) means a compromised service cannot act as root. This same shape repeats across every service unit; the installer just enables them in a loop."},
+    {"p": "udev handles the other half. A Universal Serial Bus (USB) device does not have a guaranteed name — the same GPS receiver can appear as `/dev/ttyUSB0` today and `/dev/ttyUSB1` tomorrow depending on plug order. The services need a name they can rely on, so udev rules match a device by its vendor and product identifiers and create a fixed symbolic link. The Terminal Node Controller (TNC) rule is a good example, because it also has to distinguish two devices that share the same chip:"},
+    {"code": [
+      "# Digirig Mobile v1.x uses Silicon Labs CP2102N (same VID:PID as some GPS units)",
+      "# Distinguish by USB product string \"Digirig Mobile\"",
+      "SUBSYSTEM==\"tty\", \\",
+      "    ATTRS{idVendor}==\"10c4\", ATTRS{idProduct}==\"ea60\", \\",
+      "    ATTRS{product}==\"Digirig Mobile\", \\",
+      "    SYMLINK+=\"tnc0 digirig\", \\",
+      "    MODE=\"0666\", \\",
+      "    TAG+=\"systemd\""
+    ]},
+    {"p": "That `SYMLINK+=\"tnc0\"` is why the rest of the system can simply open `/dev/tnc0` and never care which physical port the radio interface is on. The GPS rules do the same for `/dev/gps0` — and, tellingly, the GPS rule for the exact same `10c4:ea60` chip carries the mirror-image test, `ATTRS{product}!=\"Digirig Mobile\"`, so a Digirig is claimed as a TNC and a look-alike GPS as a GPS. The two rule files were written to agree with each other on purpose."},
+    {"p": "The third udev rule is not about a serial name at all — it is an **event trigger**. When a USB drive labeled `FIELDCOMMAND` is inserted, udev starts a systemd backup service, passing the kernel device name through the `%k` template:"},
+    {"code": [
+      "ACTION==\"add\", SUBSYSTEM==\"block\", ENV{ID_FS_LABEL}==\"FIELDCOMMAND\", \\",
+      "    RUN+=\"/bin/systemctl start fieldcommand-backup@%k.service\""
+    ]},
+    {"p": "This is the cleanest illustration of why FieldCommand leans on both tools together instead of one. udev is good at noticing hardware events but must hand off quickly; systemd is good at running a real job with logging and its own lifecycle. So udev only *fires the trigger*, and the templated `fieldcommand-backup@.service` does the actual `rsync` and SQLite backup. Plugging in a labeled thumb drive backs up the whole incident, with no operator action at all — the ultimate lazy-operator feature."},
+
+    {"h1": "Why It Matters / Design Takeaways"},
+    {"bullets": [
+      "__The split follows the hardware.__ Phase 1 must run from the SD card because it rebuilds the disks; Phase 2 must run from the finished mirror because that is where FieldCommand lives. The two-script design is not a style choice — it is the only order the machine allows.",
+      "__The handoff is a one-shot service, hardened against loops.__ Phase 1's real product is a mirror that finishes installing itself. The `fc-firstboot` unit disables itself before it works, marks itself done after, and has no timeout — three independent guards so a bad first boot can never trap a Pi in the field.",
+      "__Order is correctness, not preference.__ The certificate is generated before nginx is tested because `nginx -t` fails without it. Read that ordering as a dependency, not a sequence you can shuffle.",
+      "__Defense in depth on the wire.__ The core APIs bind to localhost *and* the firewall never opens them; either alone would suffice, so one slip cannot expose operator data.",
+      "__Use the tools Linux already has.__ systemd supervises and restarts the services; udev gives hardware stable names and fires the backup trigger. FieldCommand reinvents neither — it composes them."
+    ]},
+    {"callout": {"kind": "important", "label": "MAINTAINER'S RULE",
+      "text": "Preserve the ordering and the guards. If you add a service, add its unit to the `SERVICES` list in `install.sh` and enable it the same way — do not hand-roll a one-off. If you add a device, add a udev rule that matches by vendor/product ID and creates a stable `/dev/*` symlink; never make code depend on `/dev/ttyUSB0`. Never generate or test nginx before the TLS certificate exists, never open a core API port on the firewall, and never move the first-boot service's self-disable out of `ExecStartPre`. When in doubt, run the whole chain end to end on real hardware — including the pull-a-drive failover test — before you trust the change."}}
+  ]
+}

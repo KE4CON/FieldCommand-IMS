@@ -1,0 +1,158 @@
+{
+  "order": 5,
+  "title": "Incident Management — Creating and Managing Incidents",
+  "subtitle": "How to create an incident, work inside it, advance operational periods, and — when it's over — archive the permanent record to a USB drive.",
+  "in_this_chapter": [
+    "What an incident is and why everything you do lives inside one",
+    "The two Incident Management screens (the workspace and the data/archive screen)",
+    "Creating a new incident field by field",
+    "Single Incident Commander vs. Unified Command",
+    "Picking an incident type",
+    "Working inside an incident — the form grid, General Info, and Export IAP",
+    "Advancing operational periods",
+    "Closing an incident",
+    "Scenario/training mode and the Beta Reset",
+    "Archiving to USB, restoring, and deleting",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "Open **Incident Management** from the dashboard and click **+ New Incident**. Give it a **name** and pick a **type** (those two are required), then click **CREATE INCIDENT**. The incident opens and becomes your workspace — click any ICS form button to fill it out, click **⏭ Next Period** to roll to the next shift, and **✕ Close Incident** when it's done. Nothing is ever thrown away by accident: everything you type is saved, and a finished incident can be archived to a USB drive as a permanent record."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "Everything you do in the Incident Command System (ICS) side of FieldCommand happens **inside an incident**. An incident is the container that holds all of one activation's paperwork: its ICS forms, its resource T-cards, its personnel check-ins, its cost tracking, its meetings, and its net-log associations. When you create an incident, you are opening a fresh, empty folder for one event; when you fill out a form or check someone in, that record drops into the folder for that incident and stays there."},
+    {"p": "You can have several incidents in the system at the same time — a real activation, last month's exercise, and a drill you're prepping — and they never mix. Each one keeps its own separate pile of records."},
+    {"callout": {"kind": "important", "label": "INCIDENTS ARE PERMANENT RECORDS",
+      "text": "FieldCommand treats an incident as a legal record of what happened. Everything you enter is **saved automatically** and kept. Closing an incident does not erase it. Even deleting one is a deliberate, guarded action — the normal end-of-incident step is to **archive** the whole package to a USB drive so you have it forever. Assume anything you type into an incident is on the record."}},
+
+    {"h1": "The Two Incident Management Screens"},
+    {"p": "FieldCommand has two screens that both carry the name **Incident Management**. They do different jobs, and it helps to know which is which:"},
+    {"table": {
+      "headers": ["Screen", "What it's for", "How you get there"],
+      "rows": [
+        ["**Incident workspace** (`incident.html`)", "Create incidents, and work inside one — open ICS forms, advance the operational period, close the incident", "The **+ New Incident** / incident links on the dashboard"],
+        ["**Incident data screen** (`incident_mgmt.html`)", "Housekeeping — archive a finished incident to USB, restore one, delete from the Pi, or run the Beta Reset", "The red **DATA** tile / Incident Management (Archive · Restore · Delete) link"]
+      ],
+      "widths": [2.4, 3.2, 2.0]
+    }},
+    {"p": "This chapter walks the workspace first (the everyday screen), then the data screen (the once-per-incident cleanup screen)."},
+
+    {"h1": "Creating an Incident"},
+    {"p": "On the workspace screen, the header shows an **ICS** badge, the words **INCIDENT MANAGEMENT**, and a blue **+ New Incident** button at the right. The page is split in two: a left column listing **Active Incidents** and **Closed Incidents**, and a large right-hand **workspace** area. Before you pick anything, the workspace shows a **NO INCIDENT SELECTED** placeholder with a **+ Create New Incident** button."},
+    {"steps": [
+      "Click **+ New Incident** (top right) or the **+ Create New Incident** button in the empty workspace.",
+      "The **📋 CREATE NEW INCIDENT** box opens. Fill in the fields below — only **Incident Name** and **Incident Type** are required (both marked with a *).",
+      "Click **CREATE INCIDENT**. The box closes, the incident appears in the Active Incidents list, and it opens in the workspace as the incident you're now working in.",
+      "Changed your mind? Click **Cancel** instead — nothing is created."
+    ]},
+    {"screenshot": "The CREATE NEW INCIDENT modal with the name, type dropdown, jurisdiction, and variant fields"},
+    {"table": {
+      "headers": ["Field", "What to type", "Notes"],
+      "rows": [
+        ["**Incident Name** *(required)*", "A plain name for the activation", "May be pre-filled from the **Default Incident Name** you set in Setup (Chapter 3). Example: `{{county_ex}} Winter Storm Response 2026`."],
+        ["**Incident Number**", "Your agency's tracking number, if it assigns one", "Optional — leave blank if you don't use one. Example: `2026-0142`."],
+        ["**Incident Type** *(required)*", "Pick the closest match from the dropdown", "Grouped into seven categories — see the table below."],
+        ["**Jurisdiction**", "The area or authority in charge", "May be pre-filled from your Setup location (e.g. `{{county_ex}}, {{state_ex}}`)."],
+        ["**Incident Location / Address**", "Where the incident is", "A street address or GPS coordinates."],
+        ["**Incident Commander**", "The person in charge", "Start typing to pick a roster member, or type any name or callsign for someone not on the roster. See Unified Command below."],
+        ["**Operational Period Duration**", "How long each shift block runs", "**12 hours (standard)**, or 8, 24, or 6. This just sets the default length; you can advance a period whenever you like."],
+        ["**ICS Form Variant**", "Which flavor of ICS forms to use", "**FEMA**, **USCG**, or **NWCG** pills. Defaults to your Setup choice; changeable per form later."],
+        ["**Initial Situation Summary**", "A few sentences on what's happening", "Optional. Shows on the incident header once created."]
+      ],
+      "widths": [2.3, 2.7, 2.6]
+    }},
+
+    {"h1": "Single Incident Commander vs. Unified Command"},
+    {"p": "ICS runs under one of two command structures, and FieldCommand handles both the same way — the difference is how you fill in the **Incident Commander** field, not a software setting."},
+    {"table": {
+      "headers": ["Structure", "When it's used", "What to type in the IC field"],
+      "rows": [
+        ["**Single Incident Commander (IC)**", "One agency or jurisdiction clearly has authority — the common case for a single-organization activation", "The IC's name or callsign. The ICS-203 organization chart shows one IC at the top."],
+        ["**Unified Command (UC)**", "Two or more agencies share command — multi-agency responses, complex disasters, or incidents crossing boundaries. All agencies still work from one Incident Action Plan (IAP)", "Type `Unified Command` or the UC group name. List each participating agency's commander on the ICS-203 under the Unified Command section."]
+      ],
+      "widths": [2.0, 3.0, 2.5]
+    }},
+    {"callout": {"kind": "note", "label": "UNIFIED COMMAND CHANGES NOTHING UNDER THE HOOD",
+      "text": "Every ICS form, T-card, and cost record works identically whether you run Single IC or Unified Command. UC is a labeling and documentation convention inside the same incident record — there is no separate mode to turn on."}},
+
+    {"h1": "Incident Types"},
+    {"p": "The **Incident Type** dropdown is long — about 32 choices grouped into seven categories. The type only labels the incident throughout the interface (it shows as a small badge next to the incident name). All types use the exact same ICS form set, so if none fits perfectly, pick the nearest one — you are not locking anything out."},
+    {"table": {
+      "headers": ["Category", "Example types"],
+      "rows": [
+        ["Natural Hazards", "Winter Storm, Flooding, Tornado / Severe Weather, Earthquake, Wildfire, Heat Emergency, Drought"],
+        ["Technological", "Hazmat / Chemical Spill, Transportation Accident, Structure Fire, Power Outage / Infrastructure, Dam Failure, Nuclear / Radiological"],
+        ["Human-Caused", "Mass Casualty Incident, Active Threat, Civil Disturbance, Terrorism"],
+        ["Search & Rescue", "Wilderness, Urban, Water, Missing Person — Dementia / Memory, Missing Person — Child"],
+        ["Public Health", "Disease Outbreak / Pandemic, Mass Casualty — Medical, Public Health Emergency"],
+        ["Planned Events", "Planned Event — Public Safety, Planned Event — EMCOMM Exercise, Drill / Training Exercise"],
+        ["Other", "Mutual Aid Request, EOC Activation, Other / All-Hazards"]
+      ],
+      "widths": [1.6, 4.9]
+    }},
+
+    {"h1": "Working Inside an Incident"},
+    {"p": "Click any incident in the left-hand list to open it in the workspace. At the top you get an **incident header** showing the name, the type badge, the location, the jurisdiction, the Incident Commander, and the start time (stamped in Coordinated Universal Time, UTC). If you typed a situation summary, it shows here too. To its right sit three buttons on an active incident: **⏭ Next Period**, **✏ Edit**, and a red **✕ Close Incident**."},
+    {"p": "Below that is the **operational period bar** — a strip showing **OP 1** (the current period number) with two links on the right: a gold **📋 GENERAL INFO** button and a **📄 Export IAP** button."},
+    {"callout": {"kind": "tip", "label": "FILL IN GENERAL INFO FIRST",
+      "text": "The **📋 GENERAL INFO** screen is the one place you type the incident name, dates, commander, and section chiefs — and it auto-fills those values into every ICS form for that period. Do it once at the start of each period and you save yourself re-typing the same header on 20-plus forms. General Info is covered in Chapter 15."}},
+    {"h2": "The ICS Form Grid"},
+    {"p": "The bulk of the workspace is a grid of form buttons, grouped by ICS section with a colored divider for each: **COMMAND**, **OPERATIONS**, **PLANNING**, **LOGISTICS**, **FINANCE / ADMIN**, and **COMMUNICATIONS UNIT**. Each button shows the form number (like **ICS-204**), its name, and which variants it supports. Click one to open and fill it out; forms save automatically. The line above the grid shows the current **Variant** in gold with a **Change →** link if you need a different one for this incident."},
+    {"table": {
+      "headers": ["Section divider", "Forms you'll find there"],
+      "rows": [
+        ["COMMAND", "ICS-201 Incident Briefing, 202 Objectives, 207 Organization Chart, 208 Safety Message/Plan"],
+        ["OPERATIONS", "ICS-204 Assignment List, 211 Check-In List, 219 Resource Status (T-Cards), 210 Resource Status Change"],
+        ["PLANNING", "ICS-203 Organization Assignment, 209 Incident Status Summary, 215 Operational Planning Worksheet, 215A IAP Safety Analysis — plus a **📅 Meeting Scheduler** link (Chapter 6)"],
+        ["LOGISTICS", "ICS-205 Radio Communications Plan, 205A Communications List, 206 Medical Plan, 213RR Resource Request"],
+        ["FINANCE / ADMIN", "ICS-214 Activity Log, 220 Air Operations Summary, 221 Demobilization Check-Out"],
+        ["COMMUNICATIONS UNIT", "ICS-213 General Message, 309 Communications Log"]
+      ],
+      "widths": [1.9, 4.6]
+    }},
+    {"p": "At the very bottom is a **📜 ACTIVITY LOG** feed — a running list of what's been done on this incident, newest at the top, so you can see at a glance who touched what and when."},
+
+    {"h1": "Advancing Operational Periods"},
+    {"p": "ICS breaks work into **operational periods** — usually 12- or 24-hour shift blocks. FieldCommand tracks the current period and uses it as the default for new forms, T-cards, and check-ins. To move to the next one:"},
+    {"steps": [
+      "Click **⏭ Next Period** in the incident header.",
+      "The **⏭ ADVANCE OPERATIONAL PERIOD** box opens. In the **Objectives carried forward** field, list what should continue into the next period (optional).",
+      "Click **Advance Period**. The period counter ticks up (OP 1 becomes OP 2), and the prior period's data is kept and stays viewable."
+    ]},
+
+    {"h1": "Closing an Incident"},
+    {"p": "When the activation is over, click the red **✕ Close Incident** button. FieldCommand asks you to confirm (it warns that closing cannot be undone). Once closed, the incident drops from **Active Incidents** into the **Closed Incidents** list on the left, and its buttons go away — but all its data is still there and fully readable. Closing is about marking the incident finished, not deleting it."},
+
+    {"h1": "The Incident Data Screen — Scenario Mode, Archive, Restore, Delete"},
+    {"p": "The second Incident Management screen (the red **DATA** page) is where you handle a finished incident's long-term fate. Across the top a **USB Backup Drive** status strip tells you whether a backup drive is connected — it must be a drive labelled **FIELDCOMMAND** (all caps). Below that the page lists incidents in three groups: **Active Incidents**, **Archived on Pi SSD — awaiting deletion**, and **Archives on USB Backup Drive**."},
+    {"h2": "Scenario / Training Mode"},
+    {"p": "Any incident can be flagged as a training scenario. On the data screen, each active incident has a **🧪 Mark Scenario** button (it reads **✓ Scenario** once set). Scenario incidents wear a yellow **🧪 SCENARIO** badge everywhere in the interface, so operators always know they're in a drill and not the real thing. You can also tick the scenario box when activating an Event Template (Chapter 6)."},
+    {"h2": "Beta Reset — Wiping Practice Data"},
+    {"callout": {"kind": "warning", "label": "BETA RESET DELETES ALL INCIDENT DATA",
+      "text": "The red **⚠ BETA / SCENARIO RESET** zone wipes **every** incident from the Pi — incidents, ICS forms, FEMA cost entries, check-ins, T-cards, meetings, and resource history. It **preserves** your roster, hospitals, channel library, resource types, repeaters, and net-logger entries, and it does not touch system configuration. It is meant to hand you a clean system after an exercise. To run it you must type **RESET** in the box and click **🗑 Reset All Scenario Data**, then confirm. There is no undo from this screen — **archive any real incident first**."}},
+    {"h2": "Archive, Restore, and Delete"},
+    {"p": "The normal end-of-incident routine is: archive to USB, confirm the backup, then (optionally) delete from the Pi to free space. Each active incident card carries a **💾 Archive to USB Backup Drive** button and a **Delete** button; restore is offered on the USB archive cards."},
+    {"table": {
+      "headers": ["Action", "What it does", "Reversible?"],
+      "rows": [
+        ["**💾 Archive to USB**", "Writes a complete package (all forms, T-cards, check-ins, costs, net-log links) to the FIELDCOMMAND drive. The incident then also appears under **Archived on Pi SSD — awaiting deletion**.", "Yes — restore any time"],
+        ["**↩ Restore to Pi**", "Reads an archive back off the USB drive and re-inserts all its data, returning the incident to active status", "Yes"],
+        ["**Delete from Pi**", "Permanently removes the incident and its data from the Pi. Do this only after confirming the archive is on USB.", "No — permanent"]
+      ],
+      "widths": [1.7, 3.9, 1.4]
+    }},
+    {"callout": {"kind": "note", "label": "ABOUT THE USB BACKUP DRIVE",
+      "text": "The drive must be labelled **FIELDCOMMAND** (all caps) — any drive with that label is recognized automatically and the status strip turns green. If the strip is amber/red, the **Archive to USB** buttons stay disabled until you plug the drive in. A rugged 1 TB USB-C drive is a good choice for field use."}},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__The incident list says \"ICS platform offline\" or won't load.__ The workspace talks to the incident service on the Pi. Confirm you're on the FieldCommand Wi-Fi and can reach the dashboard; if other pages work but this one doesn't, the incident service may still be starting — wait a moment and reload.",
+      "__I clicked CREATE INCIDENT and nothing happened.__ Both **Incident Name** and **Incident Type** are required. If either is blank, FieldCommand pops a reminder and won't create the incident. Fill both in and try again.",
+      "__The incident name or dates aren't showing on my ICS forms.__ Fill in the **📋 GENERAL INFO** screen for that operational period — that's what feeds the header onto every form. See Chapter 15.",
+      "__The 💾 Archive to USB button is grayed out.__ No backup drive is detected. Plug in a USB drive labelled **FIELDCOMMAND** (all caps) and wait for the status strip at the top to turn green, then try again.",
+      "__I closed an incident by mistake.__ Nothing is lost — a closed incident keeps all its data and moves to the **Closed Incidents** list. Re-open it from there to review it. (Re-activating is not done from this screen; restore from a USB archive if you need it fully active again.)",
+      "__I want to clear out practice incidents but keep my roster and channels.__ Use the **Beta Reset** on the data screen. It wipes incident data only and preserves the roster, hospitals, channel library, resource types, repeaters, and net-logger entries. Archive any real incident to USB first.",
+      "__I deleted an incident and need it back.__ If you had archived it to USB, open the data screen and click **↩ Restore to Pi** on its archive card. If it was never archived, a hard delete is permanent."
+    ]}
+  ]
+}

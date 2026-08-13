@@ -1,0 +1,143 @@
+{
+  "order": 3,
+  "title": "Organization Setup & Station Configuration",
+  "subtitle": "The one-time setup screen that teaches FieldCommand who you are — your organization, your callsign, your location, your network, and which features to turn on.",
+  "in_this_chapter": [
+    "Opening the Setup screen and what it's for",
+    "Filling in Callsign & Identity (and why the callsign can be left blank)",
+    "Naming your organization and the agency you serve",
+    "Setting your location (city/county/state, coordinates, grid square)",
+    "System & network settings (Wi-Fi name, Wi-Fi password, server address, time zone)",
+    "Uploading a logo and picking the default ICS form variant",
+    "Turning features on with Active Modules",
+    "Configuring the {{ps_mode}} radio system",
+    "Saving, and what changes once setup is complete",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "Open a browser to the server address and go to **Setup**. Fill in your **callsign** (or leave it blank), your **organization** and the **agency** you serve, your **location**, and your **network** details; pick which **Active Modules** to turn on; then click **Save**. FieldCommand is now configured for {{org}}."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "Before {{org}} can run an incident on FieldCommand, the server needs to know a handful of basic facts: who you are, where you are, what to call your Wi-Fi network, and which features you want turned on. The **Setup** screen collects all of that **once**. Everything you type here is saved on the server and reused everywhere — on the dashboard, on printed ICS forms, on the map, and in the header of every report — so you never have to type it again."},
+    {"p": "Think of Setup as filling out the cover sheet for the whole system. It is normally done one time, by whoever stands the server up, and then left alone. You can come back and change any of it later, but most groups set it and forget it."},
+    {"callout": {"kind": "note", "label": "WHO DOES THIS",
+      "text": "Setup is an administrator task — one person configures the server for the whole team. Everyone else just connects to it (Chapter 2) and starts working; they never see this screen."}},
+
+    {"h1": "Opening the Setup Screen"},
+    {"steps": [
+      "On any device connected to the FieldCommand Wi-Fi, open a web browser.",
+      "Go to the server address — by default **http://192.168.50.1** (type it exactly, including the `http://`).",
+      "The main dashboard opens. Find and click **Setup** (the gear/settings link).",
+      "The **⚙ FieldCommand IMS Setup** page opens — a single long form divided into labeled sections. You fill it top to bottom, then Save at the end."
+    ]},
+    {"screenshot": "The FieldCommand Setup page: the ⚙ FIELDCOMMAND IMS SETUP heading with the sectioned form below"},
+    {"callout": {"kind": "note", "label": "A GREEN BANNER MEANS IT'S ALREADY SET UP",
+      "text": "If setup has been completed before, a green **completed** banner shows at the top. That's fine — you can still change any field and Save again; you are just editing the existing configuration."}},
+
+    {"h1": "Callsign & Identity"},
+    {"p": "The first section, **📡 Callsign & Identity**, tells FieldCommand the amateur-radio identity of the station. It has two fields:"},
+    {"table": {
+      "headers": ["Field", "What to type", "Notes"],
+      "rows": [
+        ["**Club / Station Callsign**", "Your group's club or station callsign — for example **{{club}}** — or **leave it blank**", "This is the whole team's shared callsign. The field shows a faint example and the reminder *“or leave blank”*."],
+        ["**Personal Callsign (Operator/Developer)**", "The callsign of the person setting the station up (example: `KE4CON`)", "Optional; used for attribution."]
+      ],
+      "widths": [2.3, 3.0, 2.2]
+    }},
+    {"callout": {"kind": "important", "label": "LEAVING THE CALLSIGN BLANK IS ALLOWED — ON PURPOSE",
+      "text": "If **no one in your group is a licensed amateur-radio operator**, leave the Club / Station Callsign **blank**. FieldCommand then keeps the whole **Amateur Radio** side of the app grayed out, so you only see the features you can legally use. The ham features (APRS, Winlink, 44Net, JS8Call) legally require a properly licensed operator with privileges on the bands and modes used — so the app will not let you enable any of them without a callsign."}},
+
+    {"h1": "Your Organization & the Agency You Serve"},
+    {"p": "Next, tell FieldCommand who is running the system and, if applicable, who you serve. These names appear on the dashboard header and on every ICS form and report."},
+    {"table": {
+      "headers": ["Field", "What to type", "Example ({{org_the}})"],
+      "rows": [
+        ["**Organization Full Name** *(required)*", "The full name of your group", "{{org}}"],
+        ["**Organization Abbreviation**", "A short form of that name", "{{org_abbr}}"],
+        ["**Associated Agency Name**", "The agency you support during an incident (leave blank if none)", "{{served}}"],
+        ["**Agency Abbreviation**", "A short form of the agency name", "{{agency_abbr}}"]
+      ],
+      "widths": [2.4, 2.9, 2.2]
+    }},
+    {"callout": {"kind": "note", "label": "ONLY THE ORGANIZATION NAME IS REQUIRED",
+      "text": "The starred **Organization Full Name** is the only required field in this section. If your group doesn't formally support a single agency, leave the two Agency fields blank."}},
+
+    {"h1": "Location"},
+    {"p": "The **📍 Location** section places your station on the map and fills in the geographic header on forms. Fill in what you know:"},
+    {"table": {
+      "headers": ["Field", "What to type"],
+      "rows": [
+        ["**City**", "Your city or town (example: `{{city_ex}}`)"],
+        ["**County**", "Your county (example: `{{county_ex}}`)"],
+        ["**State**", "Your state (example: `{{state_ex}}`)"],
+        ["**Contact Email**", "A contact address for the station"],
+        ["**Latitude (decimal)**", "Your latitude in decimal degrees (example: `42.3247`)"],
+        ["**Longitude (decimal)**", "Your longitude in decimal degrees (example: `-88.3822`) — note the minus sign for west"],
+        ["**Grid Square (Maidenhead)**", "Your Maidenhead grid locator (example: `EN52wa`) — a short code hams use for location"]
+      ],
+      "widths": [2.4, 4.1]
+    }},
+    {"callout": {"kind": "tip", "label": "DON'T KNOW YOUR COORDINATES?",
+      "text": "If you leave latitude and longitude blank, the map simply centers on a default until you fill them in. You can look your coordinates up later and come back — nothing else depends on them being perfect on day one."}},
+
+    {"h1": "System & Network"},
+    {"p": "The **🖥️ System & Network** section covers how devices reach the server and a couple of housekeeping defaults."},
+    {"table": {
+      "headers": ["Field", "What to type", "Default"],
+      "rows": [
+        ["**Default Incident Name**", "A name pre-filled when you start a new incident", "e.g. `County EOC Activation`"],
+        ["**Wi-Fi Network Name (SSID)**", "The name of the Wi-Fi network operators join", "`EMCOMM-NET`"],
+        ["**Wi-Fi Password** *(optional)*", "The password for that Wi-Fi network. If you fill it in, it gets printed on the back of member ID cards so people can join without asking. Leave it blank to keep it off the cards.", "*(blank)*"],
+        ["**Server Address**", "The web address of the server", "`http://192.168.50.1`"],
+        ["**Time Zone**", "Your local time zone (so logs and forms stamp the right time)", "your local zone"]
+      ],
+      "widths": [2.4, 3.0, 2.1]
+    }},
+    {"callout": {"kind": "warning", "label": "CHANGE THE WI-FI NAME OR ADDRESS WITH CARE",
+      "text": "The **Wi-Fi Network Name** and **Server Address** are how every operator's device finds the system. If you change them here, you must also change the matching network settings on the server itself, or people won't be able to connect. For most groups, the defaults (`EMCOMM-NET` and `http://192.168.50.1`) are exactly right — leave them alone unless you have a specific reason."}},
+    {"callout": {"kind": "tip", "label": "THE WI-FI PASSWORD FIELD IS JUST FOR PRINTING ON CARDS",
+      "text": "The **Wi-Fi Password** field here is optional and does one simple thing: if you type your network's password into it, that password gets printed on the **back of member ID cards** (Chapter 4), so a member can join the Wi-Fi and reach the dashboard without hunting anyone down to ask. Typing it here does **not** change the actual network password — it only decides whether the cards show it. Leave it blank and the cards simply won't print a password. If your group would rather not have the Wi-Fi password floating around on printed cards, leave it empty."}},
+
+    {"h1": "Organization Logo"},
+    {"p": "Under **🏅 Organization Logo**, you can upload a small image of your group's logo. It appears on the dashboard and on the cover of printed reports. This is optional — skip it and FieldCommand simply shows no logo. To add one, use the file picker to choose an image file from the device you're using."},
+    {"screenshot": "The Organization Logo section with the file picker and a preview of the uploaded logo"},
+
+    {"h1": "Default ICS Form Variant"},
+    {"p": "The **📋 Default ICS Form Variant** setting picks which style of Incident Command System (ICS) forms the app fills out by default. Choose the variant {{served_the}} expects; if you're not sure, leave it on the default — you can change the variant on any individual form later."},
+
+    {"h1": "Active Modules — Turning Features On"},
+    {"p": "The **🔌 Active Modules** section is a set of on/off switches for FieldCommand's optional features. Turn on only what your group uses; anything you leave off is hidden from the dashboard, keeping the screen uncluttered."},
+    {"callout": {"kind": "important", "label": "HAM MODULES NEED A CALLSIGN",
+      "text": "The amateur-radio modules (**APRS**, **Winlink**, **44Net**, **JS8Call**) cannot be switched on unless a Club / Station Callsign is set above. If you left the callsign blank, those switches stay disabled — by design, because those features legally require a licensed operator. Set a callsign first, then come back and enable them."}},
+    {"p": "Switch on the modules you want, leave the rest off, and remember you can revisit this list anytime as your group's capabilities grow."},
+
+    {"h1": "{{ps_mode}} Radio System Configuration"},
+    {"p": "The **🚔 {{ps_mode}} Radio System Configuration** section is where you describe the public-safety radio system your group monitors or operates alongside — for {{org_the}}, that is **{{ps_short}}**. Fill in the system details for your area here so the {{ps_logger}} and related tools know what talkgroups and channels to expect. If your group is amateur-only and does not touch a public-safety system, you can leave this section as-is."},
+    {"screenshot": "The Public Safety Radio System Configuration section"},
+
+    {"h1": "Software Attribution"},
+    {"p": "The final section, **ℹ Software Attribution**, shows the software author and license credit. This is informational and stays the same in every edition — it satisfies the software's license. You don't need to change anything here."},
+
+    {"h1": "Saving, and What Changes Afterward"},
+    {"steps": [
+      "Scroll to the bottom of the Setup page.",
+      "Click **Save** (the save/confirm button).",
+      "You'll see a confirmation, and the green **completed** banner appears at the top."
+    ]},
+    {"p": "Once you Save for the first time, FieldCommand marks itself **set up**. From then on: your organization name and served agency appear in the dashboard header and on forms; the map uses your coordinates; only the **Active Modules** you enabled show on the dashboard; and — if you left the callsign blank — the Amateur Radio features stay grayed out. Every operator who connects now sees a system that's branded and scoped to {{org}}."},
+    {"p": "**Can you use FieldCommand before it's set up? Yes.** A brand-new server is fully working the moment it powers on — every feature is available and nothing is hidden, so you can explore and practice freely before you ever open Setup. Finishing Setup does **not** switch the system on; it simply **tailors** it to your group. It fills in your organization, agency, and location everywhere they appear, and it tidies the dashboard so you only see the features that apply to you."},
+    {"callout": {"kind": "note", "label": "WHAT CHANGES ONCE SETUP IS COMPLETE",
+      "text": "Two things get tidied off the dashboard after your first Save: the **Amateur Radio** features are grayed out if you left the callsign blank (they legally require a licensed operator, so the app won't let an unlicensed group use them), and any **Active Modules** you chose not to turn on are hidden. Neither of these stops the server from running — they only change what shows on screen. Before that first Save, none of this tidying happens, so a fresh server deliberately shows **everything** for you to look around."}},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__The Setup page won't open / the address doesn't load.__ Make sure your device is connected to the FieldCommand Wi-Fi network (default name `EMCOMM-NET`), and that you typed the full address including `http://` — for example `http://192.168.50.1`.",
+      "__Save doesn't work / it says a field is required.__ The **Organization Full Name** is required. Fill it in, then Save again. Every other field can be blank.",
+      "__The Amateur Radio modules (APRS/Winlink/44Net/JS8Call) are grayed out and won't turn on.__ That's expected when the **Club / Station Callsign** is blank. Enter a valid callsign in the Callsign & Identity section, Save, then return to Active Modules and enable them.",
+      "__My organization name isn't showing on the dashboard/forms.__ You may not have Saved. Re-open Setup, confirm the **Organization Full Name** is filled in, and click **Save**; watch for the green completed banner.",
+      "__The map is centered in the wrong place.__ Your **Latitude/Longitude** are blank or incorrect. Enter your decimal coordinates (remember the minus sign on Longitude for west), and Save.",
+      "__Operators can't connect after I changed the Wi-Fi Name or Server Address.__ Those must match the server's actual network settings. If in doubt, set them back to the defaults (`EMCOMM-NET` and `http://192.168.50.1`) and Save."
+    ]}
+  ]
+}

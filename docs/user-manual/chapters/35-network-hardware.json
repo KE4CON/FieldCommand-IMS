@@ -1,0 +1,350 @@
+{
+  "order": 35,
+  "title": "Network Hardware — Routers, Switch, and Coverage Extension",
+  "subtitle": "The Wi-Fi router, wired switch, internet sources, and power that carry FieldCommand across a deployment site — what the recommended parts are, how they connect, and how to extend coverage.",
+  "in_this_chapter": [
+    "How the FieldCommand network fits together",
+    "The recommended router — ASUS RT-BE58 Go",
+    "Extending coverage with AiMesh nodes",
+    "The wired backbone — UniFi Switch Lite 16 PoE",
+    "Internet sources — cellular primary and satellite fallback",
+    "Powering the system in the field",
+    "Troubleshooting",
+    "Running other software on the workstations (LibreOffice, printing, other apps)"
+  ],
+  "blocks": [
+    {
+      "callout": {
+        "kind": "tip",
+        "label": "QUICK VERSION",
+        "text": "FieldCommand runs on its own private Wi-Fi network called **EMCOMM-NET**. An **ASUS RT-BE58 Go** router broadcasts that Wi-Fi; a **UniFi Switch Lite 16 PoE** ties everything together with cables; {{cell_primary}} and {{sat_fallback}} provide the (optional) link to the outside world; and everything runs off a generator or battery. Add more RT-BE58 Go units as **AiMesh nodes** to blanket a bigger site with signal. None of this needs a wall outlet or an internet provider to work."
+      }
+    },
+    {
+      "h1": "What This Is / What It Is For"
+    },
+    {
+      "p": "FieldCommand is a self-contained system: the server, the operator machines, and all the radio gear talk to each other over a small private network that you carry in with you. This chapter describes the recommended network hardware — the router that makes the Wi-Fi, the switch that wires everything together, the two internet sources, and the power that runs it all — and how the pieces connect."
+    },
+    {
+      "p": "The important idea is that this network is **local first**. Operators connect to the FieldCommand Wi-Fi (**EMCOMM-NET**) and reach the server at **http://192.168.50.1** whether or not any internet is present. Cellular and satellite are there to bridge to the outside world when it helps, but the incident-management work never depends on them. Set the network up once, and it comes up the same way every deployment."
+    },
+    {
+      "callout": {
+        "kind": "note",
+        "label": "YOU DON'T HAVE TO BUILD ALL OF IT",
+        "text": "This is the full recommended build. A small activation might use only the router, one operator machine, and a battery — no switch, no satellite, no mesh nodes. Add pieces as your group grows. The parts and prices here come from the FieldCommand Bill of Materials (`docs/hardware/FieldCommand_BOM.pdf`), which lists everything with current pricing."
+      }
+    },
+    {
+      "h1": "How the Network Fits Together"
+    },
+    {
+      "p": "At the center is the **UniFi Switch Lite 16 PoE**, a wired hub that everything plugs into with network cables. The **ASUS RT-BE58 Go** router connects to the switch and broadcasts the EMCOMM-NET Wi-Fi that operators join. The FieldCommand server (a Raspberry Pi at **192.168.50.1**) and the 44Net gateway (a second Pi at **192.168.50.2**) plug into the switch, as do the operator workstations. The two internet sources — {{cell_primary}} and {{sat_fallback}} — feed into the router's two WAN (Wide Area Network) ports. Power comes from a generator or battery through regulated supplies."
+    },
+    {
+      "screenshot": "A simple diagram of the FieldCommand network: internet sources into the router, router and Pis and workstations into the central switch, Wi-Fi radiating to operator devices"
+    },
+    {
+      "table": {
+        "headers": [
+          "Piece",
+          "Role",
+          "Address"
+        ],
+        "rows": [
+          [
+            "**ASUS RT-BE58 Go** (router)",
+            "Makes the EMCOMM-NET Wi-Fi; connects the two internet sources.",
+            "Admin at 192.168.50.254"
+          ],
+          [
+            "**UniFi Switch Lite 16 PoE**",
+            "The wired hub everything plugs into.",
+            "—"
+          ],
+          [
+            "**FieldCommand server** (Pi)",
+            "Runs the incident-management app.",
+            "192.168.50.1"
+          ],
+          [
+            "**44Net gateway** (Pi)",
+            "Handles amateur-radio internet (AMPRNet) routing.",
+            "192.168.50.2"
+          ],
+          [
+            "**{{workstation}}** units",
+            "Operator workstations.",
+            "Assigned automatically"
+          ],
+          [
+            "**{{cell_primary}}**",
+            "Primary internet.",
+            "Router WAN port 1"
+          ],
+          [
+            "**{{sat_fallback}}**",
+            "Backup internet, automatic failover.",
+            "Router WAN port 2"
+          ]
+        ],
+        "widths": [
+          2.3,
+          3.1,
+          1.6
+        ]
+      }
+    },
+    {
+      "h1": "The Recommended Router — ASUS RT-BE58 Go"
+    },
+    {
+      "p": "The **ASUS RT-BE58 Go** is the recommended router for FieldCommand. It's a compact, portable Wi-Fi 7 travel router built for exactly this kind of mobile use: it runs on USB-C power (no dedicated brick and no wall outlet required), it has **two WAN ports** so it can take a cellular and a satellite source at the same time, and it supports **AiMesh** to extend coverage with more of the same unit. It streets for around $119."
+    },
+    {
+      "table": {
+        "headers": [
+          "Spec",
+          "ASUS RT-BE58 Go"
+        ],
+        "rows": [
+          [
+            "**Wi-Fi standard**",
+            "Wi-Fi 7 (802.11be) — works with all older devices too"
+          ],
+          [
+            "**Bands**",
+            "2.4 GHz + 5 GHz dual-band"
+          ],
+          [
+            "**WAN ports**",
+            "2 — one for cellular/primary, one for satellite/secondary"
+          ],
+          [
+            "**Power**",
+            "USB-C — runs from any 65-watt USB-C adapter or battery bank"
+          ],
+          [
+            "**AiMesh**",
+            "Yes — extends EMCOMM-NET with additional RT-BE58 Go units"
+          ],
+          [
+            "**Typical range**",
+            "About 2,500 square feet indoors, more in the open"
+          ]
+        ],
+        "widths": [
+          1.6,
+          4.9
+        ]
+      }
+    },
+    {
+      "callout": {
+        "kind": "note",
+        "label": "WHY TWO WAN PORTS MATTER",
+        "text": "A **WAN port** is where the router's link to the outside world plugs in. Having two lets FieldCommand keep {{cell_primary}} plugged into one and {{sat_fallback}} into the other, and switch over automatically if the primary drops. That redundancy is the whole point in an emergency — if the cell network is congested or down, satellite carries on without anyone touching a cable."
+      }
+    },
+    {
+      "h1": "Extending Coverage with AiMesh"
+    },
+    {
+      "p": "**AiMesh** is ASUS's mesh-networking feature. If one router can't cover your whole site — a large building, multiple floors, or a spread-out field location — you add more RT-BE58 Go units as **AiMesh nodes**. Every node broadcasts the *same* EMCOMM-NET name and password, so operator devices roam from one to the next automatically, without anyone reconnecting or noticing. The recommended build carries one primary router plus two spare units ready to serve as nodes."
+    },
+    {
+      "p": "For best performance, connect each node back to the primary router with a network cable through the UniFi switch (a *wired backhaul*), rather than relying on node-to-node Wi-Fi. To add a node:"
+    },
+    {
+      "steps": [
+        "Connect the AiMesh node to the UniFi switch with an Ethernet cable, and power it on with USB-C.",
+        "Open the primary router's admin interface at **http://192.168.50.254** (or the ASUS Router phone app). The new node appears there.",
+        "Go to **AiMesh** and click **Add AiMesh Node**. The node is detected automatically.",
+        "Click **Connect**. The node joins the mesh and starts broadcasting EMCOMM-NET within about a minute.",
+        "Place nodes so their coverage overlaps by roughly 20–30 percent — that overlap is what lets devices roam smoothly between them."
+      ]
+    },
+    {
+      "screenshot": "The ASUS router admin AiMesh screen showing the primary router and an added node"
+    },
+    {
+      "callout": {
+        "kind": "tip",
+        "label": "SAME NAME, SEAMLESS ROAMING",
+        "text": "Because every node uses the same Wi-Fi name and password, operators join **EMCOMM-NET** once and stay connected as they walk the site. There's nothing for them to switch between — the mesh hands their device off from node to node behind the scenes."
+      }
+    },
+    {
+      "h1": "The Wired Backbone — UniFi Switch Lite 16 PoE"
+    },
+    {
+      "p": "The **UniFi Switch Lite 16 PoE** is the recommended wired hub — the box every cable plugs into. It has 16 gigabit ports, 8 of which supply **PoE** (Power over Ethernet), meaning they send power *and* data down a single cable so devices like antennas, cameras, or access points don't need their own power adapters. Its management interface shows each port's link status, speed, and power draw, which is a real help when you're tracking down why something won't connect in the field."
+    },
+    {
+      "table": {
+        "headers": [
+          "Ports",
+          "Recommended use"
+        ],
+        "rows": [
+          [
+            "**1–2**",
+            "FieldCommand server (Pi at 192.168.50.1) and 44Net gateway (Pi at 192.168.50.2)"
+          ],
+          [
+            "**3–4**",
+            "ASUS RT-BE58 Go primary router and AiMesh node uplinks"
+          ],
+          [
+            "**5–8** (PoE)",
+            "Cellular antenna, satellite PoE injector, and any PoE cameras"
+          ],
+          [
+            "**9–16**",
+            "Operator workstations ({{workstation}} units, a Windows laptop, tablets)"
+          ]
+        ],
+        "widths": [
+          1.4,
+          5.1
+        ]
+      }
+    },
+    {
+      "callout": {
+        "kind": "note",
+        "label": "WHAT 'PoE' BUYS YOU",
+        "text": "**Power over Ethernet** means one cable does two jobs — it carries the network and the power. For gear mounted up high or out at the edge of a site (a cellular antenna on a mast, a camera on a pole), that's one cable to run instead of two, and no need for an outlet wherever the device sits. Reserve the 8 PoE ports for those powered devices; use the plain ports for everything else."
+      }
+    },
+    {
+      "h1": "Internet Sources — Cellular and Satellite"
+    },
+    {
+      "p": "FieldCommand's link to the outside world uses two sources, plugged into the router's two WAN ports:"
+    },
+    {
+      "bullets": [
+        "**{{cell_primary}}** — the primary link, plugged into WAN port 1. A cellular modem/antenna pulls internet from mobile networks. Fast and easy where there's coverage.",
+        "**{{sat_fallback}}** — the backup link, plugged into WAN port 2. A satellite dish provides internet where there's no cell service at all, and takes over automatically if the primary drops."
+      ]
+    },
+    {
+      "p": "Because both feed the router at once, the system fails over on its own — no one has to reconnect anything if the cellular link degrades. And remember: **the incident-management work does not need either one.** Operators reach the server and do their jobs on the local network regardless; internet only adds outside connectivity (Winlink over the internet, weather feeds, remote coordination) when it's available."
+    },
+    {
+      "callout": {
+        "kind": "important",
+        "label": "THE APP WORKS WITH NO INTERNET AT ALL",
+        "text": "It's worth stating plainly: FieldCommand is offline-first. If both {{cell_primary}} and {{sat_fallback}} are unavailable, everything on the server still runs — the dashboard, forms, logs, maps, and radio tools all work over EMCOMM-NET. The internet sources are a convenience layer, never a requirement."
+      }
+    },
+    {
+      "h1": "Powering the System in the Field"
+    },
+    {
+      "p": "With no wall power available, the whole system runs off a generator or a battery. The Raspberry Pis and radios are fed through **Astron RS-35M-AP** regulated linear power supplies — the recommended build uses two, one per Pi cluster — driven from a portable generator, or from a high-capacity LiFePO4 (lithium iron phosphate) battery with a pure-sine inverter."
+    },
+    {
+      "table": {
+        "headers": [
+          "Question",
+          "Answer"
+        ],
+        "rows": [
+          [
+            "How much power does it draw?",
+            "The complete system pulls roughly 80–120 watts under typical load."
+          ],
+          [
+            "How long on a battery?",
+            "A 100 amp-hour 12-volt LiFePO4 battery gives about 8–10 hours of runtime."
+          ],
+          [
+            "What powers the router?",
+            "The ASUS RT-BE58 Go runs on USB-C — any 65-watt USB-C adapter or battery bank works."
+          ],
+          [
+            "What powers the field radios?",
+            "The Astron RS-35M-AP supplies provide clean, regulated 13.8 volts for the station gear."
+          ]
+        ],
+        "widths": [
+          2.5,
+          4.0
+        ]
+      }
+    },
+    {
+      "callout": {
+        "kind": "tip",
+        "label": "SIZE POWER FOR THE MISSION",
+        "text": "For a short activation, a single battery and the USB-C-powered router may be all you need. For a long or multi-day operation, plan for a generator (or a battery you can recharge) and budget around the 80–120-watt draw. Because the router sips USB-C power, a laptop power bank can keep the Wi-Fi alive even while you swap the main battery."
+      }
+    },
+    {
+      "h1": "Running Other Software on the Workstations (LibreOffice & More)"
+    },
+    {
+      "p": "The operator workstations (the **{{workstation}}**) are not locked-down appliances — they are **complete Raspberry Pi desktop computers** running Raspberry Pi OS (a full version of Linux). FieldCommand is simply something you open in a **web browser** on them; it does not take the computer over. So you can run other everyday programs right alongside it."
+    },
+    {
+      "h2": "An office suite (LibreOffice)"
+    },
+    {
+      "p": "The obvious one is an **office suite** for the documents and spreadsheets the app doesn't cover — a press release, a sign-in sheet, a custom worksheet, a flyer. The best fit is **LibreOffice** (Writer for documents, Calc for spreadsheets, Impress for slideshows, Draw for diagrams):"
+    },
+    {
+      "bullets": [
+        "It is **free and open-source**, and runs **entirely offline** — no internet needed to use it, which matches FieldCommand's offline-first design.",
+        "It is **usually already installed** — the Raspberry Pi OS “with desktop” image ships LibreOffice by default. If a workstation doesn't have it, install it once (while you have internet) with one command: `sudo apt install libreoffice`.",
+        "It **opens and saves Microsoft formats** (`.docx`, `.xlsx`, `.pptx`), so you can trade files with an agency that uses Microsoft Office.",
+        "The **{{workstation}}** has plenty of memory and speed to run it smoothly."
+      ]
+    },
+    {
+      "h2": "It uses the same printer"
+    },
+    {
+      "p": "Anything you print from LibreOffice goes through the **same Linux print system** that FieldCommand's own **Print Center** uses — **CUPS (the Common Unix Printing System)**. Set a printer up once on the workstation (Raspberry Pi OS **Print Settings**, or the CUPS page at `http://localhost:631`), or point it at a shared network printer on EMCOMM-NET, and **both** LibreOffice and the app can print to it. There is no separate print setup for each program."
+    },
+    {
+      "h2": "Keep your work in the incident record"
+    },
+    {
+      "callout": {
+        "kind": "tip",
+        "label": "ATTACH IT TO THE INCIDENT",
+        "text": "A document you create in LibreOffice lives only on that one workstation until you do something with it. Because FieldCommand **saves and archives everything attached to an incident**, the durable move is to **attach your LibreOffice file to the active incident** — then it is backed up and archived with the rest of the incident record, not stranded on one machine."
+      }
+    },
+    {
+      "h2": "Other programs, too"
+    },
+    {
+      "p": "The same is true for any Linux software — a **Portable Document Format (PDF) viewer**, an image editor like **GIMP**, an email client, mapping tools. Install them from Raspberry Pi OS's software (the **Add/Remove Software** tool, or `sudo apt install …`). Do it on the **workstations**, not the always-on server, and — because the field is offline-first — **install anything you'll need before deployment, while you still have internet** (or bake it into the SD card image)."
+    },
+    {
+      "callout": {
+        "kind": "important",
+        "label": "INSTALL ON THE WORKSTATIONS, NOT THE SERVER",
+        "text": "Add extra desktop software to the operator **{{workstation}}** computers. Leave the always-on FieldCommand **server** lean — it is an appliance running the services, so keep it uncluttered and reliable rather than loading it with desktop apps."
+      }
+    },
+    {
+      "h1": "Troubleshooting"
+    },
+    {
+      "bullets": [
+        "__Operators can't see the EMCOMM-NET Wi-Fi.__ Confirm the ASUS RT-BE58 Go router is powered (USB-C connected) and its link cable to the switch is seated. Watch the switch's port light for that cable, or check the port in the UniFi interface.",
+        "__A far corner of the site has weak or no signal.__ Add an RT-BE58 Go as an **AiMesh node** (see *Extending Coverage*), cabled back through the switch, and place it so its coverage overlaps the primary by 20–30 percent.",
+        "__A new AiMesh node won't join.__ Make sure it's cabled to the switch and powered, then open the router admin at **http://192.168.50.254**, go to **AiMesh**, and click **Add AiMesh Node**. Give it about a minute after **Connect** to start broadcasting.",
+        "__A PoE device (antenna/camera) has no power.__ It must be on one of the switch's **8 PoE ports (5–8)**, not a plain port. Move its cable to a PoE port and check the port's power draw in the UniFi interface.",
+        "__The internet dropped mid-activation.__ With both WAN sources plugged in, the router should fail over on its own. Verify {{cell_primary}} is in WAN port 1 and {{sat_fallback}} in WAN port 2. Either way, the local app keeps working — the outage only affects outside connectivity.",
+        "__The system won't power up in the field.__ Check the battery charge or generator output and that the Astron supplies are on and set to the right voltage. Remember the full system needs roughly 80–120 watts; an undersized battery or bank may not carry it.",
+        "__A workstation is plugged in but can't reach 192.168.50.1.__ Reseat its cable at the switch and confirm the port shows a link. If the port is dark, try a different port (9–16) or a known-good cable."
+      ]
+    }
+  ]
+}

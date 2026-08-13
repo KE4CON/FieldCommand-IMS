@@ -1,0 +1,101 @@
+{
+  "order": 12,
+  "title": "Internet / WAN — Connecting Upstream (Optional)",
+  "subtitle": "FieldCommand is offline-first — it runs completely without the internet. This chapter shows how to add an optional upstream internet connection, and how automatic failover keeps you online if one source drops.",
+  "in_this_chapter": [
+    "Why internet is optional — and what it adds when you have it",
+    "Understanding \"WAN\", preferred, and fallback",
+    "The two internet sources for {{org_the}}",
+    "Where the internet plugs into the network (the router)",
+    "Setting the sources in the WAN Settings screen",
+    "How automatic failover works",
+    "How to tell whether internet is up",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "You do **not** need the internet — FieldCommand works fully offline. If you want the online extras (weather alerts, live position data, propagation), plug your internet source into the **router's WAN port** and set it as the **preferred** source in the **WAN Settings** screen. Add a second source as the **fallback** and the router switches to it automatically if the first goes down. {{org_the}} uses {{cell_primary}} first, and {{sat_fallback}} if that primary source drops."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "FieldCommand is built **offline-first**. Everything that matters during an incident — the dashboard, net logging, Incident Command System (ICS) forms, maps, the roster, resource tracking, the reference library — lives on the server itself and runs with **no internet connection at all**. That is a deliberate design choice: when a disaster takes the internet down, your incident tools must not go down with it. So the first thing to understand about this chapter is that everything in it is **optional**."},
+    {"p": "A **Wide Area Network (WAN)** connection — plain-language: a link out to the internet — only adds a few *live extras* on top of the system you already have. Nothing you rely on depends on it. If you never connect the internet, you lose none of the core function; you simply don't see the handful of features that pull in live outside data."},
+    {"callout": {"kind": "note", "label": "WHAT INTERNET ADDS — AND WHAT IT DOESN'T",
+      "text": "**Adds (live extras only):** National Weather Service (NWS) weather alerts for your area, **APRS-IS** (the internet side of the Automatic Packet Reporting System, showing live station positions from the wider network), and **HF propagation** data (which radio bands are working right now). **Doesn't affect anything else:** net logging, ICS forms, maps, roster, resource tracking, and printing all work exactly the same with or without internet. When the internet is unavailable, those live extras simply pause and everything else keeps running without interruption."}},
+
+    {"h1": "Preferred and Fallback — The Idea"},
+    {"p": "FieldCommand can use up to **two** internet sources, and what matters is the **role** you give each one, not what type it is. A source can be cellular, satellite, a hotspot, or a wired connection — the router treats them the same. You assign each source one of two roles:"},
+    {"table": {
+      "headers": ["Role", "What it means", "In plain words"],
+      "rows": [
+        ["**Preferred**", "The source the router tries **first**. As long as it's working, this is the one carrying your internet traffic.", "Your main internet."],
+        ["**Fallback**", "The backup. The router uses it **only** when the preferred source is down or can't be detected.", "Your spare, used automatically if the main one fails."]
+      ],
+      "widths": [1.5, 3.6, 1.9]
+    }},
+    {"p": "You can enable just one source (main only, no backup) or both (main plus automatic backup). With both configured, you get **automatic failover** — the router notices the preferred source has dropped and moves your traffic to the fallback on its own, without anyone touching a setting."},
+
+    {"h1": "The Two Sources for {{org_the}}"},
+    {"p": "{{org_the}} is set up with two internet sources so it stays online even if one fails:"},
+    {"table": {
+      "headers": ["Source", "Role", "Notes"],
+      "rows": [
+        ["{{cell_primary}}", "**Preferred** — used first", "This is the day-to-day internet path. Cellular is quick to bring up in the field and works almost anywhere there's mobile coverage."],
+        ["{{sat_fallback}}", "**Fallback** — used if the primary drops", "Satellite keeps you online where cellular coverage is weak or overloaded — for example a remote staging area, or a wide-area outage that's saturated the cell network."]
+      ],
+      "widths": [2.4, 1.9, 2.7]
+    }},
+    {"p": "With both in place, {{org_the}} uses {{cell_primary}} first, and if that primary source drops, the router quietly switches to {{sat_fallback}} — the live extras keep flowing and no one has to intervene. If your group only has one of the two, that's fine: set the one you have as the preferred source and leave the second slot empty."},
+
+    {"h1": "Where the Internet Plugs In"},
+    {"p": "All internet connections attach to the **router**, not to the network switch and not to the FieldCommand server. The router is the box that both provides your EMCOMM-NET Wi-Fi and manages the connection out to the internet. It has a dedicated **WAN port** (sometimes labeled **uplink** or **internet**) for exactly this."},
+    {"table": {
+      "headers": ["Source", "Where it connects", "How"],
+      "rows": [
+        ["Cellular modem or antenna", "Router **WAN** (uplink) port", "Run the modem's network cable straight into the router's WAN port. The router pulls an address automatically — set its WAN type to **Automatic IP (DHCP)** if it asks."],
+        ["Satellite link", "Router **USB** WAN port (via a USB-to-Ethernet adapter)", "The satellite equipment's network cable goes through a small USB-to-Ethernet adapter into the router's USB port. Enable the router's **Dual WAN** option so it can fail over between the two."],
+        ["Site wired internet", "Router **WAN** (uplink) port", "Plug the venue's internet cable into the WAN port and set **Automatic IP (DHCP)**. A good, cheap primary when the site has reliable wired internet."],
+        ["Phone hotspot", "Router **USB** port (USB tether) or over Wi-Fi", "A last-resort path — tether a phone by USB cable, or have the router join the phone's hotspot. Handy when nothing else is available."]
+      ],
+      "widths": [1.9, 2.4, 2.7]
+    }},
+    {"callout": {"kind": "important", "label": "THE INTERNET SOURCE IS SEPARATE FROM THE OPERATOR NETWORK",
+      "text": "The WAN (internet) connection plugs into the router's **WAN/uplink** side. Your operator devices, workstations, and the server all live on the **local** side — EMCOMM-NET, addresses in the `192.168.50.x` range. The router keeps the two apart and bridges internet traffic across only when a WAN source is up. This is why unplugging the internet never disturbs the operators: they're on a different side of the router entirely."}},
+
+    {"h1": "Setting the Sources — The WAN Settings Screen"},
+    {"p": "Once the hardware is plugged in, you tell FieldCommand about your sources on its own **WAN / Internet Settings** screen. This is where you name each source, give it the preferred or fallback role, and choose how the system checks whether it's up."},
+    {"steps": [
+      "On any device connected to EMCOMM-NET, open a browser and go to the FieldCommand dashboard at **http://192.168.50.1**.",
+      "Open the **WAN / Internet Settings** screen (the admin area for internet sources).",
+      "You'll see two source cards, **Source A** and **Source B**. In each, tick **Enabled**, type a **Display Name** (for example, the name of your carrier or `Satellite`), pick the **Role** (Preferred or Fallback), and choose the **Type** (cellular, satellite, hotspot, or fixed).",
+      "Set the **Detection Method** — how FieldCommand decides the source is really up. Choose **Internet reachable** for the simplest up/down check, **Ping a gateway IP** to check a specific address that only answers when that path is live, or **Modem admin page responds** to also read carrier and signal details when the modem supports it.",
+      "Click **Save Settings**. Your changes take effect within about **30 seconds** (the next check cycle)."
+    ]},
+    {"callout": {"kind": "tip", "label": "SWAPPING WHICH SOURCE IS PRIMARY",
+      "text": "If you want to flip which source is the main one — say cellular becomes flaky and you'd rather lead with satellite — use the **Swap preferred ↔ fallback roles** button on the WAN Settings screen. It trades the two roles in one click; Save, and the change is live within about 30 seconds. You don't have to unplug or reconfigure anything."}},
+
+    {"h1": "How Automatic Failover Works"},
+    {"p": "When both sources are configured, you don't manage the switch between them — the router does. Here is the plain-language version of what happens:"},
+    {"steps": [
+      "The router uses your **preferred** source ({{cell_primary}}) for all internet traffic while it's healthy.",
+      "It quietly and constantly checks whether that source is still reachable, using the detection method you chose.",
+      "The moment the preferred source stops answering, the router moves your traffic to the **fallback** source ({{sat_fallback}}) — automatically, within seconds.",
+      "When the preferred source comes back, the router returns to it on its own. You end up back on your main internet without lifting a finger."
+    ]},
+    {"callout": {"kind": "note", "label": "FAILOVER ONLY MATTERS FOR THE LIVE EXTRAS",
+      "text": "Remember what's actually riding on the internet: weather alerts, APRS-IS, and propagation data. During the brief moment a failover takes, those extras may blink and refresh — and that's the worst that happens. Your net logging, ICS forms, maps, and every other core tool never notice, because they don't use the internet in the first place."}},
+
+    {"h1": "How to Tell Whether Internet Is Up"},
+    {"p": "FieldCommand shows the internet status right on the dashboard so you always know where you stand. Look for the **WAN status card** (you can turn the card on or off in WAN Settings under **Dashboard Display**). It tells you which source is active — preferred or fallback — and whether it's currently reachable. If the card shows the source is down and no fallback is available, you're running fully offline, which, again, is a perfectly normal state for FieldCommand."},
+    {"p": "You can also just watch the live extras themselves: if NWS weather alerts and APRS-IS positions are updating, you have internet; if they've paused, you don't. Either way the rest of the system carries on exactly the same."},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__I connected a source but there's still no internet.__ Confirm the source cable is in the router's **WAN/uplink** port (or the USB port for a USB-based source), not into the network switch. In the modem's own setup, make sure it actually has service. In WAN Settings, confirm the source is **Enabled** and **Saved**, then wait the ~30-second check cycle. If you chose **Ping a gateway IP**, double-check the address is the one that answers on that path (for example, a Starlink link answers at `192.168.100.1`).",
+      "__Failover isn't switching to the backup.__ Both sources must be **Enabled** in WAN Settings, one set to **Preferred** and the other to **Fallback**, and **Dual WAN** must be turned on in the router's own settings so it's allowed to switch. Also check that each source's **Detection Method** is set to something that truly tests that path — if both are set to \"Internet reachable\" and the router can still see the internet another way, it may not think the preferred source has failed. Using **Ping a gateway IP** on each source makes the up/down decision much more reliable.",
+      "__The live extras (weather, APRS-IS, propagation) aren't appearing.__ Those features only work when the internet is up. First confirm internet is actually connected using the **WAN status card** on the dashboard. If internet is up but a specific extra is still missing, its module may be switched off in the main Setup screen — check that the feature is enabled there. Note that some features (like APRS-IS) may also need a licensed callsign set before they'll turn on.",
+      "__The WAN status card shows the fallback is active when it shouldn't be.__ Your preferred source has dropped and the router did its job — it moved you to the backup. Check the preferred source's hardware (cellular signal, cable seating, modem power). When the preferred source recovers, the router returns to it automatically; you don't need to change anything in FieldCommand.",
+      "__I changed a WAN setting but nothing happened.__ Changes take effect on the next check cycle — give it about **30 seconds** after you click **Save Settings**. If it still hasn't taken, re-open WAN Settings, confirm your change is shown (a save that didn't go through would have reverted), and Save again.",
+      "__I have no internet at all and want to make sure that's OK.__ It is. Leave both source slots disabled if you like. The dashboard, net logs, ICS forms, maps, roster, resource tracking, and printing all run entirely on the local server. Running FieldCommand with no internet is a fully supported, everyday mode — you'll simply not see the live outside-data extras."
+    ]}
+  ]
+}

@@ -1,0 +1,114 @@
+{
+  "order": 2,
+  "title": "Getting Started — Connecting to FieldCommand",
+  "subtitle": "How any phone, tablet, or laptop joins the FieldCommand Wi-Fi and opens the dashboard — no app to install, no login, any operating system.",
+  "in_this_chapter": [
+    "Why there is nothing to install and no account to create",
+    "Step by step: joining the EMCOMM-NET Wi-Fi network",
+    "Opening the dashboard at http://192.168.50.1",
+    "Saving the dashboard as an app-like icon on your home screen",
+    "The padlock and the one-time certificate-trust step (HTTPS)",
+    "The one common trap: your device wandering off to another network",
+    "Connecting laptops, and connecting many people at once",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "On any phone, tablet, or laptop, open **Wi-Fi settings** and join the network named **EMCOMM-NET** (the password is on the equipment label). Then open a web browser and go to **http://192.168.50.1**. The dashboard loads. That's the whole process — no app, no sign-in, works on Apple, Android, Windows, whatever you have."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "Every screen in FieldCommand IMS is just a **web page** served from the Raspberry Pi, exactly like visiting a website — except the \"website\" lives on the little server in the room with you instead of out on the internet. That one fact is what makes getting started so easy: **if your device has a web browser, it can use FieldCommand IMS.** There is no app to download from an app store, no software to install, and no username or password to create for the system itself."},
+    {"p": "This chapter is the shortest path from \"I just walked in\" to \"I'm looking at the dashboard.\" It works the same way for a volunteer's personal phone, a borrowed tablet, an incident laptop, or the operator workstation — every device connects the same two-step way: **join the Wi-Fi, then open the address.**"},
+    {"callout": {"kind": "note", "label": "ANY BROWSER, ANY DEVICE",
+      "text": "Chrome, Safari, Firefox, Edge, and the built-in browser on any modern phone or tablet all work. Apple, Android, Windows, Chromebook, Linux — it does not matter. You do not need the newest device; anything from roughly the last several years is fine."}},
+
+    {"h1": "Step 1 — Join the EMCOMM-NET Wi-Fi"},
+    {"p": "FieldCommand makes its own private Wi-Fi network. You connect to it the same way you connect to Wi-Fi anywhere else."},
+    {"steps": [
+      "If the server was just powered on, give it about **45 seconds** to finish starting. It is ready when a Wi-Fi network named **EMCOMM-NET** shows up in your device's list of available networks.",
+      "Open your device's **Wi-Fi settings** (on a phone this is usually in Settings, or by pulling down the control panel and holding the Wi-Fi icon).",
+      "In the list of networks, tap **EMCOMM-NET**.",
+      "Enter the Wi-Fi password when asked. The password is printed on the **equipment case label** and listed in the Installation Guide. There are no other credentials to enter.",
+      "Wait for your device to show it is connected to EMCOMM-NET."
+    ]},
+    {"screenshot": "A phone's Wi-Fi settings screen with EMCOMM-NET selected and connected"},
+    {"callout": {"kind": "important", "label": "\"NO INTERNET\" ON THIS NETWORK IS NORMAL",
+      "text": "Your phone may warn that EMCOMM-NET has **no internet access**, or show a small exclamation mark on the Wi-Fi icon. That is completely expected — FieldCommand is a private network for reaching the server, not a path to the internet. If your device offers to **stay connected** to a network with no internet, choose to stay connected. This is the single most common source of confusion, and it is not a problem."}},
+
+    {"h1": "Step 2 — Open the Dashboard"},
+    {"p": "Once you are on EMCOMM-NET, you reach FieldCommand the same way you reach any web page: by typing its address into a browser."},
+    {"steps": [
+      "Open any web browser on the device.",
+      "In the address bar at the top, type **http://192.168.50.1** exactly, including the `http://` part, and go to it.",
+      "The **FieldCommand Station Dashboard** loads. You are in — that is everything.",
+      "If a yellow \"not configured\" banner appears, the system simply hasn't been set up for your group yet (Chapter 3). Everything still works."
+    ]},
+    {"callout": {"kind": "warning", "label": "TYPE THE ADDRESS, DON'T SEARCH FOR IT",
+      "text": "Type `192.168.50.1` into the **address bar**, not into a search box. If you type it as a search, the browser may try to look it up on the internet (which isn't reachable) instead of opening the local server. Including the `http://` at the front helps the browser understand you mean an address, not a search. If your deployment was set up with a different server address, use that number instead — but `192.168.50.1` is the default and what this manual assumes throughout."}},
+    {"p": "There is no login screen. The moment the dashboard loads, you have the full set of tools. FieldCommand does not ask each person to create an account, because in a field activation there is no time for that and often no way to reset a forgotten password. Access is controlled by who can reach the private Wi-Fi, not by individual logins."},
+
+    {"h1": "Make It Feel Like an App"},
+    {"p": "You will open the dashboard many times, so it is worth making it one tap away instead of retyping the address each time."},
+    {"steps": [
+      "With the dashboard open in your phone's browser, tap the browser's **Share** button (or menu).",
+      "Choose **Add to Home Screen**.",
+      "Give it a name like \"FieldCommand\" and confirm.",
+      "A FieldCommand icon now sits on your home screen. Tapping it opens the dashboard directly, filling the screen like a real app."
+    ]},
+    {"callout": {"kind": "tip", "label": "BOOKMARK IT ON A LAPTOP",
+      "text": "On a laptop, bookmark **http://192.168.50.1** so it is one click away. Consider making it the browser's home page on a dedicated incident laptop or the operator workstation, so the dashboard is up the instant the browser opens."}},
+
+    {"h1": "The Padlock — A Secure, Encrypted Connection (HTTPS)"},
+    {"p": "FieldCommand now serves the dashboard over **HTTPS** — Hypertext Transfer Protocol Secure, the same locked-padlock technology your bank's website uses. In plain words: everything that travels between your device and the server is **scrambled (encrypted)** so no one else on the air can read it. Member names, phone numbers, check-in details — all of it stays private as it crosses the Wi-Fi. It is also what lets your phone's **camera** work for scanning QR codes, because browsers only turn the camera on for a secure connection."},
+    {"p": "You do not have to do anything different to get this. If you type the plain **http://192.168.50.1** address, FieldCommand automatically sends you to the secure **https://** version — the extra **s** is added for you. There is nothing new to memorize."},
+    {"callout": {"kind": "note", "label": "WHY YOU MIGHT SEE A WARNING THE FIRST TIME",
+      "text": "On the public internet, a padlock is backed by a certificate bought from an outside company. FieldCommand runs on a **closed, private field network** with no path to those companies, so it makes its **own** certificate. Your browser doesn't recognize it the very first time and may show a one-time warning. This is expected on a private network and does **not** mean anyone is spying on you — it only means the browser has never met this particular server before. You clear it once per device, and then it's quiet forever after."}},
+    {"p": "There are two ways to get past that first-time warning. Either one is fine — pick whichever suits you."},
+    {"h2": "The quick way — accept the warning once"},
+    {"p": "The fastest option is to tell the browser you trust this server, just this once per device."},
+    {"steps": [
+      "Go to the dashboard address. If you see a page titled something like **Your connection is not private** or **Not secure**, don't panic — this is the expected first-time message on a private network.",
+      "Look for a small link or button such as **Advanced**, **Show details**, or **More information**, and tap it.",
+      "Tap the option that says **Proceed to 192.168.50.1**, **Continue to this site**, or **Visit this website**.",
+      "The dashboard loads and works normally. Your device remembers this choice, so you won't be asked again on this device."
+    ]},
+    {"callout": {"kind": "tip", "label": "THE ADDRESS BAR MAY STILL SAY \"NOT SECURE\"",
+      "text": "After you accept the warning the quick way, some browsers keep showing a faint **Not secure** note next to the address. Your connection is still fully encrypted — the note just means the browser is using the server's own certificate rather than one from an outside company. If that note bothers you, use the cleaner way below to get a proper padlock."}},
+    {"h2": "The clean way — install the certificate once (proper padlock, no warning)"},
+    {"p": "If you'd rather see a real padlock with no warning at all, install the server's **root certificate** on the device one time. Think of it as introducing your device to the server so they recognize each other from then on. This is the tidiest option for a device you'll use often, like the operator workstation or your own phone."},
+    {"steps": [
+      "On the device, open a browser and go to **https://192.168.50.1/fieldcommand-ca.crt** (type it exactly). This downloads a small file called `fieldcommand-ca.crt` — the server's certificate.",
+      "Open that downloaded file and, when the device asks, choose to **install** or **trust** it. On a phone this is usually under a prompt like *Install certificate*; on a laptop, opening the file starts a short install wizard — accept the defaults.",
+      "If asked what to trust it for, choose to trust it for **websites** (sometimes worded *SSL* or *web sites*).",
+      "Go back to **https://192.168.50.1**. You now see a clean **padlock** and no warning, on this device, from now on."
+    ]},
+    {"callout": {"kind": "important", "label": "EACH DEVICE DOES THIS ONCE",
+      "text": "Whichever way you choose, it is a **one-time step per device**, not something you repeat every visit. A brand-new phone that joins for the first time will see the warning once; every device you've already cleared or installed the certificate on just opens straight to the dashboard. It is worth walking new volunteers through this the first time they connect at a check-in table."}},
+
+    {"h1": "The One Thing That Trips People Up"},
+    {"p": "Modern phones badly want to be on a network that has internet. Because EMCOMM-NET deliberately has none, a phone left to its own devices may quietly hop back to a cell connection or a nearby Wi-Fi network with internet — and then the dashboard stops loading, seemingly at random. The fix is to keep your device pinned to EMCOMM-NET during an activation."},
+    {"bullets": [
+      "In your Wi-Fi settings, turn **off auto-join** for other nearby networks while you are working an activation, so your device can't wander off to them.",
+      "If the dashboard suddenly won't load, glance at your Wi-Fi indicator first — nine times out of ten the device switched networks on its own. Reconnect to EMCOMM-NET and reload the page.",
+      "On a phone, turning **cellular data off** for the duration is a reliable way to force it to stay on EMCOMM-NET (you're not using the internet anyway)."
+    ]},
+
+    {"h1": "Laptops, Workstations, and Many Users at Once"},
+    {"p": "A laptop or the operator workstation connects exactly the same way — join EMCOMM-NET, open `http://192.168.50.1`. On {{workstation}} set up as the station's desktop, the browser may already be pointed at the dashboard for you."},
+    {"p": "There is no per-device setup and no limit you need to worry about in practice: many volunteers can each be on their own phone, all connected to EMCOMM-NET, all using FieldCommand at the same time. Everyone sees the same live data because it all lives on the one server. One person can be logging a net while another checks people in and a third fills out a form — the system is built for a room full of people working at once."},
+    {"callout": {"kind": "note", "label": "SPREADING WI-FI COVERAGE FARTHER",
+      "text": "If the activation site is large, the network can be extended with additional mesh access points so EMCOMM-NET reaches the whole area, and people's devices roam between them seamlessly. That is a hardware setup covered in the Installation Guide — from a user's point of view you still just join EMCOMM-NET and open the address, wherever you are standing."}},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__EMCOMM-NET doesn't appear in my Wi-Fi list.__ The server may still be starting — wait about 45 seconds after power-on and refresh the Wi-Fi list. If it still isn't there after a couple of minutes, confirm the Pi and its router have power, and that you are within Wi-Fi range.",
+      "__I'm connected to EMCOMM-NET but the dashboard won't load.__ Make sure you typed the full address including `http://` (for example `http://192.168.50.1`) into the **address bar**, not a search box. Then confirm your device is still on EMCOMM-NET and hasn't switched to another network.",
+      "__My phone keeps dropping off EMCOMM-NET.__ It is hopping to a network with internet. Turn off auto-join for other networks (and optionally turn off cellular data) so it stays put, then reconnect to EMCOMM-NET.",
+      "__My phone warns \"no internet\" and asks if I want to stay connected.__ Say yes / stay connected. EMCOMM-NET has no internet on purpose; that warning does not mean anything is wrong.",
+      "__The browser tried to search Google instead of opening the page.__ You typed the address into a search box, or left off the `http://`. Type it into the address bar with the `http://` prefix.",
+      "__The browser says \"Not secure\" or \"Your connection is not private.\"__ This is the expected one-time message on FieldCommand's private, encrypted network — it has its own security certificate rather than one from an outside company, because there's no internet out here. Tap **Advanced** (or **Show details**), then **Proceed to 192.168.50.1** to continue; you'll only be asked once on this device. For a clean padlock with no warning, install the server's certificate once by opening **https://192.168.50.1/fieldcommand-ca.crt** and choosing to trust it (see \"The Padlock\" section above).",
+      "__It asks me for a login or account.__ FieldCommand itself has no login. If you are being asked to sign in, you have most likely reached a different site because your device is on the wrong network — reconnect to EMCOMM-NET and reload `http://192.168.50.1`.",
+      "__A card on the dashboard says it needs a different address or port.__ Some tools open a separate service in a new tab. Those work as long as the server does; if one fails to load, tap Back and keep using the rest of the dashboard normally."
+    ]}
+  ]
+}

@@ -1,0 +1,162 @@
+{
+  "order": 12,
+  "title": "Identity and the RF Gate — identity.js",
+  "subtitle": "One small front-end file, html/lib/identity.js, answers the question every log entry needs: who is at this keyboard? A second, separate piece of code — the station-level callsign gate — answers a different question: is this group even allowed to key up a transmitter? Together they keep FieldCommand honest about who did what, and lawful about who may transmit.",
+  "in_this_chapter": [
+    "What the shared identity module is and why every page loads it",
+    "The four kinds of person an activation sees, and how one object describes all of them",
+    "How identity is stored on the device and restored, with no password",
+    "How the module picks the single best identifier for a log entry",
+    "What 'ham or not' means in the code, and why it is just a callsign check",
+    "The RF gate — how a missing station callsign keeps every transmit feature switched off",
+    "Design takeaways and the maintainer's rule"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "IN ONE SENTENCE",
+      "text": "`identity.js` remembers who the operator is (member or visitor, ham or not) so every action can be attributed, while a separate station-callsign check — the __RF gate__ — refuses to switch on any amateur-radio transmit feature unless a licensed station callsign has been configured."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "Every screen in FieldCommand — net control, the Incident Command System (ICS) forms, the roster, the map — needs to stamp actions with a name: who checked this station in, who edited this form, who moved that marker. Rather than ask on every page, FieldCommand loads one shared module, [html/lib/identity.js](html/lib/identity.js), on all of them. It keeps a single small record of the current operator, shows a badge in the header, and offers a picker so a person can say who they are. The rest of the site just calls `FC_ID.getDisplayId()` or `FC_ID.getName()` and gets a consistent answer."},
+    {"p": "The module is written as an Immediately Invoked Function Expression (IIFE) that returns a small public object called `FC_ID`. Everything else — the stored record, the roster it fetches, the picker modal — is private inside the closure. Pages include it with one line at the bottom of the body, and it wires itself up automatically:"},
+    {"code": [
+      "<script src=\"/lib/identity.js\"></script>"
+    ]},
+    {"p": "There is no build step and no framework. When the file loads it runs `FC_ID.init()`, which reads any saved identity, fetches the roster in the background, draws the header badge, and — if nobody is set yet — pops the picker after a short delay:"},
+    {"code": [
+      "async function init() {",
+      "    load();",
+      "    await fetchRoster();",
+      "    renderBadge();",
+      "    if (!_id) setTimeout(() => { if (!_picker) showPicker(); }, 900);",
+      "}"
+    ]},
+    {"callout": {"kind": "note", "label": "JARGON, IN PLAIN WORDS",
+      "text": "An **IIFE** (Immediately Invoked Function Expression) is a function that runs the instant it is defined; here it is used to hide helper variables so only the `FC_ID` object is visible to the page. **localStorage** is a small per-browser store on the device — data written to it survives page reloads and reboots, and never leaves the machine. A **callsign** is the license identifier the Federal Communications Commission (FCC) assigns to an amateur radio operator or station; only a licensed holder may transmit."}},
+
+    {"h1": "Why It Works This Way — Four People, One Record"},
+    {"p": "A real McHenry County Emergency Services Volunteers (MCESV) activation is not just club members. The file's own header comment enumerates the four person types the code must handle, and they do not all have the same identifiers — some are hams with a callsign, some are non-ham members with only a radio identifier, some are visitors from another agency:"},
+    {"table": {
+      "headers": ["Type", "Who they are", "Identifiers they have"],
+      "rows": [
+        ["Type 1", "Emergency Services Volunteers (ESV) member, ham", "Member ID (`ESV-###`) + callsign + Starcom radio ID"],
+        ["Type 2", "ESV member, non-ham", "Member ID + Starcom radio ID, __no callsign__"],
+        ["Type 3", "Mutual aid / visitor, ham", "Callsign + their agency, __no ESV member ID__ (auto-assigned `VIS-#####`)"],
+        ["Type 4", "Mutual aid / visitor, non-ham", "Name + radio ID + their agency, __no callsign, no member ID__"]
+      ],
+      "widths": [0.9, 2.6, 3.0]
+    }},
+    {"p": "Rather than four different records, all four collapse into one flat object with the same fields — the ones a given person lacks are simply left blank. That single shape is what gets written to the device, and it is what every accessor reads back:"},
+    {"code": [
+      "member_id      : \"ESV-042\",   // ESV number, or \"VIS-#####\" for visitors",
+      "callsign       : \"K9ESV\",     // blank if non-ham",
+      "radio_id       : \"1042\",      // Starcom radio ID (all ESV members have one)",
+      "name           : \"Jim Anderson\",",
+      "role           : \"Operator\",",
+      "member_type    : \"member\" | \"visitor\" | \"mutual_aid\",",
+      "visitor_agency : \"\",           // agency name for visitors",
+      "is_ham         : true | false,"
+    ]},
+    {"p": "Why keep it on the device instead of forcing a login? Because FieldCommand is a field appliance with no accounts and, deliberately, no password. An operator says who they are once; the answer is saved in `localStorage` under a versioned key and simply reappears next time. Saving is one function, and it also notifies any listeners and repaints the badge:"},
+    {"code": [
+      "const STORE_KEY = 'fc_operator_identity_v3';",
+      "",
+      "function save(id) {",
+      "    _id = id;",
+      "    try { localStorage.setItem(STORE_KEY, JSON.stringify(id)); } catch(e) {}",
+      "    _cbs.forEach(fn => { try { fn({ ..._id }); } catch(e) {} });",
+      "    renderBadge();",
+      "}"
+    ]},
+    {"callout": {"kind": "note", "label": "WHY THE KEY ENDS IN _v3",
+      "text": "The storage key is `fc_operator_identity_v3`, not `..._identity`. Bumping the version in the key name is a deliberate, cheap migration: when the record shape changes in a way old data cannot satisfy, a new key means old browsers start clean at the picker instead of loading a stale record with missing fields. If you ever change the stored shape incompatibly again, bump to `_v4` — never silently reuse `_v3`."}},
+
+    {"h1": "How It Works — Choosing the One Identifier That Matters"},
+    {"p": "A log line has room for one identifier, not five. The module centralizes that choice in a single helper, `bestId`, so every screen labels a person the same way. The rule is a fixed priority: callsign first (it is globally unique and license-backed), then the Starcom radio ID, then the ESV member ID, then finally the plain name:"},
+    {"code": [
+      "/**",
+      " * Best single identifier for a person object (roster row or identity).",
+      " * Priority: callsign → radio_id → member_id → name",
+      " */",
+      "function bestId(m) {",
+      "    return (m.callsign || m.radio_id || m.member_id || m.name || '').trim();",
+      "}"
+    ]},
+    {"p": "That one function is the whole reason `FC_ID.getDisplayId()` is trustworthy: it never returns an empty string when any identifier exists, and it always prefers the most authoritative one. The public accessors are thin wrappers over the stored record, using optional chaining so they are safe to call before anyone has identified themselves:"},
+    {"code": [
+      "getMemberId:   () => _id?.member_id      || '',",
+      "getCallsign:   () => _id?.callsign        || '',",
+      "getDisplayId:  () => bestId(_id || {}),",
+      "getName:       () => _id?.name            || '',",
+      "isHam:         () => !!(_id?.callsign),",
+      "isVisitor:     () => ['visitor','mutual_aid'].includes(_id?.member_type),"
+    ]},
+    {"p": "Notice `isHam` is not a stored flag it trusts blindly — it is computed live from the callsign: `!!(_id?.callsign)`. If there is a callsign, the operator is treated as a ham; if the field is blank, they are not. This matters because it means 'ham-ness' can never drift out of sync with the actual callsign on record. The `is_ham` value written into the object at confirm time is set the same way — `is_ham: !!cs` — so the two always agree."},
+    {"p": "The picker enforces a minimum before it will save. For a member, at least one of Member ID, callsign, or radio ID must be present; for a visitor, a full name and an agency are required. The member branch shows the pattern:"},
+    {"code": [
+      "if (!mid && !cs && !rid) {",
+      "    _showErr('Please enter your Member ID, Callsign, or Starcom Radio ID.'); return;",
+      "}"
+    ]},
+
+    {"h1": "The RF Gate — No Callsign, No Transmit"},
+    {"p": "Knowing __who__ is at the keyboard is separate from knowing whether the __station__ may legally key a transmitter. That second decision is the __RF gate__, and it lives one level up from the operator record, at the station-configuration level. The rule is blunt and it is written in plain sight: the amateur-radio modules — general amateur, Winlink, Automatic Packet Reporting System (APRS), and the 44Net tunnel — cannot be switched on unless a station callsign has been entered. In [html/setup.html](html/setup.html) they are named as a group:"},
+    {"code": [
+      "// Modules that transmit on the amateur bands — they require a callsign AND a",
+      "// properly licensed operator. They cannot be enabled without a callsign.",
+      "const HAM_MODULES = ['amateur', 'winlink', 'aprs', '44net'];"
+    ]},
+    {"p": "Trying to toggle any of those on with no callsign is refused outright, with an explanation that names exactly what to do and why — enter a callsign, and only if the group actually has a licensed operator:"},
+    {"code": [
+      "function toggleModule(mod) {",
+      "  // Block turning on any amateur-radio module unless a callsign is set.",
+      "  if (HAM_MODULES.includes(mod) && !modules[mod] && !hasCallsign()) {",
+      "    alert('This is an amateur radio feature.\\n\\n' +",
+      "          'Enter a Club / Station Callsign at the top of this page first ...');",
+      "    const cb = document.getElementById(`mod_${mod.replace('-','')}`);",
+      "    if (cb) cb.checked = false;",
+      "    document.getElementById('callsign')?.focus();",
+      "    return;",
+      "  }",
+      "  modules[mod] = !modules[mod];",
+      "  // ...",
+      "}"
+    ]},
+    {"p": "The gate is not just a one-time check at click time; it is also a __safety net__ at save time. Even if a callsign were somehow cleared while a module was on, `saveConfig()` forces every ham module back off before the configuration is written, so a blank callsign can never leave a transmit feature enabled:"},
+    {"code": [
+      "// Safety net: no callsign means no amateur-radio transmit features, ever.",
+      "if (!callsign) HAM_MODULES.forEach(m => { modules[m] = false; });"
+    ]},
+    {"p": "Finally, the dashboard in [html/index.html](html/index.html) enforces the same gate visually. When the station configuration loads, it computes a single flag, `FC_HAM_ENABLED`, from whether a callsign exists and the amateur module is on, and then grays out the Amateur Radio mode button so it cannot even be selected:"},
+    {"code": [
+      "const hasCall = !!(cfg.callsign && String(cfg.callsign).trim());",
+      "const hamEnabled = hasCall && mods.amateur !== false;",
+      "window.FC_HAM_ENABLED = cfg.setup_complete ? hamEnabled : true;",
+      "if (window.applyModeGating) window.applyModeGating();"
+    ]},
+    {"code": [
+      "function applyModeGating() {",
+      "    const btn = document.getElementById('modeBtn-amateur');",
+      "    if (!btn) return;",
+      "    const disabled = window.FC_HAM_ENABLED === false;",
+      "    btn.classList.toggle('disabled', disabled);",
+      "    if (disabled) {",
+      "        btn.setAttribute('aria-disabled', 'true');",
+      "        btn.title = 'Add a station callsign in Setup to enable amateur radio features';",
+      "    }",
+      "}"
+    ]},
+    {"callout": {"kind": "important", "label": "TWO DIFFERENT QUESTIONS — DO NOT CONFLATE THEM",
+      "text": "`identity.js` answers __who is operating__ (per device, for attribution). The RF gate answers __may this station transmit at all__ (per station callsign, for legality). An operator can be a licensed ham personally, yet the station still shows no transmit features because __the station__ has no callsign configured — and that is correct. Never wire a transmit feature to `FC_ID.isHam()`; wire it to the station gate (`FC_HAM_ENABLED` / the `HAM_MODULES` check). The operator badge is about accountability, not authorization."}},
+
+    {"h1": "Why It Matters / Design Takeaways"},
+    {"bullets": [
+      "__One shared identity, everywhere.__ Every page loads the same `identity.js`, so 'who did this' is answered identically across net control, forms, roster, and map — no per-page reinvention.",
+      "__One record for four kinds of person.__ Members and visitors, hams and non-hams, all fold into a single flat object; blank fields, not separate schemas, carry the differences.",
+      "__Attribution without accounts.__ Identity is saved on the device with a versioned `localStorage` key and no password — appropriate for a field appliance, and reset in one call.",
+      "__Ham-ness is computed, never trusted.__ `isHam()` is just `!!callsign`, so it can never disagree with the callsign actually on record.",
+      "__The RF gate is defense in depth.__ A missing station callsign blocks transmit modules at toggle time, again at save time, and again visually on the dashboard — three independent enforcement points, not one."
+    ]},
+    {"callout": {"kind": "important", "label": "MAINTAINER'S RULE",
+      "text": "Keep the two concerns separate. To change how an operator is identified or displayed, change `identity.js` (and `bestId` if the priority order shifts) and nothing else — every screen inherits it. To change what may transmit, change the __station callsign gate__ (`HAM_MODULES` and the `hasCallsign` / `FC_HAM_ENABLED` checks) — never gate a transmit feature on the operator's personal `isHam()`. Any new amateur-radio transmit module must be added to `HAM_MODULES` so the blank-callsign safety net switches it off too, and if you change the stored identity shape incompatibly, bump the `STORE_KEY` version."}}
+  ]
+}

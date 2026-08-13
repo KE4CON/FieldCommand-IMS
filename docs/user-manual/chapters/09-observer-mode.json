@@ -1,0 +1,84 @@
+{
+  "order": 9,
+  "title": "Observer Mode — Read-Only Net View",
+  "subtitle": "A look-but-don't-touch window into any net, auto-refreshing every 15 seconds, for supervisors and liaisons who need to watch without being able to change anything.",
+  "in_this_chapter": [
+    "What Observer Mode is and who it's for",
+    "Getting an observer link and opening it",
+    "Reading the observer screen — header, clock, and refresh bar",
+    "The Stations Logged and Traffic Log panels",
+    "The net-picker view when no net is chosen",
+    "Exactly what an observer can and cannot do",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "On the net logger, click **🔗 Observer Link** to copy a web link. Send it to whoever needs to watch — a section chief, a served-agency liaison, an EOC duty officer. They open it in any browser on the FieldCommand Wi-Fi, no login needed. It shows the live net and **refreshes itself every 15 seconds**. They can look but cannot change anything."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "**Observer Mode** is a **read-only** view of any net running in FieldCommand. It shows the same check-ins and traffic the net control station sees, but with no buttons to log, edit, close, or change anything — it is a window, not a control panel. The page **refreshes itself automatically every 15 seconds**, so an observer always sees current activity without touching a thing."},
+    {"p": "It exists so people who need to *monitor* a net don't have to crowd around the net control station's screen or be given access to the live log. Typical observers are Incident Command System (ICS) section chiefs, served-agency liaisons, Emergency Operations Center (EOC) duty officers, or anyone who wants situational awareness of a net's activity from their own device. Because observers cannot change anything, you can hand the link out freely without any risk to the official log."},
+    {"callout": {"kind": "note", "label": "SAFE TO SHARE WIDELY",
+      "text": "An observer link is harmless to pass around. There is no login, and nothing an observer clicks can alter the net. The worst an observer can do is close their own browser tab. This is the right way to give a served agency or a supervisor visibility without giving them the keys."}},
+
+    {"h1": "Getting an Observer Link"},
+    {"p": "The link is created by the operator running the net, from either net logger:"},
+    {"steps": [
+      "On the Amateur Net Logger (Chapter 7) or the {{ps_mode}} Net Logger (Chapter 8), select the net you want people to watch.",
+      "Click **🔗 Observer Link**. The web address (Uniform Resource Locator, or URL) for that net is copied to your clipboard, and a confirmation shows you the link.",
+      "Share it however is handy — paste it into Winlink or JS8Call, text it, read it over the net, or just hand someone the device.",
+      "The observer opens the link in any browser on the FieldCommand Wi-Fi. **No login is required.** The net appears and begins refreshing on its own."
+    ]},
+    {"callout": {"kind": "tip", "label": "OBSERVERS CAN BOOKMARK IT",
+      "text": "The observer link is stable for that net, so an observer can bookmark it and reopen the same net later. The link points to one specific net — if you start a new net, hand out its fresh link."}},
+
+    {"h1": "Reading the Observer Screen"},
+    {"p": "Across the top is the purple **OBSERVER MODE — READ ONLY** banner, with the net name and description just beneath it, so there's never any doubt this is a watch-only view. On the right of the banner:"},
+    {"bullets": [
+      "A large green **clock** showing the current time in **UTC** (Coordinated Universal Time), ticking every second.",
+      "An **Auto-refresh in __s** countdown that shows how many seconds until the next refresh.",
+      "A thin purple **refresh bar** below the banner that empties from full to zero over the 15-second cycle — a visual sense of when the next update lands."
+    ]},
+    {"screenshot": "The Observer Mode banner with the READ ONLY label, the UTC clock, the auto-refresh countdown, and the purple refresh bar"},
+    {"p": "Below the banner is a header panel with the net's **name** in large type, its **type and net ID** underneath, and a status badge on the right reading **ACTIVE** (green) or **CLOSED** (gray). A small **Updated __ UTC** note shows the time of the last refresh. If the net is a drill, the **⚠ DRILL / EXERCISE — NOT ACTUAL EMERGENCY ⚠** banner appears here too, so observers aren't fooled by exercise traffic."},
+
+    {"h1": "The Two Live Panels"},
+    {"p": "The body of the page is split into two side-by-side panels that update together every 15 seconds:"},
+    {"table": {
+      "headers": ["Panel", "What it shows"],
+      "rows": [
+        ["**Stations Logged**", "Every check-in, newest at the top, with the callsign or radio ID, the operator/unit name, a status badge, the check-in time in UTC, the location, and any remarks. The count of stations is shown in the heading. Rows carry the same precedence colors as the logger — red for Emergency, amber for Priority, green for Welfare."],
+        ["**Traffic Log**", "Every message logged on the net, newest at the top, with the from/to stations, the time in UTC, the type, and the note. The message count is shown in the heading."]
+      ],
+      "widths": [1.9, 4.6]
+    }},
+    {"callout": {"kind": "note", "label": "WHAT THE OBSERVER HEADER LEAVES OUT",
+      "text": "The observer header is deliberately lean. It does **not** currently repeat the net's frequency or mode, and it does **not** show a live elapsed-net timer the way the logger's own header does. Observers see the live check-in and traffic lists — the substance of the net — but not those two header extras."}},
+
+    {"h1": "Opening Observer Mode Without a Link"},
+    {"p": "If someone opens the observer page **without** a specific net link, they get a **Select a Net to Observe** picker instead. It lists every net on the server as a clickable card showing the net name, its type, the number of entries, and badges for its state — **ACTIVE** or **CLOSED**, plus **STARCOM** for a {{ps_mode}} net and **DRILL** for an exercise. Clicking a card opens that net in the read-only view. This is a handy way to browse what's running when you weren't handed a direct link."},
+
+    {"h1": "What Observers Can and Cannot Do"},
+    {"p": "The whole design rests on one idea: observers see everything and touch nothing. Here is the line, drawn plainly:"},
+    {"table": {
+      "headers": ["Observers CAN", "Observers CANNOT"],
+      "rows": [
+        ["View every check-in as it happens", "Add or remove check-ins"],
+        ["View the net's open status and activity", "Close the net"],
+        ["View the full traffic log", "Add or edit traffic entries"],
+        ["Watch the page refresh itself every 15 seconds", "Change any net setting"],
+        ["Bookmark the observer link and reopen it later", "Reach the Net Control logging view"]
+      ],
+      "widths": [3.25, 3.25]
+    }},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__The page says *Cannot reach API server at 192.168.50.1:5050*.__ The observer view reads from the FieldCommand service on the Pi. Make sure the device is on the FieldCommand Wi-Fi and the server is running, then reload.",
+      "__It says *Net not found*.__ The link points to a net that no longer exists or was mistyped. Ask the net control station for a fresh **🔗 Observer Link**, or open the observer page with no link to pick from the current list.",
+      "__The list isn't updating.__ Observer Mode refreshes every 15 seconds on its own — watch the countdown and the purple bar. If it still looks frozen, reload the page manually; a dropped Wi-Fi connection will stop the refresh until it reconnects.",
+      "__I want to add a check-in but there are no buttons.__ That's by design — Observer Mode is read-only. Logging happens on the Net Control logger (Chapter 7) or the {{ps_mode}} Net Logger (Chapter 8), not here.",
+      "__The clock shows a different time than my watch.__ The observer clock is in **UTC**, the standard time zone for logging, not your local time. That's expected."
+    ]}
+  ]
+}

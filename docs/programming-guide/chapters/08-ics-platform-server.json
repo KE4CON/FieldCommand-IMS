@@ -1,0 +1,207 @@
+{
+  "order": 8,
+  "title": "The ICS Platform Server — ics_platform_server.py",
+  "subtitle": "One Python file, python/ics_platform_server.py, is the whole Incident Command System (ICS) back end. It listens on port 5055, bound to the machine itself, and answers every request about incidents, operational periods, ICS forms, T-cards and resources, check-ins, the activity feed, and meetings. Everything an incident produces flows through this one service.",
+  "in_this_chapter": [
+    "What the ICS platform server is and where it sits in the system",
+    "Why it is bound to localhost and reached only through nginx at /svc/5055",
+    "How the plain if/elif router turns a Uniform Resource Locator (URL) into a database call",
+    "Why every ICS form — 201, 202, 205, 211, 213, 214, and the rest — lives in one flexible table",
+    "How general_info auto-fills the same header onto every form",
+    "How the scan and remote check-in endpoint writes the ICS-211 roster and the T-card board at once",
+    "Design takeaways and the maintainer's rule"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "IN ONE SENTENCE",
+      "text": "`python/ics_platform_server.py` is a single localhost-only web service on port 5055 that routes every Incident Command System (ICS) request with a plain `if/elif` chain, stores all ICS forms as one flexible JavaScript Object Notation (JSON) blob per form, and keeps the incident, its people, and its paperwork in sync through the shared `db.py` data layer."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "FieldCommand runs three small web services side by side on the Raspberry Pi. This chapter is about the second of them: the **Incident Command System (ICS) platform server**, the file [python/ics_platform_server.py](python/ics_platform_server.py). Where the main server handles nets, the roster, and the Federal Communications Commission (FCC) callsign lookups, this service owns everything to do with running an incident by the book: creating the incident record, advancing operational periods, saving the ICS forms (the 201, 202, 205, 211, 213, 214, and more), tracking resources on a T-card board, taking personnel check-ins, writing the live activity feed, and scheduling the Planning Section's meetings."},
+    {"p": "It is one class, `ICSHandler`, on top of Python's built-in `http.server`. There is no web framework, no router library, and no object-relational mapper. A request comes in, one long `if/elif` chain matches the URL path, a few lines of SQL run against the shared database, and a JSON reply goes back. That plainness is deliberate: a volunteer maintainer can read the whole request lifecycle top to bottom without learning a framework first. The service announces itself the same way every time it boots:"},
+    {"code": [
+      "if __name__ == \"__main__\":",
+      "    db.startup()",
+      "    log.info(\"ICS Platform API on port 5055\")",
+      "    # Localhost only — reached via nginx at /svc/5055 over HTTPS.",
+      "    HTTPServer((\"127.0.0.1\", 5055), ICSHandler).serve_forever()"
+    ]},
+    {"callout": {"kind": "note", "label": "JARGON, IN PLAIN WORDS",
+      "text": "The **Incident Command System (ICS)** is the standard way United States responders organize a scene — who is in charge, who reports to whom, and which paper form records what. An **operational period** is one work shift of the incident (often 12 hours); each period gets its own plan. A **T-card** is the classic pocket-sized card that tracks one resource (a crew, an engine, a person) as it moves across a status board. An **Incident Action Plan (IAP)** is the packet of ICS forms that spells out the plan for one operational period."}},
+
+    {"h1": "Why localhost-only, behind nginx — the 'Why' Behind the Binding"},
+    {"p": "The very last line binds the server to `127.0.0.1`, the machine's own loopback address, not to `0.0.0.0`. That single choice means **nothing on the network can reach port 5055 directly** — only code already running on the Pi can. Field tablets and laptops never talk to this service straight; they talk to nginx, the web server out front, which holds the Hypertext Transfer Protocol Secure (HTTPS) certificate and forwards `/svc/5055/...` requests inward to this process. So the transport encryption, the single public port, and any access rules live in one place (nginx), and this service stays small and trusting because the only clients that can reach it are local."},
+    {"p": "That is also why the Cross-Origin Resource Sharing (CORS) headers are wide open. Every response calls `self.cors()`, which allows any origin. On a service exposed to the internet that would be reckless; here it is fine, because the service is not exposed to the internet — nginx is the only door, and it is the one that decides who gets in:"},
+    {"code": [
+      "def cors(self):",
+      "    self.send_header(\"Access-Control-Allow-Origin\",\"*\")",
+      "    self.send_header(\"Access-Control-Allow-Headers\",\"Content-Type\")",
+      "    self.send_header(\"Access-Control-Allow-Methods\",\"GET,POST,PUT,DELETE,OPTIONS\")"
+    ]},
+    {"callout": {"kind": "note", "label": "JARGON, IN PLAIN WORDS",
+      "text": "**localhost / 127.0.0.1** is the address a computer uses to talk to itself; nothing outside the machine can connect to it. **nginx** is a web server that sits in front, terminates HTTPS, and passes requests along to internal services — a **reverse proxy**. **CORS** is a browser rule about which web pages may call which servers; opening it wide is safe only because this server is unreachable from the outside."}},
+
+    {"h1": "How It Works — The Plain if/elif Router"},
+    {"p": "There is no route table. Each HyperText Transfer Protocol (HTTP) verb has one method — `do_GET`, `do_POST`, `do_DELETE` — and each opens the same way: parse the URL, split off the path, grab the query string, and get a database connection. From there a chain of `if path == ...` / `elif path.startswith(...)` branches picks the handler. The top of `do_GET` shows the shape the whole file follows:"},
+    {"code": [
+      "def do_GET(self):",
+      "    parsed=urlparse(self.path); path=parsed.path.rstrip(\"/\")",
+      "    qs=parse_qs(parsed.query); c=get_conn()",
+      "",
+      "    if path == \"/api/ics/incidents\":",
+      "        return self.send_json(rows_to_list(",
+      "            c.execute(\"SELECT * FROM incidents ORDER BY started DESC\").fetchall()))"
+    ]},
+    {"p": "Two habits keep this readable and safe. First, every branch ends by calling `send_json`, the one helper that serializes the reply, sets the length, and adds the CORS headers — so no branch can forget a header. Second, every value that reaches SQL is passed as a bound parameter (the `?` placeholders), never glued into the query string. When a whole set of columns must be named dynamically — as in a partial update — the column names come from a fixed in-code whitelist, not from the request body. The T-card save shows that pattern: only names in `TC_COLS` may be written, so a crafted request cannot inject a column name."},
+    {"code": [
+      "TC_COLS=[\"incident_id\",\"resource_id\",\"resource_name\",\"resource_type\",\"category\",",
+      "         \"type\",\"status\",\"assignment\",\"leader\",\"contact\",\"num_personnel\",\"eta\",",
+      "         \"notes\",\"order_number\",\"home_agency\",\"period\",\"daily_cost\",\"hourly_rate\",",
+      "         \"cost_basis\",\"hours_on_incident\"]",
+      "if c.execute(\"SELECT 1 FROM ics_tcards WHERE id=?\",(cid,)).fetchone():",
+      "    # Partial update — only overwrite fields actually provided so a status-only",
+      "    # move never wipes leader/contact/personnel/notes/cost on the card.",
+      "    present=[k for k in TC_COLS if k in body]",
+      "    sets=\",\".join(f\"{k}=?\" for k in present)+(\", \" if present else \"\")+\"updated=?\"",
+      "    vals=[body[k] for k in present]+[now,cid]",
+      "    c.execute(f\"UPDATE ics_tcards SET {sets} WHERE id=?\",vals)"
+    ]},
+    {"callout": {"kind": "warning", "label": "PARTIAL UPDATES ARE ON PURPOSE",
+      "text": "The T-card branch only writes the fields the request actually sent. This matters on a status board: when someone drags a card from Available to Assigned, the request carries only the new status, and the leader, contact, personnel count, notes, and cost must survive untouched. If you ever rewrite this to a full-row `INSERT OR REPLACE`, a one-field move will silently blank every other field. Keep partial updates partial."}},
+    {"p": "Creating an incident is the anchor operation the rest of the system hangs off. The `POST /api/ics/incidents` branch mints an identifier, inserts the incident row, immediately creates operational period 1 with the chosen shift length, commits, and writes the first line of the activity feed — all in one handler:"},
+    {"code": [
+      "if path == \"/api/ics/incidents\":",
+      "    inc_id=body.get(\"id\") or f\"inc-{int(time.time()*1000)}\"",
+      "    c.execute(\"\"\"INSERT INTO incidents",
+      "        (id,name,type,status,jurisdiction,incident_commander,",
+      "         location,summary,incident_number,current_period,started)",
+      "        VALUES(?,?,?,?,?,?,?,?,?,?,?)\"\"\",",
+      "        (inc_id,body.get(\"name\",\"\"),body.get(\"type\",\"\"),",
+      "         \"active\",body.get(\"jurisdiction\",\"\"),",
+      "         body.get(\"incident_commander\",\"\"),body.get(\"location\",\"\"),",
+      "         body.get(\"summary\",\"\"),body.get(\"incident_number\",\"\"),1,now))",
+      "    # Create period 1 — persist the chosen Operational Period Duration",
+      "    try: shift_hours = int(body.get(\"period_hours\") or 12)",
+      "    except (TypeError, ValueError): shift_hours = 12",
+      "    c.execute(\"INSERT INTO ics_periods(id,incident_id,period_num,started,shift_hours) VALUES(?,?,?,?,?)\",",
+      "              (f\"per-{inc_id}-1\",inc_id,1,now,shift_hours))",
+      "    c.commit()",
+      "    log_activity(inc_id,\"Command\",\"Incident Created\",body.get(\"name\",\"\"))"
+    ]},
+    {"p": "That `log_activity` call appears after almost every write in the file — incident created, period advanced, form saved, T-card updated, meeting scheduled. It is a two-line helper that appends one timestamped row to `activity_log`, and it is what powers the live activity feed the dashboard shows. Because every mutating branch calls it, the feed is a faithful running record of the incident without any branch needing special feed logic:"},
+    {"code": [
+      "def log_activity(incident_id, section, action, detail):",
+      "    get_conn().execute(",
+      "        \"INSERT INTO activity_log(incident_id,section,action,detail,timestamp)\"",
+      "        \" VALUES(?,?,?,?,?)\",",
+      "        (incident_id, section, action, detail, utcnow()))",
+      "    get_conn().commit()"
+    ]},
+
+    {"h1": "How It Works — One Flexible Table for Every ICS Form"},
+    {"p": "There are dozens of ICS forms, and no two have the same fields. The ICS-205 is a table of radio channels; the ICS-202 is a list of objectives; the ICS-214 is a running activity log. A traditional design would give each form its own table with its own columns — dozens of tables to define, migrate, and keep in step with the forms. FieldCommand does the opposite: **one** table, `ics_forms`, holds them all. The columns are only the handful common to every form; the entire body of the form lives in a single JSON text column named `data`:"},
+    {"code": [
+      "CREATE TABLE IF NOT EXISTS ics_forms (",
+      "    id          TEXT PRIMARY KEY,",
+      "    incident_id TEXT NOT NULL DEFAULT '',",
+      "    form_type   TEXT NOT NULL,              -- ics201, ics202, ics205, etc.",
+      "    period      INTEGER DEFAULT 1,",
+      "    summary     TEXT DEFAULT '',",
+      "    data        TEXT NOT NULL DEFAULT '{}', -- full form JSON blob",
+      "    created     TEXT NOT NULL,",
+      "    updated     TEXT NOT NULL",
+      ");"
+    ]},
+    {"p": "Saving any form is therefore one branch that works for all of them. The URL carries the form type (`/api/ics/forms/ics205`), the handler dumps the whole request body into `data` with `jdump`, and `INSERT OR REPLACE` means the same call both creates a new form and overwrites an existing one keyed by its `id`:"},
+    {"code": [
+      "elif path.startswith(\"/api/ics/forms/\"):",
+      "    form_type=path.split(\"/api/ics/forms/\")[1].split(\"/\")[0]",
+      "    fid=body.get(\"id\") or f\"{form_type}-{int(time.time()*1000)}\"",
+      "    body.update({\"id\":fid,\"form_type\":form_type,\"updated\":now})",
+      "    body.setdefault(\"created\",now)",
+      "    c.execute(\"\"\"INSERT OR REPLACE INTO ics_forms",
+      "        (id,incident_id,form_type,period,summary,data,created,updated)",
+      "        VALUES(?,?,?,?,?,?,?,?)\"\"\",",
+      "        (fid,body.get(\"incident_id\",\"\"),form_type,body.get(\"period\",1),",
+      "         body.get(\"summary\",\"\"),jdump(body),body.get(\"created\",now),now))",
+      "    c.commit()",
+      "    log_activity(body.get(\"incident_id\",\"\"),form_type.upper(),\"Form Saved\",fid)"
+    ]},
+    {"p": "Reading a single form does the reverse: fetch the row, then merge the parsed `data` blob back up to the top level so the client sees a flat object with every field, common columns and form-specific fields together. The `jload` helper parses the JSON safely, returning an empty object rather than throwing if the column is somehow malformed:"},
+    {"code": [
+      "fid=parts[1]",
+      "row=c.execute(\"SELECT * FROM ics_forms WHERE id=?\",(fid,)).fetchone()",
+      "if row:",
+      "    d=dict(row); d.update(jload(d.get(\"data\"),{}))",
+      "    return self.send_json(d)"
+    ]},
+    {"callout": {"kind": "important", "label": "WHY ONE FLEXIBLE TABLE WINS HERE",
+      "text": "Adding a brand-new ICS form, or a new field to an existing one, needs **zero** database changes — the form's shape lives entirely in the JSON `data` blob, so the front end can define a form and this server stores it without a schema edit or migration. The trade-off is that you cannot easily query *inside* a form with plain SQL (for example, filter forms by a field buried in the blob). FieldCommand accepts that trade because forms are almost always fetched whole, by incident and period; the few places that must reach inside a blob — like pulling channels out of a saved ICS-205 — parse the JSON in Python instead. If you find yourself needing to filter by an inside-the-blob field often, that is the signal to promote it to a real column, not to abandon the pattern."}},
+
+    {"h1": "How It Works — general_info and Cross-Form Auto-Fill"},
+    {"p": "Every ICS form repeats the same header: incident name, incident number, the operational period, the Incident Commander, the Command and General Staff, the weather, sunrise and sunset. Making a responder retype that on every form would be error-prone and slow. So FieldCommand keeps that shared header once, per incident and per period, in the `general_info` table, and lets every form draw from it. The primary key is literally the incident and period joined together, so there is exactly one header per period:"},
+    {"code": [
+      "CREATE TABLE IF NOT EXISTS general_info (",
+      "    id                      TEXT PRIMARY KEY,  -- \"{incident_id}-{period}\"",
+      "    incident_id             TEXT NOT NULL REFERENCES incidents(id) ON DELETE CASCADE,",
+      "    period                  INTEGER NOT NULL DEFAULT 1,",
+      "    incident_name           TEXT DEFAULT '',",
+      "    incident_number         TEXT DEFAULT '',",
+      "    ..."
+    ]},
+    {"p": "The clever part is the fallback on read. When a client asks for the general info of an incident and period that has no saved header yet — a brand-new incident, before anyone has filled the header in — the handler does not return an empty object. It falls back to the incident record itself and synthesizes a starter header from it, so the first form a responder opens is already pre-filled with the incident's name and location:"},
+    {"code": [
+      "row = c.execute(",
+      "    \"SELECT * FROM general_info WHERE incident_id=? AND period=?\",",
+      "    (inc_id, period)).fetchone()",
+      "if row:",
+      "    return self.send_json(row_to_dict(row))",
+      "inc = c.execute(\"SELECT * FROM incidents WHERE id=?\",(inc_id,)).fetchone()",
+      "if inc:",
+      "    d = row_to_dict(inc)",
+      "    d[\"incident_location\"] = d.get(\"location\",\"\")",
+      "    d[\"operational_period_number\"] = period",
+      "    return self.send_json(d)"
+    ]},
+    {"p": "Saving general info flows the other way, and it keeps two records honest at once. It writes the full header into `general_info`, and then it also updates the core `incidents` row with the handful of fields that live there too — name, Incident Commander, location, jurisdiction, ICS variant — so the incident list and the forms never disagree about the basics:"},
+    {"code": [
+      "c.execute(\"\"\"UPDATE incidents SET name=?, incident_commander=?,",
+      "    location=?, jurisdiction=?, ics_variant=?, updated=? WHERE id=?\"\"\",",
+      "    (body.get(\"incident_name\",\"\"),body.get(\"incident_commander\",\"\"),",
+      "     body.get(\"incident_location\",\"\"),body.get(\"jurisdiction\",\"\"),",
+      "     body.get(\"ics_variant\",\"FEMA\"),now, inc_id))"
+    ]},
+
+    {"h1": "How It Works — Check-In Writes Two Boards at Once"},
+    {"p": "The scan page and the remote check-in page both post to the same endpoint, `POST /api/ics/checkin`. A person signs in once, but two things need to happen: they must appear on the ICS-211 sign-in roster (the `checkin_entries` table), **and** they must appear as a resource on the T-card board so command can see and move them. Rather than make the client do two calls and risk them drifting apart, the one handler does both. It writes the check-in row, then creates or refreshes a matching T-card keyed to the check-in's own identifier:"},
+    {"code": [
+      "# Auto-populate the T-card board from the 211 sign-in (documented behavior:",
+      "# a check-in appears on BOTH the ICS-211 roster and the T-card board).",
+      "# Keyed to the check-in id so a re-check-in refreshes rather than duplicates,",
+      "# and any board movement already made (status/assignment) is preserved.",
+      "tc_id    = f\"tc-ci-{ci_id}\"",
+      "res_name = body.get(\"name\",\"\") or body.get(\"callsign_id\",\"\") or \"Unknown\"",
+      "if c.execute(\"SELECT 1 FROM ics_tcards WHERE id=?\",(tc_id,)).fetchone():",
+      "    c.execute(\"\"\"UPDATE ics_tcards SET incident_id=?, resource_name=?, ...",
+      "                 ... WHERE id=?\"\"\", ( ... , tc_id))",
+      "else:",
+      "    c.execute(\"\"\"INSERT INTO ics_tcards ( ... ) VALUES( ... )\"\"\", ( ... ))"
+    ]},
+    {"p": "The deterministic key `tc-ci-{ci_id}` is what makes this safe to call repeatedly. Because the T-card identifier is derived from the check-in identifier, a second check-in by the same person updates the same card instead of creating a duplicate, and because the update branch deliberately does not touch `status` or `assignment`, any move command already made on the board survives the refresh. The response hands back both identifiers so the client knows about each record:"},
+    {"code": [
+      "return self.send_json({\"status\":\"ok\",\"id\":ci_id,\"tcard_id\":tc_id})"
+    ]},
+    {"callout": {"kind": "note", "label": "JARGON, IN PLAIN WORDS",
+      "text": "**ICS-211** is the incident check-in list — the roster of everyone who has signed in. A **deterministic key** is an identifier built by a fixed rule (here, `tc-ci-` plus the check-in id) so the same input always yields the same key; that is how a repeat check-in lands on the same T-card instead of spawning a new one. **INSERT OR REPLACE** is SQLite writing a row that either creates it or overwrites the existing one with the same primary key."}},
+
+    {"h1": "Why It Matters / Design Takeaways"},
+    {"bullets": [
+      "__One service owns the whole incident.__ Incidents, periods, forms, T-cards, check-ins, the activity feed, and meetings all live behind port 5055, so the rules about how an incident is stored and changed are in one file.",
+      "__Safe because it is unreachable.__ Binding to `127.0.0.1` and living behind nginx at `/svc/5055` is what lets the service stay small and open (wide CORS, no per-request auth) without being exposed — the network never touches it directly.",
+      "__A flexible forms table beats dozens of rigid ones.__ Storing every ICS form as a JSON blob in `ics_forms` means new forms and new fields need no database change; the cost is that you query forms whole, not by their inner fields.",
+      "__Write the shared header once.__ `general_info` holds the common form header per incident and period, auto-fills from the incident record when empty, and writes core fields back to `incidents` so nothing drifts.",
+      "__Keep linked records in sync inside one handler.__ A single check-in writes both the ICS-211 roster and the T-card board, keyed deterministically so repeats refresh rather than duplicate."
+    ]},
+    {"callout": {"kind": "important", "label": "MAINTAINER'S RULE",
+      "text": "Add ICS behavior here, and add it the way this file already works. Route new endpoints as another `if/elif` branch that ends in `send_json`; pass every value to SQL as a bound `?` parameter and pick any dynamic column names from a fixed in-code whitelist, never from the request body. Store a new form or field in the `ics_forms` JSON blob — do not add a table unless you truly need to filter by that field in SQL. Preserve partial updates on the T-card and check-in paths so a status-only move never wipes the rest of a card, and call `log_activity` after every write so the activity feed stays complete. And never bind this service to anything but `127.0.0.1` — its safety depends on nginx being the only way in."}}
+  ]
+}

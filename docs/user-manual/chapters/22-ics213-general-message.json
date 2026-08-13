@@ -1,0 +1,135 @@
+{
+  "order": 22,
+  "title": "ICS-213 General Message",
+  "subtitle": "The standard written-message form for passing traffic between people, sections, or agencies during an incident — fill it in on screen, sign it with your finger or mouse, print it, or hand it to your radio email program.",
+  "in_this_chapter": [
+    "What the ICS-213 is and when to use it",
+    "The three form cards: Routing, Message, and Approved/Received",
+    "Every field explained in plain terms",
+    "Auto-filling the date, time, and message number",
+    "Filling the From name from a callsign automatically",
+    "Signing the form on screen",
+    "Generating the print-ready form",
+    "Printing, saving, exporting, and sending via Winlink",
+    "The saved-message log and Winlink import",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "Open **ICS-213**. Fill in **To**, **From**, **Subject**, **Date/Time**, and the **Message Text**. Click **⏰ Auto-fill Date/Time** to stamp the current time. If someone must reply, check **Reply Requested**. Optionally sign in the signature box. Click **📄 Generate Form** to see the print-ready copy, then **🖨 Print Form**, **💾 Save to Log**, **📄 Export (.txt)**, or **📡 Send via Winlink**."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "The **ICS-213 General Message** is the Incident Command System (ICS) standard for a short written message — the paper (or now digital) equivalent of passing a note in an organized, trackable way. When the Operations Section Chief needs to tell Logistics something in writing, when one agency sends a request to another, or when a radio operator writes down traffic to be delivered, the ICS-213 is the form that carries it."},
+    {"p": "FieldCommand's ICS-213 is a fillable version of that form. You type the message on screen, optionally sign it by hand right in the browser, and then produce a clean, print-ready copy that looks like the official form. From there you can print it, save it to a log, download it as a text file, or hand it off to a radio email (Winlink) program to send over the air when the internet is down."},
+    {"callout": {"kind": "note", "label": "A MESSAGE, NOT A CONVERSATION",
+      "text": "The ICS-213 carries one message and, if needed, one reply. It's for discrete written traffic — a request, an update, an instruction — not for an ongoing back-and-forth. For logging many messages across a radio net, use the ICS-309 Communications Log (Chapter 23)."}},
+
+    {"h1": "Opening the Form and Its Layout"},
+    {"p": "Open **ICS-213** from the dashboard or the top navigation bar. The screen shows a green live **UTC clock** in the corner and three stacked cards you fill top to bottom:"},
+    {"bullets": [
+      "**Incident & Routing** — who the message is to, who it's from, and the header details.",
+      "**Message** — the message text itself and the Reply Requested checkbox.",
+      "**Approved / Received** — who approved the message, the signature, and space for a reply."
+    ]},
+    {"screenshot": "The ICS-213 entry screen showing the Incident & Routing, Message, and Approved/Received cards with the signature box"},
+
+    {"h1": "Card 1 — Incident & Routing"},
+    {"p": "This card holds the header and addressing. The fields:"},
+    {"table": {
+      "headers": ["Field", "What to type"],
+      "rows": [
+        ["**Incident Name**", "The name of the incident this message belongs to (example: `Operation Winter Storm 2026`)."],
+        ["**To (Name / Title)**", "Who the message is for — a person or a role (example: `Operations Section Chief`)."],
+        ["**To (Position / Agency)**", "Their position or agency (example: `{{county_ex}} EMA`)."],
+        ["**Message Number**", "A tracking number for the message (example: `ICS-213-001`). Auto-fill can generate this for you."],
+        ["**From Callsign**", "The sender's amateur radio callsign, if they have one. Type it and tab out — the **From (Name / Title)** field fills in automatically from the Federal Communications Commission (FCC) database. Leave blank if the sender is not a licensed ham."],
+        ["**From (Name / Title)**", "Who the message is from (example: `Communications Unit Leader`). Fills automatically if you entered a callsign."],
+        ["**From (Position / Agency)**", "The sender's position or agency (example: `{{org_abbr}}`)."],
+        ["**Date**", "The message date (example: `Jun 7, 2026`)."],
+        ["**Time**", "The message time (example: `0930 UTC`)."],
+        ["**Subject**", "A short subject line (example: `Communications Status Update`)."]
+      ],
+      "widths": [2.5, 4.0]
+    }},
+    {"callout": {"kind": "tip", "label": "LET THE CALLSIGN FILL THE NAME",
+      "text": "If the sender is a licensed operator, just type their callsign in **From Callsign** and press Tab. FieldCommand looks the callsign up in its offline FCC database and drops the operator's name into the From field for you. It's faster and avoids typos. Not a ham? Leave the callsign blank and type the name by hand — the form works either way."}},
+
+    {"h1": "Card 2 — Message"},
+    {"p": "This is the heart of the form. Type your message in the **Message Text** box. The placeholder reminds you how: be clear and concise, and state __who needs to take action, what action is needed, and by when.__ A good ICS-213 leaves no doubt about what's being asked."},
+    {"p": "Below the message is the **Reply Requested** checkbox. Check it if the recipient must send an answer back. When checked, it prints on the form so the reply block is clearly expected — the recipient can see at a glance that you're waiting on them."},
+
+    {"h1": "Card 3 — Approved / Received"},
+    {"p": "The last card covers approval, signature, and the reply. In ICS practice, a message often needs sign-off from someone in charge before it goes out."},
+    {"table": {
+      "headers": ["Field", "What it's for"],
+      "rows": [
+        ["**Approved By (Name)**", "The name of the person approving the message (example: `Incident Commander`)."],
+        ["**Approved By (Title / Position)**", "Their position or title."],
+        ["**Approved By (Signature)**", "The signature box — draw a signature here (see below). Optional."],
+        ["**Reply (if applicable)**", "Space for the recipient's reply, if one comes back."],
+        ["**Replied By (Name / Signature)**", "Who wrote the reply."],
+        ["**Reply Date / Time**", "When the reply was written."]
+      ],
+      "widths": [2.6, 3.9]
+    }},
+
+    {"h1": "Signing the Form on Screen"},
+    {"p": "The **Approved By** signature box is a real signature pad. You can sign directly in the browser with a **mouse, a stylus, or your finger** on a touch screen — draw your signature in the white box just as you would on paper. If you make a mistake, click **Clear Signature** and try again."},
+    {"p": "The signature is optional. As the note under the box says, you can leave it blank and sign the printed copy by hand instead. If you do sign on screen, your signature appears on the generated form and prints with it."},
+
+    {"h1": "Auto-fill Helpers"},
+    {"p": "Two buttons save typing:"},
+    {"bullets": [
+      "**⏰ Auto-fill Date/Time** — stamps the **Date** and **Time** fields with the current UTC time, and if the **Message Number** is empty, generates the next one in sequence (like `ICS-213-002`).",
+      "**↺ New** — clears the whole form to start a fresh message."
+    ]},
+
+    {"h1": "Generating the Print-Ready Form"},
+    {"p": "When the form is filled in, click **📄 Generate Form**. The entry cards disappear and a clean, print-styled ICS-213 appears — the official numbered layout with your details in place, your signature if you drew one, and a __REPLY REQUESTED__ note if you checked that box. A row of action buttons appears with it."},
+    {"steps": [
+      "Click **📄 Generate Form** to build the print-ready copy.",
+      "Review it. To fix something, click **← Edit** to return to the form.",
+      "When it's right, use one of the action buttons below it."
+    ]},
+    {"screenshot": "The generated print-ready ICS-213 form with the official numbered layout and the action buttons beneath it"},
+
+    {"h1": "Print, Save, Export, and Send"},
+    {"p": "The action buttons under the generated form:"},
+    {"table": {
+      "headers": ["Button", "What it does"],
+      "rows": [
+        ["**🖨 Print Form**", "Opens your device's print dialog to print the form — or to save it as a PDF, since that's an option in most print dialogs."],
+        ["**💾 Save to Log**", "Saves the message to the on-screen log at the bottom of the page (and to the server), so you have a record of what was sent."],
+        ["**📄 Export (.txt)**", "Downloads the message as a plain text file, named after the message number."],
+        ["**📡 Send via Winlink**", "Prepares the message as a ready-to-send text file for a radio email program (see below)."],
+        ["**← Edit**", "Goes back to the entry form to make changes."]
+      ],
+      "widths": [2.3, 4.2]
+    }},
+
+    {"h1": "Sending via Winlink"},
+    {"p": "Winlink is the amateur radio email network — a way to send email-style messages over the air when the internet is down (covered in its own chapter). The **📡 Send via Winlink** button does not transmit anything itself. Instead, it prepares the message: it builds a text file with the recipient and subject already set up, downloads it, and tells you what to do next."},
+    {"steps": [
+      "On the generated form, click **📡 Send via Winlink**.",
+      "A text file downloads and a message reminds you to open it in your Winlink client.",
+      "Open that file in your Winlink program (**Pat** on the Raspberry Pi/Linux, or **Winlink Express** on a Windows laptop).",
+      "Fill in the recipient's actual Winlink address in the To line, then send it over the air from your Winlink program."
+    ]},
+    {"callout": {"kind": "note", "label": "NO LIVE RADIO LINK IS NEEDED HERE",
+      "text": "FieldCommand doesn't talk to the radio directly. It just hands your Winlink program a ready-made message. The actual over-the-air sending happens in that program — this keeps the message form simple and works no matter which Winlink client you use."}},
+
+    {"h1": "The Saved-Message Log"},
+    {"p": "At the bottom of the page, **Saved ICS-213 Messages** lists every message you've saved with **💾 Save to Log** — showing its number, subject, To, From, and date. This is your running record of ICS-213 traffic on this device. Each row has an **✕** to delete it, and **Clear All** empties the whole log. The list keeps your most recent messages so you can look back at what was sent."},
+    {"p": "One more thing this page can do: **import** a Winlink message. If an ICS-213 arrives over Winlink and is brought in through the Winlink import page, it opens this form already filled in and jumps straight to the print-ready view — so a received message is as easy to print and file as one you wrote."},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__I typed a callsign but the name didn't fill in.__ The name only auto-fills if the **From (Name / Title)** field is still empty and the callsign is found in the FCC database. If the name box already has text, it won't overwrite it. Some callsigns (clubs, very new licenses) may not be in the local database — just type the name by hand.",
+      "__My signature won't draw.__ Make sure you're drawing inside the white signature box. On a touch screen, use your finger or a stylus; with a mouse, click and drag. If it still won't take, click **Clear Signature** and try again — or skip it and sign the printed copy.",
+      "__I clicked Generate Form and my entry fields vanished.__ That's expected — the form switched to the print-ready view. Click **← Edit** to get the entry fields back.",
+      "__Print looks wrong / includes the navigation menu.__ Use the **🖨 Print Form** button on the generated form, not your browser's menu, so only the ICS-213 prints. The page is set up to hide everything but the form when printing.",
+      "__Send via Winlink didn't send anything.__ That button only prepares a file — it never transmits. Open the downloaded file in your Winlink program (Pat or Winlink Express), add the recipient's Winlink address, and send from there.",
+      "__My saved messages disappeared.__ The log is stored on the device you used. A different device, or a cleared browser, won't show them. Saving also sends a copy to the server, so the server-side record persists even if the local list is cleared."
+    ]}
+  ]
+}

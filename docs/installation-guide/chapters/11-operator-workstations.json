@@ -1,0 +1,105 @@
+{
+  "order": 11,
+  "title": "Operator Workstations — {{workstation}}",
+  "subtitle": "The ready-to-use computers you set at each operating position — a {{workstation}} keyboard-computer and a monitor, joined to EMCOMM-NET and pointed at the FieldCommand dashboard, so an operator can sit down and work in seconds.",
+  "in_this_chapter": [
+    "What an operator workstation is, and why use dedicated ones",
+    "What each station is made of ({{workstation}} + monitor)",
+    "Connecting a workstation to EMCOMM-NET — wired or Wi-Fi",
+    "Powering it and opening the dashboard",
+    "Setting it to open FieldCommand by itself (kiosk / full-screen)",
+    "How many workstations a typical deployment uses",
+    "Running other Linux software and sharing the printer",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "Set a **{{workstation}}** and a monitor at each operating position. Plug the {{workstation}} into the switch with a network cable (or join **EMCOMM-NET** over Wi-Fi), plug in the monitor and power, and turn it on. Open the built-in **Chromium** web browser and go to **http://192.168.50.1**. That's a working operator station. To make it open FieldCommand by itself every time it starts, set Chromium's start page (below). Four stations is typical."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "An **operator workstation** is a small, ready-to-use computer you place at each operating position — the check-in table, the net control desk, the resource-tracking corner. It is nothing more than a **{{workstation}}** (a complete computer built into a keyboard) plus a **monitor**, connected to your FieldCommand network and showing the dashboard in a web browser. An operator walks up, sits down, and is already looking at the tools — no logging in to a personal account, no installing anything, no hunting for a cable."},
+    {"p": "FieldCommand is a **web application**: everything it does happens in a web browser pointed at the server. That means a workstation does not need any special software — it only needs a browser and a connection to the server. The whole job of this chapter is getting a browser on a screen at each position, aimed at **http://192.168.50.1**, so the people doing the work have the tools in front of them."},
+    {"callout": {"kind": "note", "label": "WHY DEDICATED WORKSTATIONS INSTEAD OF \"BRING YOUR OWN\"",
+      "text": "Anyone can connect their own phone, tablet, or laptop to EMCOMM-NET and reach the same dashboard — nothing stops them, and it is a fine way for helpers to pitch in. But **dedicated** {{workstation}} stations give you consistency you can count on: every position looks and behaves the same, there are no dead phone batteries mid-shift, no personal notifications popping up over an ICS form, and a fresh operator on the next shift finds the station exactly as the last one left it. For the core positions you staff every activation, dedicated stations are worth it."}},
+
+    {"h1": "What Each Station Is Made Of"},
+    {"p": "A single operator workstation is just a handful of parts. Here is what one station needs and what each piece is for:"},
+    {"table": {
+      "headers": ["Part", "What it is", "Why it's there"],
+      "rows": [
+        ["**{{workstation}}**", "A complete computer built into a keyboard — you add a screen, and it's a full desktop. Runs the Raspberry Pi OS Desktop operating system with the Chromium web browser already installed.", "This is the workstation's brain. It joins the network and runs the browser that shows FieldCommand."],
+        ["**Monitor**", "A 15.6-inch Full HD screen (the Raspberry Pi Monitor is the matched choice — it powers from the {{workstation}} over a single USB-C cable and has a built-in kickstand).", "So the operator can see the dashboard. Any HDMI monitor works; the matched 15.6-inch one keeps the station compact and travel-friendly."],
+        ["**micro-HDMI to HDMI video cable**", "A short cable from the {{workstation}}'s micro-HDMI port to the monitor's HDMI port.", "Carries the picture from the computer to the screen."],
+        ["**USB-C power supply (27 W)**", "The official Raspberry Pi USB-C power supply.", "Powers the {{workstation}}. If the monitor supplies power over USB-C, the {{workstation}} can run from the monitor instead — one less brick."],
+        ["**Network cable (optional)**", "A short CAT 6 Ethernet patch cable from the {{workstation}} to the network switch.", "The most reliable way to connect. Skip it if you join EMCOMM-NET over Wi-Fi instead."],
+        ["**Mouse (optional)**", "A USB mouse.", "The {{workstation}} has a keyboard built in; a mouse just makes pointing and clicking easier. A touchscreen monitor removes the need for one."]
+      ],
+      "widths": [1.9, 3.1, 2.0]
+    }},
+    {"callout": {"kind": "note", "label": "\"HDMI\", \"MICRO-HDMI\", AND \"USB-C\" — IN PLAIN WORDS",
+      "text": "**HDMI** (High-Definition Multimedia Interface) is the standard cable that carries video to a screen. **Micro-HDMI** is the same thing with a smaller plug on the computer end — that's why the video cable has a big plug at the monitor and a tiny plug at the {{workstation}}. **USB-C** is the small oval connector used here for power. You don't need to understand any of it beyond matching each cable to its labeled port."}},
+
+    {"h1": "Setting Up One Workstation"},
+    {"p": "Do this once per position. It takes a few minutes and needs no technical knowledge — you are connecting cables and opening a browser."},
+    {"h2": "Step 1 — Connect it to the network"},
+    {"p": "Pick **one** of these two ways to get the workstation onto EMCOMM-NET:"},
+    {"bullets": [
+      "__Wired (recommended).__ Run a short network cable from the {{workstation}}'s Ethernet port to any open port on the **network switch** (the box everything plugs into). Wired is steadier than Wi-Fi and never drops mid-net — use it whenever the station sits near the switch. The switch hands the workstation an address automatically; you do nothing else.",
+      "__Wi-Fi.__ If a cable won't reach, join the workstation to the **EMCOMM-NET** Wi-Fi network the same way you'd join any Wi-Fi: click the network icon on the {{workstation}} desktop, pick **EMCOMM-NET** from the list, and type the Wi-Fi password. This is the right choice for a station across the room or in another tent."
+    ]},
+    {"h2": "Step 2 — Connect the monitor and power"},
+    {"steps": [
+      "Plug the **micro-HDMI to HDMI** cable in: the small end into the {{workstation}}, the large end into the monitor.",
+      "Power the monitor (its own supply, or a USB-C cable if it draws power that way).",
+      "Power the {{workstation}} with the **27 W USB-C** supply — or, if your monitor feeds power out over USB-C, run that single cable to the {{workstation}} and skip the separate brick.",
+      "The {{workstation}} starts up on its own and lands on the Raspberry Pi OS desktop in under a minute. You'll see a normal desktop with a taskbar."
+    ]},
+    {"h2": "Step 3 — Open the FieldCommand dashboard"},
+    {"steps": [
+      "On the taskbar, click the **Chromium** web browser icon (the round, four-color circle).",
+      "In the address bar at the top, type **http://192.168.50.1** exactly — including the `http://` — and press Enter.",
+      "The FieldCommand dashboard opens. This station is now ready for an operator."
+    ]},
+    {"callout": {"kind": "tip", "label": "PREFER FULL-SCREEN FOR A CLEANER LOOK",
+      "text": "Press **F11** to put Chromium into full-screen mode — the address bar and desktop disappear, leaving only FieldCommand. Press **F11** again to come back out. Full-screen keeps operators focused on the tools and looks tidy on a small monitor."}},
+
+    {"h1": "Make It Open FieldCommand By Itself"},
+    {"p": "You don't want to reopen the browser and re-type the address every time a station powers on. Set the browser's **start page** once, and from then on the {{workstation}} boots straight to the dashboard with no clicks at all — a true walk-up-and-work station (sometimes called **kiosk mode**)."},
+    {"steps": [
+      "In Chromium, click the **three-dot menu** at the top-right and choose **Settings**.",
+      "In the left list, click **On startup**.",
+      "Choose **Open a specific page or set of pages**, then click **Add a new page**.",
+      "Type **http://192.168.50.1** and click **Add**.",
+      "Close Settings. From now on, every time this {{workstation}} starts, Chromium opens straight to the FieldCommand dashboard."
+    ]},
+    {"callout": {"kind": "note", "label": "A DIFFERENT BROWSER IS FINE",
+      "text": "Chromium comes pre-installed and is the recommended choice, but the {{workstation}} can also run **Firefox** (install with `sudo apt install firefox-esr`) or the very lightweight **GNOME Web** browser (`sudo apt install epiphany-browser`) if you ever want an alternative — for example on a check-in station with many tabs open where you want the smallest memory footprint. All of them reach the same dashboard at the same address."}},
+
+    {"h1": "How Many Workstations Do You Need?"},
+    {"p": "There is no fixed number — you set up one workstation per operating position you want to staff. A common, comfortable starting point is **four** {{workstation}} stations, which covers the core roles most activations run at once:"},
+    {"bullets": [
+      "__Net control__ — the operator running the radio net and logging check-ins.",
+      "__Check-in / registration__ — logging people and resources as they arrive.",
+      "__Resource / status tracking__ — keeping the ICS boards and forms current.",
+      "__A spare or floating station__ — for the incident commander, a message clerk, or whoever needs a screen next."
+    ]},
+    {"p": "Add more as your positions grow; remove them when you run lean. Because every station is identical and connects the same way, scaling up or down is just plugging in or unplugging one more {{workstation}}. The switch has ports set aside for them, so there's room to expand without reconfiguring anything."},
+
+    {"h1": "More Than Just a Browser"},
+    {"p": "A {{workstation}} workstation is a full Linux desktop computer, not a locked-down terminal — so it can do ordinary desktop work alongside FieldCommand when you need it to. That flexibility is a bonus, not a requirement; most of the time a station just shows the dashboard."},
+    {"bullets": [
+      "__Office documents.__ **LibreOffice** — a free office suite that opens and creates documents, spreadsheets, and presentations — comes with the Raspberry Pi OS Desktop. An operator can draft a message, keep a side spreadsheet, or open a PDF without leaving the station.",
+      "__Printing.__ Every workstation can print to the shared network printer through FieldCommand's print server. Chromium finds the printer automatically, so printing an ICS form or a net log is just **File → Print**. The full setup and any troubleshooting live in the **Printing** chapter — this is only a pointer to it."
+    ]},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__The workstation can't reach the dashboard / the page won't load.__ First confirm the network connection: for a wired station, check the CAT 6 cable is firmly seated at both the {{workstation}} and the switch, and that the switch port's light is on; for Wi-Fi, click the network icon and confirm it's joined to **EMCOMM-NET**. Then check the address is typed exactly as `http://192.168.50.1`, including the `http://`. If other stations reach the dashboard but this one doesn't, the problem is this station's connection, not the server.",
+      "__No picture on the monitor.__ Make sure the small (**micro-HDMI**) end of the video cable is in the {{workstation}} and the large (**HDMI**) end is in the monitor — it's easy to reverse. Confirm the monitor is powered on and set to its **HDMI** input. If the monitor draws power over USB-C, check that cable too. As a test, try the other micro-HDMI port on the {{workstation}}.",
+      "__The keyboard or mouse doesn't respond.__ The keyboard is built into the {{workstation}} and works as soon as the computer is powered — if nothing types, the {{workstation}} itself may not be powered (check the USB-C power and look for its power light). For a separate USB mouse, unplug it and plug it back into a USB port; give it a few seconds to be recognized. A touchscreen monitor needs its USB touch cable connected to the {{workstation}}, not just the video cable.",
+      "__It boots to the desktop but not to FieldCommand.__ You haven't set the start page yet, or it was cleared. Open Chromium, go to **Settings → On startup**, choose **Open a specific page**, and add **http://192.168.50.1** (see the steps above). After that it opens the dashboard on every boot.",
+      "__The screen is cut off or too big/small.__ This is a display-resolution mismatch. On the {{workstation}} desktop, open **Screen Configuration** (or **Settings → Displays**) and set the resolution to match the monitor — Full HD (1920×1080) for the matched 15.6-inch screen. The picture will snap to fit.",
+      "__The station is slow with many tabs open.__ A {{workstation}} is a small computer; a dozen open browser tabs will tax it. Close tabs you're not using, or switch that station to the lighter **GNOME Web** browser for check-in duty where memory is tight."
+    ]}
+  ]
+}

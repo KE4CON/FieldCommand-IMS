@@ -1,0 +1,134 @@
+{
+  "order": 3,
+  "title": "Before You Begin — Flash the microSD Card",
+  "subtitle": "Put the operating system on a memory card and drop the FieldCommand software onto it — the one preparation step you do on your own computer before the Raspberry Pi ever powers on.",
+  "in_this_chapter": [
+    "What you need on hand (a computer, a microSD card, and one free program)",
+    "Installing the Raspberry Pi Imager",
+    "Choosing the operating-system edition",
+    "The Imager Advanced Options — hostname, username, password, and more",
+    "Getting the FieldCommand software onto the card (the bootfs drive)",
+    "Renaming the folder if you downloaded the ZIP from GitHub",
+    "The optional fieldcommand.conf file for hands-off setup",
+    "The shortcut if the Pi has internet",
+    "Putting the card in the Pi and powering on",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "On your computer, install the **Raspberry Pi Imager** from **raspberrypi.com/software**. Use it to write **Raspberry Pi OS (64-bit, Desktop)** to a microSD card, and in its **Advanced Options** set the hostname to **`fieldcommand.local`** and the username to **`fieldcommand`** (that exact username is required). When it finishes, a small drive named **`bootfs`** appears on your computer — copy the whole **`FieldCommand-IMS`** folder onto it. Put the card in the Pi 5, connect a monitor and keyboard, and power it on. The next chapter runs the one command that builds the server."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "A Raspberry Pi doesn't come with an operating system — the software that makes it a working computer — so before it can do anything you have to put one on a memory card for it. That card is a **microSD card** (Secure Digital, the same tiny card a phone or camera uses). Writing the operating system onto the card is called **flashing** it. This chapter walks you through flashing the card on your own laptop or desktop computer, and then dropping the FieldCommand software folder onto that same card so it's waiting for the Pi on first boot."},
+    {"p": "Everything here happens **on your regular computer**, not on the Pi. The Pi stays switched off until the very end. When you're done, you'll have one prepared microSD card; you slide it into the Pi, power on, and the next chapter takes over. Think of this as packing the Pi's lunch before it goes to work."},
+    {"callout": {"kind": "note", "label": "WHO DOES THIS",
+      "text": "This is a one-time job for whoever is building the server — one person, at a desk, before the equipment ever ships to the field. It takes about fifteen minutes, most of which is the card writing itself while you wait."}},
+
+    {"h1": "What You Need on Hand"},
+    {"bullets": [
+      "__A computer__ — any Windows, macOS, or Linux laptop or desktop with a way to read a microSD card (a built-in card slot, or a small USB card reader).",
+      "__A microSD card__ — 32 gigabytes (GB) or larger is plenty for this setup card. A name-brand card (SanDisk, Samsung, Kingston) is worth the couple of extra dollars; cheap no-name cards fail often.",
+      "__The Raspberry Pi Imager__ — one free program from the Raspberry Pi people that both downloads the operating system and writes it to the card. Getting it is the next step.",
+      "__The FieldCommand software__ — the `FieldCommand-IMS` folder, either already on your computer or downloaded from GitHub (covered further down)."
+    ]},
+    {"callout": {"kind": "warning", "label": "FLASHING ERASES THE CARD",
+      "text": "Writing the operating system wipes everything already on the microSD card. That's normal and expected for a blank setup card — but if you grabbed a card that has photos or other files on it, copy those off first. The Imager will warn you before it writes, but it never hurts to check."}},
+
+    {"h1": "Install the Raspberry Pi Imager"},
+    {"steps": [
+      "On your computer, open a web browser and go to **raspberrypi.com/software** (type it exactly).",
+      "Click the big download button for **your** computer's system — it offers **Download for Windows**, **Download for macOS**, and **Download for Ubuntu/Linux**. Pick the one that matches the computer you're using.",
+      "When the file finishes downloading, open it and follow the normal install prompts for your system (on Windows, click through the installer; on macOS, drag the Raspberry Pi Imager icon into your Applications folder).",
+      "Open the newly installed **Raspberry Pi Imager**. You'll see a simple window with three buttons: **Choose Device**, **Choose OS**, and **Choose Storage**."
+    ]},
+    {"callout": {"kind": "note", "label": "\"OS\" MEANS OPERATING SYSTEM",
+      "text": "Throughout the Imager and this guide, **OS** is short for **operating system** — the base software that runs the computer, the same idea as Windows or macOS on your laptop. On the Pi it's a version of Linux called Raspberry Pi OS."}},
+
+    {"h1": "Choose the Device and the Operating System"},
+    {"steps": [
+      "Click **Choose Device** and select **Raspberry Pi 5** — the model this build uses.",
+      "Click **Choose OS**. From the list, pick **Raspberry Pi OS (other)**, then choose **Raspberry Pi OS (64-bit)** — the full **Desktop** edition."
+    ]},
+    {"p": "There are a few editions to choose from, and the right one depends on how you plan to work. For **building and setting up** the server, the **Desktop** edition is the easiest because it gives the Pi a normal screen with a mouse, menus, and a web browser right on the Pi — handy for testing. Here is the plain-language comparison:"},
+    {"table": {
+      "headers": ["OS edition", "What it gives you", "Best for"],
+      "rows": [
+        ["**Raspberry Pi OS (64-bit) Desktop** *(recommended for setup)*", "A full graphical screen on the Pi — menus, a mouse, and a local web browser. Easiest for new users and for testing.", "Building the server and troubleshooting with a monitor and keyboard connected."],
+        ["**Raspberry Pi OS (64-bit) Lite**", "No screen or menus at all — text only. Uses less memory and boots faster, but you configure it over the network from your laptop.", "Experienced Linux admins running a lean production server."],
+        ["**Ubuntu Server 24.04 LTS**", "A different flavor of Linux, also text-only. Familiar to admins already standardized on Ubuntu.", "Organizations that already use Ubuntu everywhere."]
+      ],
+      "widths": [2.4, 2.9, 2.1]
+    }},
+    {"callout": {"kind": "tip", "label": "WHEN IN DOUBT, PICK DESKTOP (64-BIT)",
+      "text": "If you're not sure, choose **Raspberry Pi OS (64-bit) Desktop**. It's the friendliest for the build steps in this guide, and everything in the next chapter is written assuming you have a monitor and keyboard on the Pi. You can always move to the leaner Lite edition later once you're comfortable."}},
+
+    {"h1": "The Advanced Options — Set These Before You Write"},
+    {"p": "Before it writes the card, the Imager lets you pre-fill some settings so the Pi comes up ready to use. This step matters — one of these settings is **required** for FieldCommand to install correctly."},
+    {"steps": [
+      "Click **Choose Storage** and pick your microSD card from the list. Double-check the size matches your card, so you don't accidentally pick another drive.",
+      "Click **Next**. The Imager asks **\"Would you like to apply OS customisation settings?\"** — click **Edit Settings** (on some versions, the gear icon).",
+      "Fill in the settings using the table below.",
+      "Click **Save**, then click **Yes** to apply the settings, then **Yes** again to confirm you want to write the card. Writing takes several minutes — let it finish."
+    ]},
+    {"table": {
+      "headers": ["Imager option", "What to set it to", "Why"],
+      "rows": [
+        ["**Hostname**", "`fieldcommand.local`", "This is the name the Pi answers to on the network. Setting it here means the Pi is reachable as `fieldcommand.local` from any device."],
+        ["**Username**", "`fieldcommand` *(required — type it exactly)*", "The FieldCommand installer expects this exact username. If you use anything else, the setup in the next chapter will not find its files."],
+        ["**Password**", "Choose a strong password and **write it down**", "You'll need it the first time you use `sudo` on the Pi and to reach the print system's admin page. There is no way to recover it if you forget it."],
+        ["**Enable SSH**", "Optional for Desktop — leave it on if you'd like to reach the Pi remotely later; it's fine to leave off if you have a monitor and keyboard on the Pi", "SSH (Secure Shell) is a way to control the Pi from another computer with no screen. The Desktop edition doesn't need it for setup."],
+        ["**Configure wireless LAN (Wi-Fi)**", "Enter your **home or workbench** Wi-Fi name and password", "This gets the Pi online during the build so it can download software. The field network (EMCOMM-NET) is set up much later — this is just for now."],
+        ["**Locale / Time zone & keyboard**", "Set your local time zone (for example, US/Central) and keyboard layout", "So the Pi's clock and keyboard match where you are."]
+      ],
+      "widths": [1.9, 2.8, 2.7]
+    }},
+    {"callout": {"kind": "important", "label": "THE USERNAME MUST BE fieldcommand",
+      "text": "Of everything on this screen, the **Username** is the one you cannot change. Type **`fieldcommand`** exactly — all lowercase, one word. The installer in the next chapter looks for files under that exact user; a different name (even `FieldCommand` or `field_command`) will make the setup fail with confusing errors. The hostname `fieldcommand.local` and the password are up to you, but the username is fixed."}},
+
+    {"h1": "Put the FieldCommand Software on the Card"},
+    {"p": "Flashing put the operating system on the card. Now you add the FieldCommand software itself, so it's already there when the Pi boots — no internet required on the Pi. When the Imager finishes writing, it ejects and re-mounts the card, and a small drive appears on your computer named **`bootfs`**. That's the card's boot partition — the one place both your computer and the Pi can read."},
+    {"steps": [
+      "Leave the card in your computer (or re-insert it) after the Imager finishes. Open your file manager (File Explorer on Windows, Finder on macOS).",
+      "Find the small drive named **`bootfs`**. It's usually just a few hundred megabytes in size — that's correct; it's meant to be small.",
+      "Copy the **entire `FieldCommand-IMS` folder** onto the `bootfs` drive — the whole folder, not just the files inside it. Drag it in, or copy and paste it.",
+      "Wait for the copy to finish completely before you eject the card. Then safely eject `bootfs` (right-click → Eject on Windows, or drag to the eject icon on macOS)."
+    ]},
+    {"callout": {"kind": "note", "label": "WHY THE FOLDER GOES ON bootfs SPECIFICALLY",
+      "text": "Flashing creates two drives on the card: **`bootfs`** (small, and readable by any computer) and **`rootfs`** (the big Linux part, which Windows and macOS can't open). The `FieldCommand-IMS` folder must go on **`bootfs`** because that's the drive your computer can write to — and on the Pi, that same drive shows up at the path **`/boot/firmware`**, which is where the setup command looks for it."}},
+
+    {"h1": "If You Downloaded the ZIP from GitHub — Rename It"},
+    {"p": "If you got the FieldCommand software by downloading it as a **ZIP** file from GitHub (the website where the source code lives), there's one small thing to fix. GitHub packs the download so that, when you unzip it, the folder comes out named **`FieldCommand-IMS-main`** — with a `-main` on the end. The setup command in the next chapter looks for a folder named exactly **`FieldCommand-IMS`**, without the `-main`."},
+    {"steps": [
+      "Unzip the downloaded file (on Windows, right-click → Extract All; on macOS, double-click it).",
+      "You'll see a folder named **`FieldCommand-IMS-main`**.",
+      "Rename that folder to **`FieldCommand-IMS`** — remove the `-main` from the end (right-click → Rename).",
+      "Now copy that renamed **`FieldCommand-IMS`** folder onto the `bootfs` drive as described above."
+    ]},
+    {"callout": {"kind": "tip", "label": "OPTIONAL — DROP IN A fieldcommand.conf FOR HANDS-OFF SETUP",
+      "text": "If you want the next chapter's setup to run without asking you any questions (handy when you're building several identical servers), you can fill in a small text file named **`fieldcommand.conf`** ahead of time and copy it onto **`bootfs`** right alongside the `FieldCommand-IMS` folder. A ready-to-edit sample lives inside the `scripts` folder. This is completely optional — skip it and the setup simply asks its questions on screen instead. The next chapter covers the file in full."}},
+
+    {"h1": "The Shortcut — If the Pi Will Have Internet"},
+    {"p": "Copying the folder onto the card is the method that needs **no internet on the Pi at all** — ideal for a field build. But if your Pi will be plugged into the internet when you set it up, there's an even shorter path: skip copying the folder entirely, and let the Pi download FieldCommand itself with a single command once it boots. You'd flash the card exactly as above (still setting the username to `fieldcommand`), leave the folder off, and run one line on the Pi. The next chapter shows that one-line command. Pick whichever fits: copy-the-folder for offline, or the one-liner for online — you don't need both."},
+
+    {"h1": "Put the Card in the Pi and Power On"},
+    {"steps": [
+      "Make sure you've safely ejected the card from your computer, so nothing was left half-copied.",
+      "Slide the microSD card into the **Raspberry Pi 5**'s card slot (on the underside edge of the board). It clicks in; the metal contacts face the board.",
+      "Connect a **monitor** to one of the Pi's micro-HDMI ports and a **USB keyboard** (a mouse too, for the Desktop edition).",
+      "Plug in the Pi's **USB-C power supply** last. The Pi powers on the moment it has power — there's no separate power button.",
+      "Watch the monitor. The Pi boots into Raspberry Pi OS the first time, which takes a couple of minutes. When it settles onto the desktop (or a text login prompt for Lite), you're ready for the next chapter."
+    ]},
+    {"callout": {"kind": "note", "label": "WHAT COMES NEXT",
+      "text": "That's the whole card-preparation job. The next chapter, **The One-Command Setup**, is where the Pi actually becomes a FieldCommand server — you open a terminal, run a single command, answer a few short questions, and it builds everything by itself."}},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__The `bootfs` drive never appeared after flashing.__ Eject the card and re-insert it — the drive often shows up on the second mount. On Windows, `bootfs` sometimes appears without a drive letter; open Disk Management, find the small FAT partition on the card, and assign it a letter. Make sure you're looking at the **small** partition (`bootfs`), not the large `rootfs` one, which Windows and macOS can't read at all.",
+      "__I can't open or see the big part of the card (`rootfs`).__ That's expected and not a problem. `rootfs` is the Linux part of the card and Windows and macOS deliberately can't read it. You only ever need the small `bootfs` drive on your computer.",
+      "__The setup later can't find the FieldCommand files.__ The most common cause is the **username** wasn't set to exactly `fieldcommand`, or the folder is named `FieldCommand-IMS-main` instead of `FieldCommand-IMS`. Re-flash with the username `fieldcommand`, and make sure the folder on `bootfs` is named `FieldCommand-IMS` with no `-main`.",
+      "__The Pi shows nothing on the monitor / won't boot.__ Power off and re-seat the microSD card firmly — a card not fully clicked in is the usual cause. Confirm the monitor cable is in a **micro-HDMI** port on the Pi (the small one), and that you flashed a **64-bit** Raspberry Pi OS. If the card is old or off-brand, try flashing a fresh name-brand card.",
+      "__The Imager can't see my card under \"Choose Storage.\"__ Check the card is fully seated in the reader, try a different USB port or reader, and make sure the card isn't locked (some full-size SD adapters have a tiny lock switch on the side — slide it away from \"Lock\").",
+      "__Writing the card fails partway through.__ This is almost always a failing or counterfeit card. Try a different, name-brand microSD card. Re-download the Imager if the problem repeats across cards."
+    ]}
+  ]
+}

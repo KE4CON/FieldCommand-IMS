@@ -1,0 +1,155 @@
+{
+  "order": 5,
+  "title": "The Data Layer — SQLite and db.py",
+  "subtitle": "One small Python file, python/db.py, is the single front door to all of FieldCommand's saved data. It owns the database file, the connection handling, the schema, the migrations, and the one-time import of the old JSON files. Every service goes through it.",
+  "in_this_chapter": [
+    "What the data layer is and why it exists",
+    "Why SQLite (and not a database server) fits an offline field appliance",
+    "How connections are handed out — one per thread, safely",
+    "How the schema is created and safely upgraded over time",
+    "How legacy JSON data is migrated in exactly once",
+    "The helper functions every service shares",
+    "Design takeaways and the maintainer's rule"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "IN ONE SENTENCE",
+      "text": "`python/db.py` gives every FieldCommand service a thread-safe SQLite connection, creates and upgrades the schema on startup, and migrates any old JSON files in once — so the rest of the code just calls `db()` and writes SQL."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "FieldCommand keeps everything an incident produces — nets, check-ins, the roster, ICS forms, resources, costs, map state, the station's own configuration — in **one** database file on the server. The data layer is the single piece of code that owns that file. It is [python/db.py](python/db.py), and it is deliberately small and boring: it opens the database, hands out connections, defines the tables, upgrades them when the code changes, and imports any legacy data left over from the old JSON-file days. Nothing else in the system talks to the database file directly; everything goes through here."},
+    {"p": "Three separate service processes (the main / Federal Communications Commission (FCC) lookup server, the Incident Command System (ICS) platform server, and the health monitor) all `import db`. Because they share this one module, they share one schema, one set of helpers, and one set of rules about how the database is opened. That is the whole point of having a data layer: the decisions about *how* data is stored live in exactly one place."},
+    {"callout": {"kind": "note", "label": "JARGON, IN PLAIN WORDS",
+      "text": "**SQLite** is a database that is just a single file on disk — there is no separate database server program to install, start, or log into. Your code opens the file and reads and writes it directly. **Schema** means the shape of the data: the list of tables and the columns in each. **Migration** means changing that shape safely after there is already real data in the file."}},
+
+    {"h1": "Why SQLite — the 'Why' Behind the Choice"},
+    {"p": "FieldCommand runs on a Raspberry Pi in a field with no internet and, often, no one who knows databases. A traditional database server (PostgreSQL, MySQL) would mean another service to install, secure, start at boot, back up, and troubleshoot at 2 a.m. in a shelter. SQLite removes all of that: the entire database is the file `/opt/fieldcommand/data/fieldcommand.db`. Backing it up is copying a file. There is no port, no password, no server process that can crash independently."},
+    {"p": "The trade-off is that SQLite is a library inside each process rather than a shared server, so the data layer has to be careful about **concurrency** — several service processes and several threads all touching the same file at once. The rest of this chapter is mostly about how `db.py` makes that safe. The paths are fixed at the top of the file, and the directories are created on import so a fresh install never fails for a missing folder:"},
+    {"code": [
+      "BASE      = Path(\"/opt/fieldcommand\")",
+      "DATA      = BASE / \"data\"",
+      "DB_PATH   = DATA / \"fieldcommand.db\"",
+      "",
+      "for _d in [DATA, DATA / \"nets\", DATA / \"forms\", DATA / \"ics\" / \"forms\",",
+      "           REFS_DIR, FILES_DIR, THUMB_DIR]:",
+      "    _d.mkdir(parents=True, exist_ok=True)"
+    ]},
+    {"callout": {"kind": "note", "label": "WHY fcc.db IS KEPT SEPARATE",
+      "text": "The ~800,000-record FCC license database lives in its own file (`fcc.db`), not in `fieldcommand.db`. The file's own comment explains why: it is huge (~600 MB), it is rebuild-only, and the application never writes to it. Keeping it out of the main database keeps backups of live incident data small and fast."}},
+
+    {"h1": "How It Works — One Connection Per Thread"},
+    {"p": "Each service runs a **single-threaded** HTTP server (Python's `HTTPServer`), so within one process requests are handled one at a time. Even so, `db.py` gives **each thread its own connection** using Python's `threading.local()` and opens it with `check_same_thread=False`. This is defensive: any background thread (for example the dead-man's-switch monitor) — or a future switch to a threaded server — then never shares a SQLite connection unsafely, because SQLite connection objects are not meant to be passed between threads carelessly. The first time a given thread asks for a connection, one is created and tuned; after that, the same thread gets the same connection back:"},
+    {"code": [
+      "_local = threading.local()",
+      "",
+      "def get_conn() -> sqlite3.Connection:",
+      "    \"\"\"Return a thread-local connection to fieldcommand.db.\"\"\"",
+      "    if not hasattr(_local, \"conn\") or _local.conn is None:",
+      "        conn = sqlite3.connect(str(DB_PATH), check_same_thread=False)",
+      "        conn.row_factory = sqlite3.Row",
+      "        conn.execute(\"PRAGMA journal_mode=WAL\")",
+      "        conn.execute(\"PRAGMA synchronous=NORMAL\")",
+      "        conn.execute(\"PRAGMA foreign_keys=ON\")",
+      "        conn.execute(\"PRAGMA cache_size=-8000\")   # 8 MB per thread",
+      "        conn.execute(\"PRAGMA temp_store=MEMORY\")",
+      "        _local.conn = conn",
+      "    return _local.conn"
+    ]},
+    {"p": "Each setting is a deliberate choice, so here is what each one buys you:"},
+    {"table": {
+      "headers": ["Setting", "What it does", "Why it's set this way"],
+      "rows": [
+        ["`row_factory = sqlite3.Row`", "Makes query results behave like dictionaries (`row['name']`) as well as tuples.", "Every helper can turn a row straight into a dict for JSON responses — no column-order bugs."],
+        ["`journal_mode=WAL`", "Write-Ahead Logging: readers don't block the writer and the writer doesn't block readers.", "The dashboard is constantly reading while net control is writing. WAL keeps both smooth on one file."],
+        ["`synchronous=NORMAL`", "Slightly relaxes how often SQLite forces data to disk.", "A good safety/speed balance for a Pi with an SSD; still crash-safe under WAL."],
+        ["`foreign_keys=ON`", "Enforces the table relationships (e.g. deleting an incident cascades to its forms).", "SQLite leaves this OFF by default; the schema relies on it, so it must be turned on per connection."],
+        ["`cache_size=-8000`", "Gives each connection an 8 megabyte (MB) page cache.", "Speeds up repeated reads without using much of the Pi's memory."],
+        ["`temp_store=MEMORY`", "Keeps temporary tables/sorts in memory instead of on disk.", "Faster sorts and joins; less SSD wear."]
+      ],
+      "widths": [1.9, 2.5, 2.1]
+    }},
+    {"callout": {"kind": "note", "label": "JARGON, IN PLAIN WORDS",
+      "text": "**Thread-local** means each thread gets its own private copy of something. **Write-Ahead Logging (WAL)** is a way SQLite records changes to a side file first, so that reading and writing can happen at the same time without one freezing the other. **PRAGMA** is just SQLite's keyword for 'set an option on this connection.'"}},
+    {"p": "Two short aliases keep the calling code readable — services call `db()` everywhere rather than the longer name:"},
+    {"code": [
+      "def db() -> sqlite3.Connection:",
+      "    \"\"\"Shorthand for get_conn().\"\"\"",
+      "    return get_conn()"
+    ]},
+
+    {"h1": "How It Works — Creating and Upgrading the Schema"},
+    {"p": "All the tables are defined as one big block of SQL in the `SCHEMA` string, and every table uses `CREATE TABLE IF NOT EXISTS`. That single word — `IF NOT EXISTS` — is what makes `init_db()` safe to call on **every** startup: if the table is already there, nothing happens; if it isn't, it's created. `init_db()` runs the whole schema in one call:"},
+    {"code": [
+      "def init_db():",
+      "    \"\"\"Create all tables and indexes. Safe to call multiple times.\"\"\"",
+      "    conn = db()",
+      "    conn.executescript(SCHEMA)"
+    ]},
+    {"p": "But `CREATE TABLE IF NOT EXISTS` has a limit: it will **not** add a new column to a table that already exists from an older install. When a later version of FieldCommand needs a new column, the table is already there with real data in it, so the create statement does nothing. That is what the **migrations** list solves. It is a plain list of `ALTER TABLE ... ADD COLUMN` statements, run one at a time, each wrapped so that an 'already exists' error is simply ignored:"},
+    {"code": [
+      "    migrations = [",
+      "        \"ALTER TABLE nets ADD COLUMN net_opened TEXT\",",
+      "        \"ALTER TABLE station_config ADD COLUMN wifi_ssid TEXT DEFAULT 'EMCOMM-NET'\",",
+      "        # ... dozens more, one per column added over the project's life",
+      "    ]",
+      "    for sql in migrations:",
+      "        try:",
+      "            conn.execute(sql)",
+      "        except Exception:",
+      "            pass  # column already exists"
+    ]},
+    {"callout": {"kind": "warning", "label": "WHY THE BARE except IS INTENTIONAL HERE",
+      "text": "Swallowing every exception is normally a bad habit, and FieldCommand's own rules forbid it in general. This one spot is the deliberate exception: on a database that already has the column, `ADD COLUMN` throws, and that specific throw is the *expected, correct* outcome. The pattern is idempotent — running it a hundred times leaves the schema identical. When you add a column, append a new line here; never edit or reorder the existing lines, because field databases at every past version must all upgrade cleanly."}},
+    {"p": "After the tables exist, `init_db()` seeds the reference data that a brand-new database needs to be useful — example radio channels, the National Incident Management System (NIMS) resource-typing library, hospitals, incident templates, and the Federal Emergency Management Agency (FEMA) equipment rates. Each seeder checks whether its table is already populated and does nothing if so, so seeding also runs safely on every boot:"},
+    {"code": [
+      "    seed_hospitals(conn)",
+      "    seed_resource_types(conn)",
+      "    seed_channel_library(conn)",
+      "    seed_incident_templates(conn)",
+      "    seed_fema_equipment_rates(conn)"
+    ]},
+    {"callout": {"kind": "important", "label": "SEEDED DATA IS EXAMPLE DATA, NOT LOCKED DATA",
+      "text": "The seeded channels and similar defaults are McHenry County, Illinois examples on purpose — the seeder even says so in a comment. They are all fully editable and deletable from the app. Never treat seeded rows as system-owned; an agency is expected to replace them with their own."}},
+
+    {"h1": "How It Works — The One-Time JSON Migration"},
+    {"p": "Early versions of FieldCommand stored data in JSON files (a `nets/` folder, `roster.json`, `resources.json`, and so on). `migrate_from_json()` imports all of that into SQLite exactly once. The trick that makes it 'exactly once' is simple: after a file is successfully imported, it is **renamed** with a `.migrated` suffix, so the next boot no longer finds it. The generic helper shows the pattern:"},
+    {"code": [
+      "def _migrate_json_file(path: Path, label: str, fn):",
+      "    \"\"\"Load a JSON file, call fn(data), rename file to .migrated.\"\"\"",
+      "    if not path.exists():",
+      "        return 0",
+      "    try:",
+      "        data = json.loads(path.read_text())",
+      "        count = fn(data)",
+      "        path.rename(path.with_suffix(\".migrated\"))",
+      "        return count",
+      "    except Exception as e:",
+      "        log.warning(f\"  Migration error for {label}: {e}\")",
+      "        return 0"
+    ]},
+    {"p": "Every insert during migration uses `INSERT OR IGNORE`, so even if a migration were somehow run twice against the same data, duplicate primary keys are silently skipped rather than crashing. On a fresh install with no legacy files, all of this simply finds nothing and returns immediately — it costs nothing."},
+
+    {"h1": "The Shared Helpers"},
+    {"p": "The rest of `db.py` is a handful of tiny helpers that every service uses so that time-stamping and JSON handling are done the same way everywhere:"},
+    {"table": {
+      "headers": ["Helper", "What it returns"],
+      "rows": [
+        ["`utcnow()`", "The current time as a Coordinated Universal Time (UTC) string like `2026-08-12T14:30:00Z`. Every timestamp in the database is written with this, so logs and forms are consistent."],
+        ["`jdump(obj)`", "A JSON string for storing a list/object in a text column (used for things like a net's roster chips or a form's full data blob)."],
+        ["`jload(s, default)`", "The reverse — parses a JSON text column back into Python, returning `default` if the column is empty or unparseable (never throws)."],
+        ["`row_to_dict(row)` / `rows_to_list(rows)`", "Turn SQLite rows into plain dicts/lists, ready to hand straight to `json.dumps` for an Application Programming Interface (API) response."]
+      ],
+      "widths": [2.2, 4.3]
+    }},
+    {"p": "These look trivial, but they are why every service produces identical timestamp formats and stores JSON columns the same way. If you ever need to change how time is stamped or how JSON is stored, you change it here, once."},
+
+    {"h1": "Why It Matters / Design Takeaways"},
+    {"bullets": [
+      "__One front door.__ Because all data access goes through `db.py`, the hard decisions (concurrency, WAL, foreign keys, timestamp format) are made once and shared by every service.",
+      "__Safe to run on every boot.__ `init_db()` uses `CREATE TABLE IF NOT EXISTS`, an idempotent migration list, and check-first seeders, so starting the app never damages an existing database — it only ever brings the schema forward.",
+      "__Field-appropriate.__ SQLite means the whole database is one file with no server to babysit; backups are a file copy; WAL keeps reads and writes smooth on a single Pi.",
+      "__Forward-only migrations.__ New columns are added by appending to the migrations list, never by editing the schema of a table that already ships — so a database created by any past version upgrades cleanly."
+    ]},
+    {"callout": {"kind": "important", "label": "MAINTAINER'S RULE",
+      "text": "To change the stored data, change it in `db.py` and nowhere else. Add a table by extending the `SCHEMA` string; add a column by **appending** one `ALTER TABLE ... ADD COLUMN` line to the migrations list (never editing existing lines or the shipped `CREATE`); add starter data with a check-first seeder. Then confirm `init_db()` still runs cleanly against both a brand-new database and a copy of an old one before you consider the change done."}}
+  ]
+}

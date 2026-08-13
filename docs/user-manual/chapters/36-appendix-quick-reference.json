@@ -1,0 +1,231 @@
+{
+  "order": 36,
+  "title": "Appendix — Quick Reference & Administration",
+  "subtitle": "A one-page map of every screen and task, plus the housekeeping an administrator handles: preflight and health checks, backups to the external drive, and archiving finished incidents.",
+  "in_this_chapter": [
+    "A quick-reference table of the main screens by the job you're trying to do",
+    "A tour of the dashboard: the mode switcher and how features are grouped",
+    "The full list of pages and their web addresses",
+    "Running the Preflight check and reading the GO / NO-GO verdict",
+    "Watching system health (are all the services running?)",
+    "Backing up to the external USB drive",
+    "Archiving, restoring, and deleting finished incidents",
+    "For administrators: the background services and ports behind the scenes",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "Everything in FieldCommand starts from the **dashboard** at **http://192.168.50.1**. Pick the **mode** you're working in at the top (**Amateur Radio**, **{{ps_mode}}**, or **ICS / Incident Command**), then click the card for the task you want. Before an activation, open **Preflight** for a GO / NO-GO readiness check. When an incident is over, open **Incident Management** to **Archive to USB** and then delete it from the {{mid}}. That's the whole day."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "This appendix is the page you flip to when you know __what__ you want to do but not __which screen__ does it. It has three parts: a quick-reference of the main screens by task, a tour of how the dashboard is laid out, and the short list of administration jobs — backups, archiving, and the readiness checks — that one person handles to keep {{org_the}} ready. Nothing here is new functionality; it's a map of what the earlier chapters covered, gathered in one place so you don't have to hunt."},
+    {"p": "You do not need to read this front to back. Skim the first table, find your task, and go. Come back to the Administration sections when you're the person standing the server up or tearing it down."},
+
+    {"h1": "Quick Reference — Screens by Task"},
+    {"p": "Find the job you're trying to do in the left column; the middle column names the screen, and the right column is the web address you'd type if you wanted to jump straight there. Every one of these is also a labeled **card** on the dashboard, so you rarely need the address."},
+    {"table": {
+      "headers": ["I want to…", "Open this screen", "Address (after http://192.168.50.1/)"],
+      "rows": [
+        ["See everything at a glance", "Main Dashboard", "index.html"],
+        ["Check we're ready to activate", "Preflight Deployment Checklist", "preflight.html"],
+        ["Start or manage the incident", "Incident Command Section", "incident.html"],
+        ["Archive, restore, or delete an incident", "Incident Management", "incident_mgmt.html"],
+        ["Run an amateur-radio net", "Amateur Net Control Logger", "netcontrol.html"],
+        ["Run a {{ps_short}} net", "{{ps_mode}} Net Logger", "starcom.html"],
+        ["Watch a net without editing it", "Observer Mode", "observer.html"],
+        ["Check people in", "Manual Check-In (ICS-211)", "checkin.html"],
+        ["Check people in by scanning a code", "Scan Check-In", "scan_checkin.html"],
+        ["Look up who's on the team", "Member Roster", "roster.html"],
+        ["Track resources on a T-card board", "T-Card Resource Board", "ics/operations.html"],
+        ["See resources on a map", "GPS-Tracked Resource Map", "resource_map.html"],
+        ["Fill out an ICS-213 message", "ICS-213 General Message", "ics213.html"],
+        ["Keep an ICS-214 activity log", "ICS-214 Activity Log", "ics214.html"],
+        ["Keep an ICS-309 comms log", "ICS-309 Communications Log", "ics309.html"],
+        ["Build the Incident Action Plan", "IAP Assembly (Planning Section)", "iap.html"],
+        ["Look up an amateur callsign", "FCC Callsign Lookup", "callsign.html"],
+        ["Write an NTS radiogram", "NTS Radiogram Generator", "nts.html"],
+        ["See weather radar", "Animated NEXRAD Radar", "radar.html"],
+        ["Print anything", "Print Center", "printcenter.html"],
+        ["Read a manual or reference", "Reference Library", "refs.html"],
+        ["Change the organization settings", "Organization Setup", "setup.html"]
+      ],
+      "widths": [2.5, 2.4, 2.6]
+    }},
+
+    {"h1": "A Tour of the Dashboard"},
+    {"p": "The dashboard (`index.html`) is the home screen. Three bands run across the top, and everything below them is a grid of clickable **cards**."},
+    {"table": {
+      "headers": ["Part of the screen", "What it is / what it does"],
+      "rows": [
+        ["**Hero bar** (top)", "A dark strip showing your Wi-Fi name (default `EMCOMM-NET`), the system name and version, and a live clock. Amateur mode shows Coordinated Universal Time (UTC) big and local time small; the other modes flip that around."],
+        ["**Mode switcher** (three buttons)", "**📻 Amateur Radio**, **🚔 {{ps_mode}}**, and **🏛 ICS / Incident Command**. Clicking one changes which cards are shown below, so each kind of operator sees the tools that fit their job. It does not turn anything off — it just re-arranges the screen."],
+        ["**Weather + Radar row**", "A National Weather Service (NWS) alerts box and a radar shortcut. These need internet; offline they simply say they're waiting for a connection."],
+        ["**Section labels** (e.g. ⚡ Operations)", "Short headings that group the cards beneath them by purpose."],
+        ["**Cards**", "Each labeled tile opens one screen. A card shows an icon, a name, a one-line description, and sometimes a small port or source note in the corner."]
+      ],
+      "widths": [2.4, 4.1]
+    }},
+    {"callout": {"kind": "note", "label": "WHY SOME CARDS AREN'T THERE",
+      "text": "If a card you expect is missing, it's usually one of two things: you're in a different **mode** (switch modes at the top), or that feature was left off in **Setup** under Active Modules. The amateur-radio cards also stay grayed out if no callsign was entered during Setup. See Chapter 3 (Organization Setup) and the Troubleshooting chapter."}},
+    {"screenshot": "The FieldCommand dashboard: the hero bar, the three-way mode switcher, and the card grid below"},
+
+    {"h1": "Full Page & Address Reference"},
+    {"p": "Every screen in FieldCommand, with the web address you'd type after `http://192.168.50.1/`. You almost never need to type these — click the cards — but it's handy for bookmarks or when someone reads an address to you over the radio. Acronyms are spelled out on first use here for quick lookup."},
+    {"table": {
+      "headers": ["Address", "What the screen is"],
+      "rows": [
+        ["index.html", "Main Dashboard"],
+        ["incident.html", "Incident Management / Command Section"],
+        ["incident_mgmt.html", "Incident Archive, Restore, Delete"],
+        ["event_templates.html", "Pre-Planned Event Templates"],
+        ["resources.html", "Resource Board (flat list)"],
+        ["ics/operations.html", "T-Card Resource Board (drag-and-drop)"],
+        ["resource_map.html", "Global Positioning System (GPS)-Tracked Resource Map"],
+        ["resource_types.html", "National Incident Management System (NIMS) Resource Typing Library"],
+        ["checkin.html", "Manual Check-In (ICS-211)"],
+        ["scan_checkin.html", "Quick Response (QR) code / Barcode Scan Check-In"],
+        ["roster.html", "Member Roster and QR Code Generator"],
+        ["netcontrol.html", "Amateur Radio Net Control Logger"],
+        ["starcom.html", "{{ps_mode}} Net Logger"],
+        ["observer.html", "Observer Mode — Read-Only Net View"],
+        ["deadmans.html", "Dead Man's Switch (net inactivity monitor)"],
+        ["iap.html", "Incident Action Plan (IAP) Assembly — Planning Section"],
+        ["iap_compile.html", "IAP One-Click Portable Document Format (PDF) Compilation"],
+        ["ics-form.html", "Incident Command System (ICS) Form Suite — all forms"],
+        ["ics213.html", "ICS-213 General Message"],
+        ["ics214.html", "ICS-214 Activity Log"],
+        ["ics309.html", "ICS-309 Communications Log"],
+        ["fema_costs.html", "Federal Emergency Management Agency (FEMA) Public Assistance cost documentation"],
+        ["cost_dashboard.html", "Real-Time Cost Dashboard"],
+        ["wan_settings.html", "Wide Area Network (WAN) source configuration"],
+        ["wan-status.html", "WAN status detail page"],
+        ["radar.html", "Animated Next Generation Radar (NEXRAD)"],
+        ["propagation.html", "High Frequency (HF) propagation data"],
+        ["tactical.html", "Tactical Automatic Packet Reporting System (APRS) map"],
+        ["callsign.html", "Federal Communications Commission (FCC) callsign lookup"],
+        ["amprgate.html", "Amateur Packet Radio Network (AMPRNet / 44Net) gateway status"],
+        ["nts.html", "National Traffic System (NTS) radiogram generator"],
+        ["winlink-import.html", "Winlink form import"],
+        ["hospitals.html", "Hospital proximity directory"],
+        ["facilities.html", "Facilities directory"],
+        ["repeaters.html", "Repeater database"],
+        ["channel_library.html", "Channel library"],
+        ["cheatsheets.html", "Radio / ICS cheat sheets"],
+        ["grid.html", "Grid square calculator"],
+        ["position_checklists.html", "ICS position checklists"],
+        ["meetings.html", "Meeting scheduler"],
+        ["printcenter.html", "Print Center"],
+        ["preflight.html", "Preflight Deployment Checklist"],
+        ["refs.html", "Reference Library"],
+        ["setup.html", "Organization Setup"],
+        ["general_info.html", "General Info / ICS-201"]
+      ],
+      "widths": [2.5, 4.0]
+    }},
+
+    {"h1": "Administration — The Preflight Check"},
+    {"p": "The **Preflight Deployment Checklist** (`preflight.html`, the **Preflight** card) is your go/no-go readiness review before an activation. It walks eight groups — **Data Readiness**, **Power Systems**, **Communications Equipment**, **Computing & Software**, **Personnel & Staffing**, **Logistics & Supplies**, **Safety & Security**, and **Agency Coordination** — and for each item you tap one of three buttons: **✓** (GO), **⚠** (CAUTION), or **✕** (NO-GO)."},
+    {"steps": [
+      "Open the **Preflight** card from the dashboard.",
+      "The **Data Readiness** group at the top **auto-checks itself** — FieldCommand asks the server whether the organization is set up, the FCC database is loaded, the roster has members, and so on, and marks those items for you. Click **↺ Auto-Check** to re-run it.",
+      "Work down the other groups, tapping ✓, ⚠, or ✕ for each item. A small **red dot** marks items that must be GO before the system will clear you.",
+      "Watch the big **verdict banner** at the top. It reads **GO**, **CAUTION**, or **NO-GO** and explains why.",
+      "Use **💾 Save Progress** to keep your answers on the device, **🖨 Print Report** for a paper copy, or **⬇ Export JSON** to save the results as a file."
+    ]},
+    {"table": {
+      "headers": ["Verdict", "What it means"],
+      "rows": [
+        ["**GO** (green)", "Every required item is confirmed and nothing is marked NO-GO. Cleared to activate."],
+        ["**CAUTION** (amber)", "No hard failures, but some items are marked caution or aren't checked yet. Review before activating."],
+        ["**NO-GO** (red)", "At least one required item is unconfirmed or marked NO-GO. Fix it before you activate."]
+      ],
+      "widths": [1.8, 4.7]
+    }},
+    {"callout": {"kind": "note", "label": "PREFLIGHT ANSWERS STAY ON YOUR DEVICE",
+      "text": "Your ✓/⚠/✕ choices and notes are saved in the browser you're using (via **Save Progress**), not centrally. Do the preflight on the device you'll keep with you, or print/export it for the record."}},
+
+    {"h1": "Administration — System Health"},
+    {"p": "FieldCommand runs several small background programs (services). A built-in **health monitor** keeps an eye on them and on the hardware — processor load, memory, disk space, and whether each service is answering. The dashboard surfaces the important parts; the Preflight **Computing & Software** group lists the same services so you can confirm each is green before an activation."},
+    {"table": {
+      "headers": ["If this is unhealthy…", "What to check"],
+      "rows": [
+        ["Web server (nginx)", "Nothing loads at all — the {{mid}} may still be booting, or needs a restart. This is the program that serves every page."],
+        ["FCC lookup / config server", "Callsign lookups, the roster, nets, and Setup won't save. It's the service behind most data screens."],
+        ["Health monitor", "The health readout itself is blank. The rest of the system can still work."],
+        ["Map tile server", "Maps show blank tiles. Offline map imagery comes from this service."],
+        ["Disk space low", "Archive and delete old incidents (below) to free room before you run out."]
+      ],
+      "widths": [2.3, 4.2]
+    }},
+    {"callout": {"kind": "tip", "label": "GREEN ON THE DASHBOARD IS THE SHORT ANSWER",
+      "text": "You don't need to memorize service names. If the dashboard loads and the Preflight **Computing & Software** items auto-check green, the system is healthy. The service names matter only when something is red and a technically minded person is fixing it."}},
+
+    {"h1": "Administration — Backups to the External Drive"},
+    {"p": "FieldCommand backs its data up **automatically every night** to an external Universal Serial Bus (USB) drive, if one is connected. The drive must be labeled **FIELDCOMMAND**; the {{mid}} writes incident archives to it under the `incidents` folder. Your job as administrator is simply to **keep that drive plugged in** and to glance at the connection badge now and then."},
+    {"steps": [
+      "Plug the labeled **FIELDCOMMAND** USB drive into the {{mid}}.",
+      "Open **Incident Management** (`incident_mgmt.html`). At the top, a badge reads **USB Backup Drive Connected ✓** when the drive is seen, or **USB Backup Drive Not Detected** when it isn't.",
+      "Leave the drive connected. The nightly backup runs on its own — you don't start it by hand."
+    ]},
+    {"callout": {"kind": "important", "label": "NO DRIVE MEANS NO NIGHTLY BACKUP",
+      "text": "If the badge says **Not Detected**, the nightly backup has nowhere to write and your data lives only on the {{mid}}'s internal storage. Connect the FIELDCOMMAND drive so the automatic backup can run. For a real activation, having the external drive attached is part of a complete Preflight."}},
+
+    {"h1": "Administration — Archiving Finished Incidents"},
+    {"p": "When an incident is over, you don't delete it outright — you **archive it to the USB drive first**, confirm the copy is good, and only then remove it from the {{mid}} to free space. The **Incident Management** screen handles all three steps and keeps them in a safe order."},
+    {"steps": [
+      "Open **Incident Management** (`incident_mgmt.html`).",
+      "Find the finished incident in the list and click **💾 Archive to USB**. (The button is disabled until the FIELDCOMMAND drive is connected.) A full copy is written to the drive.",
+      "The incident moves into **Archived on Pi — awaiting deletion**. It's now safe on the drive but still taking up space on the {{mid}}.",
+      "Confirm the archive completed, then click **🗑 Delete from Pi** to reclaim the space. The copy on the USB drive remains.",
+      "To bring an archived incident back later, find it under **Archives on USB Backup Drive** and click **↩ Restore to Pi**."
+    ]},
+    {"callout": {"kind": "warning", "label": "ARCHIVE BEFORE YOU DELETE",
+      "text": "**Delete from Pi** is permanent for the copy on the {{mid}}. Only use it __after__ you've archived to the USB drive and confirmed the archive is there. If the drive isn't connected, don't delete — you'd have no backup."}},
+    {"screenshot": "The Incident Management screen: the USB Backup Drive badge at top, the active incidents with Archive to USB buttons, and the archived-awaiting-deletion list"},
+
+    {"h1": "For Administrators — Behind the Scenes"},
+    {"p": "You do not need any of this to operate FieldCommand — the cards and the dashboard are the whole user experience. This section is only for the technically minded person maintaining the {{mid}}, so they know which program answers on which network port. Each service starts automatically at boot and restarts itself if it stops."},
+    {"table": {
+      "headers": ["Port", "Program", "What it handles"],
+      "rows": [
+        ["80", "nginx (web server)", "Serves every page and image"],
+        ["5050", "fcc_lookup_server.py", "Callsign lookups, nets, roster, hospitals, repeaters, facilities, GPS / dead-man switch, WAN config"],
+        ["5051", "health_monitor.py", "System health — processor, memory, disk, service and connectivity status"],
+        ["5055", "ics_platform_server.py", "ICS forms, incidents, T-cards, check-ins, IAP, FEMA costs"],
+        ["5056", "reference_server.py", "Offline reference library (renders PDFs)"],
+        ["8083", "tile_server.py", "Offline map tiles"],
+        ["9000 / 9001", "amprgate_status.py", "44Net gateway status (read-only) and tunnel control (local only), on the gateway {{mid}}"]
+      ],
+      "widths": [1.2, 2.3, 3.0]
+    }},
+    {"table": {
+      "headers": ["Background service", "What it keeps running"],
+      "rows": [
+        ["ics-platform.service", "ICS platform server (port 5055)"],
+        ["fcc-lookup.service", "FCC lookup and config server (port 5050)"],
+        ["health-monitor.service", "System health monitor (port 5051)"],
+        ["fieldcommand-refs.service", "Offline reference library (port 5056)"],
+        ["fieldcommand-tiles.service", "Offline map tile server (port 8083)"],
+        ["deadmans.service", "Per-net dead-man switch monitor"],
+        ["wan-monitor.service", "WAN source monitoring and failover"],
+        ["aprs-rf.service", "RF APRS receive via a Terminal Node Controller (TNC)"],
+        ["kiwix.service", "Offline reference library server (Wikipedia, ARRL docs)"],
+        ["backup.service / backup.timer", "Nightly backup to the USB drive"]
+      ],
+      "widths": [2.6, 3.9]
+    }},
+
+    {"h1": "Copyright & License"},
+    {"p": "FieldCommand IMS v1.0 — Copyright © 2026 James Rospopo, KE4CON. Developed for emergency-management and amateur-radio organizations. Source code is released under the MIT License; this documentation under Creative Commons Attribution-ShareAlike 4.0 (CC BY-SA 4.0). Project home: `https://github.com/KE4CON/FieldCommand-IMS`."},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__A card I need isn't on the dashboard.__ Check the **mode** switch at the top (Amateur / {{ps_mode}} / ICS) — cards are grouped by mode. If it's still missing, the feature may be turned off in **Setup ▸ Active Modules**, or the amateur cards are grayed out because no callsign was entered.",
+      "__Preflight says NO-GO but I think we're ready.__ Scroll for the item with a **red dot** that's marked ✕ or left unchecked — a required item that isn't confirmed forces NO-GO. Set it correctly, and the banner updates.",
+      "__The Archive to USB button is grayed out.__ The **FIELDCOMMAND** USB drive isn't connected or mounted. Plug it in and wait for the **USB Backup Drive Connected ✓** badge, then try again.",
+      "__I archived an incident but it's still in the list.__ That's expected — it moves to **Archived on Pi — awaiting deletion** so you can verify the USB copy first. Click **Delete from Pi** once you've confirmed the archive.",
+      "__The nightly backup didn't run.__ The USB drive was probably unplugged overnight. Reconnect the FIELDCOMMAND drive; the backup runs on its own the next night, or you can archive incidents manually anytime from Incident Management.",
+      "__Health shows a red service.__ Note which one from the tables above and hand it to your technical contact; the service names map directly to what stopped working."
+    ]}
+  ]
+}

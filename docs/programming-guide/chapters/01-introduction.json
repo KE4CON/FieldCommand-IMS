@@ -1,0 +1,83 @@
+{
+  "order": 1,
+  "title": "Introduction — What FieldCommand Is and How This Book Works",
+  "subtitle": "FieldCommand IMS is an offline-first incident-management server that runs on a single Raspberry Pi and is used from an ordinary web browser. This chapter explains what the platform is, the small and deliberate technology stack it is built on, how to read this book, and where every part of the code lives.",
+  "in_this_chapter": [
+    "What FieldCommand is — an offline ICS/NIMS incident server on a Raspberry Pi",
+    "The whole technology stack in one view — nginx, Python, SQLite, static HTML",
+    "The design values that shaped every decision (offline-first, no build step)",
+    "How to read this book — the What -> Why -> How method and the jargon callouts",
+    "A map of the codebase — python/, html/, scripts/, udev/, systemd/",
+    "Who this book is for"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "IN ONE SENTENCE",
+      "text": "FieldCommand IMS is a self-contained incident-management server — a Raspberry Pi running __nginx__ in front of a few small Python programs and one __SQLite__ database file — that any browser on its own Wi-Fi network can use with no internet, no login, and no app to install."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "FieldCommand IMS is a complete Incident Command System / National Incident Management System (ICS/NIMS) incident-management platform that keeps working when the internet, the cell network, and commercial power are all gone. It runs on a single **Raspberry Pi 5** — a small, inexpensive single-board computer — which also broadcasts its own Wi-Fi network. Any phone, tablet, or laptop that joins that network opens a web browser, goes to `http://192.168.50.1`, and has the full suite of ICS tools: the net loggers, the resource and facility tracking, the tactical map, and every form needed to build a complete Incident Action Plan (IAP)."},
+    {"p": "The thesis behind the whole product is that **communications is inseparable from running an incident**. Cloud incident-management platforms — WebEOC, E-Team, NIMSIAP — all stop working the moment the infrastructure they depend on goes down, which is exactly the moment an emergency manager needs them most. FieldCommand is the offline-first answer to that: it is designed specifically for the moment when everything else fails. It adds a native amateur-radio and public-safety communications capability that no other ICS platform provides, and it deliberately puts amateur radio in front of emergency managers as the backup that survives a total-infrastructure disaster."},
+    {"callout": {"kind": "note", "label": "JARGON, IN PLAIN WORDS",
+      "text": "**Incident Command System / National Incident Management System (ICS/NIMS)** is the standard, nationwide way United States responders organize and document an emergency — the roles, the forms, and the workflow. **Incident Action Plan (IAP)** is the packet of standard forms that describes what an incident is doing during one work shift. **Offline-first** means the software is built to run with no internet at all; anything that needs the internet is an optional extra that lights up only when a connection happens to be present."}},
+    {"p": "One rule frames everything about the data side of the system: **incident data is permanent — save everything.** Every net, log, ICS form, T-card, cost record, resource, and roster snapshot an incident produces is written to the server, backed up to an external drive, and archived. Nothing an incident generates is treated as throwaway or session-only. (This is the deliberate opposite of the sibling project, Activation Planner, which is intentionally stateless.) When you work on any incident feature, the default is always *persist it and make sure it reaches the backup and archive path.*"},
+
+    {"h1": "The Whole Stack in One View"},
+    {"p": "FieldCommand's technology stack is intentionally tiny. The entire system is four kinds of thing, and you can hold all of them in your head at once:"},
+    {"table": {
+      "headers": ["Layer", "What it is", "Why it's here"],
+      "rows": [
+        ["**nginx**", "A web server that answers the browser on the standard ports (80 and 443), serves the static pages, terminates the encryption (TLS), and forwards Application Programming Interface (API) calls to the right Python service.", "One front door for everything, so the browser only ever talks to one place over one secure connection."],
+        ["**Python services**", "Several small, single-purpose programs, each built on Python's own `http.server` from the **standard library only** — no web framework.", "Each concern (the core API, health, the ICS platform, the reference library) is its own independent process that can crash, restart, or be worked on alone."],
+        ["**SQLite**", "One database file on disk (`fieldcommand.db`), reached through `python/db.py`.", "All incident data in a single file with no database server to install or babysit — backing it up is copying a file."],
+        ["**Static HTML/JS**", "Plain HyperText Markup Language (HTML) pages with inline CSS and JavaScript in `html/` — one page per tool. No framework, no build step.", "Deploy by copying files. Nothing to compile means nothing in the build chain to break in the field."]
+      ],
+      "widths": [1.5, 3.2, 2.3]
+    }},
+    {"p": "That is the whole picture. A browser asks nginx for a page or an API call; nginx serves the page from a folder or hands the API call to one of the Python programs; that program reads or writes the one SQLite file and answers. There is no application server, no container runtime, no message queue, and — importantly — **no build step**. What is in the `html/` folder is exactly what the browser runs, and what is in the `python/` folder is exactly what the server runs."},
+    {"callout": {"kind": "important", "label": "WHY 'NO BUILD STEP' IS A FEATURE, NOT A SHORTCUT",
+      "text": "There is deliberately nothing to compile, bundle, or transpile. That is what lets the software survive in the field: an operator can copy files onto a Raspberry Pi and it runs. The flip side is that syntax errors do not surface until a page is opened in a browser or a service is started. That is why the project's one hard rule is that no change is 'done' until `python scripts/preflight_check.py` passes — it compiles every Python file, syntax-checks every shell script, validates the JSON, and runs a syntax check on every `<script>` block in every HTML page."}},
+    {"p": "The only third-party Python packages anywhere in the running system are `flask`/`flask-cors` (used by the offline map-tile server) and `reportlab`/`pypdf` (used only by the document generators that build the PDFs, not by the field server). Every other runtime service is pure Python standard library. That constraint is a promise: a maintainer never has to chase a dependency tree to keep the field server alive."},
+
+    {"h1": "How to Read This Book"},
+    {"p": "This is a **maintainer's code book**, not a user manual. Its job is to explain how the code works and — just as important — *why it was built the way it was*, so that the next person to touch it makes changes that fit. It is written to be plain enough for a curious non-programmer to follow and deep enough for a maintainer to rely on. Every chapter follows the same three-part shape:"},
+    {"bullets": [
+      "__What it does__ — a plain-language description of the piece and the job it performs.",
+      "__Why it was built this way__ — the reasoning and the trade-offs behind the design, so you understand the constraints before you change anything.",
+      "__How it works__ — the mechanics, grounded in the real source with exact code quoted from the files."
+    ]},
+    {"p": "Two kinds of callout recur throughout. A **JARGON, IN PLAIN WORDS** note stops to define any technical term the moment it first appears, in everyday language. A **MAINTAINER'S RULE** at the end of each chapter states the one thing you must not get wrong when you work on that piece of the system. Every acronym is spelled out in full the first time it is used — like Transport Layer Security (TLS) — and then shortened."},
+    {"callout": {"kind": "note", "label": "JARGON, IN PLAIN WORDS",
+      "text": "**Grounded in the source** means every claim in this book is checked against the actual files in the repository, and the code you see quoted is copied from those files rather than invented. When this book shows a code block, it is real code you can go read yourself at the path named nearby."}},
+    {"p": "Because the code is the living source of truth and this book is generated from per-chapter files, the fastest way to trust any statement here is to open the file it names and read the surrounding lines. Every chapter points at real paths under `python/`, `html/`, `scripts/`, `udev/`, and `systemd/`."},
+
+    {"h1": "A Map of the Codebase"},
+    {"p": "The repository is organized by *kind of thing*, not by feature. Once you know these five folders, you can find anything:"},
+    {"table": {
+      "headers": ["Folder", "What lives here", "Examples"],
+      "rows": [
+        ["`python/`", "Every backend service and helper — the code that runs on the server. About nineteen files.", "`fcc_lookup_server.py` (core API, port 5050), `ics_platform_server.py` (ICS platform, 5055), `health_monitor.py` (5051), `reference_server.py` (5056), `tile_server.py` (8083), `db.py` (the one data layer)."],
+        ["`html/`", "The web front end — one self-contained page per tool, with its CSS and JavaScript inline. About forty-nine pages, plus a tiny shared `lib/`.", "`index.html` (the dashboard), `netcontrol.html`, `tactical.html`, `iap.html`, `theme.css`, and the two shared helpers `lib/identity.js` and `lib/tiles.js`."],
+        ["`scripts/`", "Installation, setup, and maintenance shell scripts — how the Pi is turned into a FieldCommand server.", "`fieldcommand-setup.sh` (one-command build), `install.sh`, `update.sh`, `fc-gen-cert.sh` (TLS cert), `preflight_check.py` (the mandatory syntax gate)."],
+        ["`udev/`", "System configuration files copied into place on the Pi — the operating-system-level glue.", "`nginx-fieldcommand.conf` (the web front-end config), `hostapd.conf` (Wi-Fi), `dnsmasq-fieldcommand.conf`, and the device rules for the Global Positioning System (GPS) and radio hardware."],
+        ["`systemd/`", "The service definitions that tell the Raspberry Pi's operating system how to start, stop, and auto-restart each Python program at boot.", "`fcc-lookup.service`, `ics-platform.service`, `health-monitor.service`, `fieldcommand-refs.service`, `fieldcommand-tiles.service`, `deadmans.service`."]
+      ],
+      "widths": [1.2, 2.6, 3.2]
+    }},
+    {"p": "The documents you are reading now (the Installation Guide, the User Manual, and this Programming Guide) live under `docs/`, built by generators in `docs_generators/`. Those are tooling, not part of the running field server."},
+    {"callout": {"kind": "note", "label": "JARGON, IN PLAIN WORDS",
+      "text": "**systemd** is the part of Linux that starts programs at boot and restarts them if they die. A **service** (a `.service` file) is a small text file telling systemd what to run and under what conditions. **udev** is the Linux part that reacts to hardware being plugged in — for example, giving a specific GPS receiver a fixed device name every time."}},
+
+    {"h1": "Who This Book Is For"},
+    {"p": "This book is for the person who has to keep FieldCommand working and safely change it — the maintainer. That might be a volunteer coordinator, a hobbyist programmer, or the next author who inherits the project. It assumes you can read code but does not assume you already know this codebase or every technology in it, which is why jargon is defined as it appears and the reasoning is spelled out alongside the mechanics. If you are a curious non-programmer, you can still follow the What and the Why of every chapter; the How sections are where the code lives when you need them."},
+
+    {"h1": "Why It Matters / Design Takeaways"},
+    {"bullets": [
+      "__Small on purpose.__ The entire stack is nginx + a few standard-library Python programs + one SQLite file + static HTML. You can hold the whole architecture in your head, and that is the point.",
+      "__Offline-first is the north star.__ Every design decision — SQLite over a database server, no build step, its own Wi-Fi — exists to make the system survive with zero internet on a single Raspberry Pi.",
+      "__The code is the source of truth.__ This book explains and quotes the real files; when in doubt, open the path named in the chapter and read the surrounding lines.",
+      "__Every chapter answers What, Why, and How.__ Read the Why before you change the How — the constraints are the reason the code looks the way it does."
+    ]},
+    {"callout": {"kind": "important", "label": "MAINTAINER'S RULE",
+      "text": "Protect the two things that make FieldCommand survivable: **no build step** and **standard library only** in the runtime servers. Deploy by copying files; never introduce a compile/bundle step or a front-end framework, and never add a Python runtime dependency without updating `scripts/install.sh`. And whatever you change, it is not done until `python scripts/preflight_check.py` passes."}}
+  ]
+}

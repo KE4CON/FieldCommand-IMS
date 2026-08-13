@@ -1,0 +1,138 @@
+{
+  "order": 16,
+  "title": "FCC Amateur Database & APRS (Optional)",
+  "subtitle": "Turn on the offline database of every US amateur-radio license so you can look up any callsign in the field with no internet — and set up APRS so live station positions appear on the tactical map.",
+  "in_this_chapter": [
+    "Who this chapter is for",
+    "What the offline FCC license database is and why it helps",
+    "Turning the database on and refreshing it",
+    "Using the in-app Callsign Lookup page",
+    "What APRS, Direwolf, and YAAC are",
+    "Connecting a USB TNC (Digirig or SignaLink)",
+    "Configuring Direwolf to receive and transmit",
+    "Feeding the tactical map",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "**FCC database:** during the main setup, answer **Y** to \"Download FCC database\" (about 600 megabytes). Then open the **Callsign Lookup** page in FieldCommand, type a callsign, and press **Look Up** — name, license class, and address appear instantly, no internet needed. **APRS:** plug a USB **Terminal Node Controller (TNC)** into the Pi (it appears as **`/dev/tnc0`**), edit two lines in **`/etc/direwolf.conf`** (your sound device and your callsign), restart Direwolf, and live stations show up on the tactical map."}},
+
+    {"callout": {"kind": "important", "label": "THIS CHAPTER IS OPTIONAL — AND TRANSMITTING NEEDS A LICENSE",
+      "text": "Like all of Part 2, this chapter is **optional** and aimed at groups with a licensed amateur-radio operator. The **offline FCC database is a read-only reference** and is handy to any group that logs hams during a net, licensed or not. But **APRS transmit** — sending your own position or relaying others — is on-air amateur operation and is only lawful under the control of a **properly licensed operator** with privileges on the band and mode used. A group with no hams can safely skip the APRS half of this chapter (and the database half too, if it never logs callsigns)."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "This chapter covers two independent amateur-radio features. You can turn on either one, both, or neither:"},
+    {"bullets": [
+      "__The offline FCC amateur license database__ — a full local copy of the **Federal Communications Commission (FCC)** records for roughly **800,000 US amateur licensees**, so you can look up any callsign instantly, even with no internet.",
+      "__APRS__ — the **Automatic Packet Reporting System**, the amateur network that carries station positions, weather, and short messages over the air. With a small piece of hardware and a radio, live station positions appear on FieldCommand's tactical map."
+    ]},
+    {"p": "They share this chapter because both are amateur-radio tools, but they do not depend on each other. Set up whichever your group needs."},
+
+    {"h1": "The Offline FCC License Database"},
+    {"p": "When a net-control operator types a callsign into a check-in field, it is enormously helpful to see the operator's name, license class, and town immediately — to confirm the person is who they say, to fill an ICS form correctly, or just to greet a new check-in by name. Online lookup services do this, but in a real activation you often have **no internet**. FieldCommand solves that by keeping the **entire FCC amateur database on the server's own drives**, so a lookup returns in well under a second whether or not there is any connection to the outside world."},
+    {"callout": {"kind": "note", "label": "WHY OFFLINE MATTERS IN THE FIELD",
+      "text": "The whole point of FieldCommand is to keep working when the normal internet is down — that is exactly when an emergency net is running. A callsign lookup that needs the internet is useless in a blackout. Holding all 800,000 records locally (about 600 megabytes on the mirrored drives) means the lookup is always available, and always fast."}},
+
+    {"h2": "Turning the Database On"},
+    {"p": "The easiest time to enable the database is during the main one-command setup (covered earlier in this guide). When it asks **\"Download FCC database\"**, the default is **N**, but the recommended answer is **Y**. Answering **Y** downloads and builds the database as part of the install — it needs an active internet connection for a few minutes while it runs."},
+    {"p": "If you skipped it during setup, or you want to rebuild it later, you can build it by hand. On the FieldCommand server Pi, open a Terminal and run:"},
+    {"code": [
+      "# Build (or rebuild) the FCC database — needs internet, takes about 5-10 minutes:",
+      "sudo -u fieldcommand \\",
+      "  /opt/fieldcommand/venv/bin/python \\",
+      "  /opt/fieldcommand/python/build_fcc_db.py"
+    ]},
+    {"p": "The build takes roughly **5 to 10 minutes** on a Raspberry Pi 5 and requires internet **only while it runs** — once built, the lookup itself never needs a connection. FieldCommand also keeps the data current on its own: a weekly refresh timer updates the records automatically. You can check or force it:"},
+    {"code": [
+      "# See the automatic weekly refresh timer:",
+      "sudo systemctl status fcc-refresh.timer",
+      "# Force an immediate refresh (needs internet):",
+      "sudo systemctl start fcc-refresh.service"
+    ]},
+    {"callout": {"kind": "note", "label": "HOW TO TELL IT'S READY",
+      "text": "In FieldCommand, the **Preflight → Data Readiness** screen has an **FCC Callsign Database** line showing how many records are loaded and how old they are. A healthy record count (hundreds of thousands) and a recent date mean the lookup is ready. If it shows zero records, the database was never built — run the build command above."}},
+
+    {"h2": "Using the Callsign Lookup Page"},
+    {"p": "Open the **Callsign Lookup** page from the FieldCommand dashboard (or the top navigation bar). It has two ways to search:"},
+    {"table": {
+      "headers": ["Feature", "How to use it", "What you get"],
+      "rows": [
+        ["**Single lookup**", "Type a callsign in the big box and press **Enter** or click **Look Up**.", "One result card: the callsign, license class (Technician, General, Extra, and so on), Active/Expired status, name, city and state, ZIP, grant and expiration dates, FRN, license ID, and grid square if known."],
+        ["**Advanced search**", "Fill any of Last/Entity Name, First Name, State, License Class, City, or Grid Square, then click **Search**.", "A table of every matching licensee (up to 100). Click any callsign in the table to open its full result card."],
+        ["**Recent lookups**", "Nothing to set up — the page remembers callsigns you looked up and shows them as quick buttons.", "One click re-opens a recent callsign, handy during a busy net."]
+      ],
+      "widths": [1.5, 3.0, 2.0]
+    }},
+    {"p": "From a result card you can also add the operator straight to your incident **roster**, or copy the callsign to the clipboard. The net-control loggers use the same database behind the scenes, so callsigns you enter there fill in the operator's details automatically."},
+
+    {"h1": "APRS — Live Positions on the Map"},
+    {"p": "APRS is the amateur network that carries short bursts of data — most usefully, **where stations are**. With APRS working, the tactical map shows live markers for participating stations as they report in: mobile units, portable operators, weather stations, and digipeaters. FieldCommand builds this from two free programs plus one small piece of hardware."},
+    {"table": {
+      "headers": ["Piece", "What it is", "What it does here"],
+      "rows": [
+        ["**Direwolf**", "A **software TNC** — a **Terminal Node Controller** done in software instead of a separate box.", "It listens to the radio's audio and decodes the APRS data packets (and encodes yours to transmit). It is the engine; it has no screen of its own."],
+        ["**A USB TNC**", "A small hardware adapter (Digirig Mobile or SignaLink USB) between the Pi and the radio.", "It carries audio both ways between the Pi and the transceiver and keys the radio to transmit. Direwolf needs it to hear and speak to the radio."],
+        ["**YAAC**", "\"Yet Another APRS Client\" — an optional Java program that can run on the Pi.", "An on-Pi APRS display, if you want one. It is optional; the tactical map is the main way FieldCommand shows APRS."]
+      ],
+      "widths": [1.4, 2.5, 2.6]
+    }},
+    {"callout": {"kind": "note", "label": "MOST OF THIS IS ALREADY INSTALLED",
+      "text": "The FieldCommand installer sets up **Direwolf** and **YAAC** for you, writes a starter **`/etc/direwolf.conf`**, and enables the Direwolf service. So in the normal case you do not install anything here — you connect the TNC and edit two lines of the config. The manual install steps exist only as a fallback if the automatic install failed."}},
+
+    {"h2": "Connecting the USB TNC"},
+    {"p": "Plug your USB TNC — a **Digirig Mobile** or a **SignaLink USB** — into one of the Pi's USB ports (or a powered USB hub). FieldCommand gives it a stable, predictable device name so software always finds it in the same place:"},
+    {"code": ["ls -la /dev/tnc0"]},
+    {"p": "The name **`/dev/tnc0`** always points to your TNC, no matter which USB port you use or what else is plugged in. FieldCommand sets this up with a **udev rule** — a small system rule that recognizes the TNC by its identity. This matters because a common USB GPS receiver uses the very same chip inside as the Digirig; the rules are written to tell them apart so your GPS never gets mistaken for your TNC or the other way around. Your radio then connects to the TNC with the audio and keying cable made for your specific transceiver."},
+    {"callout": {"kind": "note", "label": "GET THE RIGHT CABLE FOR YOUR RADIO",
+      "text": "The TNC needs a radio-specific cable to reach your transceiver. For a **Digirig**, order the cable for your exact radio model from **digirig.net**. For a **SignaLink USB**, order the matching Tigertronics cable for your rig. The wrong cable is the most common reason a freshly connected TNC hears nothing."}},
+
+    {"h2": "Configuring Direwolf (First Run)"},
+    {"p": "Direwolf needs to know two things: which sound device is your TNC, and what callsign to identify with. Set them once:"},
+    {"steps": [
+      "Find your TNC's sound device. Run **`arecord -l`** and note the **card** and **device** numbers it lists for the TNC (for example, card 1, device 0).",
+      "Open the config for editing: **`sudo nano /etc/direwolf.conf`**.",
+      "Set the **`ADEVICE`** line to your sound device — for card 1, device 0 that is **`plughw:1,0`**.",
+      "Set the **`MYCALL`** line to your callsign with an APRS suffix (an **SSID**), for example **{{club}}-5**. The suffix is a number that labels this particular station.",
+      "Save and exit (in `nano`: **Ctrl+O**, Enter, then **Ctrl+X**), then restart Direwolf: **`sudo systemctl restart direwolf`**."
+    ]},
+    {"callout": {"kind": "important", "label": "RECEIVE FIRST, TRANSMIT ONLY WHEN LICENSED AND READY",
+      "text": "Out of the box Direwolf is **receive-only** — it listens and decodes but never keys the radio. That is the safe way to start: you can confirm everything works by watching stations decode, with no transmission at all. **Transmitting** (acting as an iGate or a digipeater, or beaconing your own position) is on-air amateur operation. Only enable it if a **licensed operator** is in control, and configure the keying method (PTT) in the config — by GPIO pin, CM108 sound-card keying, or rig control — to match your TNC and radio."}},
+
+    {"h2": "Feeding the Tactical Map"},
+    {"p": "Direwolf decodes packets but does not draw the map itself. You point the map at whatever reads Direwolf's output. In FieldCommand, open **Tactical → Settings → APRS Sources** and choose the source that matches your setup:"},
+    {"table": {
+      "headers": ["Source", "Connects to Direwolf via", "Map setting"],
+      "rows": [
+        ["**APRS Command (Windows laptop)**", "KISS on TCP port **8001**, or AGW on port **8000**, over EMCOMM-NET", "Set the RF source host to the laptop's IP address"],
+        ["**Pi-side KISS bridge (optional)**", "KISS on **localhost:8001**", "Set the RF source host to **localhost** — lets the map work without the laptop"],
+        ["**APRS-IS internet (only if online)**", "the internet APRS-IS network", "Turn on the APRS-IS layer on the map"]
+      ],
+      "widths": [1.9, 2.5, 2.1]
+    }},
+    {"p": "Once a source is feeding it, stations decoded off the air appear as markers on the tactical map and update as new packets arrive."},
+    {"callout": {"kind": "note", "label": "THE LIVE APRS FEED IS CARRIED OVER SECURE HTTPS FOR YOU",
+      "text": "Because FieldCommand now serves everything over secure **HTTPS** (see the connect chapter), the tactical map's live APRS feed is passed through the web server automatically at the addresses **`/aprs-gw/`** and **`/aprs-yc/`**. You normally do nothing for this — it just works. It matters only in one case: if your **APRS gateway** (the radio-facing gateway, such as **YAAC**) runs on a **different computer** than the FieldCommand server — for example, on the operations laptop — then those two feeds need to be told where to find it. Whoever builds the server edits the two **`proxy_pass`** lines for `/aprs-gw/` and `/aprs-yc/` in the web-server (nginx) configuration so they point at that other computer's address, then restarts the web server. If the gateway runs on the FieldCommand server itself (the usual case), leave these alone."}},
+
+    {"h2": "Verifying APRS Is Working"},
+    {"p": "Two quick checks confirm the chain is alive. On the server Pi:"},
+    {"code": [
+      "# Watch Direwolf decode packets off the radio in real time:",
+      "journalctl -u direwolf -f",
+      "# Confirm the KISS/AGW ports are listening:",
+      "ss -tlnp | grep -E \"8000|8001\""
+    ]},
+    {"p": "If a nearby station or digipeater is active, the first command scrolls decoded packets as they arrive — that is your proof the TNC, radio, and Direwolf are all working together. The second command should list ports **8000** and **8001** as listening, which is what the map connects to."},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__The Callsign Lookup page finds nothing / every callsign is \"not found.\"__ The database was probably never built. Open **Preflight → Data Readiness** and check the **FCC Callsign Database** record count; if it is zero, run the build command shown above. Remember the build needs internet while it runs (but not afterward).",
+      "__Lookup says \"Could not reach local FCC database.\"__ The lookup service is not answering. On the server Pi, check it is alive with **`curl http://localhost:5050/health`**. If that fails, the database service needs restarting — the lookup runs on port 5050 of the FieldCommand server.",
+      "__A callsign really isn't in the database.__ The database holds **US** amateur licensees and is refreshed weekly. A brand-new license, a recent change, or a non-US callsign may not be present yet. Force a refresh with **`sudo systemctl start fcc-refresh.service`** (needs internet), or search by name in Advanced Search.",
+      "__The TNC isn't detected / `/dev/tnc0` is missing.__ Run **`ls -la /dev/tnc0`** — if nothing is there, unplug and replug the TNC, and confirm it is a supported unit (Digirig Mobile or SignaLink USB). If a USB GPS is also plugged in, make sure each shows up separately (`/dev/gps0` and `/dev/tnc0`); the udev rules keep them distinct, but a truly unknown adapter may not match either rule.",
+      "__No APRS packets are decoded.__ Work through the chain from the radio inward. Is the radio on the right APRS frequency and turned up? Is the correct radio-specific cable connecting the TNC to the radio? In **`/etc/direwolf.conf`**, does **`ADEVICE`** match the card/device from **`arecord -l`**? Watch **`journalctl -u direwolf -f`** while a known station is active — silence there points to audio or cabling; scrolling gibberish points to audio levels (next item).",
+      "__Audio levels are wrong (garbled or no decode).__ APRS is fussy about receive audio level. Too low and Direwolf hears nothing; too high and packets are distorted and fail to decode. Adjust the radio's volume and the TNC's input level a little at a time, watching the decode log until clean packets appear.",
+      "__Direwolf won't transmit.__ Transmit is off until you configure keying (PTT) in **`/etc/direwolf.conf`** and only under a licensed operator's control. Confirm the PTT method (GPIO, CM108, or rig control) matches your hardware, and that your radio is actually able to transmit on the frequency in use.",
+      "__The map shows no stations even though Direwolf is decoding.__ The map is not pointed at the feed. In **Tactical → Settings → APRS Sources**, set the source and host to match your setup (see the table above), and confirm ports **8000/8001** are listening with **`ss -tlnp | grep -E \"8000|8001\"`**."
+    ]}
+  ]
+}

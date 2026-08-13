@@ -1,0 +1,115 @@
+{
+  "order": 12,
+  "title": "Dead Man's Switch",
+  "subtitle": "A safety timer that watches your net for silence. If nobody checks in within the time you set, it sets off an alarm — so a field team that goes quiet doesn't go unnoticed.",
+  "in_this_chapter": [
+    "What a Dead Man's Switch is and when to use one",
+    "The four states: Disarmed, Armed, Warning, Triggered",
+    "The big status ring at the top of the page",
+    "Setting your default configuration (threshold, warning, poll, sound)",
+    "Watching monitored nets and their countdown timers",
+    "Arming, resetting, and disarming a net",
+    "What happens when the alarm fires",
+    "The activity log",
+    "Troubleshooting"
+  ],
+  "blocks": [
+    {"callout": {"kind": "tip", "label": "QUICK VERSION",
+      "text": "Open **Dead Man's Switch**. Set a **threshold** (how many minutes of silence you'll allow). **Arm** the net you want to watch. A countdown runs. Every check-in in Net Control resets it. If the countdown ever hits zero, the page flashes red and sounds an alarm so you can investigate. Click **Disarm** when the net closes."}},
+
+    {"h1": "What This Is / What It Is For"},
+    {"p": "A **Dead Man's Switch** is a safety device that assumes the worst if it stops hearing from you. FieldCommand's version watches your net's check-in activity. As long as check-ins keep coming, it stays quiet. But if the net goes completely silent for longer than a limit you set, it raises an alarm — because unexpected radio silence can mean a field team is in trouble and unable to call for help."},
+    {"p": "This is built for operations where a quiet radio is genuinely dangerous — search and rescue, a lone operator in the field, a team working a hazardous area. Instead of a human at net control having to remember \"wait, when did we last hear from Team 3?\", the switch tracks it precisely and never gets distracted."},
+    {"callout": {"kind": "note", "label": "IT WATCHES ACTIVITY — IT DOESN'T TRANSMIT",
+      "text": "The Dead Man's Switch is purely a monitor and an alarm. It doesn't key a radio or call anyone on its own. When it triggers, it's telling **you** to act — make contact, send someone to check, or escalate."}},
+
+    {"h1": "The Four States"},
+    {"p": "A net being watched moves through four states. The page uses these same words and colors everywhere, so it's worth learning them:"},
+    {"table": {
+      "headers": ["State", "Color", "What it means"],
+      "rows": [
+        ["**Disarmed**", "Green", "Not being watched. The timer is off. This is the resting state before you start and after you stop."],
+        ["**Armed**", "Amber", "Actively watching. The countdown is running and check-ins are resetting it. Everything is normal."],
+        ["**Warning**", "Red", "The countdown has passed the warning mark (75% of the threshold by default). Time is getting short — a heads-up before the full alarm."],
+        ["**Triggered**", "Red (flashing)", "The countdown reached zero. The alarm is firing. No activity was heard in time. Investigate now."]
+      ],
+      "widths": [1.6, 1.3, 3.6]
+    }},
+
+    {"h1": "The Status Ring at the Top"},
+    {"p": "In the top-right of the page is a large circular **status ring**. It's an at-a-glance summary of the **worst** state across every net you're watching. If everything is calm it reads **ALL CLEAR** in green; if any single net is in trouble, the ring jumps to that net's state — **MONITORING** (amber), **WARNING** (red), or **TRIGGERED** (red and pulsing). The idea is that from across the room you can tell the overall situation from the color of that one ring."},
+    {"screenshot": "The Dead Man's Switch page: the green ALL CLEAR status ring beside the header, with the configuration panel below"},
+
+    {"h1": "Default Configuration"},
+    {"p": "The **DEFAULT CONFIGURATION** panel sets the behavior used when you arm a net. These are the knobs:"},
+    {"table": {
+      "headers": ["Setting", "What it controls", "Default"],
+      "rows": [
+        ["**Default Threshold (minutes)**", "The maximum silence allowed. If no activity is logged within this many minutes, the switch triggers. Shorter for high-risk operations, longer for routine nets.", "`30`"],
+        ["**Warning at (% of threshold)**", "How far into the countdown the **Warning** state kicks in, as a percentage. At 75%, a 30-minute threshold warns at 22.5 minutes elapsed — giving you a nudge before the full alarm.", "`75`"],
+        ["**Poll Interval (seconds)**", "How often the page checks the server for fresh activity. Lower means faster reaction; higher means less network chatter.", "`15`"],
+        ["**Alert Sound**", "The sound the alarm makes: **Beep**, **Alarm** (a louder, higher tone), or **None (visual only)** if you want the flashing banner but no sound.", "`Beep`"]
+      ],
+      "widths": [2.3, 3.5, 0.9]
+    }},
+    {"p": "After changing any of these, click **Save Defaults**. The page remembers them on this device and notes the change in the activity log."},
+    {"callout": {"kind": "important", "label": "PICK A THRESHOLD YOU CAN LIVE WITH",
+      "text": "The threshold is a judgment call. Too short and you'll get false alarms every time the net is briefly quiet; too long and a real emergency goes unnoticed for too long. Match it to how often your teams are expected to check in — a good rule of thumb is a bit longer than your normal check-in cycle."}},
+
+    {"h1": "Monitored Nets"},
+    {"p": "Below the configuration is the **MONITORED NETS** area. Each net you're watching gets its own card, and the small timestamp on the right (**Updated … Z**) tells you when the page last heard from the server. If nothing is being watched yet, you'll see a message telling you to open a net in Net Control and arm the switch."},
+    {"p": "Each net card packs a lot of information into a small space:"},
+    {"table": {
+      "headers": ["On the card", "What it shows"],
+      "rows": [
+        ["**Net name** and **state badge**", "The net's name and its current state (disarmed / armed / warning / triggered), color-coded."],
+        ["**Countdown timer**", "The big number in the middle — time **remaining** before the alarm, counting down live. It's colored to match the state."],
+        ["**Progress bar**", "A visual bar that fills up as the silence grows. Full bar = out of time."],
+        ["**Last activity**", "The clock time of the most recent check-in that reset this net's timer."],
+        ["**Elapsed**", "How many minutes have passed since that last activity."],
+        ["**Warning at**", "The minute mark where this net flips to the Warning state (based on your warning percentage)."],
+        ["**Triggered**", "Only appears once an alarm has fired — the time it triggered, in red."]
+      ],
+      "widths": [2.2, 4.3]
+    }},
+    {"screenshot": "A monitored net card showing the live countdown timer, progress bar, and Arm / Reset / Disarm buttons"},
+
+    {"h1": "Arming, Resetting, and Disarming a Net"},
+    {"p": "The buttons at the bottom of each net card change depending on its state, so you only ever see the actions that make sense right now:"},
+    {"table": {
+      "headers": ["Button", "When it appears", "What it does"],
+      "rows": [
+        ["**⚡ Arm**", "When the net is disarmed", "Starts watching this net. The countdown begins from your threshold and the state turns Armed."],
+        ["**↺ Reset**", "When the net is armed, warning, or triggered", "Manually restarts the countdown from the top — useful after you've handled an alarm and want to keep watching."],
+        ["**✕ Disarm**", "When the net is armed, warning, or triggered", "Stops watching this net entirely. It asks you to confirm first, then returns the net to Disarmed."]
+      ],
+      "widths": [1.4, 2.5, 2.6]
+    }},
+    {"callout": {"kind": "important", "label": "CHECK-INS RESET THE TIMER FOR YOU — AUTOMATICALLY",
+      "text": "You normally don't touch the **Reset** button at all. **Any** check-in logged in the Net Control Logger for that net resets its countdown on its own. That's the whole point: as long as your teams keep checking in, the timer keeps refreshing and the alarm never fires. **Reset** is just a manual override for when you need it."}},
+
+    {"h1": "What Happens When the Alarm Fires"},
+    {"p": "If a net's countdown reaches zero, three things happen at once so it's impossible to miss:"},
+    {"bullets": [
+      "A **red alarm bar** appears across the top of the page reading *“DEAD MAN'S SWITCH TRIGGERED — NET INACTIVITY ALARM,”* flashing to draw the eye.",
+      "The **status ring** and the affected **net card** turn red and pulse.",
+      "The **alert sound** you chose plays (unless you set it to None)."
+    ]},
+    {"p": "When this happens, act on it: try to raise the silent team or net on the radio, send someone to physically check if you can, and escalate to your incident commander. Once you've made contact or resolved the situation, click **↺ Reset** to restart the countdown (if the net is still running) or **✕ Disarm** to stop watching. The alarm clears on its own once no net is in the triggered state anymore."},
+    {"callout": {"kind": "warning", "label": "THE SOUND NEEDS A SPEAKER AND AN AWAKE SCREEN",
+      "text": "The audible alarm plays through the browser on the device showing this page, so that device needs working speakers with the volume up. Run the Dead Man's Switch on a dedicated monitor or tablet at the net control position, and keep that screen awake — a sleeping tablet can't sound an alarm."}},
+
+    {"h1": "The Activity Log"},
+    {"p": "At the bottom, the **ACTIVITY LOG** is a running timeline of what the switch has done — nets armed, reset, or disarmed, configuration changes, and alarms. Each line shows the time, the net, and a short note. It's a quick record of the session for your after-action notes. The **Clear** button empties the log. The log is kept in this browser only and isn't a permanent incident record, so copy anything important into your official log before clearing it."},
+
+    {"h1": "Troubleshooting"},
+    {"bullets": [
+      "__“Loading DMS state from server…” never goes away, or it says “Server offline.”__ The page can't reach the Dead Man's Switch service on the Pi. Confirm the FieldCommand server is running and this device is on the FieldCommand Wi-Fi, then wait for the next poll.",
+      "__No nets show up to monitor.__ There's nothing to watch until a net is live. Open a net in **Net Control** first, then return here — the net will appear as a card you can **Arm**.",
+      "__The alarm went off but there was no emergency (false alarm).__ Your threshold is shorter than your net's natural quiet periods. Raise the **Default Threshold**, click **Save Defaults**, and re-arm. Then **Reset** the net to restart cleanly.",
+      "__The timer never counts down / never resets.__ The switch resets on check-ins logged in the **Net Control Logger**. If check-ins aren't being logged there, the timer won't refresh. Make sure operators are being logged in Net Control, not just heard on the radio.",
+      "__I can't hear the alarm.__ Check the device's speaker and volume, and confirm **Alert Sound** isn't set to **None**. Browsers also need a click on the page before they'll play sound — interact with the page once after loading it.",
+      "__I armed the wrong net / want to stop watching.__ Click **✕ Disarm** on that net's card and confirm. It returns to the green Disarmed state and stops counting."
+    ]}
+  ]
+}

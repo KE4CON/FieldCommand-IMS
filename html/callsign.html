@@ -185,7 +185,7 @@
 </div>
 
 <script>
-const API = 'http://192.168.50.1:5050';
+const API = '/svc/5050';
 let recentLookups = JSON.parse(localStorage.getItem('fc_recent_callsigns')||'[]');
 
 setInterval(()=>{ document.getElementById('utc-clock').textContent = new Date().toUTCString().slice(17,22)+'Z'; },1000);

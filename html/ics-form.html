@@ -281,9 +281,9 @@
 <div class="ics-print" id="printView"></div>
 
 <script>
-const ICS_API  = 'http://192.168.50.1:5055';
+const ICS_API  = '/svc/5055';
 function markDirty(){ window.__fcFormDirty = true; }
-const MAIN_API = 'http://192.168.50.1:5050';
+const MAIN_API = '/svc/5050';
 
 const params    = new URLSearchParams(location.search);
 const FORM_NUM  = params.get('form') || '201';
@@ -9556,7 +9556,7 @@ let mpTargetKey = null;
 let mpTileLayer = null;
 let mpLabels = [];
 
-const TILE_SERVER = 'http://localhost:8083';
+const TILE_SERVER = '';  // same-origin: tiles served at /tiles/... via nginx
 const TILE_SOURCES = {
   offline_auto:   null, // handled by FC_TILES
   osm:            { url:'https://tile.openstreetmap.org/{z}/{x}/{y}.png', attr:'© OpenStreetMap contributors', crossOrigin:true },

@@ -4,7 +4,32 @@ Post-v1.0 planned work. Items here are **not** in v1.0 scope; they are recorded 
 
 ---
 
-## v1.5 / v2.0 — Transport Security (HTTPS)  ·  **Priority: High**
+## Transport Security (HTTPS) — ✅ IMPLEMENTED (2026-08-13)
+
+**Shipped:** the app now serves over HTTPS with an HTTP→HTTPS redirect. The four core
+services (5050/5051/5055/5056) are bound to `127.0.0.1` and reached same-origin through
+nginx at `/svc/<port>` — so operator PII (roster, check-ins, ICS forms, FEMA costs) is no
+longer on the wire in cleartext, and camera/GPS/PWA secure-context features are unlocked.
+Certificate is generated at install by `scripts/fc-gen-cert.sh` — a private local CA by
+default (install `fieldcommand-ca.crt` on devices for a clean padlock), or `--self-signed`
+(`TLS_SELF_SIGNED=1`). See `udev/nginx-fieldcommand.conf`.
+
+**Remaining follow-ups (smaller):**
+- **Live APRS tactical feed** (APRS Command / YAAC on the laptop, ports 8080/8082, http + `ws://`).
+  APRS data is public so this is a browser mixed-content issue, not a confidentiality one. Fix:
+  an nginx reverse-proxy (`/aprs/` → the gateway host, with WebSocket upgrade → `wss://`),
+  driven by a Setup field for the APRS gateway address. The map still works from stored state
+  meanwhile.
+- **Other direct-port services** still served over plain HTTP on their own ports: Pat Winlink
+  (8090), Kiwix (8081), tiles (8083, also proxied at `/tiles`). Non-PII; optionally bind-localhost
+  + proxy them later.
+- **Gateway FCC lookup** (`amprgate_status.py`) calls the server over HTTPS with certificate
+  verification disabled (public data, graceful fallback). Tighten to verify the local CA if the
+  root is distributed to the gateway Pi.
+
+---
+
+## (historical) v1.5 / v2.0 — Transport Security (HTTPS)  ·  the original plan
 
 **Why this is on the near track:** served agencies (county emergency management, public
 safety) increasingly expect a secure ("padlock") system and may formally vet it before

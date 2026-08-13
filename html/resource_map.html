@@ -191,8 +191,8 @@ html,body { height:100%;margin:0;padding:0; }
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-const API     = 'http://192.168.50.1:5050';
-const ICS_API = 'http://192.168.50.1:5055';
+const API     = '/svc/5050';
+const ICS_API = '/svc/5055';
 
 let map, markersLayer;
 let allTCards    = [];   // all tcards for incident (with and without GPS)
@@ -558,7 +558,7 @@ async function toggleRepLayer() {
   if (!repLayerLoaded) {
     btn && (btn.textContent = '📡 Loading…');
     try {
-      const res = await fetch('http://192.168.50.1:5050/api/repeaters');
+      const res = await fetch('/svc/5050/api/repeaters');
       if (!res.ok) throw new Error(res.status);
       const reps = await res.json();
       repLayer.clearLayers();

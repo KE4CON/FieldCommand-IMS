@@ -1698,4 +1698,5 @@ class ICSHandler(BaseHTTPRequestHandler):
 if __name__ == "__main__":
     db.startup()
     log.info("ICS Platform API on port 5055")
-    HTTPServer(("0.0.0.0", 5055), ICSHandler).serve_forever()
+    # Localhost only — reached via nginx at /svc/5055 over HTTPS.
+    HTTPServer(("127.0.0.1", 5055), ICSHandler).serve_forever()

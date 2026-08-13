@@ -148,7 +148,7 @@
 </div>
 
 <script>
-const API='http://192.168.50.1:5050';
+const API='/svc/5050';
 let rows=[];   // {dt, from, to, subject}
 
 setInterval(()=>{ const e=document.getElementById('utc-clock'); if(e) e.textContent=new Date().toUTCString().slice(17,22)+'Z'; },1000);
@@ -208,7 +208,7 @@ function currentData(){
 async function loadIncidents(){
   const sel=document.getElementById('incidentSel');
   try{
-    const r=await fetch('http://192.168.50.1:5055/api/ics/incidents',{signal:AbortSignal.timeout(4000)});
+    const r=await fetch('/svc/5055/api/ics/incidents',{signal:AbortSignal.timeout(4000)});
     if(r.ok){
       const d=await r.json();
       const list=Array.isArray(d)?d:(d.incidents||[]);

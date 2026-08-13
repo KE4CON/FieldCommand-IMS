@@ -1011,7 +1011,7 @@ let STATION_CALL = "EMCOMM-NET";
 
 async function loadStationConfig() {
   try {
-    const r = await fetch('http://192.168.50.1:5050/api/config');
+    const r = await fetch('/svc/5050/api/config');
     if (!r.ok) return;
     const cfg = await r.json();
     if (cfg.callsign) {
@@ -1112,7 +1112,7 @@ const SVC_LABELS = {
 
 async function pollHealth() {
   try {
-    const r = await fetch("http://192.168.50.1:5051/api/health/quick", {signal: AbortSignal.timeout(5000)});
+    const r = await fetch("/svc/5051/api/health/quick", {signal: AbortSignal.timeout(5000)});
     const d = await r.json();
     const temp = d.cpu_temp ? `${d.cpu_temp}°C` : "—°C";
     const memPct = d.memory_pct ? `${d.memory_pct}%` : "—%";
@@ -1136,7 +1136,7 @@ async function pollHealth() {
     // If GPS has a fix, update station coordinates live
     if (gpsFix) {
       try {
-        const posRes = await fetch("http://192.168.50.1:5050/api/position");
+        const posRes = await fetch("/svc/5050/api/position");
         const pos = await posRes.json();
         if (pos.fix && pos.lat && pos.lon) {
           // Update global station position for NWS alerts
@@ -1155,7 +1155,7 @@ async function pollHealth() {
   } catch(e) { /* offline */ }
 
   try {
-    const r2 = await fetch("http://192.168.50.1:5051/api/health/services",{signal:AbortSignal.timeout(5000)});
+    const r2 = await fetch("/svc/5051/api/health/services",{signal:AbortSignal.timeout(5000)});
     const svcs = await r2.json();
     const grid = document.getElementById("svcGrid");
     grid.innerHTML = Object.entries(svcs).map(([k,v]) => {
@@ -1166,7 +1166,7 @@ async function pollHealth() {
   } catch(e) {}
 
   try {
-    const r3 = await fetch("http://192.168.50.1:5050/api/dms",{signal:AbortSignal.timeout(3000)});
+    const r3 = await fetch("/svc/5050/api/dms",{signal:AbortSignal.timeout(3000)});
     const dms = await r3.json();
     const bar = document.getElementById("dmsBar");
     const lbl = document.getElementById("dmsLabel");
@@ -1178,7 +1178,7 @@ async function pollHealth() {
   } catch(e) {}
 
   try {
-    const st = await fetch("http://192.168.50.1:5050/api/dms",{signal:AbortSignal.timeout(3000)});
+    const st = await fetch("/svc/5050/api/dms",{signal:AbortSignal.timeout(3000)});
     const dk = await st.json();
     // disk from full health if available
   } catch(e) {}
@@ -1587,7 +1587,7 @@ function openJS8Call(e) {
 
 // ── WAN + AMPRNet live status on dashboard cards ──────────────────────────
 (function() {
-  const API = 'http://192.168.50.1:5050';
+  const API = '/svc/5050';
 
   function updateWanCards(source, label) {
     ['wan-card-status','wan-card-status-sc','wan-card-status-ics'].forEach(id => {

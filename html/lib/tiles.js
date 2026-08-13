@@ -13,7 +13,7 @@
  */
 
 const FC_TILES = (() => {
-    const TILE_SERVER = 'http://localhost:8083';
+    const TILE_SERVER = '';  // same-origin: tiles served at /tiles/... via nginx
 
     // ── Tile source definitions ───────────────────────────────────────────────
     // Ordered: offline local first, then online fallbacks

@@ -125,7 +125,7 @@ textarea.xml-paste { width:100%; min-height:120px; font-family: var(--font-mono,
 </div>
 
 <script>
-const API = 'http://192.168.50.1:5050';
+const API = '/svc/5050';
 
 setInterval(()=>{ const e=document.getElementById('utc-clock'); if(e) e.textContent=new Date().toUTCString().slice(17,22)+'Z'; },1000);
 

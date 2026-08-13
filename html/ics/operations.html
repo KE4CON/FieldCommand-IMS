@@ -268,10 +268,10 @@
 </div>
 
 <script>
-const API = 'http://192.168.50.1:5055/api/ics';
+const API = '/svc/5055/api/ics';
 const STORE = 'ics_resources';
 let resources = [], selectedId = null;
-const ICS_API = 'http://192.168.50.1:5055';
+const ICS_API = '/svc/5055';
 function esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 function uid(){ return 'R' + Date.now().toString(36).toUpperCase(); }
@@ -346,7 +346,7 @@ async function drop(e, newStatus) {
 async function syncTCardTo204(resource, oldStatus, newStatus) {
   const incId = getIncidentId();
   if (!incId) return;
-  const ICS_API = 'http://192.168.50.1:5055';
+  const ICS_API = '/svc/5055';
 
   try {
     // Find all 204s for this incident that reference this resource
@@ -439,7 +439,7 @@ function save() {
 async function sync204ToTCards() {
   const incId  = getIncidentId();
   if (!incId) return;
-  const ICS_API = 'http://192.168.50.1:5055';
+  const ICS_API = '/svc/5055';
   try {
     const r = await fetch(`${ICS_API}/api/ics/forms/ics204?incident_id=${incId}`);
     if (!r.ok) return;
@@ -760,7 +760,7 @@ async function loadPersonnel(tcardId) {
     renderPersonnel();
     // Load roster for autocomplete (once)
     if (!rosterData.length) {
-      const rr = await fetch('http://192.168.50.1:5050/api/roster');
+      const rr = await fetch('/svc/5050/api/roster');
       if (rr.ok) { const d = await rr.json(); rosterData = d.members || d || []; }
     }
   } catch(e) {

@@ -320,7 +320,7 @@ tr:nth-child(even) td { background: var(--bg); }
 </div>
 
 <script>
-const API = 'http://192.168.50.1:5051';
+const API = '/svc/5051';
 const INSTY_ADMIN = 'http://10.1.1.1';
 
 // WAN event log stored in memory
@@ -483,7 +483,7 @@ function load() {
 function runConnectivityTests() {
   const tests = [
     { service: 'NWS Weather Alerts', url: 'https://api.weather.gov/', addr: 'api.weather.gov' },
-    { service: 'APRS-IS', url: 'http://192.168.50.1:5050/aprs/status', addr: 'APRS-IS via FieldCommand' },
+    { service: 'APRS-IS', url: '/svc/5050/aprs/status', addr: 'APRS-IS via FieldCommand' },
     { service: 'Cloudflare DNS', url: 'https://1.1.1.1/', addr: '1.1.1.1' },
     { service: 'AMPRNet Gateway', url: 'http://192.168.50.2:9000/health', addr: '192.168.50.2:9000' },
   ];

@@ -51,7 +51,7 @@
  */
 const FC_ID = (() => {
     const STORE_KEY = 'fc_operator_identity_v3';
-    const API       = 'http://localhost:5050';
+    const API       = '/svc/5050';
 
     let _id     = null;
     let _roster = [];

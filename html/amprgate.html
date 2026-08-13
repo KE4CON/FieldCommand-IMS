@@ -254,7 +254,7 @@ tr:nth-child(even) td { background: var(--bg); }
 // ── Status data from FieldCommand Pi's local poll cache ──────────
 // The amprgate-poll service writes /data/amprgate_status.json every 30s.
 // We read it via the fcc-lookup API's data endpoint.
-const API_BASE = 'http://192.168.50.1:5050';
+const API_BASE = '/svc/5050';
 const GATEWAY_DIRECT = 'http://192.168.50.2:9000';
 
 function fmt(bytes) {

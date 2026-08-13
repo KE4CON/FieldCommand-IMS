@@ -332,5 +332,6 @@ if __name__ == "__main__":
     print("[health-monitor] Starting on port 5051")
     # Pre-warm cache in background
     threading.Thread(target=collect_health, daemon=True).start()
-    server = HTTPServer(("0.0.0.0", 5051), HealthHandler)
+    # Localhost only — reached via nginx at /svc/5051 over HTTPS.
+    server = HTTPServer(("127.0.0.1", 5051), HealthHandler)
     server.serve_forever()

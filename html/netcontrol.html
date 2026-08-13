@@ -312,7 +312,7 @@
 </div>
 
 <script>
-const API = "http://192.168.50.1:5050";
+const API = "/svc/5050";
 let currentNetId = null;
 let currentNet = null;
 
@@ -884,7 +884,7 @@ async function openChannelPicker(freqFieldId, nameFieldId) {
   let channels = [];
   try {
     const r = await fetch(
-      `http://192.168.50.1:5055/api/ics/active_channels?incident_id=${incId}&period=${period}`
+      `/svc/5055/api/ics/active_channels?incident_id=${incId}&period=${period}`
     );
     if (r.ok) {
       const d = await r.json();

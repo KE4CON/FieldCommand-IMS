@@ -229,7 +229,7 @@ body { background:var(--bg);font-size:15px; }
 </div><!-- /ci-body -->
 
 <script>
-const ICS_API = 'http://192.168.50.1:5055';
+const ICS_API = '/svc/5055';
 const params  = new URLSearchParams(location.search);
 const INC_ID  = params.get('incident') || '';
 const PERIOD  = parseInt(params.get('period') || '1');

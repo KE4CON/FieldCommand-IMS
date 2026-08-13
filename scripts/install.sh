@@ -399,20 +399,39 @@ fi
 step "Configuring Firewall (ufw)"
 if command -v ufw &>/dev/null; then
     ufw allow 22/tcp    comment "SSH"        2>>"$FC_LOG" || true
-    ufw allow 80/tcp    comment "nginx HTTP" 2>>"$FC_LOG" || true
-    ufw allow 5050/tcp  comment "FCC Lookup API"    2>>"$FC_LOG" || true
-    ufw allow 5051/tcp  comment "Health Monitor"    2>>"$FC_LOG" || true
-    ufw allow 5055/tcp  comment "ICS Platform API"  2>>"$FC_LOG" || true
-    ufw allow 5056/tcp  comment "Reference Library" 2>>"$FC_LOG" || true
+    ufw allow 80/tcp    comment "nginx HTTP (redirects to HTTPS)" 2>>"$FC_LOG" || true
+    ufw allow 443/tcp   comment "nginx HTTPS" 2>>"$FC_LOG" || true
+    # Core API services (5050 FCC, 5051 Health, 5055 ICS, 5056 Refs) are bound to
+    # 127.0.0.1 and reached ONLY through nginx (/svc/<port>) over HTTPS. They are
+    # deliberately NOT opened on the LAN, so operator PII is never on the wire in
+    # cleartext. (Do not re-add ufw allow rules for 5050/5051/5055/5056.)
     ufw allow 8000/tcp  comment "Direwolf AGWPE TNC"  2>>"$FC_LOG" || true
     ufw allow 8001/tcp  comment "Direwolf KISS TNC"   2>>"$FC_LOG" || true
     ufw allow 8081/tcp  comment "Kiwix Library"     2>>"$FC_LOG" || true
     ufw allow 8082/tcp  comment "YAAC APRS"         2>>"$FC_LOG" || true
     ufw allow 8083/tcp  comment "Tile Server"       2>>"$FC_LOG" || true
     ufw allow 8090/tcp  comment "Pat Winlink"       2>>"$FC_LOG" || true
-    ufw --force enable  2>>"$FC_LOG" && success "Firewall configured (ports 80,5050-5056,8080-8090 open)" || warn "ufw enable failed"
+    ufw --force enable  2>>"$FC_LOG" && success "Firewall configured (80/443 web; core APIs localhost-only)" || warn "ufw enable failed"
 else
     warn "ufw not found — ports may be blocked. Install with: sudo apt-get install ufw"
+fi
+
+step "Generating TLS certificate (HTTPS)"
+# nginx serves the dashboard over HTTPS. On this closed LAN (no public domain) we
+# create our own certificate: a private local Certificate Authority by default
+# (install its root on devices once for a warning-free padlock), or a single
+# self-signed cert if TLS_SELF_SIGNED=1. Must exist before 'nginx -t' below.
+command -v openssl >/dev/null 2>&1 || apt-get install -y openssl 2>>"$FC_LOG" || true
+CERT_ARGS="--ip ${SERVER_IP:-192.168.50.1}"
+[[ "${TLS_SELF_SIGNED:-0}" == "1" ]] && CERT_ARGS="$CERT_ARGS --self-signed"
+if bash "$SCRIPT_DIR/fc-gen-cert.sh" $CERT_ARGS 2>>"$FC_LOG"; then
+    if [[ "${TLS_SELF_SIGNED:-0}" == "1" ]]; then
+        success "TLS certificate ready (self-signed — devices show a one-time warning)"
+    else
+        success "TLS certificate ready (local CA — install /opt/fieldcommand/html/fieldcommand-ca.crt on devices for a clean padlock)"
+    fi
+else
+    warn "TLS certificate generation failed — HTTPS will not start until it exists (see $FC_LOG)"
 fi
 
 step "Configuring nginx"

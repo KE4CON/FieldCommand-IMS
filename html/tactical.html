@@ -520,7 +520,7 @@ WantedBy=multi-user.target</pre>
 // ══════════════════════════════════════════════════
 // Constants & state
 // ══════════════════════════════════════════════════
-const FC_API = 'http://192.168.50.1:5050';
+const FC_API = '/svc/5050';
 
 // Raw data per source
 let rawGW = [], rawYC = [], rawIS = [];
@@ -616,7 +616,7 @@ function updateSourceURLs() {
 // ── Live GPS position ─────────────────────────────────────────────────────
 async function loadGPSPosition() {
   try {
-    const res = await fetch('http://192.168.50.1:5050/api/position',
+    const res = await fetch('/svc/5050/api/position',
                             { signal: AbortSignal.timeout(3000) });
     const pos = await res.json();
     if (pos.fix && pos.lat && pos.lon) {
@@ -1488,7 +1488,7 @@ async function toggleRepeaters() {
   if (!repOverlayLoaded) {
     btn && (btn.textContent = '📡 Loading…');
     try {
-      const res = await fetch('http://192.168.50.1:5050/api/repeaters');
+      const res = await fetch('/svc/5050/api/repeaters');
       if (!res.ok) throw new Error('HTTP ' + res.status);
       const reps = await res.json();
       layers.rep.clearLayers();

@@ -304,4 +304,5 @@ class RefsHandler(BaseHTTPRequestHandler):
 if __name__ == "__main__":
     db.startup()
     log.info(f"Reference Library on port 5056 — {FILES_DIR}")
-    HTTPServer(('0.0.0.0',5056),RefsHandler).serve_forever()
+    # Localhost only — reached via nginx at /svc/5056 over HTTPS.
+    HTTPServer(('127.0.0.1',5056),RefsHandler).serve_forever()

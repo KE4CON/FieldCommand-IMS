@@ -319,7 +319,7 @@ async function loadResourceStats() {
     document.getElementById('ss-oos').textContent = res.filter(r=>r.status==='out_of_service').length;
   } catch(e) {}
   try {
-    const i = await fetch('http://192.168.50.1:5055/api/ics/incidents');
+    const i = await fetch('/svc/5055/api/ics/incidents');
     const d = await i.json();
     const inc = (d.incidents||[]).find(x=>x.status==='active');
     if(inc){ document.getElementById('ss-period').textContent = inc.current_period||1; incData=inc; }

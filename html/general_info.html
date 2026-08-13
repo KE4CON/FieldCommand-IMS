@@ -378,8 +378,8 @@
 </div>
 
 <script>
-const API     = 'http://192.168.50.1:5055';
-const MAIN    = 'http://192.168.50.1:5050';
+const API     = '/svc/5055';
+const MAIN    = '/svc/5050';
 const params  = new URLSearchParams(location.search);
 const INC_ID  = params.get('incident') || '';
 let   PERIOD  = parseInt(params.get('period') || '1');

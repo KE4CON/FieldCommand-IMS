@@ -56,7 +56,16 @@ import threading
 PUBLIC_PORT    = 9000          # Status + UI — accessible from EMCOMM-NET
 CONTROL_PORT   = 9001          # Tunnel control — localhost only
 WG_INTERFACE   = "ampr0"
-FIELDCOMMAND_API = "http://192.168.50.1:5050"  # FCC lookup on FieldCommand Pi
+# FCC lookup on the FieldCommand Pi, reached via its HTTPS reverse proxy at /svc/5050
+# (the core API is bound to localhost there and no longer exposed in cleartext). This
+# script runs on the SEPARATE gateway Pi, so the call crosses the LAN. The FCC data is
+# public and the lookup degrades gracefully, so we skip verification of the LAN's
+# self-signed / local-CA certificate for this one enrichment call.
+import ssl as _ssl
+FIELDCOMMAND_API = "https://192.168.50.1/svc/5050"
+_FC_SSL = _ssl.create_default_context()
+_FC_SSL.check_hostname = False
+_FC_SSL.verify_mode = _ssl.CERT_NONE
 SESSION_TTL    = 8 * 3600      # 8 hours in seconds
 LOG_FILE       = Path("/var/log/amprgate-access.log")
 TEMPLATES      = Path("/opt/amprgate/templates")
@@ -103,7 +112,7 @@ def validate_callsign(callsign: str) -> dict:
     try:
         url = f"{FIELDCOMMAND_API}/callsign/{cs}"
         req = urllib.request.Request(url, headers={"User-Agent": "amprgate/1.0"})
-        with urllib.request.urlopen(req, timeout=5) as resp:
+        with urllib.request.urlopen(req, timeout=5, context=_FC_SSL) as resp:
             data = json.loads(resp.read().decode())
             if data.get("found"):
                 return {

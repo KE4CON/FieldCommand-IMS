@@ -1303,4 +1303,6 @@ if __name__ == "__main__":
     db.startup()
     threading.Thread(target=dms_monitor, daemon=True).start()
     log.info("FCC Lookup API server on port 5050")
-    HTTPServer(("0.0.0.0", 5050), Handler).serve_forever()
+    # Bind localhost only: the front end reaches this via nginx at /svc/5050 over
+    # HTTPS, so the API is never exposed in cleartext on the LAN.
+    HTTPServer(("127.0.0.1", 5050), Handler).serve_forever()

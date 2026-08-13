@@ -15,11 +15,11 @@ default (install `fieldcommand-ca.crt` on devices for a clean padlock), or `--se
 (`TLS_SELF_SIGNED=1`). See `udev/nginx-fieldcommand.conf`.
 
 **Remaining follow-ups (smaller):**
-- **Live APRS tactical feed** (APRS Command / YAAC on the laptop, ports 8080/8082, http + `ws://`).
-  APRS data is public so this is a browser mixed-content issue, not a confidentiality one. Fix:
-  an nginx reverse-proxy (`/aprs/` → the gateway host, with WebSocket upgrade → `wss://`),
-  driven by a Setup field for the APRS gateway address. The map still works from stored state
-  meanwhile.
+- **Live APRS tactical feed** — ✅ done. nginx now reverse-proxies the APRS gateway (RF gateway
+  8080, YAAC 8082) at `/aprs-gw/` and `/aprs-yc/` with WebSocket upgrade, so the tactical map
+  fetches same-origin and opens `wss://` over TLS. `tactical.html` auto-selects the proxy under
+  HTTPS and the direct host:port under plain http. Upstreams default to this server; if the APRS
+  gateway runs on another host (e.g. the ops laptop), point the two `proxy_pass` lines at it.
 - **Other direct-port services** still served over plain HTTP on their own ports: Pat Winlink
   (8090), Kiwix (8081), tiles (8083, also proxied at `/tiles`). Non-PII; optionally bind-localhost
   + proxy them later.

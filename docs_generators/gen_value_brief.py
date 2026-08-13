@@ -412,7 +412,11 @@ def build_edition(ED, out_path):
 
 
 def default_out(ED):
-    d = os.path.join(REPO, 'docs', 'internal' if ED['private'] else 'guides')
+    # The value/cost brief is a BUSINESS/FINANCIAL document — private by policy
+    # (see .gitignore: "org-specific (ESV), business/financial, and dev-only").
+    # BOTH the World and ESV editions go to the gitignored docs/internal, unlike
+    # the manuals whose World edition is public.
+    d = os.path.join(REPO, 'docs', 'internal')
     os.makedirs(d, exist_ok=True)
     return os.path.join(d, f"FieldCommand_Value_and_Cost_Brief{ED['infix']}.pdf")
 

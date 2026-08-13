@@ -855,6 +855,7 @@ def init_db():
         "ALTER TABLE station_config ADD COLUMN grid TEXT DEFAULT ''",
         "ALTER TABLE station_config ADD COLUMN default_incident_name TEXT DEFAULT ''",
         "ALTER TABLE station_config ADD COLUMN wifi_ssid TEXT DEFAULT 'EMCOMM-NET'",
+        "ALTER TABLE station_config ADD COLUMN wifi_pass TEXT DEFAULT ''",
         "ALTER TABLE station_config ADD COLUMN server_url TEXT DEFAULT 'http://192.168.50.1'",
         "ALTER TABLE station_config ADD COLUMN time_zone TEXT DEFAULT ''",
         "ALTER TABLE incidents ADD COLUMN ics_variant TEXT DEFAULT 'FEMA'",
@@ -2211,6 +2212,20 @@ def _alter_existing_tables():
             log.info("Added roster.barcode_id column and backfilled from member_id")
         except Exception as e:
             log.warning(f"roster.barcode_id: {e}")
+
+    # roster — member photo for printed ID cards.
+    # Stored as a small Base64 headshot (like station_config.logo_data) so it
+    # backs up with the database and works fully offline. Agency-neutral: any
+    # group can attach photos; walk-ins / mutual-aid may leave these blank.
+    for _col, _defn in [("photo_data", "TEXT DEFAULT ''"),
+                        ("photo_mime", "TEXT DEFAULT ''")]:
+        if _col not in ros_existing:
+            try:
+                conn.execute(f"ALTER TABLE roster ADD COLUMN {_col} {_defn}")
+                conn.commit()
+                log.info(f"Added roster.{_col} column")
+            except Exception as e:
+                log.warning(f"roster.{_col}: {e}")
 
     # net_entries new columns
     ne_existing = {r[1] for r in conn.execute("PRAGMA table_info(net_entries)").fetchall()}

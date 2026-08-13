@@ -54,6 +54,7 @@
     <button onclick="document.getElementById('importFile').click()" title="CSV columns: member_id, callsign, radio_id, first_name, last_name, role, phone, email, grid&#10;Optional: license_class, roles (semicolon-separated)&#10;&#10;• callsign: leave blank for non-ham members&#10;• member_id: ESV member number (e.g. ESV-042)&#10;• radio_id: Starcom radio ID (all members)">📥 Import CSV ⓘ</button>
     <input type="file" id="importFile" accept=".csv" style="display:none" onchange="importCSV(this)">
     <button onclick="exportCSV()">📤 Export CSV</button>
+    <button onclick="printIdCards()" title="Print laminate-ready photo ID cards with a scannable QR for every member (walk-ins/mutual-aid included only if they have a photo)">🪪 Print ID Cards</button>
     <button onclick="window.print()">🖨 Print</button>
   </div>
 </div>
@@ -130,6 +131,20 @@
   </div>
   <div><label style="font-size:10px;color:var(--muted)">Emergency Contact</label><input type="text" id="fEmContact" style="width:100%"></div>
 
+  <div style="font-size:11px;color:var(--muted);margin:12px 0 6px;text-transform:uppercase">Photo (for ID card)</div>
+  <div style="display:flex;gap:12px;align-items:center">
+    <img id="fPhotoPreview" alt="member photo" style="width:64px;height:80px;object-fit:cover;border:1px solid var(--line);border-radius:4px;display:none">
+    <div id="fPhotoEmpty" style="width:64px;height:80px;border:1px dashed var(--line);border-radius:4px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:22px">👤</div>
+    <div style="display:flex;flex-direction:column;gap:6px">
+      <div style="display:flex;gap:6px">
+        <button type="button" onclick="document.getElementById('fPhotoFile').click()" style="font-size:11px;padding:6px 10px">📷 Take / upload photo</button>
+        <button type="button" id="fPhotoRemove" onclick="removeMemberPhoto()" style="font-size:11px;padding:6px 10px;display:none">Remove</button>
+      </div>
+      <div style="font-size:10px;color:var(--muted);max-width:230px;line-height:1.4">Any phone or webcam is fine — head-and-shoulders, plain background, even light. Resized automatically. Optional.</div>
+    </div>
+    <input type="file" id="fPhotoFile" accept="image/*" capture="environment" style="display:none" onchange="onPhotoPicked(this.files[0])">
+  </div>
+
   <div style="font-size:11px;color:var(--muted);margin:12px 0 6px;text-transform:uppercase">Roles</div>
   <div class="certs-grid" id="roleChecks">
     <label class="cert-check"><input type="checkbox" name="role" value="Net Control (NCS)"> Net Control (NCS)</label>
@@ -175,6 +190,7 @@
 
   <div style="display:flex;gap:8px;margin-top:16px">
     <button onclick="saveMember()" style="flex:1;background:var(--blue);border-color:var(--blue);color:#fff;font-weight:bold">Save Member</button>
+    <button id="printCardBtn" onclick="printIdCards(editingId)" title="Print this member's ID card" style="display:none">🪪 ID Card</button>
     <button id="deleteMemberBtn" onclick="deleteMember()" style="background:var(--red);border-color:var(--red);display:none">Delete</button>
     <button onclick="closeMemberModal()">Cancel</button>
   </div>
@@ -204,6 +220,58 @@ const API = "http://192.168.50.1:5050";
 let allMembers = [];
 let activations = [];
 let editingId   = null;
+
+// ── Member photo (for ID cards) ──────────────────────────────────────
+// _photoDataUrl: a new JPEG chosen this edit (data URL), or null if unchanged.
+// _photoRemove:  true if the operator cleared an existing photo.
+let _photoDataUrl = null;
+let _photoRemove  = false;
+
+function _showPhoto(src) {
+  const p=document.getElementById('fPhotoPreview'),
+        e=document.getElementById('fPhotoEmpty'),
+        r=document.getElementById('fPhotoRemove');
+  p.src=src; p.style.display=''; e.style.display='none'; r.style.display='';
+}
+function _clearPhotoUI() {
+  const p=document.getElementById('fPhotoPreview'),
+        e=document.getElementById('fPhotoEmpty'),
+        r=document.getElementById('fPhotoRemove');
+  p.style.display='none'; p.removeAttribute('src'); e.style.display='flex'; r.style.display='none';
+  document.getElementById('fPhotoFile').value='';
+}
+function resetPhoto() { _photoDataUrl=null; _photoRemove=false; _clearPhotoUI(); }
+
+function onPhotoPicked(file) {
+  if (!file) return;
+  const rd = new FileReader();
+  rd.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      // Downscale to 480px on the long edge and encode JPEG. JPEG matters:
+      // ReportLab embeds JPEG in the ID-card PDF without needing PIL.
+      const MAX=480; let w=img.width||MAX, h=img.height||MAX;
+      if (w>=h && w>MAX){ h=Math.round(h*MAX/w); w=MAX; }
+      else if (h>w && h>MAX){ w=Math.round(w*MAX/h); h=MAX; }
+      const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+      cv.getContext('2d').drawImage(img,0,0,w,h);
+      _photoDataUrl = cv.toDataURL('image/jpeg', 0.85);
+      _photoRemove = false;
+      _showPhoto(_photoDataUrl);
+    };
+    img.onerror = () => alert('That file could not be read as an image.');
+    img.src = rd.result;
+  };
+  rd.readAsDataURL(file);
+}
+
+function removeMemberPhoto() { _photoDataUrl=null; _photoRemove=true; _clearPhotoUI(); }
+
+// Open the printable ID-card PDF. No id → all eligible members; id → one card.
+function printIdCards(id) {
+  const url = `${API}/api/id_cards.pdf` + (id ? `?id=${encodeURIComponent(id)}` : '');
+  window.open(url, '_blank');
+}
 
 function showTab(name) {
   document.querySelector(".tab:nth-child(1)").classList.toggle("active", name==="directory");
@@ -255,7 +323,9 @@ function renderMembers(members) {
     }).join("");
     const roles = (m.roles||[]).map(r=>`<span class="badge badge-blue" style="font-size:9px">${r}</span>`).join("");
     return `<div class="member-card" onclick="openEditMember('${m.id}')">
-      <div class="member-avatar">${m.first_name?m.first_name[0]:"?"}</div>
+      <div class="member-avatar" style="overflow:hidden">${m.has_photo
+        ? `<img src="${API}/api/roster/photo?id=${encodeURIComponent(m.id)}" alt="" style="width:100%;height:100%;object-fit:cover">`
+        : (m.first_name?m.first_name[0]:"?")}</div>
       <div style="flex:1">
         <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
           <strong style="font-size:15px">${name}</strong>
@@ -404,10 +474,12 @@ function openAddMember() {
   editingId = null;
   document.getElementById("modalTitle").textContent = "Add Member";
   document.getElementById("deleteMemberBtn").style.display = "none";
+  document.getElementById("printCardBtn").style.display = "none";
   document.querySelectorAll("#memberModal input[type=text], #memberModal input[type=email], #memberModal input[type=tel]").forEach(i=>i.value="");
   document.querySelectorAll("#memberModal input[type=checkbox]").forEach(i=>i.checked=false);
   document.getElementById("fClass").value = "";
   document.getElementById("memberId").value = "";
+  resetPhoto();
   document.getElementById("memberModal").style.display="flex";
 }
 
@@ -417,6 +489,7 @@ function openEditMember(id) {
   editingId = id;
   document.getElementById("modalTitle").textContent = "Edit Member";
   document.getElementById("deleteMemberBtn").style.display = "";
+  document.getElementById("printCardBtn").style.display = "";
   document.getElementById("memberId").value = id;
   document.getElementById("fCallsign").value = m.callsign||"";
   document.getElementById("fRadioId").value  = m.radio_id||"";
@@ -448,6 +521,10 @@ function openEditMember(id) {
   document.querySelectorAll("input[name=role]").forEach(cb => {
     cb.checked = (m.roles||[]).includes(cb.value);
   });
+  // Photo: show the stored one (served separately) if present; no re-upload
+  // happens unless the operator picks a new file or removes it.
+  resetPhoto();
+  if (m.has_photo) _showPhoto(`${API}/api/roster/photo?id=${encodeURIComponent(id)}&t=${Date.now()}`);
   document.getElementById("memberModal").style.display="flex";
 }
 
@@ -488,6 +565,16 @@ async function saveMember() {
     await fetch(`${API}/api/roster/members`,{
       method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(m)
     });
+    // Photo is stored separately so an ordinary edit never wipes it. Only touch
+    // it when the operator actually changed it.
+    if (_photoDataUrl) {
+      await fetch(`${API}/api/roster/photo`,{
+        method:"POST",headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({id:m.id, photo_data:_photoDataUrl, photo_mime:"image/jpeg"})
+      });
+    } else if (_photoRemove) {
+      await fetch(`${API}/api/roster/photo/${encodeURIComponent(m.id)}`,{method:"DELETE"});
+    }
     closeMemberModal();
     await loadRoster();
   } catch(e) { alert("Failed: "+e); }
@@ -574,8 +661,8 @@ loadRoster();
   <div style="font-size:13px;font-weight:700;color:#1a3a6b;
               letter-spacing:1px;margin-bottom:4px" id="qrModalName"></div>
   <div style="font-size:11px;color:#666;margin-bottom:14px" id="qrModalSub"></div>
-  <canvas id="qrCanvas" style="display:block;margin:0 auto 10px;
-    border:1px solid #eee;border-radius:4px"></canvas>
+  <img id="qrImg" alt="QR check-in code" width="200" height="200"
+    style="display:block;margin:0 auto 10px;border:1px solid #eee;border-radius:4px">
   <div style="font-family:monospace;font-size:13px;color:#1a3a6b;
               background:#f0f4f8;border-radius:4px;padding:6px;margin-bottom:14px"
        id="qrCode"></div>
@@ -589,7 +676,7 @@ loadRoster();
              color:#fff;border-radius:6px;cursor:pointer">🖨 Print</button>
     <button onclick="downloadQR()"
       style="flex:1;padding:9px;background:#f0f4f8;border:1px solid #ddd;
-             border-radius:6px;cursor:pointer">💾 Save PNG</button>
+             border-radius:6px;cursor:pointer">💾 Save</button>
     <button onclick="document.getElementById('qrModal').style.display='none'"
       style="padding:9px 14px;background:#f0f4f8;border:1px solid #ddd;
              border-radius:6px;cursor:pointer">Close</button>
@@ -613,56 +700,22 @@ function showQR(memberId, barcodeId, name, callsign) {
     (callsign ? callsign + ' · ' : '') + code;
   document.getElementById('qrCode').textContent = code;
 
-  // Generate QR using canvas — simple URL-based approach
-  // Uses the Google Charts API when online, or a minimal inline fallback
-  const canvas = document.getElementById('qrCanvas');
-  canvas.width  = 200;
-  canvas.height = 200;
-  const ctx = canvas.getContext('2d');
-
-  // Try to load QR image from Google Charts (needs internet)
-  const qrUrl = `https://chart.googleapis.com/chart?cht=qr&chs=200x200&chl=${encodeURIComponent(code)}&choe=UTF-8`;
-  const img = new Image();
-  img.crossOrigin = 'anonymous';
-  img.onload = () => {
-    ctx.clearRect(0,0,200,200);
-    ctx.drawImage(img,0,0,200,200);
-  };
-  img.onerror = () => {
-    // Offline fallback: draw a simple placeholder with the code as text
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0,0,200,200);
-    ctx.strokeStyle = '#1a3a6b';
-    ctx.lineWidth = 4;
-    ctx.strokeRect(10,10,180,180);
-    // Draw a simple QR-like pattern border
-    for (let i=0;i<3;i++) {
-      ctx.strokeRect(10+i*4,10+i*4,24-i*8,24-i*8);
-      ctx.strokeRect(166-i*4,10+i*4,24-i*8,24-i*8);
-      ctx.strokeRect(10+i*4,166-i*4,24-i*8,24-i*8);
-    }
-    // Print the code prominently
-    ctx.fillStyle = '#1a3a6b';
-    ctx.font = 'bold 16px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText(code, 100, 95);
-    ctx.font = '11px sans-serif';
-    ctx.fillStyle = '#666';
-    ctx.fillText('(Offline — use code above)', 100, 115);
-    ctx.fillText('Scan manually at check-in', 100, 130);
-  };
-  img.src = qrUrl;
+  // Real, scannable QR from the local server — ReportLab-generated SVG, fully
+  // offline (replaces the old chart.googleapis.com dependency, which is dead and
+  // never worked without internet).
+  const img = document.getElementById('qrImg');
+  img.onerror = () => { img.removeAttribute('src'); img.alt = 'QR unavailable — use the code below'; };
+  img.src = `${API}/api/qr?data=${encodeURIComponent(code)}`;
 
   document.getElementById('qrModal').style.display = 'flex';
 }
 
 function printQR() {
-  const canvas  = document.getElementById('qrCanvas');
-  const name    = document.getElementById('qrModalName').textContent;
-  const sub     = document.getElementById('qrModalSub').textContent;
-  const code    = document.getElementById('qrCode').textContent;
-  const dataUrl = canvas.toDataURL('image/png');
-  const win     = window.open('','_blank','width=400,height=500');
+  const name = document.getElementById('qrModalName').textContent;
+  const sub  = document.getElementById('qrModalSub').textContent;
+  const code = document.getElementById('qrCode').textContent;
+  const src  = `${API}/api/qr?data=${encodeURIComponent(code)}`;
+  const win  = window.open('','_blank','width=400,height=500');
   win.document.write(`<!DOCTYPE html><html><head><title>QR: ${name}</title>
     <style>body{font-family:Arial;text-align:center;padding:24px}
     img{border:1px solid #eee;border-radius:4px}
@@ -670,26 +723,26 @@ function printQR() {
     .code{font-family:monospace;font-size:16px;background:#f0f4f8;
           padding:6px 14px;border-radius:4px;display:inline-block;margin:8px 0}
     .sub{font-size:12px;color:#666;margin-bottom:12px}
-    </style></head><body onload="window.print()">
-    <img src="${dataUrl}" width="200" height="200">
+    </style></head><body>
+    <img src="${src}" width="200" height="200" onload="window.print()">
     <h2>${name}</h2>
     <div class="code">${code}</div>
     <div class="sub">${sub}</div>
     <div style="font-size:10px;color:#999;margin-top:8px">
       FieldCommand IMS Check-In Code<br>
-      Scan at: http://192.168.50.1/scan_checkin.html
+      Scan at: /scan_checkin.html
     </div>
   </body></html>`);
   win.document.close();
 }
 
 function downloadQR() {
-  const canvas = document.getElementById('qrCanvas');
-  const name   = (document.getElementById('qrModalName').textContent || 'member')
+  const name = (document.getElementById('qrModalName').textContent || 'member')
     .replace(/\s+/g,'_').toLowerCase();
+  const code = document.getElementById('qrCode').textContent;
   const a = document.createElement('a');
-  a.href     = canvas.toDataURL('image/png');
-  a.download = `checkin_qr_${name}.png`;
+  a.href     = `${API}/api/qr?data=${encodeURIComponent(code)}`;
+  a.download = `checkin_qr_${name}.svg`;
   a.click();
 }
 </script>

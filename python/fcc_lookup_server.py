@@ -13,7 +13,7 @@ FCC callsign lookup uses the separate fcc.db (read-only).
 """
 
 import json, sqlite3, time, threading, subprocess, socket
-import logging, sys, re
+import logging, sys, re, os
 from datetime import datetime, timezone
 from pathlib import Path
 from http.server import HTTPServer, BaseHTTPRequestHandler
@@ -22,10 +22,16 @@ from urllib.parse import urlparse, parse_qs
 import db
 from db import get_conn, utcnow, jdump, jload, row_to_dict, rows_to_list
 
+_log_handlers = [logging.StreamHandler(sys.stdout)]
+try:
+    # File log is best-effort: on the Pi /var/log exists; off-Pi (dev/CI/import
+    # for tests) it may not, and a missing directory must not crash startup.
+    _log_handlers.append(logging.FileHandler('/var/log/fieldcommand-api.log', mode='a'))
+except Exception:
+    pass
 logging.basicConfig(level=logging.INFO,
     format='%(asctime)s [fcc-lookup] %(message)s',
-    handlers=[logging.StreamHandler(sys.stdout),
-              logging.FileHandler('/var/log/fieldcommand-api.log', mode='a')])
+    handlers=_log_handlers)
 log = logging.getLogger('fcc-lookup')
 
 BASE    = Path("/opt/fieldcommand")
@@ -196,6 +202,10 @@ EQUIP_LABELS = {"hf":"HF","vhf":"VHF","digital":"Digital","packet":"Packet","pac
 def member_to_dict(row):
     if row is None: return None
     d = dict(row)
+    # Photos can be large; never ship the Base64 blob in list/detail JSON.
+    # Expose only a flag — the actual image is served by GET /api/roster/photo.
+    d["has_photo"] = bool(d.get("photo_data"))
+    d.pop("photo_data", None); d.pop("photo_mime", None)
     d["certifications"] = {CERT_LABELS[c]:  bool(d.pop(f"cert_{c}", 0))  for c in CERT_COLS}
     d["equipment"]      = {EQUIP_LABELS[e]: bool(d.pop(f"equip_{e}", 0)) for e in EQUIP_COLS}
     # role column stores one-or-more roles joined with "; "; expose as a list too
@@ -251,6 +261,34 @@ def member_vals(m, mid, now):
             *(eflag(e) for e in EQUIP_COLS),
             m.get("created", now), now]
 
+# ── QR + config helpers (agency-neutral, fully offline) ─────────────────────────
+def qr_svg(data, size_px=220):
+    """Render `data` as a scannable QR code and return it as an SVG string.
+    Generated locally with ReportLab — no internet, no external service. This is
+    what replaces the old (now-dead) chart.googleapis.com dependency."""
+    from reportlab.graphics.barcode.qr import QrCodeWidget
+    from reportlab.graphics.shapes import Drawing
+    from reportlab.graphics import renderSVG
+    q = QrCodeWidget(str(data), barLevel="M")
+    x1, y1, x2, y2 = q.getBounds()
+    w = (x2 - x1) or 1
+    h = (y2 - y1) or 1
+    d = Drawing(size_px, size_px)
+    d.transform = [size_px / w, 0, 0, size_px / h, -x1 * size_px / w, -y1 * size_px / h]
+    d.add(q)
+    return renderSVG.drawToString(d)
+
+
+def _org_short(c):
+    """The deploying organization's short name from Setup (agency-neutral).
+    Empty string if not configured — never a hardcoded agency."""
+    try:
+        row = c.execute("SELECT org_short FROM station_config WHERE id=1").fetchone()
+        return (row["org_short"] or "") if row else ""
+    except Exception:
+        return ""
+
+
 # ── HTTP Handler ──────────────────────────────────────────────────────────────
 
 def _suggest_position(role):
@@ -279,6 +317,19 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header("Content-Type","application/json")
         self.send_header("Content-Length",len(body))
         self.cors(); self.end_headers(); self.wfile.write(body)
+
+    def send_bytes(self, data, content_type, code=200, extra=None):
+        self.send_response(code)
+        self.send_header("Content-Type", content_type)
+        self.send_header("Content-Length", len(data))
+        if extra:
+            for k, v in extra.items():
+                self.send_header(k, v)
+        self.cors(); self.end_headers()
+        try:
+            self.wfile.write(data)
+        except Exception:
+            pass
 
     def read_body(self):
         n = int(self.headers.get("Content-Length",0))
@@ -328,7 +379,7 @@ class Handler(BaseHTTPRequestHandler):
                 setup_complete,configured_at,active_modules,
                 ps_system_name,ps_system_type,ps_id_label,ps_dispatch,
                 ps_system2_name,ps_system2_type,ps_member_id_label,ps_member_lookup,
-                grid,default_incident_name,wifi_ssid,server_url,time_zone
+                grid,default_incident_name,wifi_ssid,wifi_pass,server_url,time_zone
                 FROM station_config WHERE id=1""").fetchone()
             if row:
                 keys = ['callsign','personal_call','org_name','org_short',
@@ -338,7 +389,7 @@ class Handler(BaseHTTPRequestHandler):
                         'setup_complete','configured_at','active_modules',
                         'ps_system_name','ps_system_type','ps_id_label','ps_dispatch',
                         'ps_system2_name','ps_system2_type','ps_member_id_label','ps_member_lookup',
-                        'grid','default_incident_name','wifi_ssid','server_url','time_zone']
+                        'grid','default_incident_name','wifi_ssid','wifi_pass','server_url','time_zone']
                 return self.send_json(dict(zip(keys, row)))
             return self.send_json({})
 
@@ -460,12 +511,71 @@ class Handler(BaseHTTPRequestHandler):
                 "name":         f"{r.get('first_name','')} {r.get('last_name','')}".strip(),
                 "callsign":     r.get("callsign",""),
                 "radio_id":     r.get("radio_id",""),
-                "agency":       r.get("visitor_agency","") or "MCESV",
+                "agency":       r.get("visitor_agency","") or _org_short(c),
                 "role":         r.get("role",""),
                 "member_type":  r.get("member_type",""),
                 # Suggest ICS position based on role
                 "suggested_position": _suggest_position(r.get("role","")),
             })
+
+        # ── QR code image (offline, ReportLab-generated SVG) ────────────────
+        # GET /api/qr?data=XXXX  → scannable QR as image/svg+xml. Replaces the
+        # dead chart.googleapis.com dependency; works with no internet.
+        elif path == "/api/qr":
+            data = qs.get("data",[qs.get("code",[""])[0]])[0]
+            if not data:
+                return self.send_json({"error":"missing data"},400)
+            try:
+                svg = qr_svg(data).encode("utf-8")
+            except Exception as e:
+                return self.send_json({"error":f"qr failed: {e}"},500)
+            return self.send_bytes(svg, "image/svg+xml; charset=utf-8",
+                                   extra={"Cache-Control":"no-store"})
+
+        # ── Member photo (served separately so list JSON stays small) ───────
+        elif path == "/api/roster/photo":
+            mid = qs.get("id",[""])[0]
+            if not mid:
+                return self.send_json({"error":"missing id"},400)
+            row = c.execute("SELECT photo_data,photo_mime FROM roster WHERE id=?",
+                            (mid,)).fetchone()
+            if not row or not row["photo_data"]:
+                return self.send_json({"error":"no photo"},404)
+            raw  = row["photo_data"]
+            mime = row["photo_mime"] or "image/png"
+            if isinstance(raw,str) and raw.startswith("data:"):
+                head,_,raw = raw.partition(",")
+                if ":" in head and ";" in head:
+                    mime = head[head.find(":")+1:head.find(";")] or mime
+            import base64 as _b64
+            try:
+                img = _b64.b64decode(raw)
+            except Exception:
+                return self.send_json({"error":"bad image"},500)
+            return self.send_bytes(img, mime, extra={"Cache-Control":"no-store"})
+
+        # ── Printable member ID cards (PDF, generated on demand) ────────────
+        # GET /api/id_cards.pdf           → all eligible members
+        # GET /api/id_cards.pdf?id=<mid>  → one member's card
+        elif path == "/api/id_cards.pdf":
+            mid = qs.get("id",[""])[0] or None
+            backs = qs.get("backs",["1"])[0] not in ("0","false","no")
+            import tempfile
+            try:
+                import gen_id_cards as _gen
+            except Exception as e:
+                return self.send_json({"error":f"card module unavailable: {e}"},500)
+            out = os.path.join(tempfile.gettempdir(), "fc_member_id_cards.pdf")
+            try:
+                _gen.generate_from_db(out_path=out, only_id=mid, backs=backs)
+                with open(out,"rb") as f:
+                    data = f.read()
+            except ValueError as e:
+                return self.send_json({"error":str(e)},404)
+            except Exception as e:
+                return self.send_json({"error":f"card generation failed: {e}"},500)
+            return self.send_bytes(data, "application/pdf",
+                extra={"Content-Disposition":"inline; filename=member_id_cards.pdf"})
 
         elif path == "/api/hospitals":
             county = qs.get("county",[None])[0]
@@ -714,7 +824,7 @@ class Handler(BaseHTTPRequestHandler):
                       'logo_data','logo_mime','setup_complete','active_modules',
                       'ps_system_name','ps_system_type','ps_id_label','ps_dispatch',
                       'ps_system2_name','ps_system2_type','ps_member_id_label','ps_member_lookup',
-                      'grid','default_incident_name','wifi_ssid','server_url','time_zone']
+                      'grid','default_incident_name','wifi_ssid','wifi_pass','server_url','time_zone']
             sets = [f"{f}=?" for f in fields if f in body]
             vals = [body[f] for f in fields if f in body]
             if sets:
@@ -910,6 +1020,27 @@ class Handler(BaseHTTPRequestHandler):
             return self.send_json({"ok":True,"member":member_to_dict(
                 c.execute("SELECT * FROM roster WHERE id=?",(mid,)).fetchone())})
 
+        # ── Member photo (stored separately from the member upsert, so an
+        #    ordinary edit can never wipe a photo). POST {id, photo_data, photo_mime}.
+        elif path == "/api/roster/photo":
+            mid = body.get("id","")
+            if not mid:
+                return self.send_json({"error":"missing id"},400)
+            if not c.execute("SELECT 1 FROM roster WHERE id=?",(mid,)).fetchone():
+                return self.send_json({"error":"no such member"},404)
+            raw  = body.get("photo_data","") or ""
+            mime = body.get("photo_mime","") or "image/jpeg"
+            # Accept a data: URL and split out the mime + bare base64 for storage.
+            if raw.startswith("data:"):
+                head,_,b64 = raw.partition(",")
+                if ":" in head and ";" in head:
+                    mime = head[head.find(":")+1:head.find(";")] or mime
+                raw = b64
+            c.execute("UPDATE roster SET photo_data=?,photo_mime=?,modified=? WHERE id=?",
+                      (raw, mime, now, mid))
+            c.commit()
+            return self.send_json({"ok":True,"has_photo":bool(raw)})
+
         elif path == "/api/roster/activations":
             aid = body.get("id") or f"a-{int(time.time()*1000)}"
             c.execute("""INSERT OR REPLACE INTO activations
@@ -1043,6 +1174,9 @@ class Handler(BaseHTTPRequestHandler):
             c.execute("DELETE FROM roster WHERE id=?",(path.split("/api/roster/members/")[1],))
         elif path.startswith("/api/roster/activations/"):
             c.execute("DELETE FROM activations WHERE id=?",(path.split("/api/roster/activations/")[1],))
+        elif path.startswith("/api/roster/photo/"):
+            c.execute("UPDATE roster SET photo_data='',photo_mime='' WHERE id=?",
+                      (path.split("/api/roster/photo/")[1],))
         elif path.startswith("/api/forms/"):
             c.execute("DELETE FROM forms WHERE id=?",(path.split("/api/forms/")[1],))
         else:

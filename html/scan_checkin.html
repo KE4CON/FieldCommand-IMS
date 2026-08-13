@@ -160,6 +160,19 @@ body { background:var(--bg);font-size:15px; }
   </select>
 </div>
 
+<!-- Take-a-photo fallback — works over plain HTTP, where the live camera can't -->
+<div style="display:flex;gap:8px;align-items:center;padding:0 18px 10px;border-bottom:1px solid var(--line)">
+  <button onclick="document.getElementById('photoInput').click()" id="photoBtn"
+    style="flex:1;font-size:12px;padding:7px;background:var(--eoc);border-color:var(--eoc);color:#fff">
+    📸 Take Photo of QR
+  </button>
+  <input type="file" id="photoInput" accept="image/*" capture="environment"
+    style="display:none" onchange="photoDecode(this.files[0])">
+  <span style="flex:1;font-size:10px;color:var(--muted);line-height:1.3">
+    Snap the person's QR card — reads it and fills in the check-in.
+  </span>
+</div>
+
 <!-- Manual ID entry -->
 <div id="manualEntry">
   <div style="font-size:12px;color:var(--muted);margin-bottom:8px">
@@ -277,6 +290,54 @@ let lastScanTime  = 0;
 let sessionCheckins = [];
 let scannerActive = false;
 
+// ── Photo decode (works over plain HTTP — no live camera stream needed) ──
+// The live viewfinder uses getUserMedia, which browsers only allow over HTTPS
+// (a "secure context"). Snapping a still photo uses the OS camera via a file
+// input, which needs no secure context, and BarcodeDetector.detect() reads a
+// QR out of that still image the same way. So this path works today over http.
+async function ensureDetector() {
+  if (detector) return detector;
+  if (typeof BarcodeDetector === 'undefined') return null;
+  detector = new BarcodeDetector({
+    formats: ['qr_code','code_128','code_39','ean_13','ean_8',
+              'data_matrix','pdf417','aztec']
+  });
+  return detector;
+}
+
+async function photoDecode(file) {
+  if (!file) return;
+  const det = await ensureDetector();
+  const status = document.getElementById('scanStatus');
+  if (!det) {
+    alert('This browser cannot read QR codes.\nType the member ID, callsign, or radio ID manually instead.');
+    return;
+  }
+  status.textContent = 'Reading photo…';
+  hideNotFound();
+  try {
+    const bitmap = await createImageBitmap(file);
+    const codes  = await det.detect(bitmap);
+    if (bitmap.close) bitmap.close();
+    if (!codes.length) {
+      status.textContent = '⚠ No QR code found in that photo';
+      showNotFound('No QR code found in that photo. Hold steady, fill the frame with the code, and retake — or type the ID below.');
+      return;
+    }
+    const code = codes[0].rawValue;
+    status.textContent = `✓ Read: ${code}`;
+    if (navigator.vibrate) navigator.vibrate(50);
+    await lookupCode(code);
+  } catch(e) {
+    status.textContent = 'Could not read that photo';
+    showNotFound('Could not read that photo (' + e.message + '). Type the ID below instead.');
+  } finally {
+    // Reset the input so choosing the same file again still fires onchange.
+    const inp = document.getElementById('photoInput');
+    if (inp) inp.value = '';
+  }
+}
+
 // ── Init ───────────────────────────────────────────────────────────
 async function init() {
   // Set incident badge
@@ -289,13 +350,26 @@ async function init() {
     } catch(e) {}
   }
 
-  // Check BarcodeDetector support
+  // Decide which scanning modes this browser/context can actually do:
+  //   • BarcodeDetector missing (e.g. iOS Safari): no scanning at all → manual entry.
+  //   • BarcodeDetector present but NOT a secure context (plain http over the LAN):
+  //     the live viewfinder is blocked (getUserMedia needs HTTPS), but snapping a
+  //     photo still works → steer the user to "Take Photo of QR".
+  //   • BarcodeDetector present AND secure context (HTTPS/localhost): live scan works.
   if (typeof BarcodeDetector === 'undefined') {
     document.getElementById('scanStatus').textContent =
-      '⚠ Camera scanning not supported in this browser — use manual entry below';
+      '⚠ This browser can’t read QR codes — type the ID in manual entry below';
     document.getElementById('startCamBtn').disabled = true;
+    const pb = document.getElementById('photoBtn');
+    if (pb) { pb.disabled = true; pb.title = 'This browser cannot read QR codes'; }
+  } else if (!window.isSecureContext) {
+    document.getElementById('scanStatus').textContent =
+      '📸 Tap “Take Photo of QR” to scan (live scanning needs a secure HTTPS link) — or type the ID below';
+    const sb = document.getElementById('startCamBtn');
+    sb.disabled = true;
+    sb.title = 'Live camera needs a secure (HTTPS) connection; use Take Photo instead';
   } else {
-    // Enumerate cameras
+    // Secure context — the live viewfinder is available. Enumerate cameras.
     try {
       const devices = await navigator.mediaDevices.enumerateDevices();
       const cameras = devices.filter(d => d.kind === 'videoinput');
@@ -308,6 +382,13 @@ async function init() {
       });
     } catch(e) {}
   }
+
+  // A USB or Bluetooth barcode/QR scanner acts as a keyboard — it "types" the
+  // scanned code and presses Enter. Focus the manual box so a scan lands there
+  // and fires the lookup with no taps at all. This path uses no camera and no
+  // secure context, so it works on any device (including iPhones) over plain http.
+  const mc = document.getElementById('manualCode');
+  if (mc) mc.focus();
 }
 
 // ── Camera ────────────────────────────────────────────────────────
@@ -529,6 +610,9 @@ function resetScan() {
   if (scannerActive) {
     document.getElementById('scanStatus').textContent = 'Scanning…';
   }
+  // Re-focus the manual box so a USB/Bluetooth scanner can fire the next scan hands-free.
+  const mc2 = document.getElementById('manualCode');
+  if (mc2) mc2.focus();
 }
 
 // ── History ────────────────────────────────────────────────────────

@@ -230,6 +230,14 @@
         <input type="email" id="contact_email" placeholder="ke4con@example.com">
       </div>
       <div class="form-group">
+        <button type="button" id="gpsBtn" onclick="useGps()"
+          style="padding:8px 14px;border:1px solid var(--line,#c0cfe0);border-radius:6px;
+                 background:var(--panel,#f0f3f6);color:var(--eoc,#1a3a6b);cursor:pointer;font-weight:600">
+          📍 Use GPS to fill location
+        </button>
+        <span class="hint" id="gpsStatus">Uses the server's connected GPS if it has a fix; otherwise this device's location.</span>
+      </div>
+      <div class="form-group">
         <label>Latitude (decimal)</label>
         <input type="number" id="lat" placeholder="42.3247" step="0.0001">
         <span class="hint">Used for NWS weather, sunrise/sunset, maps</span>
@@ -517,6 +525,71 @@
 
 <script>
 const API = '/svc/5050';
+
+// ── Fill Latitude / Longitude (and grid) from GPS ───────────────────────────
+// Tries the server's connected GPS (gpsd, via the health monitor) first — that
+// is the station's true position — then falls back to this device's browser
+// location. Never blocks setup: if neither works, the operator types it by hand.
+function maidenhead(lat, lon) {
+  if (!isFinite(lat) || !isFinite(lon)) return '';
+  lon += 180; lat += 90;
+  const U = 'ABCDEFGHIJKLMNOPQR', L = 'abcdefghijklmnopqrstuvwx';
+  const c1 = U[Math.floor(lon / 20)] + U[Math.floor(lat / 10)];
+  const c2 = Math.floor((lon % 20) / 2) + '' + Math.floor(lat % 10);
+  const c3 = L[Math.floor((lon % 2) * 12)] + L[Math.floor((lat % 1) * 24)];
+  return c1 + c2 + c3;
+}
+
+function _fillLatLon(lat, lon, source) {
+  const st = document.getElementById('gpsStatus');
+  document.getElementById('lat').value = (+lat).toFixed(4);
+  document.getElementById('lon').value = (+lon).toFixed(4);
+  const g = maidenhead(+lat, +lon);
+  const gridEl = document.getElementById('grid');
+  if (g && gridEl && !gridEl.value) gridEl.value = g;
+  st.style.color = 'var(--ok, #1a7a3a)';
+  st.textContent = `Filled from ${source}: ${(+lat).toFixed(4)}, ${(+lon).toFixed(4)}`
+                   + (g ? ` (grid ${g})` : '');
+}
+
+async function useGps() {
+  const btn = document.getElementById('gpsBtn');
+  const st  = document.getElementById('gpsStatus');
+  btn.disabled = true;
+  st.style.color = '';
+  st.textContent = 'Reading the server GPS…';
+
+  // 1) The Pi's connected GPS (gpsd) via the health monitor
+  try {
+    const r = await fetch('/svc/5051/api/health/gps', { signal: AbortSignal.timeout(6000) });
+    if (r.ok) {
+      const d = await r.json();
+      if (d && d.fix && typeof d.lat === 'number' && typeof d.lon === 'number') {
+        _fillLatLon(d.lat, d.lon, 'the station GPS');
+        btn.disabled = false;
+        return;
+      }
+    }
+  } catch (e) { /* fall through to the device's location */ }
+
+  // 2) This device's own location (phone/tablet/laptop doing the setup)
+  if (navigator.geolocation) {
+    st.textContent = 'No station GPS fix — trying this device…';
+    navigator.geolocation.getCurrentPosition(
+      p  => { _fillLatLon(p.coords.latitude, p.coords.longitude, "this device's location"); btn.disabled = false; },
+      () => {
+        st.style.color = 'var(--warn, #c8760a)';
+        st.textContent = 'No GPS fix. Connect a USB GPS to the server, or enter the coordinates by hand.';
+        btn.disabled = false;
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  } else {
+    st.style.color = 'var(--warn, #c8760a)';
+    st.textContent = 'No station GPS fix, and this browser has no location. Enter the coordinates by hand.';
+    btn.disabled = false;
+  }
+}
 let selectedVariant = 'FEMA';
 let logoData = '';
 let logoMime = '';

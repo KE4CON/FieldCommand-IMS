@@ -655,6 +655,15 @@ def ch3():
          'Sets the time zone for every timestamp in logs and forms (for example, '
          'America/Chicago). Set it to your deployment time zone.'],
     ], widths=[1.9*inch, CW-1.9*inch]))
+    s.append(SP(4))
+    s.append(note(
+        'A connected GPS can fill the location in for you. On the Setup screen, click '
+        '<b>Use GPS to fill location</b> (the button just above the Latitude field). It reads '
+        'the GPS plugged into the server first; if that has no fix, it uses the location of '
+        'the device you are running Setup on. It fills Latitude, Longitude, and the Grid '
+        'Square automatically. A USB GPS receiver plugs into a USB port on the FieldCommand '
+        'server and appears to the system as /dev/gps0. If no GPS is available, just type the '
+        'coordinates in by hand.', 'tip'))
     s.append(SP(6))
 
     s.append(P('3.3  Public-Safety Net Settings', H2))

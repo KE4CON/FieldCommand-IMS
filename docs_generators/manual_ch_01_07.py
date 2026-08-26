@@ -16,7 +16,7 @@ def ch1():
         'and the Incident Command System (ICS) forms drift out of step at exactly the moment '
         'they most need to agree. FieldCommand IMS is built on the opposite idea — that '
         'communications and ICS incident management belong together, married in one tool, '
-        'because during any incident, of any type, each one depends on the other.', Lead))
+        'because during any incident, of any type, each one depends on the other.'))
     s.append(P(
         'This project began as an amateur-radio emergency-communications (EMCOMM) effort and '
         'grew into a complete incident management system, because that inseparability became '
@@ -25,7 +25,8 @@ def ch1():
         "last resort that keeps working when nothing else does. An agency's primary "
         'communications are usually a public-service radio system and cellular service, and '
         'both can be overwhelmed or destroyed in moments. The recent hurricanes across '
-        'Florida, Louisiana, and the Carolinas made this plain: when the public-safety systems '
+        'Florida, Louisiana, and the Carolinas made this plain, and massive tornado outbreaks '
+        'devastate public-service communications the same way: when the public-safety systems '
         'were overloaded or wiped out, it was amateur radio operators who moved the traffic '
         'that coordinated the response and saved lives. Incident Commanders and emergency '
         'managers sometimes forget how vital that capability is — so a deliberate goal of '

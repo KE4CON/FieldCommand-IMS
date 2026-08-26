@@ -87,11 +87,11 @@ def feat_section(title,color,cols):
     return [hdr,tbl,SP(4)]
 
 story=[]; story.append(SP(2))
-tag=Table([[P('Offline Emergency Communications Server for Raspberry Pi 5',S('tag',fontName='Helvetica-Bold',fontSize=11,textColor=EOC,leading=14,alignment=TA_CENTER))]],colWidths=[CW])
+tag=Table([[P('Offline Incident Management + Emergency Communications — Raspberry Pi 5',S('tag',fontName='Helvetica-Bold',fontSize=11,textColor=EOC,leading=14,alignment=TA_CENTER))]],colWidths=[CW])
 tag.setStyle(TableStyle([('BACKGROUND',(0,0),(-1,-1),HexColor('#ddeeff')),('TOPPADDING',(0,0),(-1,-1),6),('BOTTOMPADDING',(0,0),(-1,-1),6),('BOX',(0,0),(-1,-1),1,EOC_LT)]))
 story.append(tag); story.append(SP(5))
 
-story.append(P('The <b>Incident Management System</b> is a self-contained emergency communications server running on a Raspberry Pi 5 (16 GB) in a Pironman MAX 5 enclosure with dual 1 TB NVMe SSDs in RAID 1. It broadcasts its own Wi-Fi network (<b>EMCOMM-NET</b>) via an ASUS RT-BE58 Go router and serves a full suite of amateur radio, ICS, and SAR tools to any browser on scene — no internet, no app installation, no configuration required. Everything is accessible at <b>http://192.168.50.1</b>.',S('intro',fontSize=8.5,leading=12,alignment=TA_JUSTIFY)))
+story.append(P('Communications and Incident Command System (ICS) incident management are inseparable, so FieldCommand marries them in one tool — and it keeps <b>amateur radio</b> ready as the communications that survive when public-service radio and cellular are overwhelmed or destroyed, as recent hurricanes across Florida, Louisiana, and the Carolinas — and massive tornado outbreaks — have shown. A deliberate goal is to promote and advance the use of amateur radio in emergency management. It is a self-contained server on a Raspberry Pi 5 (16 GB, Pironman MAX 5, dual 1 TB NVMe in RAID 1) that broadcasts its own <b>EMCOMM-NET</b> Wi-Fi via an ASUS RT-BE58 Go router and serves a full suite of amateur radio, ICS, and SAR tools to any browser on scene — no internet, no app, no configuration. Everything is at <b>http://192.168.50.1</b>.',S('intro',fontSize=8.5,leading=12,alignment=TA_JUSTIFY)))
 story.append(SP(5))
 
 # Stats strip — updated to show 3 modes

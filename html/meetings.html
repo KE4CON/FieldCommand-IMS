@@ -91,6 +91,7 @@
 .agenda-edit-row input { flex: 1; }
 .agenda-edit-row .dur-input { width: 80px; flex: none; }
 </style>
+<script src="/lib/clock.js"></script>
 </head>
 <body>
 
@@ -713,7 +714,7 @@ function showScheduleModal(meetingId) {
     // Defaults
     document.getElementById('sm-type').value = '';
     document.getElementById('sm-title').value = '';
-    const now = new Date(); now.setMinutes(0,0,0);
+    const now = (window.FC_TIME ? FC_TIME.date() : new Date()); now.setMinutes(0,0,0);
     document.getElementById('sm-time').value = now.toISOString().slice(0,16);
     document.getElementById('sm-period').value = currentPeriod;
     document.getElementById('sm-location').value = '';

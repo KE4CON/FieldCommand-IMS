@@ -258,6 +258,7 @@
   .mode-btn:last-child { border-bottom: none; }
 }
 </style>
+<script src="/lib/clock.js"></script>
 </head>
 <body>
 
@@ -1074,7 +1075,10 @@ loadStationConfig();
 
 // ── UTC Clock ─────────────────────────────────────────────────────────
 function updateClock() {
-  const now = new Date();
+  // Server-synced: show the Pi's clock (GPS/UTC-disciplined offline), not this
+  // device's, so every operator's dashboard agrees. Falls back to the device
+  // clock until clock.js has synced or if the server is unreachable.
+  const now = (window.FC_TIME ? FC_TIME.date() : new Date());
 
   // Build both time strings
   const utcH  = String(now.getUTCHours()).padStart(2,"0");

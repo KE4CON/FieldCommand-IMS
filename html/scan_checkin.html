@@ -119,6 +119,7 @@ body { background:var(--bg);font-size:15px; }
   border-bottom:1px solid var(--line-lt);font-size:11px;
 }
 </style>
+<script src="/lib/clock.js"></script>
 </head>
 <body>
 
@@ -543,7 +544,8 @@ async function submitCheckin() {
   btn.disabled = true;
   btn.textContent = 'Submitting…';
 
-  const now     = new Date();
+  // Server-synced clock so every staging device stamps the same check-in time.
+  const now     = (window.FC_TIME ? FC_TIME.date() : new Date());
   const timeStr = now.toTimeString().slice(0,5);
   const payload = {
     incident_id:   INC_ID,

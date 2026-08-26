@@ -243,6 +243,7 @@ PACKAGES=(
     nginx sqlite3
     git curl wget unzip
     gpsd gpsd-clients
+    chrony
     # Note: hostapd/dnsmasq NOT installed — Wi-Fi handled by ASUS RT-BE58 Go router
     rsync
 )
@@ -615,6 +616,39 @@ SCONF
         info "Once GPS is connected: sudo systemctl restart gpsd"
         info "Test with: gpspipe -w -n 5"
     fi
+fi
+
+# ── Time sync (chrony + GPS as an offline clock) ───────────────────
+if [[ "$PROFILE" == "1" || "$PROFILE" == "2" ]]; then
+    step "Configuring time sync (chrony + GPS)"
+
+    # Install the GPS refclock drop-in so the Pi can hold accurate UTC with no
+    # internet — gpsd feeds GPS time into chrony via shared memory.
+    if [[ -f "$SCRIPT_DIR/../udev/chrony-gps.conf" ]]; then
+        mkdir -p /etc/chrony/conf.d
+        cp "$SCRIPT_DIR/../udev/chrony-gps.conf" /etc/chrony/conf.d/fieldcommand-gps.conf
+        success "GPS refclock config written: /etc/chrony/conf.d/fieldcommand-gps.conf"
+        # Older chrony.conf files may not include the conf.d directory — add it once.
+        if [[ -f /etc/chrony/chrony.conf ]] && ! grep -q 'conf.d' /etc/chrony/chrony.conf; then
+            echo 'confdir /etc/chrony/conf.d' >> /etc/chrony/chrony.conf
+            info "Added 'confdir /etc/chrony/conf.d' to chrony.conf"
+        fi
+    fi
+
+    # chrony and systemd-timesyncd cannot both run — hand timekeeping to chrony.
+    systemctl disable --now systemd-timesyncd 2>>"$FC_LOG" || true
+
+    systemctl enable chrony 2>>"$FC_LOG" && success "chrony enabled"
+    systemctl restart chrony 2>>"$FC_LOG" || warn "chrony restart failed — check: sudo systemctl status chrony"
+
+    # Best-effort: show chrony's sources (GPS shows as #* / #? once it has a fix).
+    sleep 1
+    if command -v chronyc >/dev/null 2>&1; then
+        chronyc sources 2>>"$FC_LOG" | grep -iE 'NMEA|PPS' >/dev/null 2>&1 \
+            && success "GPS reference clock is registered with chrony" \
+            || info "GPS refclock will engage once the GPS has a fix (needs sky view)."
+    fi
+    info "Offline, the Pi keeps UTC from GPS; with a WAN it also uses internet time."
 fi
 
 # ── Offline map tiles ──────────────────────────────────────────────

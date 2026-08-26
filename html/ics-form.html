@@ -239,6 +239,7 @@
   button[onclick^="clearSig"] { display: none !important; }
 }
 </style>
+<script src="/lib/clock.js"></script>
 </head>
 <body>
 
@@ -398,8 +399,14 @@ let formData = {};
 function val(key, def='') {
   return formData[key] ?? incData[key] ?? orgData[key] ?? def;
 }
-function now() { return new Date().toISOString().slice(0,16); }
-function todayDate() { return new Date().toISOString().slice(0,10); }
+// Server-synced time: every device stamps the Pi's clock onto forms, not its
+// own, so timestamps agree across staging laptops, tablets, and phones.
+// Falls back to the device clock if clock.js isn't loaded / server unreachable.
+function _fcDate()   { return (window.FC_TIME ? FC_TIME.date() : new Date()); }
+function now()       { return _fcDate().toISOString().slice(0,16); }
+function todayDate() { return _fcDate().toISOString().slice(0,10); }
+function timeHHMM()  { return _fcDate().toTimeString().slice(0,5); }
+function stamp()     { return _fcDate().toLocaleString(); }
 
 // ── Collect all form field values ─────────────────────────────────────
 function collectFormData() {
@@ -417,7 +424,7 @@ async function saveForm() {
   data.variant = VARIANT;
   data.period = PERIOD;
   data.incident_id = INC_ID;
-  data.updated = new Date().toISOString();
+  data.updated = _fcDate().toISOString();
 
   const payload = {
     id: savedId,
@@ -902,7 +909,7 @@ FORMS['201'] = {
       </div>
       <div class="grid-3">
         ${field('date','Date','date',todayDate())}
-        ${field('time_prepared','Time Prepared','time',new Date().toTimeString().slice(0,5))}
+        ${field('time_prepared','Time Prepared','time',timeHHMM())}
         ${field('map_sketch_page','Map / Sketch Page','')}
       </div>
       <div class="grid-2">
@@ -1116,7 +1123,7 @@ FORMS['201'] = {
     </div>` : ''}
     <div class="print-footer">
       <span>${variant} · FieldCommand IMS · © 2026 James Rospopo KE4CON · CC BY-SA 4.0</span>
-      <span>Printed: ${new Date().toLocaleString()}</span>
+      <span>Printed: ${stamp()}</span>
     </div>`;
   }
 };
@@ -1208,7 +1215,7 @@ FORMS['202'] = {
       </div>
       <div class="grid-3">
         ${field('date_prepared','Date Prepared','date',todayDate())}
-        ${field('time_prepared','Time Prepared','time',new Date().toTimeString().slice(0,5))}
+        ${field('time_prepared','Time Prepared','time',timeHHMM())}
         ${field('operational_period_number','Operational Period #','text',String(PERIOD))}
       </div>
     </div>
@@ -1387,7 +1394,7 @@ FORMS['202'] = {
     </div>
     <div class="print-footer">
       <span>${variant} · FieldCommand IMS · © 2026 James Rospopo KE4CON · CC BY-SA 4.0</span>
-      <span>Printed: ${new Date().toLocaleString()}</span>
+      <span>Printed: ${stamp()}</span>
     </div>`;
   }
 };
@@ -1812,7 +1819,7 @@ FORMS['203'] = {
     </div>
     <div class="print-footer">
       <span>${variant} · FieldCommand IMS · © 2026 James Rospopo KE4CON · CC BY-SA 4.0</span>
-      <span>Printed: ${new Date().toLocaleString()}</span>
+      <span>Printed: ${stamp()}</span>
     </div>`;
   }
 };
@@ -2310,7 +2317,7 @@ FORMS['203A'] = {
     </div>
     <div class="print-footer">
       <span>${variant} · FieldCommand IMS · © 2026 James Rospopo KE4CON · CC BY-SA 4.0</span>
-      <span>Printed: ${new Date().toLocaleString()}</span>
+      <span>Printed: ${stamp()}</span>
     </div>`;
   }
 };
@@ -2543,7 +2550,7 @@ FORMS['204'] = {
     </div>
     <div class="print-footer">
       <span>${variant} \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
-      <span>Printed: ${new Date().toLocaleString()}</span>
+      <span>Printed: ${stamp()}</span>
     </div>`;
   }
 };
@@ -2927,7 +2934,7 @@ FORMS['203S'] = {
     </div>
     <div class="print-footer">
       <span>${variant} · FieldCommand IMS · © 2026 James Rospopo KE4CON · CC BY-SA 4.0</span>
-      <span>Printed: ${new Date().toLocaleString()}</span>
+      <span>Printed: ${stamp()}</span>
     </div>`;
   }
 };
@@ -3181,7 +3188,7 @@ FORMS['230'] = {
     </div>
     <div class="print-footer">
       <span>${variant} · FieldCommand IMS · © 2026 James Rospopo KE4CON · CC BY-SA 4.0</span>
-      <span>Printed: ${new Date().toLocaleString()}</span>
+      <span>Printed: ${stamp()}</span>
     </div>`;
   }
 };
@@ -3589,7 +3596,7 @@ FORMS['205'] = {
     </div>
     <div class="print-footer">
       <span>${variant} · FieldCommand IMS · © 2026 James Rospopo KE4CON · CC BY-SA 4.0</span>
-      <span>Printed: ${new Date().toLocaleString()}</span>
+      <span>Printed: ${stamp()}</span>
     </div>`;
   }
 };
@@ -3898,7 +3905,7 @@ FORMS['205A'] = {
     </div>
     <div class="print-footer">
       <span>${variant} \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
-      <span>Printed: ${new Date().toLocaleString()}</span>
+      <span>Printed: ${stamp()}</span>
     </div>`;
   }
 };
@@ -4362,7 +4369,7 @@ FORMS['206'] = {
     </div>
     <div class="print-footer">
       <span>${variant} \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
-      <span>Printed: ${new Date().toLocaleString()}</span>
+      <span>Printed: ${stamp()}</span>
     </div>`;
   }
 };
@@ -4645,7 +4652,7 @@ FORMS['208'] = {
     </div>
     <div class="print-footer">
       <span>${variant} \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
-      <span>Printed: ${new Date().toLocaleString()}</span>
+      <span>Printed: ${stamp()}</span>
     </div>`;
   }
 };
@@ -4904,7 +4911,7 @@ FORMS['209'] = {
     </div>
     <div class="print-footer">
       <span>${variant} \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
-      <span>Printed: ${new Date().toLocaleString()}</span>
+      <span>Printed: ${stamp()}</span>
     </div>`;
   }
 };
@@ -5087,7 +5094,7 @@ FORMS['213RR'] = {
     </div>
     <div class="print-footer">
       <span>${variant} \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
-      <span>Printed: ${new Date().toLocaleString()}</span>
+      <span>Printed: ${stamp()}</span>
     </div>`;
   }
 };
@@ -5147,7 +5154,7 @@ FORMS['214'] = {
       <div class="grid-3">
         ${field('unit_leader','Unit Leader (Name / Position)','text','')}
         ${field('date_prepared','Date Prepared','date',todayDate())}
-        ${field('time_prepared','Time Prepared','time',new Date().toTimeString().slice(0,5))}
+        ${field('time_prepared','Time Prepared','time',timeHHMM())}
       </div>
     </div>
 
@@ -5265,7 +5272,7 @@ FORMS['214'] = {
     </div>
     <div class="print-footer">
       <span>${variant} \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
-      <span>Printed: ${new Date().toLocaleString()}</span>
+      <span>Printed: ${stamp()}</span>
     </div>`;
   }
 };
@@ -5442,7 +5449,7 @@ FORMS['215'] = {
     </div>
     <div class="print-footer">
       <span>${variant} \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
-      <span>Printed: ${new Date().toLocaleString()}</span>
+      <span>Printed: ${stamp()}</span>
     </div>`;
   }
 };
@@ -5667,7 +5674,7 @@ FORMS['221'] = {
     </div>
     <div class="print-footer">
       <span>${variant} \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
-      <span>Printed: ${new Date().toLocaleString()}</span>
+      <span>Printed: ${stamp()}</span>
     </div>`;
   }
 };
@@ -5940,7 +5947,7 @@ FORMS['207'] = {
     </div>
     <div class="print-footer">
       <span>${variant} \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
-      <span>Printed: ${new Date().toLocaleString()}</span>
+      <span>Printed: ${stamp()}</span>
     </div>`;
   }
 };
@@ -6113,7 +6120,7 @@ FORMS['215A'] = {
     </div>
     <div class="print-footer">
       <span>${variant} \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
-      <span>Printed: ${new Date().toLocaleString()}</span>
+      <span>Printed: ${stamp()}</span>
     </div>`;
   }
 };
@@ -6277,7 +6284,7 @@ FORMS['210'] = {
     </div>
     <div class="print-footer">
       <span>${variant} \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
-      <span>Printed: ${new Date().toLocaleString()}</span>
+      <span>Printed: ${stamp()}</span>
     </div>`;
   }
 };
@@ -6502,7 +6509,7 @@ FORMS['211'] = {
     </div>
     <div class="print-footer">
       <span>${variant} \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
-      <span>Printed: ${new Date().toLocaleString()}</span>
+      <span>Printed: ${stamp()}</span>
     </div>`;
   }
 };
@@ -6703,7 +6710,7 @@ FORMS['219'] = {
     <div class="ics-print-header">
       <div class="logo-cell">${logoHtml()}</div>
       <div class="title-cell"><h1>ICS-219 RESOURCE STATUS BOARD</h1>
-        <div class="sub">${variant} \u00b7 FieldCommand IMS \u00b7 Printed: ${new Date().toLocaleString()}</div></div>
+        <div class="sub">${variant} \u00b7 FieldCommand IMS \u00b7 Printed: ${stamp()}</div></div>
       <div class="meta-cell">
         <div class="ml">Incident Name</div><div class="mv" style="font-size:10px">${incData.name||'\u2014'}</div>
         <div class="ml">IC</div><div class="mv" style="font-size:10px">${incData.incident_commander||'\u2014'}</div>
@@ -6717,7 +6724,7 @@ FORMS['219'] = {
     </div>
     <div class="print-footer">
       <span>${variant} \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
-      <span>Printed: ${new Date().toLocaleString()}</span>
+      <span>Printed: ${stamp()}</span>
     </div>`;
   }
 };
@@ -7099,7 +7106,7 @@ FORMS['220'] = {
     </div>
     <div class="print-footer">
       <span>${variant} \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
-      <span>Printed: ${new Date().toLocaleString()}</span>
+      <span>Printed: ${stamp()}</span>
     </div>`;
   }
 };
@@ -7256,7 +7263,7 @@ FORMS['233'] = {
     </div>
     <div class="print-footer">
       <span>IAP Supplement \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
-      <span>Printed: ${new Date().toLocaleString()}</span>
+      <span>Printed: ${stamp()}</span>
     </div>`;
   }
 };
@@ -7449,7 +7456,7 @@ FORMS['218'] = {
     </div>
     <div class="print-footer">
       <span>${variant} \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
-      <span>Printed: ${new Date().toLocaleString()}</span>
+      <span>Printed: ${stamp()}</span>
     </div>`;
   }
 };
@@ -7652,7 +7659,7 @@ FORMS['216'] = {
     </div>
     <div class="print-footer">
       <span>Radio Planning Worksheet \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
-      <span>Printed: ${new Date().toLocaleString()}</span>
+      <span>Printed: ${stamp()}</span>
     </div>`;
   }
 };
@@ -7808,7 +7815,7 @@ FORMS['217A'] = {
       <div class="pv">${fd.cr217a_notes}</div></div></div>`:''}
     <div class="print-footer">
       <span>Comms Planning Worksheet \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
-      <span>Printed: ${new Date().toLocaleString()}</span>
+      <span>Printed: ${stamp()}</span>
     </div>`;
   }
 };
@@ -8267,7 +8274,7 @@ function build225PrintDoc(fd) {
     <div style="border:1px solid #999;border-top:none;padding:6px 10px;background:#f5f5f5;
                 display:flex;justify-content:space-between;font-size:9px;color:#888">
       <span>${variant} \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0 \u00b7 CONFIDENTIAL</span>
-      <span>Printed: ${new Date().toLocaleString()}</span>
+      <span>Printed: ${stamp()}</span>
     </div>
   </div>`;
 }
@@ -8531,7 +8538,7 @@ FORMS['213'] = {
     </div>
     <div class="print-footer">
       <span>${variant} \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
-      <span>Printed: ${new Date().toLocaleString()}</span>
+      <span>Printed: ${stamp()}</span>
     </div>`;
   }
 };
@@ -8741,7 +8748,7 @@ FORMS['234'] = {
     </div>
     <div class="print-footer">
       <span>Planning Supplement \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
-      <span>Printed: ${new Date().toLocaleString()}</span>
+      <span>Printed: ${stamp()}</span>
     </div>`;
   }
 };
@@ -8918,7 +8925,7 @@ FORMS['223'] = {
     </div>
     <div class="print-footer">
       <span>NWCG Fire Supplement \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
-      <span>Printed: ${new Date().toLocaleString()}</span>
+      <span>Printed: ${stamp()}</span>
     </div>`;
   }
 };
@@ -9149,7 +9156,7 @@ FORMS['224'] = {
     </div>
     <div class="print-footer">
       <span>${variant} \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
-      <span>Printed: ${new Date().toLocaleString()}</span>
+      <span>Printed: ${stamp()}</span>
     </div>`;
   }
 };
@@ -9317,7 +9324,7 @@ FORMS['226'] = {
     </div>
     <div class="print-footer">
       <span>${variant} \u00b7 FieldCommand IMS \u00b7 \u00a9 2026 James Rospopo KE4CON \u00b7 CC BY-SA 4.0</span>
-      <span>Printed: ${new Date().toLocaleString()}</span>
+      <span>Printed: ${stamp()}</span>
     </div>`;
   }
 };

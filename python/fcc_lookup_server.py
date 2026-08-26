@@ -344,6 +344,17 @@ class Handler(BaseHTTPRequestHandler):
         qs     = parse_qs(parsed.query)
         c      = get_conn()
 
+        if path == "/api/time":
+            # Authoritative server clock. Every connected device syncs to this so
+            # ICS forms, check-in, and logs all carry one time — the Pi's — no
+            # matter what a phone or laptop's own clock says. Offline the Pi holds
+            # UTC from GPS (chrony); with a WAN it also uses internet time.
+            now = time.time()
+            return self.send_json({
+                "epoch_ms": int(now * 1000),
+                "utc":      datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            })
+
         if path == "/api/fcc":
             call = qs.get("call",[""])[0]
             if not call: return self.send_json({"error":"Missing call"},400)

@@ -78,6 +78,7 @@ body { background:var(--bg);font-size:15px; }
   font-size:13px;color:var(--red);margin-bottom:14px;
 }
 </style>
+<script src="/lib/clock.js"></script>
 </head>
 <body>
 
@@ -274,7 +275,8 @@ async function submitCheckin() {
   btn.disabled = true;
   btn.textContent = 'Submitting…';
 
-  const now = new Date();
+  // Server-synced clock so every staging device stamps the same check-in time.
+  const now = (window.FC_TIME ? FC_TIME.date() : new Date());
   const timeStr = now.toTimeString().slice(0,5);
   const dateStr = now.toISOString().slice(0,10);
 

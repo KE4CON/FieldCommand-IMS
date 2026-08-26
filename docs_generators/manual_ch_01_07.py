@@ -1763,13 +1763,107 @@ def ch7():
         ['Mode',                "FM, NFM, P25, DMR, D-STAR, C4FM, AM, SSB, or Analog."],
         ['Division / Group',    "Optional Incident Command System (ICS) assignment, e.g. \"Div A\", "
                                 "\"Grp SAR\", or \"All\"."],
+        ['Group / Pack',        "A label that keeps related channels together, e.g. \"Statewide "
+                                "Interop\" or \"Local\" (see below)."],
         ['Notes',               "Repeater location, coverage area, or special instructions."],
     ], widths=[1.6*inch, CW-1.6*inch]))
     s.append(SP(4))
+    s.append(P('<b>To add one channel by hand:</b>'))
+    s += steps([
+        'Click the <b>+ Add Channel</b> button at the top-right of the page. The '
+        '<b>ADD CHANNEL</b> box opens.',
+        'Fill in the fields from the table above. <b>Channel Name</b> and <b>RX Frequency</b> '
+        'are required; everything else is optional.',
+        'If this channel belongs to a set you want to keep together, type a name in the '
+        '<b>Group / Pack</b> box — for example "Local" or "IL Statewide Interop" (see 7.2.3).',
+        'Click the amber <b>SAVE CHANNEL</b> button. The box closes and the channel appears in '
+        'the list. To change it later, click the pencil (edit) button on its row; to remove it, '
+        'click the red X.',
+    ])
+    s.append(SP(4))
+    s.append(P('<b>To import a whole pack from a spreadsheet (for example a statewide SWIT file):</b>'))
+    s += steps([
+        'Put your channels in a CSV (comma-separated) file with these column headings: '
+        '<b>name, alpha_tag, rx_freq, tx_freq, pl_tone, mode, function, division, grp, notes</b>. '
+        'Easiest way to get the exact headings: click <b>Export CSV</b> once, open the file it '
+        'saves, and fill in your rows.',
+        'Click <b>Import CSV</b> at the top of the page and choose your file.',
+        'A small box asks for a <b>group name</b> for this whole file (it suggests one from the '
+        'file name). Type the name you want — for example "IL Statewide Interop" — and click OK. '
+        'Every channel in that file is tagged with that group. Leave it blank for no group.',
+        'FieldCommand adds the channels and shows "Imported N channels." Because importing is '
+        'additive, repeat these steps for another file (say your local channels) under a '
+        'different group name, and both packs stay in the library side by side.',
+    ])
+    s.append(SP(4))
+    s.append(P('<b>To import channels from RadioReference (needs a paid RadioReference account):</b>'))
+    s += steps([
+        'Click <b>Import from RadioReference</b>. A panel drops down.',
+        'Type your RadioReference <b>username</b> and <b>password</b>. They are used only for '
+        'this one lookup and are never stored.',
+        'Type your <b>ZIP Code</b> and click <b>Lookup ZIP</b>. The <b>County ID</b> fills in '
+        'automatically.',
+        'Optionally choose a <b>Filter by Tag</b> (Fire Dispatch, EMS Dispatch, Law, Interop, '
+        'Emergency Ops, Amateur, and so on) to narrow the results.',
+        'Click <b>Fetch Channels</b>. The channels it finds are added to the library, where you '
+        'can edit or group them like any others.',
+    ])
+    s.append(SP(6))
+
+    s.append(P('7.2.3  Groups — Keeping Statewide and Local Channels Apart', H3))
+    s.append(CHG('New: channel Groups (separate statewide from local) + multi-select mass edit.'))
     s.append(P(
-        'Once saved, these channels appear tagged <b>LIB</b> in the Select Channel picker from '
-        '7.2.1 and auto-fill the ICS-205 Communications Plan — so a channel entered once is '
-        'ready everywhere it is needed.'))
+        'A statewide interoperability plan can hold a hundred or more channels. If those were '
+        'mixed in with your handful of local channels, you would have to scroll past all of '
+        'them every time. The <b>Group / Pack</b> label prevents that. Give each set of '
+        'channels a group name — for example <b>"IL Statewide Interop"</b> for the state plan '
+        'and <b>"Local"</b> for your own repeaters — and the Channel Library keeps them '
+        'together and lets you show one at a time.'))
+    s.append(SP(4))
+    s.append(tbl(['DOING THIS', 'HOW'], [
+        ['Load a whole pack under one group',
+         "When you Import CSV, FieldCommand asks for a group name and applies it to every "
+         "channel in that file. Import your statewide file as one group and your local file "
+         "as another. Importing is additive, so both packs live in the library side by side."],
+        ['Show only one group',
+         "Use the <b>Group</b> drop-down in the filter bar to show just \"Local\" (or just the "
+         "statewide plan). The channels are also sorted so each group stays clustered together."],
+        ['Show only one band',
+         "A statewide plan spans several bands. Use the <b>Band</b> drop-down to show only VHF, "
+         "UHF, 700 MHz, or 800 MHz — worked out automatically from each channel's frequency, so "
+         "it works even on an imported pack you never hand-labeled."],
+        ['Change many channels at once',
+         "Tick the check-boxes on the left of the rows (or the box in the header to select all "
+         "shown), then use the <b>mass-edit bar</b> that appears to set a new group on all of "
+         "them or delete them together — handy when a state plan is re-issued and you need to "
+         "re-label or replace an entire pack."],
+    ], widths=[2.0*inch, CW-2.0*inch]))
+    s.append(SP(4))
+    s.append(P('<b>To show just your local channels (or just one band):</b>'))
+    s += steps([
+        'In the filter bar, open the <b>Group</b> drop-down and choose your local group. Only '
+        'those channels show. Choose "All Groups" to see everything again.',
+        'To narrow by band instead, open the <b>Band</b> drop-down and choose VHF, UHF, '
+        '700 MHz, or 800 MHz. The two drop-downs work together, so you can show, for example, '
+        'only the VHF channels within the statewide group.',
+    ])
+    s.append(SP(4))
+    s.append(P('<b>To re-label or remove a whole pack at once (mass edit):</b>'))
+    s += steps([
+        'Tick the check-box on the left of each channel you want to change. To select every '
+        'channel currently shown, tick the box in the table header instead.',
+        'An amber <b>mass-edit bar</b> appears near the top and shows how many channels are '
+        'selected.',
+        'To move them all into a group, type the group name in the <b>Set group</b> box and '
+        'click <b>Apply Group</b>. To remove them all, click <b>Delete Selected</b>. Either '
+        'way, a pop-up asks you to confirm first.',
+        'Click <b>Clear</b> to un-select everything without making a change.',
+    ])
+    s.append(SP(4))
+    s.append(P(
+        'Once saved, these channels appear tagged <b>LIB</b> — with their group shown — in the '
+        'Select Channel picker from 7.2.1 and auto-fill the ICS-205 Communications Plan, so a '
+        'channel entered once is ready everywhere it is needed.'))
     s.append(SP(6))
 
     s.append(P('7.3  Logging Check-Ins', H2))

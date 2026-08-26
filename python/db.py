@@ -332,6 +332,7 @@ CREATE TABLE IF NOT EXISTS channel_library (
     mode        TEXT DEFAULT 'FM',          -- FM, NFM, P25, DMR, etc.
     function    TEXT DEFAULT 'Tactical',    -- Command, Tactical, Air, Medical, etc.
     division    TEXT DEFAULT '',            -- which division this channel is assigned to
+    grp         TEXT DEFAULT '',            -- pack/group label, e.g. "Statewide Interop" vs "Local"
     notes       TEXT DEFAULT '',
     custom      INTEGER DEFAULT 1,
     active      INTEGER DEFAULT 1,
@@ -828,6 +829,8 @@ def init_db():
         "ALTER TABLE nets ADD COLUMN net_closed TEXT",
         "ALTER TABLE net_entries ADD COLUMN checkout_time TEXT",
         "ALTER TABLE net_entries ADD COLUMN ema_id TEXT DEFAULT ''",
+        # channel_library group/pack label (separate statewide from local)
+        "ALTER TABLE channel_library ADD COLUMN grp TEXT DEFAULT ''",
         # station_config expansions
         "ALTER TABLE station_config ADD COLUMN personal_call TEXT DEFAULT ''",
         "ALTER TABLE station_config ADD COLUMN org_name TEXT DEFAULT ''",

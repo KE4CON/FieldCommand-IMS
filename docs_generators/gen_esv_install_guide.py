@@ -1891,8 +1891,12 @@ story.append(tbl(['DATA', 'HOW TO LOAD', 'WHERE TO VERIFY', 'IMPACT IF MISSING']
      'Preflight → Data Readiness → Repeater Database shows count and how many have coordinates',
      'ICS-205 channel picker will be empty; repeater map overlay will show no pins'],
     ['Channel Library',
-     'http://192.168.50.1/channel_library.html → + Add Channel, '
-     'or click "+ Add to Channel Library" from the Repeater Database map popup.',
+     'http://192.168.50.1/channel_library.html → + Add Channel, Import CSV, or '
+     'Import from RadioReference. This is where you load statewide interop / STARCOM '
+     'and local public-service channels. Importing is additive, so you can load several '
+     'packs — tag each with a Group (e.g. "Statewide Interop" vs "Local") to keep them '
+     'separate and filterable. (Universal channels — National Simplex, APRS, NIFOG, '
+     'Mutual Aid — are always present automatically.)',
      'Preflight → Data Readiness → Channel Library shows channel count',
      'ICS-205 communications plan will have no channels to select'],
     ['Active Incident',
@@ -1901,14 +1905,25 @@ story.append(tbl(['DATA', 'HOW TO LOAD', 'WHERE TO VERIFY', 'IMPACT IF MISSING']
      'Or activate an event template at event_templates.html.',
      'Preflight → Data Readiness → Active Incident shows ✓',
      'Net logger, resource board, ICS forms, and T-cards will have no incident to attach to'],
+    ['Offline Map Tiles',
+     'On the Pi, run the tile downloader once while you have internet: '
+     'sudo bash /opt/fieldcommand/scripts/download_tiles.sh — choose your county or state '
+     'preset (for example --area county_mchenry or --area state_il), or --list to see all '
+     'presets. Tiles are saved as MBTiles and served offline from then on.',
+     'Open the tactical or resource map with the internet unplugged — detailed tiles '
+     'should render (Preflight does not auto-check this one).',
+     'Maps show only a blank / gray background when offline (online tiles only)'],
 ], [1.3*inch, 2.1*inch, 1.5*inch, CW-4.9*inch]))
 story.append(SP(4))
 story.append(NoteBox(
     'The Preflight Deployment Checklist at http://192.168.50.1/preflight.html '
-    'auto-checks all six items above on page load and shows live server detail — '
+    'auto-checks the data-readiness items above on page load and shows live server detail — '
     'record counts, database age, and error descriptions — without any operator input. '
     'Run the Preflight page as the final go/no-go check before activating the system. '
-    'Each NO-GO item includes a direct link to the page where it can be resolved.',
+    'Each NO-GO item includes a direct link to the page where it can be resolved. '
+    'Two directories need no load step: the hospital directory comes pre-loaded at install '
+    '(edit it at http://192.168.50.1/hospitals.html), and the facilities directory is '
+    'entered by hand per incident at http://192.168.50.1/facilities.html.',
     'tip'))
 story.append(PB())
 

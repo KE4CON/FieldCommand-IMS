@@ -955,7 +955,7 @@ class ICSHandler(BaseHTTPRequestHandler):
             ch_id = body.get("id") or f"ch-{int(time.time()*1000)}"
             existing = c.execute("SELECT id FROM channel_library WHERE id=?",(ch_id,)).fetchone()
             fields = ["name","alpha_tag","rx_freq","tx_freq","pl_tone","mode",
-                      "function","division","notes","custom","active"]
+                      "function","division","grp","notes","custom","active"]
             if existing:
                 sets = ", ".join(f"{f}=?" for f in fields)
                 vals = [body.get(f,"") for f in fields] + [ch_id]

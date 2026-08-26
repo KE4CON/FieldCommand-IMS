@@ -243,14 +243,52 @@
     <option>Mutual Aid</option>
     <option>Air</option>
   </select>
+  <select id="filterGroup" onchange="filterChannels()"
+    title="Show only one channel group (e.g. your local channels)"
+    style="background:var(--input-bg);border:1px solid var(--line);color:var(--txt);
+           padding:6px 10px;font-size:12px;border-radius:4px">
+    <option value="">All Groups</option>
+  </select>
+  <select id="filterBand" onchange="filterChannels()"
+    title="Show only one radio band (computed from the frequency)"
+    style="background:var(--input-bg);border:1px solid var(--line);color:var(--txt);
+           padding:6px 10px;font-size:12px;border-radius:4px">
+    <option value="">All Bands</option>
+    <option>VHF</option>
+    <option>UHF</option>
+    <option>700 MHz</option>
+    <option>800 MHz</option>
+    <option>HF</option>
+  </select>
   <div style="font-size:11px;color:var(--muted);margin-left:auto" id="chCount"></div>
+</div>
+
+<!-- Mass-edit bar (appears when channels are selected) -->
+<div id="bulkBar" style="display:none;background:rgba(200,118,10,0.1);
+     border-bottom:1px solid rgba(200,118,10,0.3);padding:8px 16px;
+     gap:8px;align-items:center;flex-wrap:wrap">
+  <span id="bulkCount" style="font-size:12px;font-weight:bold;color:var(--amber)"></span>
+  <span style="font-size:11px;color:var(--muted)">Set group:</span>
+  <input type="text" id="bulkGroup" maxlength="80"
+    placeholder="e.g. Illinois Statewide Interop (SWIT)" list="grpList"
+    style="width:340px;max-width:60vw;background:var(--input-bg);border:1px solid var(--line);
+           color:var(--txt);padding:5px 9px;font-size:12px;border-radius:4px">
+  <button onclick="bulkSetGroup()"
+    style="font-size:12px;padding:5px 12px;background:var(--amber);
+           border-color:var(--amber);color:#001428;font-weight:bold">Apply Group</button>
+  <button onclick="bulkDelete()"
+    style="font-size:12px;padding:5px 12px;background:rgba(192,32,32,0.12);
+           border-color:rgba(192,32,32,0.35);color:var(--red)">Delete Selected</button>
+  <button onclick="clearSelection()" style="font-size:12px;padding:5px 12px">Clear</button>
 </div>
 
 <div style="padding:16px;overflow-x:auto">
   <table class="ch-table">
     <thead>
       <tr>
+        <th style="width:26px"><input type="checkbox" id="chkAll" onclick="toggleAll(this)" title="Select all shown"></th>
         <th>Channel Name</th>
+        <th>Group</th>
         <th>Alpha Tag</th>
         <th>RX Freq</th>
         <th>TX Freq</th>
@@ -263,7 +301,7 @@
       </tr>
     </thead>
     <tbody id="chBody">
-      <tr><td colspan="10" style="text-align:center;padding:40px;color:var(--muted)">
+      <tr><td colspan="12" style="text-align:center;padding:40px;color:var(--muted)">
         Loading channels...
       </td></tr>
     </tbody>
@@ -375,6 +413,19 @@
     </div>
     <div class="fg" style="grid-column:1/-1">
       <label style="font-size:10px;color:var(--muted);text-transform:uppercase;
+                    letter-spacing:1px;display:block;margin-bottom:4px">
+        Group / Pack
+      </label>
+      <input type="text" id="f_grp" maxlength="80"
+        placeholder="e.g. Illinois Statewide Interop (SWIT) — long names with spaces are fine"
+        list="grpList"
+        style="width:100%;box-sizing:border-box;background:var(--input-bg);
+               border:1px solid var(--line);color:var(--txt);
+               padding:7px 10px;font-size:13px;border-radius:4px">
+      <datalist id="grpList"></datalist>
+    </div>
+    <div class="fg" style="grid-column:1/-1">
+      <label style="font-size:10px;color:var(--muted);text-transform:uppercase;
                     letter-spacing:1px;display:block;margin-bottom:4px">Notes</label>
       <input type="text" id="f_notes" placeholder="Repeater location, coverage area, special instructions..."
         style="width:100%;box-sizing:border-box;background:var(--input-bg);
@@ -401,13 +452,28 @@ async function loadChannels() {
   try {
     const r = await fetch(`${API}/api/ics/channel_library`);
     allChannels = r.ok ? await r.json() : [];
+    populateGroups();
     filterChannels();
   } catch(e) {
     document.getElementById('chBody').innerHTML =
-      `<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--red)">
+      `<tr><td colspan="12" style="text-align:center;padding:40px;color:var(--red)">
         ⚠ Cannot reach server — ${e.message}
       </td></tr>`;
   }
+}
+
+// Build the group filter dropdown and the modal's group suggestions from the
+// groups already in use, so labels stay consistent (e.g. everyone types the
+// same "Statewide Interop").
+function populateGroups() {
+  const groups = [...new Set(allChannels.map(c => (c.grp||'').trim()).filter(Boolean))].sort();
+  const sel = document.getElementById('filterGroup');
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">All Groups</option>' +
+    groups.map(g => `<option>${g}</option>`).join('');
+  sel.value = cur;
+  const dl = document.getElementById('grpList');
+  if (dl) dl.innerHTML = groups.map(g => `<option value="${g}">`).join('');
 }
 
 function fnClass(fn) {
@@ -419,29 +485,52 @@ function fnClass(fn) {
   return 'fn-' + (map[fn] || 'Tactical');
 }
 
+// Radio band from the receive frequency (MHz) — lets you filter the SWIT by
+// VHF / UHF / 700 / 800 without hand-tagging each channel.
+function bandOf(c) {
+  const f = parseFloat(c.rx_freq);
+  if (isNaN(f)) return '';
+  if (f < 30)                return 'HF';
+  if (f >= 30  && f <= 174)  return 'VHF';
+  if (f >= 380 && f <= 512)  return 'UHF';
+  if (f >= 764 && f <= 806)  return '700 MHz';
+  if (f >= 806 && f <= 870)  return '800 MHz';
+  return 'Other';
+}
+
 function filterChannels() {
   const q  = document.getElementById('filterText').value.toLowerCase();
   const fn = document.getElementById('filterFunction').value;
-  let list = allChannels;
+  const gp = document.getElementById('filterGroup').value;
+  const bd = document.getElementById('filterBand').value;
+  let list = allChannels.slice();
   if (q)  list = list.filter(c =>
     JSON.stringify(c).toLowerCase().includes(q));
   if (fn) list = list.filter(c => c.function === fn);
+  if (gp) list = list.filter(c => (c.grp||'') === gp);
+  if (bd) list = list.filter(c => bandOf(c) === bd);
+  // Cluster by group so a big statewide pack doesn't bury your local channels
+  list.sort((a,b) => (a.grp||'').localeCompare(b.grp||'') ||
+                     (a.name||'').localeCompare(b.name||''));
 
   document.getElementById('chCount').textContent =
     `${list.length} channel${list.length!==1?'s':''}`;
 
   if (!list.length) {
     document.getElementById('chBody').innerHTML =
-      '<tr><td colspan="10" style="text-align:center;padding:30px;color:var(--muted)">No channels match filter.</td></tr>';
+      '<tr><td colspan="12" style="text-align:center;padding:30px;color:var(--muted)">No channels match filter.</td></tr>';
+    onRowCheck();
     return;
   }
 
   document.getElementById('chBody').innerHTML = list.map(c => `
     <tr>
+      <td><input type="checkbox" class="rowchk" data-id="${c.id}" onclick="onRowCheck()"></td>
       <td>
         <strong style="font-size:12px">${c.name}</strong>
         ${!c.custom ? '<span class="agency-badge">seed</span>' : ''}
       </td>
+      <td style="font-size:11px;color:var(--purple)">${c.grp||''}</td>
       <td style="font-family:var(--font-hd);font-size:11px;color:var(--muted)">${c.alpha_tag||''}</td>
       <td style="font-family:var(--font-hd);font-size:12px;color:var(--green)">${c.rx_freq}</td>
       <td style="font-family:var(--font-hd);font-size:12px;color:${c.tx_freq&&c.tx_freq!==c.rx_freq?'var(--amber)':'var(--dim)'}">
@@ -461,11 +550,64 @@ function filterChannels() {
                  border-color:rgba(192,32,32,0.3);color:var(--red)">✕</button>
       </td>
     </tr>`).join('');
+  onRowCheck();
+}
+
+// ── Mass edit (multi-select) ─────────────────────────────────────
+function selectedIds() {
+  return [...document.querySelectorAll('.rowchk:checked')].map(x => x.dataset.id);
+}
+function onRowCheck() {
+  const n   = selectedIds().length;
+  const all = document.querySelectorAll('.rowchk').length;
+  const bar = document.getElementById('bulkBar');
+  if (bar) bar.style.display = n ? 'flex' : 'none';
+  const cnt = document.getElementById('bulkCount');
+  if (cnt) cnt.textContent = `${n} selected`;
+  const chkAll = document.getElementById('chkAll');
+  if (chkAll) { chkAll.checked = n > 0 && n === all; chkAll.indeterminate = n > 0 && n < all; }
+}
+function toggleAll(cb) {
+  document.querySelectorAll('.rowchk').forEach(x => { x.checked = cb.checked; });
+  onRowCheck();
+}
+function clearSelection() {
+  document.querySelectorAll('.rowchk').forEach(x => { x.checked = false; });
+  const chkAll = document.getElementById('chkAll');
+  if (chkAll) { chkAll.checked = false; chkAll.indeterminate = false; }
+  onRowCheck();
+}
+// Bulk change of group preserves every other field (we POST the full channel).
+async function bulkSetGroup() {
+  const ids = selectedIds(); if (!ids.length) return;
+  const g = document.getElementById('bulkGroup').value.trim();
+  if (!confirm(`Set group to "${g || '(none)'}" for ${ids.length} channel(s)?`)) return;
+  for (const id of ids) {
+    const c = allChannels.find(x => x.id === id); if (!c) continue;
+    await fetch(`${API}/api/ics/channel_library`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ ...c, grp: g })
+    });
+  }
+  document.getElementById('bulkGroup').value = '';
+  await loadChannels();
+}
+async function bulkDelete() {
+  const ids = selectedIds(); if (!ids.length) return;
+  if (!confirm(`Delete ${ids.length} selected channel(s)? This cannot be undone.`)) return;
+  for (const id of ids) {
+    const c = allChannels.find(x => x.id === id);
+    await fetch(`${API}/api/ics/channel_library`, {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ ...(c || { id }), active: 0 })
+    });
+  }
+  await loadChannels();
 }
 
 function showAddModal(id) {
   const fields = ['name','alpha_tag','rx_freq','tx_freq','pl_tone','mode',
-                  'function','division','notes'];
+                  'function','division','grp','notes'];
   if (id) {
     const ch = allChannels.find(c => c.id === id);
     if (!ch) return;
@@ -504,6 +646,7 @@ async function saveChannel() {
     mode:       document.getElementById('f_mode').value,
     function:   document.getElementById('f_function').value,
     division:   document.getElementById('f_division').value.trim(),
+    grp:        document.getElementById('f_grp').value.trim(),
     notes:      document.getElementById('f_notes').value.trim(),
   };
   try {
@@ -534,7 +677,7 @@ function closeModal() {
 
 function exportCSV() {
   const headers = ['name','alpha_tag','rx_freq','tx_freq','pl_tone','mode',
-                   'function','division','notes'];
+                   'function','division','grp','notes'];
   const rows = [headers.join(',')];
   allChannels.forEach(c => {
     rows.push(headers.map(h => `"${(c[h]||'').replace(/"/g,'""')}"`).join(','));
@@ -556,6 +699,14 @@ async function handleCSVImport(input) {
   const text = await file.text();
   const lines = text.split('\n').filter(l => l.trim());
   const headers = lines[0].split(',').map(h => h.replace(/"/g,'').trim());
+  // Tag the whole pack with one group so it stays separate from your other
+  // channels (e.g. import a statewide file as "Statewide Interop"). If the CSV
+  // already has a grp/group column, that wins per-row.
+  const suggested = file.name.replace(/\.[^.]+$/,'').replace(/[_-]+/g,' ').trim();
+  const packGroup = (prompt(
+    'Group / label for this channel pack (keeps it separate from your other ' +
+    'channels — e.g. "Statewide Interop" or "Local"). Leave blank for none:',
+    suggested) || '').trim();
   let count = 0;
   for (let i = 1; i < lines.length; i++) {
     const vals = lines[i].match(/(".*?"|[^,]+)(?=,|$)/g) || [];
@@ -565,6 +716,7 @@ async function handleCSVImport(input) {
       obj[h] = (vals[idx]||'').replace(/^"|"$/g,'').trim();
     });
     if (!obj.name || !obj.rx_freq) continue;
+    obj.grp = (obj.grp || obj.group || packGroup || '').trim();
     obj.tx_freq = obj.tx_freq || obj.rx_freq;
     try {
       await fetch(`${API}/api/ics/channel_library`, {

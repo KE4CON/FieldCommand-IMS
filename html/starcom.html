@@ -621,6 +621,12 @@ async function openChannelPicker(freqFieldId, nameFieldId) {
     return;
   }
 
+  // Cluster by source then group so a big statewide pack doesn't bury local channels.
+  const srcRank = s => s === 'ICS-205' ? 0 : s === 'Repeater DB' ? 2 : 1;
+  channels.sort((a,b) => srcRank(a.source) - srcRank(b.source) ||
+                         (a.grp||'').localeCompare(b.grp||'') ||
+                         (a.name||'').localeCompare(b.name||''));
+
   const modal = document.createElement('div');
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:500;display:flex;align-items:center;justify-content:center';
   modal.innerHTML = `
@@ -640,15 +646,16 @@ async function openChannelPicker(freqFieldId, nameFieldId) {
           const src = ch.source==='ICS-205'?'<span style="font-size:9px;color:var(--amber)"> 205</span>'
             : ch.source==='Repeater DB'?'<span style="font-size:9px;color:var(--green)"> RPT</span>'
             : '<span style="font-size:9px;color:var(--dim)"> LIB</span>';
+          const grpTag = ch.grp ? `<span style="font-size:9px;color:var(--purple)"> ${ch.grp}</span>` : '';
           const disp = ch.source==='Repeater DB'
             ? `${ch.rx_freq} ${ch.mode||'FM'}${ch.pl_tone?' PL '+ch.pl_tone:''} — ${ch.name}`
             : `${ch.rx_freq} ${ch.mode||'FM'}${ch.pl_tone?' PL '+ch.pl_tone:''}`;
-          return `<div class="picker-row" data-s="${ch.name} ${ch.rx_freq} ${ch.function}"
+          return `<div class="picker-row" data-s="${ch.name} ${ch.rx_freq} ${ch.function} ${ch.grp||''}"
             onclick="selectChannel(${i})"
             style="padding:7px 12px;border-bottom:1px solid var(--line);cursor:pointer"
             onmouseover="this.style.background='rgba(200,118,10,0.08)'"
             onmouseout="this.style.background=''">
-            <div style="font-size:12px;font-weight:bold">${ch.name}${src}</div>
+            <div style="font-size:12px;font-weight:bold">${ch.name}${src}${grpTag}</div>
             <div style="font-size:11px;color:var(--muted);font-family:monospace">${disp}</div>
           </div>`;
         }).join('')}

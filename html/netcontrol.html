@@ -898,6 +898,13 @@ async function openChannelPicker(freqFieldId, nameFieldId) {
     return;
   }
 
+  // Cluster by source then group so a big statewide pack doesn't bury local
+  // channels (search box still filters across everything).
+  const srcRank = s => s === 'ICS-205' ? 0 : s === 'Repeater DB' ? 2 : 1;
+  channels.sort((a,b) => srcRank(a.source) - srcRank(b.source) ||
+                         (a.grp||'').localeCompare(b.grp||'') ||
+                         (a.name||'').localeCompare(b.name||''));
+
   const modal = document.createElement('div');
   modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:500;display:flex;align-items:center;justify-content:center';
 
@@ -910,6 +917,9 @@ async function openChannelPicker(freqFieldId, nameFieldId) {
     const divTag = ch.division
       ? `<span style="font-size:9px;color:var(--blue);margin-left:4px">${ch.division}</span>`
       : '';
+    const grpTag = ch.grp
+      ? `<span style="font-size:9px;color:var(--purple);margin-left:4px">${ch.grp}</span>`
+      : '';
     const display = `${ch.rx_freq} ${ch.mode||'FM'}${ch.pl_tone?' PL '+ch.pl_tone:''}`;
     return `<div onclick="selectChannel(${i})"
       style="padding:8px 12px;border-bottom:1px solid var(--line);cursor:pointer;
@@ -918,7 +928,7 @@ async function openChannelPicker(freqFieldId, nameFieldId) {
       onmouseout="this.style.background=''">
       <div style="flex:1">
         <div style="font-size:12px;font-weight:bold">
-          ${ch.name}${src}${divTag}
+          ${ch.name}${src}${grpTag}${divTag}
         </div>
         <div style="font-size:11px;color:var(--muted);font-family:monospace">
           ${display}

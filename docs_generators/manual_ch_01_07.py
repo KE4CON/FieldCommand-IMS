@@ -130,7 +130,7 @@ def ch1():
          'Any device with a modern browser: smartphones, tablets, laptops, '
          'Raspberry Pi 500 desktops, Windows or macOS laptops',
          'DHCP assigned'],
-    ], widths=[1.9*inch, CW-2.9*inch, 1.0*inch]))
+    ], widths=[1.9*inch, CW-3.05*inch, 1.15*inch]))
     s.append(SP(4))
     s.append(note(
         'The default server address is 192.168.50.1. This is configurable during '
@@ -699,7 +699,7 @@ def ch3():
         ['HF propagation data',                 'WAN',   'Last retrieved data shown until WAN returns'],
         ['AMPRNet / 44Net tunnel',              'WAN',   'Tunnel drops — local network unaffected'],
         ['Winlink Telnet sessions',             'WAN',   'RF Winlink (VARA/Pactor) continues'],
-    ], widths=[2.2*inch, 0.7*inch, CW-2.9*inch]))
+    ], widths=[2.2*inch, 0.9*inch, CW-3.1*inch]))
     s.append(SP(6))
 
     s.append(P('3.5  Troubleshooting', H2))

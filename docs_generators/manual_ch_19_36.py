@@ -3028,7 +3028,7 @@ def ch31():
          'Shows a handful of clearly-labeled SAMPLE placeholder entries so you can '
          'see how the page looks and behaves before real data is loaded.',
          'Nothing. These are not real repeaters and must never be used on the air.'],
-    ], widths=[1.4*inch, 2.6*inch, CW-4.0*inch]))
+    ], widths=[1.35*inch, 2.95*inch, CW-4.3*inch]))
     s.append(SP(4))
     s += steps([
         'Click the <b>Offline File</b> tab (it is selected by default).',

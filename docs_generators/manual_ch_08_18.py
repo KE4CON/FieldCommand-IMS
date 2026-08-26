@@ -1405,6 +1405,7 @@ def ch13():
     ], widths=[2.1*inch, CW-2.1*inch]))
     s.append(SP(6))
 
+    s.append(CHG('Renamed: "SARTopo" is now "CalTopo / SARTopo" throughout.'))
     s.append(P('13.9  Tracking, Range Ring, Repeaters, and CalTopo / SARTopo Overlays', H2))
     s.append(P(
         "Four extra layers add context beyond the live stations:"))

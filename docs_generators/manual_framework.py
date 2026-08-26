@@ -145,6 +145,26 @@ def note(text, kind='note'):
     return t
 
 
+def CHG(text=''):
+    """TEMPORARY review marker — flags a spot changed this session so the reviewer
+    can spot it. Remove every CHG() call and this helper before release."""
+    tag  = P('CHANGED', _s('cgi', fontName='Helvetica-Bold', fontSize=7.5,
+                           textColor=white, leading=9))
+    body = P(text, _s('cgt', fontName='Helvetica-Bold', fontSize=8.5,
+                      textColor=HexColor('#8a1420'), leading=11))
+    t = Table([[tag, body]], colWidths=[0.82*inch, CW-0.82*inch])
+    t.setStyle(TableStyle([
+        ('BACKGROUND',   (0, 0), (0, 0), HexColor('#b82020')),
+        ('BACKGROUND',   (1, 0), (1, 0), HexColor('#fde8e8')),
+        ('LEFTPADDING',  (0, 0), (-1, -1), 6),
+        ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+        ('TOPPADDING',   (0, 0), (-1, -1), 3),
+        ('BOTTOMPADDING',(0, 0), (-1, -1), 3),
+        ('VALIGN',       (0, 0), (-1, -1), 'MIDDLE'),
+    ]))
+    return t
+
+
 # ── Abbreviation master list & helper ─────────────────────────────────────────
 ABBREVIATIONS = {
     'AMPRNet':   'Amateur Packet Radio Network (44.0.0.0/8)',

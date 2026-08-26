@@ -656,6 +656,7 @@ def ch3():
          'America/Chicago). Set it to your deployment time zone.'],
     ], widths=[1.9*inch, CW-1.9*inch]))
     s.append(SP(4))
+    s.append(CHG('New feature: "Use GPS to fill location" button on the Setup page.'))
     s.append(note(
         'A connected GPS can fill the location in for you. On the Setup screen, click '
         '<b>Use GPS to fill location</b> (the button just above the Latitude field). It reads '
@@ -764,6 +765,7 @@ def ch4():
     s.append(P(
         "Above the tabs sits the toolbar that acts on the whole roster:"))
     s.append(SP(4))
+    s.append(CHG('New: "Roster Report" PDF button (see the Roster Report row in this table).'))
     s.append(tbl(['BUTTON', 'WHAT IT DOES'], [
         ['Search box', 'Type any part of a name, callsign, Member ID, or Radio ID to filter '
          'the Directory instantly.'],
@@ -841,6 +843,7 @@ def ch4():
     s.append(P(
         "Three grids of checkboxes capture what a member can do. Tick every box that "
         "applies:"))
+    s.append(CHG('New: ICS command/general-staff roles added, plus a free-text "Other role" box.'))
     s.append(P("<b>Roles</b> - the amateur and public-service roles Net Control (NCS), "
                "Operator, Liaison, and Emergency Coordinator (EC), plus the ICS command and "
                "general-staff positions Incident Commander (IC), Deputy Incident Commander, "
@@ -1138,6 +1141,7 @@ def ch5():
         'ruggedized 1TB USB-C drive is recommended for field use.', 'note'))
     s.append(SP(6))
 
+    s.append(CHG('Renamed: "Beta Reset" is now "Exercise / Scenario Reset".'))
     s.append(P('5.6  Exercise / Scenario Mode', H2))
     s.append(P(
         'Exercises and training scenarios can be tagged as <b>Scenario</b> when '
@@ -1239,6 +1243,7 @@ def ch6():
     ], widths=[1.3*inch, CW-1.3*inch]))
     s.append(SP(6))
 
+    s.append(CHG('New: 10 built-in templates now (4 new sample packs); the set grows via updates.'))
     s.append(P('6.2  Built-In Templates', H2))
     s.append(P(
         'FieldCommand IMS ships with ten built-in templates covering the most common '
@@ -1351,6 +1356,7 @@ def ch6():
     ], widths=[1.7*inch, CW-1.7*inch]))
     s.append(SP(4))
 
+    s.append(CHG('New: Common Objective Library picklist in the template editor (hand entry still works).'))
     s.append(P('6.5.2  Objectives', H3))
     s.append(P(
         'The incident objectives, one per line. There are two ways to add them: pick from the '
@@ -1420,6 +1426,7 @@ def ch6():
                'to ship with FieldCommand (see 6.7).', Bullet))
     s.append(SP(6))
 
+    s.append(CHG('New: mark your own template "standard" (protected from deletion).'))
     s.append(P('6.6  Standard Templates and Deletion Protection', H2))
     s.append(P(
         'Templates come in three levels. The only difference is whether they can be deleted '
@@ -1441,6 +1448,7 @@ def ch6():
         'on later.', 'tip'))
     s.append(SP(6))
 
+    s.append(CHG('New: suggest templates for future updates + "Export Update Candidates"; maintainer drop-in packs.'))
     s.append(P('6.7  Sharing Templates and Suggesting New Ones', H2))
     s.append(P(
         'Templates are plain JSON files, so they move easily between servers and agencies.'))

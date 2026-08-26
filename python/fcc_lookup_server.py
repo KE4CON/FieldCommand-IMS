@@ -577,6 +577,79 @@ class Handler(BaseHTTPRequestHandler):
             return self.send_bytes(data, "application/pdf",
                 extra={"Content-Disposition":"inline; filename=member_id_cards.pdf"})
 
+        # ── Printable roster report (PDF, generated on demand) ──────────────
+        # GET /api/roster_report.pdf → landscape table of all members
+        elif path == "/api/roster_report.pdf":
+            try:
+                import io
+                from datetime import datetime, timezone
+                from reportlab.lib.pagesizes import letter, landscape
+                from reportlab.lib.units import inch
+                from reportlab.lib import colors as _rc
+                from reportlab.lib.styles import ParagraphStyle
+                from reportlab.platypus import (SimpleDocTemplate, Table,
+                                                TableStyle, Paragraph, Spacer)
+                members = [member_to_dict(r) for r in c.execute(
+                    "SELECT * FROM roster ORDER BY last_name, first_name, callsign").fetchall()]
+                org = ""
+                try:
+                    _o = c.execute("SELECT org_name FROM station_config WHERE id=1").fetchone()
+                    if _o and _o[0]:
+                        org = str(_o[0])
+                except Exception:
+                    pass
+                cell  = ParagraphStyle('c', fontName='Helvetica', fontSize=8, leading=10)
+                hcell = ParagraphStyle('h', fontName='Helvetica-Bold', fontSize=8,
+                                       leading=10, textColor=_rc.white)
+                def _p(t, s=cell):
+                    t = "" if t is None else str(t)
+                    return Paragraph(t.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;"), s)
+                def _certs(m):
+                    cf = m.get("certifications") or {}
+                    return ", ".join(k for k, v in cf.items() if v)
+                header = ['#', 'Name', 'Callsign', 'Radio ID', 'Member ID',
+                          'License', 'Roles', 'Certifications']
+                data = [[_p(h, hcell) for h in header]]
+                for i, m in enumerate(members, 1):
+                    name = ", ".join(x for x in [(m.get("last_name") or "").strip(),
+                                                 (m.get("first_name") or "").strip()] if x)
+                    data.append([
+                        _p(i), _p(name or "-"), _p(m.get("callsign") or ""),
+                        _p(m.get("radio_id") or ""), _p(m.get("member_id") or ""),
+                        _p(m.get("license_class") or ""),
+                        _p("; ".join(m.get("roles") or [])), _p(_certs(m)),
+                    ])
+                widths = [0.35, 1.8, 0.95, 0.95, 0.95, 0.95, 2.35, 1.7]  # inches, sum ~9.6
+                t = Table(data, colWidths=[w * inch for w in widths], repeatRows=1)
+                t.setStyle(TableStyle([
+                    ('BACKGROUND',    (0, 0), (-1, 0), _rc.HexColor('#1a3a6b')),
+                    ('ROWBACKGROUNDS', (0, 1), (-1, -1), [_rc.white, _rc.HexColor('#eef2f7')]),
+                    ('GRID',          (0, 0), (-1, -1), 0.4, _rc.HexColor('#b0c4dc')),
+                    ('VALIGN',        (0, 0), (-1, -1), 'TOP'),
+                    ('LEFTPADDING',   (0, 0), (-1, -1), 4),
+                    ('RIGHTPADDING',  (0, 0), (-1, -1), 4),
+                    ('TOPPADDING',    (0, 0), (-1, -1), 3),
+                    ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
+                ]))
+                title = ParagraphStyle('t', fontName='Helvetica-Bold', fontSize=14,
+                                       textColor=_rc.HexColor('#1a3a6b'))
+                sub = ParagraphStyle('s', fontName='Helvetica', fontSize=9,
+                                     textColor=_rc.HexColor('#4a6080'))
+                heading = (org + " — Member Roster") if org else "Member Roster"
+                stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+                buf = io.BytesIO()
+                doc = SimpleDocTemplate(buf, pagesize=landscape(letter),
+                                        leftMargin=0.4 * inch, rightMargin=0.4 * inch,
+                                        topMargin=0.4 * inch, bottomMargin=0.5 * inch,
+                                        title="Member Roster")
+                doc.build([_p(heading, title),
+                           _p(f"{len(members)} members  ·  generated {stamp}", sub),
+                           Spacer(1, 8), t])
+                return self.send_bytes(buf.getvalue(), "application/pdf",
+                    extra={"Content-Disposition": "inline; filename=member_roster.pdf"})
+            except Exception as e:
+                return self.send_json({"error": f"roster report failed: {e}"}, 500)
+
         elif path == "/api/hospitals":
             county = qs.get("county",[None])[0]
             state  = qs.get("state",[None])[0]

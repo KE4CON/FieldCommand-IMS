@@ -771,8 +771,12 @@ def ch4():
         ['Import CSV', 'Loads members from a spreadsheet file (see 4.9). Hover the button to '
          'see the exact column list.'],
         ['Export CSV', 'Downloads the whole roster as a spreadsheet file (see 4.9).'],
-        ['Print ID Cards', 'Opens a print-ready Portable Document Format (PDF) of photo ID '
-         'cards with a scannable QR for every member (see 4.5).'],
+        ['Roster Report', 'Opens a print-ready Portable Document Format (PDF) report of the '
+         'whole roster - a clean table of name, callsign, radio ID, member ID, license, '
+         'roles, and certifications - for handing to a section chief. Print it or save it as '
+         'a PDF from your browser.'],
+        ['Print ID Cards', 'Opens a print-ready PDF of photo ID cards with a scannable QR for '
+         'every member (see 4.5).'],
         ['Print', 'Opens your browser print dialog for a paper copy of the on-screen roster.'],
     ], widths=[1.6*inch, CW-1.6*inch]))
     s.append(SP(6))

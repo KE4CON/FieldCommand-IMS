@@ -54,6 +54,7 @@
     <button onclick="document.getElementById('importFile').click()" title="CSV columns: member_id, callsign, radio_id, first_name, last_name, role, phone, email, grid&#10;Optional: license_class, roles (semicolon-separated)&#10;&#10;• callsign: leave blank for non-ham members&#10;• member_id: ESV member number (e.g. ESV-042)&#10;• radio_id: Starcom radio ID (all members)">📥 Import CSV ⓘ</button>
     <input type="file" id="importFile" accept=".csv" style="display:none" onchange="importCSV(this)">
     <button onclick="exportCSV()">📤 Export CSV</button>
+    <button onclick="printRosterReport()" title="Open a printable roster report (PDF): name, callsign, IDs, license, roles, certifications">📋 Roster Report</button>
     <button onclick="printIdCards()" title="Print laminate-ready photo ID cards with a scannable QR for every member (walk-ins/mutual-aid included only if they have a photo)">🪪 Print ID Cards</button>
     <button onclick="window.print()">🖨 Print</button>
   </div>
@@ -288,6 +289,11 @@ function removeMemberPhoto() { _photoDataUrl=null; _photoRemove=true; _clearPhot
 function printIdCards(id) {
   const url = `${API}/api/id_cards.pdf` + (id ? `?id=${encodeURIComponent(id)}` : '');
   window.open(url, '_blank');
+}
+
+function printRosterReport() {
+  // Opens the server-generated roster report PDF; the browser can print it or save as PDF.
+  window.open(`${API}/api/roster_report.pdf`, '_blank');
 }
 
 function showTab(name) {

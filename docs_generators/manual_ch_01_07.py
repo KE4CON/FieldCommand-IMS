@@ -6,22 +6,44 @@ from manual_framework import *
 
 def ch1():
     s = chapter(1, 'Introduction & System Overview')
+    s.append(CHG('Reworded intro: the communications + ICS "marriage" and the vital role of amateur radio (messaging).'))
     s.append(P(
-        'When a disaster takes down commercial infrastructure — cellular networks, internet, '
-        'power — the tools modern emergency management depends on disappear precisely when '
-        'they are needed most. Incident logs revert to paper. Resource tracking becomes a '
-        'whiteboard. Incident Command System (ICS) forms are filled out by hand, photocopied, and hand-carried between '
-        'rooms. Situational awareness degrades to whatever one person can hold in their head. '
-        'Every organization that has worked a major activation knows this failure mode, and '
-        'most have simply accepted it as the cost of doing business.', Lead))
+        'Running an incident and communicating during it are inseparable. Every decision an '
+        'Incident Commander makes depends on information getting in, and every order depends '
+        'on being able to send it back out — so incident management and communications are '
+        'not two separate jobs, they are one. When they are handled by tools that never talk '
+        'to each other, the incident suffers: the message traffic, the resource assignments, '
+        'and the Incident Command System (ICS) forms drift out of step at exactly the moment '
+        'they most need to agree. FieldCommand IMS is built on the opposite idea — that '
+        'communications and ICS incident management belong together, married in one tool, '
+        'because during any incident, of any type, each one depends on the other.', Lead))
     s.append(P(
-        'FieldCommand IMS was built to eliminate that failure mode. It is a complete, '
-        'self-contained incident management platform that carries its own network, its own '
-        'server, and its own tools — and it operates with no internet connection, no cellular '
-        'service, and no outside infrastructure of any kind. The cell towers are down, the '
-        'internet is gone, and you are running on a generator in a parking lot. '
-        'That is exactly when you need incident management software most — and that is '
-        'exactly when FieldCommand IMS is designed to perform.'))
+        'This project began as an amateur-radio emergency-communications (EMCOMM) effort and '
+        'grew into a complete incident management system, because that inseparability became '
+        'impossible to ignore. It carries a second conviction just as strongly: amateur radio '
+        'is not a hobbyist add-on to emergency management — it is often the communications of '
+        "last resort that keeps working when nothing else does. An agency's primary "
+        'communications are usually a public-service radio system and cellular service, and '
+        'both can be overwhelmed or destroyed in moments. The recent hurricanes across '
+        'Florida, Louisiana, and the Carolinas made this plain: when the public-safety systems '
+        'were overloaded or wiped out, it was amateur radio operators who moved the traffic '
+        'that coordinated the response and saved lives. Incident Commanders and emergency '
+        'managers sometimes forget how vital that capability is — so a deliberate goal of '
+        'FieldCommand IMS is to keep amateur radio in front of them: ready, integrated, and '
+        'available as the resilient backbone an incident can fall back on when the primary '
+        'systems fail. Beyond serving any one incident, this system is intended to promote and '
+        'advance the use of amateur radio in emergency management — putting it to work on '
+        'everyday activations, growing the pool of trained and ready operators, and '
+        'demonstrating on real incidents the capability that only amateur radio can provide.'))
+    s.append(P(
+        'And because the worst incidents take down the very infrastructure modern tools rely '
+        'on — cellular networks, internet, and power — FieldCommand IMS is completely '
+        'self-contained. It carries its own network, its own server, and its own tools, and it '
+        'operates with no internet connection, no cellular service, and no outside '
+        'infrastructure of any kind. The cell towers are down, the internet is gone, and you '
+        'are running on a generator in a parking lot: that is exactly when you need incident '
+        'management and communications the most, and exactly when FieldCommand IMS is designed '
+        'to perform.'))
     # Deploying-org / served-agency line — ESV edition only (blank in World).
     if ed('org'):
         line = f"This edition is prepared for <b>{ed('org')}</b>"
@@ -32,15 +54,17 @@ def ch1():
         s.append(P(line))
     s.append(SP(4))
     s.append(note(
-        'In one sentence: FieldCommand IMS is a full ICS incident management system that '
-        'brings its own Wi-Fi, its own server, and radio communications built in, and keeps '
-        'working when the internet and cell service are gone.', 'tip'))
+        'In one sentence: FieldCommand IMS marries ICS incident management with the '
+        'communications an incident depends on — public-service and amateur radio alike — in '
+        'one self-contained system that keeps working when the internet and cell service are '
+        'gone.', 'tip'))
     s.append(SP(6))
 
     s.append(P('1.1  What FieldCommand IMS Is', H2))
     s.append(P(
-        'FieldCommand IMS is a <b>complete ICS/NIMS all-hazards incident management system</b> — '
-        'not simply an amateur radio or Emergency Communications (EMCOMM) tool. It manages the full lifecycle of any '
+        'FieldCommand IMS is a <b>complete ICS/NIMS all-hazards incident management system</b> '
+        'with amateur radio and public-service Emergency Communications (EMCOMM) built into its '
+        'core rather than bolted on. It manages the full lifecycle of any '
         'incident from initial response through demobilization using standard ICS forms and '
         'workflows. It runs on a Raspberry Pi 5 server and broadcasts its own private Wi-Fi '
         'access point. Any smartphone, tablet, or laptop that joins that network immediately '

@@ -417,8 +417,11 @@ def ch2():
     s.append(SP(6))
 
     s.append(P('2.2  First Connection', H2))
+    s.append(CHG('Clarified: power on the ASUS access router too, not just the Pi (wording).'))
     s += steps([
-        "Power on the FieldCommand Pi and wait approximately 45 seconds for all services to "
+        "Power on <b>both</b> the FieldCommand Pi <b>and</b> the ASUS access router. The router "
+        "is what broadcasts the Wi-Fi, so powering on the Pi by itself is not enough. Wait "
+        "approximately 45 seconds for all services to "
         "start. The system is ready when the EMCOMM-NET Wi-Fi network appears in your device "
         "scan list.",
         "On any smartphone, tablet, or laptop, open Wi-Fi settings and connect to "

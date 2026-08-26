@@ -501,9 +501,10 @@ def ch10():
 
     s.append(P('10.1  Four Ways to Read a Person In', H2))
     s.append(P(
-        'The page offers four input methods and picks the ones your device can actually do. '
-        'A staffed check-in station usually uses the live camera or a USB scanner; a '
-        'walk-up on a plain phone uses Take Photo or manual entry.'))
+        'The page offers four input methods and shows the ones your device can actually do. '
+        'A staffed check-in station usually uses the live camera or a USB scanner. Which methods '
+        'a phone can do depends on the phone — read the important iPhone and iPad note below '
+        'before you plan a check-in station around phones.'))
     s.append(SP(4))
     s.append(tbl(['METHOD', 'HOW IT WORKS', 'BEST FOR'], [
         ['Live camera',
@@ -524,6 +525,19 @@ def ch10():
          'into the manual box, which stays focused so the lookup fires hands-free.',
          'A fixed desk station reading printed badges'],
     ], widths=[1.25*inch, CW-3.05*inch, 1.8*inch]))
+    s.append(SP(4))
+    s.append(CHG('Added: iPhone/iPad cannot do in-app camera or Take Photo scanning (Safari lacks Barcode Detector); use manual entry or a Bluetooth scanner.'))
+    s.append(note(
+        '<b>iPhone and iPad — the in-app scanning does not work on them.</b> Apple\'s Safari '
+        'browser does not include the Barcode Detector that this page uses, so on an iPhone or '
+        'iPad neither <b>Live Camera</b> nor <b>Take Photo</b> can read a code. On those devices '
+        'use <b>Manual ID entry</b> (type the callsign, member ID, or radio ID), or pair a '
+        '<b>Bluetooth barcode scanner</b> — it types the code in for you. The camera and photo '
+        'scanning DO work on <b>Android</b> phones and tablets, and on laptops or the Raspberry '
+        'Pi running <b>Google Chrome</b> or <b>Microsoft Edge</b>. So if your check-in station '
+        'will scan with phones, use Android phones; for iPhones, plan on manual entry or a '
+        'Bluetooth scanner. (Scanning the card\'s QR with the iPhone\'s own Camera app does not '
+        'help either — the code is a plain identifier, not a web link.)', 'warn'))
     s.append(SP(6))
 
     s.append(P('10.2  The Screen at a Glance', H2))

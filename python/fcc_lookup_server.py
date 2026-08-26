@@ -641,29 +641,19 @@ class Handler(BaseHTTPRequestHandler):
                                      spaceAfter=6, textColor=_rc.HexColor('#4a6080'))
                 heading = (org + " — Member Roster") if org else "Member Roster"
                 stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-                # Accountability signature block (kept together, printed after the roster)
-                lab = ParagraphStyle('lab', fontName='Helvetica', fontSize=8,
-                                     textColor=_rc.HexColor('#4a6080'))
-                _ln = _rc.HexColor('#333333')
-                sig = Table([
-                    [Spacer(1, 16), '', Spacer(1, 16)],
-                    [_p('Prepared by (print and sign)', lab), '', _p('Date', lab)],
-                    [Spacer(1, 20), '', ''],
-                    [Spacer(1, 16), '', Spacer(1, 16)],
-                    [_p('Reviewed by / Section Chief (print and sign)', lab), '', _p('Date', lab)],
-                ], colWidths=[5.5 * inch, 0.6 * inch, 2.4 * inch])
-                sig.setStyle(TableStyle([
-                    ('LINEBELOW',     (0, 0), (0, 0), 0.7, _ln),
-                    ('LINEBELOW',     (2, 0), (2, 0), 0.7, _ln),
-                    ('LINEBELOW',     (0, 3), (0, 3), 0.7, _ln),
-                    ('LINEBELOW',     (2, 3), (2, 3), 0.7, _ln),
-                    ('LEFTPADDING',   (0, 0), (-1, -1), 0),
-                    ('RIGHTPADDING',  (0, 0), (-1, -1), 0),
-                    ('TOPPADDING',    (0, 0), (-1, -1), 0),
-                    ('BOTTOMPADDING', (0, 1), (-1, 1), 4),
-                    ('BOTTOMPADDING', (0, 4), (-1, 4), 0),
-                    ('VALIGN',        (0, 0), (-1, -1), 'BOTTOM'),
-                ]))
+                # Accountability sign-off block — rendered with the same helpers the
+                # ICS form PDFs use (iap_pdf._section + _field_table), so it matches the
+                # "Prepared / Approved By" blocks on the forms.
+                import iap_pdf
+                sig_block = [
+                    iap_pdf._section('Prepared / Reviewed By'),
+                    iap_pdf._field_table([
+                        ('Prepared By',                 ''),
+                        ('Date/Time',                   ''),
+                        ('Reviewed By / Section Chief', ''),
+                        ('Date/Time',                   ''),
+                    ], col_widths=[2.0 * inch, 5.0 * inch]),
+                ]
                 buf = io.BytesIO()
                 doc = SimpleDocTemplate(buf, pagesize=landscape(letter),
                                         leftMargin=0.4 * inch, rightMargin=0.4 * inch,
@@ -672,7 +662,7 @@ class Handler(BaseHTTPRequestHandler):
                 doc.build([_p(heading, title),
                            _p(f"{len(members)} members  ·  generated {stamp}", sub),
                            Spacer(1, 10), t,
-                           KeepTogether([Spacer(1, 28), sig])])
+                           KeepTogether([Spacer(1, 22)] + sig_block)])
                 return self.send_bytes(buf.getvalue(), "application/pdf",
                     extra={"Content-Disposition": "inline; filename=member_roster.pdf"})
             except Exception as e:

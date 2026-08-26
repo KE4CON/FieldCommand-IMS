@@ -1023,6 +1023,31 @@ def ch12():
         'triggered net turns the whole page red even if others are calm.'))
     s.append(SP(6))
 
+    s.append(P('12.1.1  What Counts as Activity — and Whose Job It Is', H3))
+    s.append(CHG('Clarified what resets the switch: the net\'s most recent log entry (any entry, any station) — not each login; it is Net Control\'s job to log activity.'))
+    s.append(P(
+        'This is the most common point of confusion, so to be exact: the switch watches '
+        '<b>one</b> thing — the time of the <b>most recent entry in the net\'s log</b>. Any new '
+        'entry resets the countdown to full: a check-in, a piece of traffic, a status or '
+        'position update, or a check-out, from <b>any</b> station.'))
+    s.append(SP(4))
+    s.append(P(
+        'It is <b>not</b> a per-operator timer. The people already checked in do <b>not</b> each '
+        'have to do something within the interval, and one logged entry anywhere in the net '
+        'keeps the whole net alive. In practice this makes it the <b>Net Control operator\'s</b> '
+        'responsibility, because Net Control is who types entries into the log. As long as Net '
+        'Control records something before the countdown runs out, the switch stays quiet. If the '
+        'net is genuinely silent — no traffic, nothing to log — for the entire interval, the '
+        'alarm fires. That is the whole point: in search and rescue, a net that goes quiet for '
+        'too long may be the first sign a field team is in trouble.'))
+    s.append(SP(4))
+    s.append(note(
+        'When a net is quiet on purpose (the teams are fine, they just have nothing to report), '
+        'keep the switch satisfied the same way you keep the teams accountable: Net Control '
+        'calls a periodic radio check ("all teams, report") and logs it. That single entry both '
+        'confirms the teams are okay and resets the countdown.', 'tip'))
+    s.append(SP(6))
+
     s.append(P('12.2  Opening the Page', H2))
     s.append(P(
         'Open <b>Dead Man\'s Switch</b> from the top navigation bar, or go straight to '

@@ -151,6 +151,23 @@
     <label class="cert-check"><input type="checkbox" name="role" value="Operator"> Operator</label>
     <label class="cert-check"><input type="checkbox" name="role" value="Liaison"> Liaison</label>
     <label class="cert-check"><input type="checkbox" name="role" value="Emergency Coordinator (EC)"> Emergency Coordinator (EC)</label>
+    <label class="cert-check"><input type="checkbox" name="role" value="Incident Commander (IC)"> Incident Commander (IC)</label>
+    <label class="cert-check"><input type="checkbox" name="role" value="Deputy Incident Commander"> Deputy Incident Commander</label>
+    <label class="cert-check"><input type="checkbox" name="role" value="Safety Officer (SO)"> Safety Officer (SO)</label>
+    <label class="cert-check"><input type="checkbox" name="role" value="Public Information Officer (PIO)"> Public Information Officer (PIO)</label>
+    <label class="cert-check"><input type="checkbox" name="role" value="Liaison Officer (LOFR)"> Liaison Officer (LOFR)</label>
+    <label class="cert-check"><input type="checkbox" name="role" value="Operations Section Chief (OSC)"> Operations Section Chief (OSC)</label>
+    <label class="cert-check"><input type="checkbox" name="role" value="Planning Section Chief (PSC)"> Planning Section Chief (PSC)</label>
+    <label class="cert-check"><input type="checkbox" name="role" value="Logistics Section Chief (LSC)"> Logistics Section Chief (LSC)</label>
+    <label class="cert-check"><input type="checkbox" name="role" value="Finance/Admin Section Chief (FSC)"> Finance/Admin Section Chief (FSC)</label>
+    <label class="cert-check"><input type="checkbox" name="role" value="Communications Unit Leader (COML)"> Communications Unit Leader (COML)</label>
+    <label class="cert-check"><input type="checkbox" name="role" value="Communications Technician (COMT)"> Communications Technician (COMT)</label>
+  </div>
+  <div id="customRoles" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div>
+  <div style="display:flex;gap:6px;margin-top:6px">
+    <input type="text" id="customRoleInput" placeholder="Other role — type it and click Add (e.g. Shelter Manager)"
+           style="flex:1" onkeydown="if(event.key==='Enter'){event.preventDefault();addCustomRole();}">
+    <button type="button" onclick="addCustomRole()">+ Add</button>
   </div>
 
   <div style="font-size:11px;color:var(--muted);margin:12px 0 6px;text-transform:uppercase">Certifications</div>
@@ -479,6 +496,8 @@ function openAddMember() {
   document.querySelectorAll("#memberModal input[type=checkbox]").forEach(i=>i.checked=false);
   document.getElementById("fClass").value = "";
   document.getElementById("memberId").value = "";
+  customRoles = [];
+  renderCustomRoles();
   resetPhoto();
   document.getElementById("memberModal").style.display="flex";
 }
@@ -517,10 +536,13 @@ function openEditMember(id) {
    ["eGoBox","Go-Box"],["eGenerator","Generator"],["eBattery","Battery"],["eVehicle","Vehicle"]].forEach(([id,k]) => {
     document.getElementById(id).checked = !!eq[k];
   });
-  // Roles
+  // Roles: tick the standard boxes; any other saved role becomes a custom chip.
+  const _stdRoleVals = new Set([...document.querySelectorAll("input[name=role]")].map(cb=>cb.value));
   document.querySelectorAll("input[name=role]").forEach(cb => {
     cb.checked = (m.roles||[]).includes(cb.value);
   });
+  customRoles = (m.roles||[]).filter(r => !_stdRoleVals.has(r));
+  renderCustomRoles();
   // Photo: show the stored one (served separately) if present; no re-upload
   // happens unless the operator picks a new file or removes it.
   resetPhoto();
@@ -529,6 +551,32 @@ function openEditMember(id) {
 }
 
 function closeMemberModal() { document.getElementById("memberModal").style.display="none"; }
+
+// ── Custom (typed-in) roles ─────────────────────────────────────────────────
+// Any role that is not one of the standard checkboxes is kept here as a chip so
+// operators can record positions not in the list. Saved together with the boxes.
+let customRoles = [];
+function _escRole(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function renderCustomRoles(){
+  const box = document.getElementById("customRoles");
+  if (!box) return;
+  box.innerHTML = customRoles.map((r,i) =>
+    `<span style="display:inline-flex;align-items:center;gap:5px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:2px 8px;font-size:11px">`
+    + `${_escRole(r)} <a href="#" title="Remove" onclick="removeCustomRole(${i});return false" style="text-decoration:none;color:var(--red);font-weight:bold">&times;</a>`
+    + `</span>`).join("");
+}
+function addCustomRole(){
+  const inp = document.getElementById("customRoleInput");
+  const v = (inp.value||"").trim();
+  if (!v) return;
+  // If it matches a standard checkbox, tick that box instead of adding a chip.
+  const std = [...document.querySelectorAll("input[name=role]")].find(cb => cb.value.toLowerCase() === v.toLowerCase());
+  if (std) { std.checked = true; inp.value = ""; return; }
+  if (!customRoles.some(r => r.toLowerCase() === v.toLowerCase())) customRoles.push(v);
+  inp.value = "";
+  renderCustomRoles();
+}
+function removeCustomRole(i){ customRoles.splice(i,1); renderCustomRoles(); }
 
 async function saveMember() {
   const certs = {};
@@ -543,7 +591,7 @@ async function saveMember() {
    ["eGoBox","Go-Box"],["eGenerator","Generator"],["eBattery","Battery"],["eVehicle","Vehicle"]].forEach(([id,k]) => {
     equipment[k] = document.getElementById(id).checked;
   });
-  const roles = [...document.querySelectorAll("input[name=role]:checked")].map(cb=>cb.value);
+  const roles = [...document.querySelectorAll("input[name=role]:checked")].map(cb=>cb.value).concat(customRoles);
 
   const m = {
     id:        document.getElementById("memberId").value || ("m-"+Date.now()),

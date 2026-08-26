@@ -835,8 +835,14 @@ def ch4():
     s.append(P(
         "Three grids of checkboxes capture what a member can do. Tick every box that "
         "applies:"))
-    s.append(P("<b>Roles</b> - Net Control (NCS), Operator, Liaison, and Emergency "
-               "Coordinator (EC).", Bullet))
+    s.append(P("<b>Roles</b> - the amateur and public-service roles Net Control (NCS), "
+               "Operator, Liaison, and Emergency Coordinator (EC), plus the ICS command and "
+               "general-staff positions Incident Commander (IC), Deputy Incident Commander, "
+               "Safety Officer (SO), Public Information Officer (PIO), Liaison Officer (LOFR), "
+               "Operations, Planning, Logistics, and Finance/Admin Section Chiefs, and the "
+               "Communications Unit Leader (COML) and Technician (COMT). For any position not "
+               "in the list, type it into the <b>Other role</b> box and click <b>Add</b> - it "
+               "is saved with the member and shown as its own badge.", Bullet))
     s.append(P("<b>Certifications</b> - ICS-100, ICS-200, ICS-300, ICS-400, ICS-700, "
                "ICS-800, EmComm I, EmComm II, CPR/AED, First Aid, and CERT.", Bullet))
     s.append(P("<b>Equipment</b> - HF Radio, VHF/UHF, Digital, Packet, PACTOR Modem, "

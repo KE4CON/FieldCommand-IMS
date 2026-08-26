@@ -1391,6 +1391,15 @@ story.append(tbl(['PROMPT', 'DEFAULT', 'DESCRIPTION'], [
     ['Kiwix tier', '1', 'Tier 1: WikiMed + Wikipedia Mini + Wikivoyage (~2.5 GB). Tier 2 adds iFixit (~5 GB more).'],
 ], [1.6*inch, 1.2*inch, CW-2.8*inch]))
 story.append(SP(6))
+story.append(NoteBox(
+    'You do not have to look up your coordinates. After installation, open the Setup page '
+    '(http://192.168.50.1/setup.html) and click <b>Use GPS to fill location</b> (the button '
+    'just above the Latitude field). It reads a GPS connected to the server first, and '
+    'otherwise uses the location of the device you are on, filling in latitude, longitude, '
+    'and the grid square. A USB GPS receiver plugs into a USB port on the FieldCommand server '
+    'and appears to the system as /dev/gps0.',
+    'note'))
+story.append(SP(6))
 story.append(H2('What the Installer Does Automatically'))
 for item in [
     'Installs system packages: Python 3, nginx, kiwix-tools, rsync, gpsd, ufw, mdadm, java',

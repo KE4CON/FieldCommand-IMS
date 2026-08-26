@@ -173,7 +173,7 @@ def ch1():
         ['Situational Awareness',
          'Animated NEXRAD radar (WAN required). Live NWS weather alerts. '
          'GPS-tracked resource map with status-coded SVG markers. '
-         'Offline APRS tactical map. SARTopo GeoJSON import. HF propagation tool.'],
+         'Offline APRS tactical map. CalTopo / SARTopo GeoJSON import. HF propagation tool.'],
         ['Personnel & Check-In',
          'Member roster with certifications, radio IDs, and Quick Response (QR) code check-in codes. '
          'QR/barcode camera scan check-in using native BarcodeDetector API. '

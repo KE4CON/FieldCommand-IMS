@@ -604,7 +604,7 @@ story.append(ref_tbl(
     [
         ['RF APRS (TNC/direwolf)',  '✗ Always offline', 'Live RF stations from local TNC — always available'],
         ['APRS-IS internet feed',   '✓ WAN required',   'Internet feed pauses when offline; RF continues'],
-        ['SARTopo GeoJSON overlay', '✗ Once imported',  'Import at sartopo_import.html — persists on map'],
+        ['CalTopo / SARTopo GeoJSON overlay', '✗ Once imported',  'Import at caltopo_import.html — persists on map'],
         ['NWS weather polygons',    '✓ WAN required',   'Alert polygons overlay on the map'],
     ],
     [1.8*inch, 1.1*inch, CW-2.9*inch]))
@@ -798,7 +798,13 @@ story.append(tip(
 story.append(PB())
 
 
-out = '/mnt/user-data/outputs/FieldCommand_Field_Quick_Reference.pdf'
+import os
+_qr_default = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..',
+                           'docs', 'guides', 'FieldCommand_Field_Quick_Reference.pdf')
+out = os.environ.get('FC_QUICKREF_OUT') or (
+    '/mnt/user-data/outputs/FieldCommand_Field_Quick_Reference.pdf'
+    if os.path.isdir('/mnt/user-data/outputs') else os.path.normpath(_qr_default))
+os.makedirs(os.path.dirname(out), exist_ok=True)
 doc = SimpleDocTemplate(
     out, pagesize=letter,
     leftMargin=M, rightMargin=M,

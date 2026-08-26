@@ -1278,7 +1278,7 @@ def ch13():
         ['Range Ring', 'A dashed distance circle around your station (radius set in Settings).'],
         ['Track', 'The movement trail of a station you chose to follow.'],
         ['Repeaters', 'The repeater database overlay, loaded from the FieldCommand server.'],
-        ['SARTopo', 'An imported SARTopo / CalTopo GeoJSON overlay (see 13.9).'],
+        ['CalTopo / SARTopo', 'An imported CalTopo / SARTopo GeoJSON overlay (see 13.9).'],
     ], widths=[1.5*inch, CW-1.5*inch]))
     s.append(SP(6))
 
@@ -1405,7 +1405,7 @@ def ch13():
     ], widths=[2.1*inch, CW-2.1*inch]))
     s.append(SP(6))
 
-    s.append(P('13.9  Tracking, Range Ring, Repeaters, and SARTopo Overlays', H2))
+    s.append(P('13.9  Tracking, Range Ring, Repeaters, and CalTopo / SARTopo Overlays', H2))
     s.append(P(
         "Four extra layers add context beyond the live stations:"))
     s.append(P(
@@ -1418,9 +1418,9 @@ def ch13():
         "<b>Repeaters</b> -- overlays the repeater database served by the FieldCommand "
         "server, handy for choosing a machine to work through.", Bullet))
     s.append(P(
-        "<b>SARTopo</b> -- shows search sectors, assignments, and zones you imported "
-        "from SARTopo or CalTopo. Export your map as GeoJSON, import it on the SARTopo "
-        "Import page, then turn on the SARTopo layer here. The overlay stays put across "
+        "<b>CalTopo / SARTopo</b> -- shows search sectors, assignments, and zones you imported "
+        "from CalTopo / SARTopo. Export your map as GeoJSON, import it on the CalTopo / SARTopo "
+        "Import page, then turn on the CalTopo / SARTopo layer here. The overlay stays put across "
         "refreshes until you clear it.", Bullet))
     s.append(SP(6))
 

@@ -4457,7 +4457,7 @@ def ch_appendix():
         ('position_checklists.html','ICS Position Checklists'),
         ('meetings.html',          'Meeting Scheduler'),
         ('printcenter.html',       'Print Center'),
-        ('sartopo_import.html',    'SARTopo GeoJSON Import'),
+        ('caltopo_import.html',    'CalTopo / SARTopo GeoJSON Import'),
         ('preflight.html',         'Preflight Deployment Checklist'),
         ('refs.html',              'Reference Library'),
         ('setup.html',             'Organization Setup'),

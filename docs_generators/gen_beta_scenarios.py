@@ -1029,10 +1029,10 @@ for n, action, expected in [
     (29, 'If APRS-IS is active (WAN up), verify live stations appear as icons.', 'APRS station symbols visible on map. Click a station for popup.'),
     (30, 'If RF APRS TNC is connected, verify RF stations appear.', 'RF stations visible independent of WAN state.'),
     (31, 'Click a station marker to open the popup.', 'Popup shows: callsign, last beacon time, speed, course, altitude, comment.'),
-    (32, 'Navigate to SARTopo Import. Test GeoJSON import with a minimal valid file.', 'File imports without error. Returns to tactical map.'),
+    (32, 'Navigate to CalTopo / SARTopo Import. Test GeoJSON import with a minimal valid file.', 'File imports without error. Returns to tactical map.'),
 ]:
     url = ('http://192.168.50.1/tactical.html' if n == 26 else
-           'http://192.168.50.1/sartopo_import.html' if n == 32 else None)
+           'http://192.168.50.1/caltopo_import.html' if n == 32 else None)
     story.append(step(n, action, expected, url))
 story.append(SP(8))
 

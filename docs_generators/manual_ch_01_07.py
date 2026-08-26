@@ -1708,6 +1708,68 @@ def ch7():
         'sub-audible tone. Click a channel and its frequency and mode drop straight into '
         'the net. If no channels are set up, the app tells you to type the frequency '
         'by hand.'))
+    s.append(SP(3))
+    s.append(P(
+        'Where those channels come from: the <b>205</b> entries appear once the incident '
+        'ICS-205 has channels on it, the <b>RPT</b> entries come from the repeater database, '
+        'and the <b>LIB</b> entries are the ones you set up yourself on the Channel Library '
+        'page — described next in 7.2.2.'))
+    s.append(SP(6))
+
+    s.append(P('7.2.2  Setting Up the Channel Library', H3))
+    s.append(CHG('New section + pointer: the Channel Library page (where the LIB channels are configured).'))
+    s.append(P(
+        'The <b>LIB</b> channels in that picker come from the <b>Channel Library</b> — a page '
+        'where you enter your agency\'s own radio channels once so they auto-fill the '
+        '<b>ICS-205 Communications Plan</b> and appear in the net logger\'s channel picker on '
+        'every device. Open it from the dashboard\'s <b>Channel Library</b> card (the radio '
+        'icon). Because the library is saved on the server, every operator on every device sees '
+        'the same channels.'))
+    s.append(SP(4))
+    s.append(note(
+        'A set of universal channels — National Simplex, APRS, NIFOG, and Mutual Aid — is '
+        'always available automatically. You only need to add your agency-specific channels '
+        'here: local repeaters, interop channels, and tactical frequencies.', 'tip'))
+    s.append(SP(4))
+    s.append(P('There are three ways to fill the library:'))
+    s.append(SP(2))
+    s.append(tbl(['WAY', 'WHAT TO DO'], [
+        ['Add by hand',
+         "Click <b>+ Add Channel</b> and fill in the fields (listed below). Best for a handful "
+         "of local channels."],
+        ['Import a CSV',
+         "Click <b>Import CSV</b> to load channels from a spreadsheet. <b>Export CSV</b> saves "
+         "the whole library to a file (channel_library.csv) for backup or to copy to another "
+         "FieldCommand system."],
+        ['Import from RadioReference',
+         "Click <b>Import from RadioReference</b>, enter your RadioReference username and "
+         "password, look up your county by ZIP code, then fetch channels — optionally filtered "
+         "by category (Fire Dispatch, EMS, Law, Interop, and so on). This requires a "
+         "RadioReference Premium subscription; your credentials are used only for that one "
+         "lookup and are not stored."],
+    ], widths=[1.6*inch, CW-1.6*inch]))
+    s.append(SP(4))
+    s.append(P('Each channel you add by hand has these fields:'))
+    s.append(SP(2))
+    s.append(tbl(['FIELD', 'WHAT IT MEANS'], [
+        ['Name',                "The channel's plain name, e.g. \"McHenry County Command\"."],
+        ['Alpha Tag',           "A short radio-display tag, up to 10 characters, e.g. \"MHCO CMD\"."],
+        ['Function',            "What the channel is for: Command, Tactical, Interop, Medical, "
+                                "Data, Amateur, Calling, Mutual Aid, Air, or Other."],
+        ['RX Frequency (MHz)',  "The receive frequency — required, e.g. 155.3400."],
+        ['TX Frequency (MHz)',  "The transmit frequency; leave blank if it is the same as receive "
+                                "(a simplex channel)."],
+        ['PL Tone / DCS',       "The sub-audible tone or digital code, e.g. \"100.0 Hz\" or \"D023N\"."],
+        ['Mode',                "FM, NFM, P25, DMR, D-STAR, C4FM, AM, SSB, or Analog."],
+        ['Division / Group',    "Optional Incident Command System (ICS) assignment, e.g. \"Div A\", "
+                                "\"Grp SAR\", or \"All\"."],
+        ['Notes',               "Repeater location, coverage area, or special instructions."],
+    ], widths=[1.6*inch, CW-1.6*inch]))
+    s.append(SP(4))
+    s.append(P(
+        'Once saved, these channels appear tagged <b>LIB</b> in the Select Channel picker from '
+        '7.2.1 and auto-fill the ICS-205 Communications Plan — so a channel entered once is '
+        'ready everywhere it is needed.'))
     s.append(SP(6))
 
     s.append(P('7.3  Logging Check-Ins', H2))

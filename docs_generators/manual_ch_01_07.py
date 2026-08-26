@@ -6,7 +6,7 @@ from manual_framework import *
 
 def ch1():
     s = chapter(1, 'Introduction & System Overview')
-    s.append(CHG('Reworded intro: the communications + ICS "marriage" and the vital role of amateur radio (messaging).'))
+    s.append(CHG('Reworded intro: the communications + ICS "marriage" and the vital role of amateur radio; added the tornado-outbreak example (messaging).'))
     s.append(P(
         'Running an incident and communicating during it are inseparable. Every decision an '
         'Incident Commander makes depends on information getting in, and every order depends '
@@ -62,6 +62,7 @@ def ch1():
     s.append(SP(6))
 
     s.append(P('1.1  What FieldCommand IMS Is', H2))
+    s.append(CHG('Clarified: the Pi does NOT broadcast Wi-Fi; a separate ASUS router creates EMCOMM-NET (wording).'))
     s.append(P(
         'FieldCommand IMS is a <b>complete ICS/NIMS all-hazards incident management system</b> '
         'with amateur radio and public-service Emergency Communications (EMCOMM) built into its '
@@ -267,6 +268,7 @@ def ch1():
     s.append(SP(6))
 
     s.append(P('1.7  Amateur Radio and FCC License Gating', H2))
+    s.append(CHG('Reframed: amateur radio is central and license-gated (not "optional"); gated for FCC legality (wording).'))
     s.append(P(
         'Amateur radio is central to what FieldCommand IMS is — not an add-on and not optional '
         'to its purpose. But amateur radio may only be operated by a properly licensed operator, '

@@ -588,7 +588,8 @@ class Handler(BaseHTTPRequestHandler):
                 from reportlab.lib import colors as _rc
                 from reportlab.lib.styles import ParagraphStyle
                 from reportlab.platypus import (SimpleDocTemplate, Table,
-                                                TableStyle, Paragraph, Spacer)
+                                                TableStyle, Paragraph, Spacer,
+                                                KeepTogether)
                 members = [member_to_dict(r) for r in c.execute(
                     "SELECT * FROM roster ORDER BY last_name COLLATE NOCASE, "
                     "first_name COLLATE NOCASE, callsign COLLATE NOCASE").fetchall()]
@@ -640,6 +641,29 @@ class Handler(BaseHTTPRequestHandler):
                                      spaceAfter=6, textColor=_rc.HexColor('#4a6080'))
                 heading = (org + " — Member Roster") if org else "Member Roster"
                 stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+                # Accountability signature block (kept together, printed after the roster)
+                lab = ParagraphStyle('lab', fontName='Helvetica', fontSize=8,
+                                     textColor=_rc.HexColor('#4a6080'))
+                _ln = _rc.HexColor('#333333')
+                sig = Table([
+                    [Spacer(1, 16), '', Spacer(1, 16)],
+                    [_p('Prepared by (print and sign)', lab), '', _p('Date', lab)],
+                    [Spacer(1, 20), '', ''],
+                    [Spacer(1, 16), '', Spacer(1, 16)],
+                    [_p('Reviewed by / Section Chief (print and sign)', lab), '', _p('Date', lab)],
+                ], colWidths=[5.5 * inch, 0.6 * inch, 2.4 * inch])
+                sig.setStyle(TableStyle([
+                    ('LINEBELOW',     (0, 0), (0, 0), 0.7, _ln),
+                    ('LINEBELOW',     (2, 0), (2, 0), 0.7, _ln),
+                    ('LINEBELOW',     (0, 3), (0, 3), 0.7, _ln),
+                    ('LINEBELOW',     (2, 3), (2, 3), 0.7, _ln),
+                    ('LEFTPADDING',   (0, 0), (-1, -1), 0),
+                    ('RIGHTPADDING',  (0, 0), (-1, -1), 0),
+                    ('TOPPADDING',    (0, 0), (-1, -1), 0),
+                    ('BOTTOMPADDING', (0, 1), (-1, 1), 4),
+                    ('BOTTOMPADDING', (0, 4), (-1, 4), 0),
+                    ('VALIGN',        (0, 0), (-1, -1), 'BOTTOM'),
+                ]))
                 buf = io.BytesIO()
                 doc = SimpleDocTemplate(buf, pagesize=landscape(letter),
                                         leftMargin=0.4 * inch, rightMargin=0.4 * inch,
@@ -647,7 +671,8 @@ class Handler(BaseHTTPRequestHandler):
                                         title="Member Roster")
                 doc.build([_p(heading, title),
                            _p(f"{len(members)} members  ·  generated {stamp}", sub),
-                           Spacer(1, 10), t])
+                           Spacer(1, 10), t,
+                           KeepTogether([Spacer(1, 28), sig])])
                 return self.send_bytes(buf.getvalue(), "application/pdf",
                     extra={"Content-Disposition": "inline; filename=member_roster.pdf"})
             except Exception as e:

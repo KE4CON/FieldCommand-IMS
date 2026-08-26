@@ -446,7 +446,7 @@ function renderNet() {
   } else {
     entryList.innerHTML = [...entries].reverse().map((e,i) => {
       const prec = e.precedence || "ROUTINE";
-      const isWalkIn = e.walk_in || (!e.fcc_verified && e.name && !e.callsign);
+      const isUnverified = e.walk_in || (!e.fcc_verified && e.name && !e.callsign);
       const isInRoster = currentNet?.roster_chips?.some(c =>
         c.callsign && e.callsign && c.callsign.toUpperCase() === e.callsign.toUpperCase());
       const canPromote = e.callsign && !isInRoster;
@@ -459,7 +459,7 @@ function renderNet() {
             <strong style="font-size:14px">${e.callsign || "?"}</strong>
             ${e.name ? `<span style="color:var(--muted);font-size:12px"> / ${e.name}</span>` : ""}
             <span class="badge badge-${prec==='EMERGENCY'?'red':prec==='PRIORITY'?'amber':prec==='WELFARE'?'green':'gray'}" style="margin-left:8px;font-size:10px">${e.status||""}</span>
-            ${isWalkIn ? `<span style="font-size:9px;background:rgba(200,118,10,0.15);color:var(--amber);border:1px solid var(--amber);border-radius:3px;padding:1px 5px">WALK-IN</span>` : ""}
+            ${isUnverified ? `<span title="No FCC-verified callsign — Net Control should confirm the station's identity and license" style="font-size:9px;background:rgba(200,118,10,0.15);color:var(--amber);border:1px solid var(--amber);border-radius:3px;padding:1px 5px">UNVERIFIED</span>` : ""}
             ${e.ema_id ? `<span style="font-size:10px;padding:1px 6px;background:#1a3a6b22;border:1px solid var(--blue);color:var(--blue);border-radius:3px">ESV ${e.ema_id}</span>` : ""}
           </div>
           ${e.remarks ? `<div style="font-size:12px;color:var(--muted);margin-top:3px">${e.remarks}</div>` : ""}

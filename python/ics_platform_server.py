@@ -411,7 +411,7 @@ class ICSHandler(BaseHTTPRequestHandler):
         # POST /api/ics/incidents/archive      → archive incident to USB backup drive + mark Pi DB
         # POST /api/ics/incidents/restore      → restore from USB backup drive back to Pi DB
         # POST /api/ics/incidents/delete       → hard-delete incident from Pi DB
-        # POST /api/ics/reset                  → beta reset: wipe all scenario data
+        # POST /api/ics/reset                  → Exercise / Scenario Reset: wipe all scenario data
 
         elif path == "/api/ics/incidents/archived":
             rows = c.execute(
@@ -1300,7 +1300,7 @@ class ICSHandler(BaseHTTPRequestHandler):
             c.commit()
             return self.send_json({"ok":True,"deleted":inc_id})
 
-        # ── Beta / Scenario Reset ────────────────────────────────────────────
+        # ── Exercise / Scenario Reset ────────────────────────────────────────────
         # Wipes all incident data, forms, costs, check-ins, T-cards.
         # Leaves intact: roster, hospitals, channel_library, resource_types,
         # repeaters, system config. Requires confirm="RESET" in body.

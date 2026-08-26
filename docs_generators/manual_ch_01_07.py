@@ -1098,7 +1098,7 @@ def ch5():
     ], widths=[1.4*inch, CW-1.4*inch]))
     s.append(SP(3))
     s.append(P(
-        'Any incident can be flagged as a drill/exercise. Beta Reset (under incident settings) '
+        'Any incident can be flagged as a drill/exercise. Exercise / Scenario Reset (under incident settings) '
         'wipes exercise data while preserving the roster, channel library, and repeater database.'))
     s.append(SP(6))
 
@@ -1143,7 +1143,7 @@ def ch5():
         'Exercises and training scenarios can be tagged as <b>Scenario</b> when '
         'the incident is created. Scenario incidents display a yellow badge throughout '
         'the interface so operators always know they are in training mode. '
-        'A <b>Beta Reset</b> wipes all scenario data — incidents, forms, costs, '
+        'A <b>Exercise / Scenario Reset</b> wipes all scenario data — incidents, forms, costs, '
         'check-ins, T-cards, and meetings — while preserving the roster, '
         'hospital directory, channel library, and repeater database. '
         'This returns the system to a clean state for the next exercise without '
@@ -1188,7 +1188,7 @@ def ch5():
          'Use Next Period to advance (not a brand-new incident). The carry-forward prompt is '
          'where you keep or edit the objectives for the new period.'],
         ['My exercise/scenario data will not clear',
-         'Use Beta Reset in the incident settings. It wipes exercise data (incidents, forms, '
+         'Use Exercise / Scenario Reset in the incident settings. It wipes exercise data (incidents, forms, '
          'costs, check-ins, T-cards) but preserves the roster, channel library, and repeater '
          'database.'],
     ], widths=[2.5*inch, CW-2.5*inch]))

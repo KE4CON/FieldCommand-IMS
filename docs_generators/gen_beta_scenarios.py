@@ -357,7 +357,7 @@ story.append(SP(1))  # triggers cover page
 story += scenario_cover(1,
     'System Setup, Organization Configuration & Incident Creation',
     '45\u201360 min',
-    'Setup \u00b7 Dashboard \u00b7 Incident creation \u00b7 Templates \u00b7 Archive/Restore \u00b7 Beta reset',
+    'Setup \u00b7 Dashboard \u00b7 Incident creation \u00b7 Templates \u00b7 Archive/Restore \u00b7 Exercise / Scenario Reset',
     'setup.html \u00b7 index.html \u00b7 incident.html \u00b7 incident_mgmt.html \u00b7 event_templates.html \u00b7 preflight.html \u00b7 wan_settings.html'
 )
 
@@ -370,8 +370,8 @@ story.append(P(
 story.append(SP(6))
 story.append(prereq(
     'Use a clean FieldCommand system with no prior data for this scenario. '
-    'If the system has been used previously, run Beta Reset first '
-    '(incident_mgmt.html \u2192 Beta/Scenario Reset) before starting.'))
+    'If the system has been used previously, run Exercise / Scenario Reset first '
+    '(incident_mgmt.html \u2192 Exercise / Scenario Reset) before starting.'))
 story.append(SP(6))
 
 # PRE-TEST CHECKLIST
@@ -382,7 +382,7 @@ for item in [
     'FieldCommand Pi 5 is powered on and has been running for at least 60 seconds',
     'Your test device (phone, tablet, or laptop) is connected to EMCOMM-NET Wi-Fi',
     'Browser is open to http://192.168.50.1',
-    'No active incidents exist (or Beta Reset has been performed)',
+    'No active incidents exist (or Exercise / Scenario Reset has been performed)',
     'Test roster CSV is prepared with at least 5 members (see Appendix A)',
     'Note the current time \u2014 you will need it for incident timestamps',
 ]:
@@ -501,8 +501,8 @@ for n, action, expected in [
     (44, 'Verify the USB drive \u2014 confirm the JSON archive file exists at /media/fieldcommand/backup/incidents/ on the Pi.', 'JSON file present with incident name in filename.'),
     (45, 'Click <b>Hard Delete from Pi</b> on the archived SAR incident. Confirm the deletion prompt.', 'Incident removed from the Pi database. No longer listed.'),
     (46, 'Click <b>Restore from USB</b>. Select the JSON file you archived.', 'Incident restored to fully active status. All data intact.'),
-    (47, 'Navigate to Incident Management. Click <b>Beta/Scenario Reset</b>.', 'Confirmation prompt appears warning this will wipe all incident data.'),
-    (48, 'Confirm the Beta Reset.', 'All incidents, forms, costs, check-ins, and T-cards wiped. Roster, hospitals, channels, and repeaters preserved.'),
+    (47, 'Navigate to Incident Management. Click <b>Exercise / Scenario Reset</b>.', 'Confirmation prompt appears warning this will wipe all incident data.'),
+    (48, 'Confirm the Exercise / Scenario Reset.', 'All incidents, forms, costs, check-ins, and T-cards wiped. Roster, hospitals, channels, and repeaters preserved.'),
     (49, 'Navigate to roster.html to verify roster is intact after reset.', 'Roster still shows any members previously entered.'),
 ]:
     url = ('http://192.168.50.1/incident_mgmt.html' if n in (42, 47) else
@@ -1521,11 +1521,11 @@ story.append(perf_t)
 story.append(SP(8))
 
 # TEST 7
-story.append(test_header(7, 'Final Cleanup & Beta Reset'))
+story.append(test_header(7, 'Final Cleanup & Exercise / Scenario Reset'))
 story.append(SP(4))
 for n, action, expected in [
     (19, 'Archive all test incidents to USB before reset.', 'JSON archive files written to USB for records.'),
-    (20, 'Run Beta/Scenario Reset.', 'All test data cleared. Roster and config preserved.'),
+    (20, 'Run Exercise / Scenario Reset.', 'All test data cleared. Roster and config preserved.'),
     (21, 'Verify the system is in clean state for handover or next activation.', 'Dashboard shows no active incident. Roster intact.'),
     (22, 'Document any unresolved defects in the Defect Log on the final page.', 'All defects captured for developer review.'),
 ]:

@@ -685,7 +685,7 @@ story.append(ref_tbl(
          '6 built-in templates (Shelter/SAR/HazMat/Weather/Mass Gathering/Exercise). '
          'Activate → incident pre-loaded with objectives, resources, channels, org.'],
         ['Incident Archive',      '/incident_mgmt.html',
-         'Archive to USB · Restore from USB · Hard delete · Beta/Scenario Reset.'],
+         'Archive to USB · Restore from USB · Hard delete · Exercise / Scenario Reset.'],
     ],
     [1.55*inch, 1.15*inch, CW-2.7*inch]))
 story.append(PB())

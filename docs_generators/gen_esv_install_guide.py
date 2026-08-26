@@ -2976,7 +2976,7 @@ story.append(tbl(['PAGE', 'URL', 'NOTES'], [
     ['Organization Setup',           '/setup.html', 'Configure org name, callsign, grid square, time zone, SSID'],
     ['Preflight Check',              '/preflight.html', 'GO/CAUTION/NO-GO readiness. Run before every activation.'],
     ['Incident Management',          '/incident.html', 'Create/manage incidents, operational periods, incident type'],
-    ['Incident Archive/Reset',       '/incident_mgmt.html', 'Archive to USB · Restore · Hard delete · Beta/Scenario Reset'],
+    ['Incident Archive/Reset',       '/incident_mgmt.html', 'Archive to USB · Restore · Hard delete · Exercise / Scenario Reset'],
     ['Event Templates',              '/event_templates.html', '6 built-in templates (Shelter/SAR/HazMat/Weather/Gathering/Exercise)'],
     ['General Info / ICS-201',       '/general_info.html', 'Initial incident briefing — situation summary, initial actions'],
     ['ICS Platform — Overview',      '/ics/index.html', 'Five-section ICS structure navigator'],
@@ -3228,7 +3228,7 @@ story.append(P(
     S('B', fontSize=9, leading=13)))
 story.append(SP(8))
 
-story.append(H2('15.9  Incident Archive and Beta Reset'))
+story.append(H2('15.9  Incident Archive and Exercise / Scenario Reset'))
 story.append(tbl(['FUNCTION', 'HOW TO USE', 'NOTES'], [
     ['Archive to USB',
      'incident_mgmt.html → select incident → Archive to USB',
@@ -3239,8 +3239,8 @@ story.append(tbl(['FUNCTION', 'HOW TO USE', 'NOTES'], [
     ['Hard delete from Pi',
      'incident_mgmt.html → select archived incident → Hard Delete',
      'Permanent — confirm archive exists on USB before deleting'],
-    ['Beta/Scenario Reset',
-     'incident_mgmt.html → Beta/Scenario Reset → Confirm',
+    ['Exercise / Scenario Reset',
+     'incident_mgmt.html → Exercise / Scenario Reset → Confirm',
      'Wipes all incidents, forms, T-cards, costs, check-ins. Preserves roster, channels, repeaters.'],
 ], [1.5*inch, 2.0*inch, CW-3.5*inch]))
 story.append(SP(4))

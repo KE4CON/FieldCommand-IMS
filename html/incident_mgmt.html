@@ -48,7 +48,7 @@
 <div class="page-header">
   <span class="page-header-badge" style="background:var(--red)">DATA</span>
   <span class="page-header-title">Incident Management</span>
-  <div class="page-header-sub">Archive to USB Drive · Restore · Delete · Beta Reset</div>
+  <div class="page-header-sub">Archive to USB Drive · Restore · Delete · Exercise / Scenario Reset</div>
   <a href="index.html" class="back-link">← Dashboard</a>
 </div>
 
@@ -87,10 +87,10 @@
     </div>
   </div>
 
-  <!-- Beta / Scenario Reset -->
+  <!-- Exercise / Scenario Reset -->
   <div class="reset-zone">
     <div style="font-family:var(--font-hd);font-size:13px;color:var(--red);
-                letter-spacing:1px;margin-bottom:8px">⚠ BETA / SCENARIO RESET</div>
+                letter-spacing:1px;margin-bottom:8px">⚠ EXERCISE / SCENARIO RESET</div>
     <div style="font-size:12px;color:var(--txt);line-height:1.7;margin-bottom:14px">
       Wipes <strong>all incident data</strong> from the Pi SSD:
       incidents, ICS forms, FEMA cost entries, check-ins, T-cards, meetings, and resource history.
@@ -352,7 +352,7 @@ async function markScenario(id, flag) {
   } catch(e) {}
 }
 
-// ── Beta reset ────────────────────────────────────────────────────
+// ── Exercise / Scenario Reset ────────────────────────────────────────────────────
 async function performReset() {
   const confirm_val = document.getElementById('resetConfirm').value.trim();
   if (confirm_val !== 'RESET') {

@@ -4415,7 +4415,7 @@ def ch_appendix():
     pages = [
         ('index.html',             'Main Dashboard'),
         ('incident.html',          'Incident Management / Command Section'),
-        ('incident_mgmt.html',     'Incident Archive, Restore, Delete, Beta Reset'),
+        ('incident_mgmt.html',     'Incident Archive, Restore, Delete, Exercise / Scenario Reset'),
         ('event_templates.html',   'Pre-Planned Event Templates'),
         ('resources.html',         'Resource Board (flat list)'),
         ('ics/operations.html',    'T-Card Resource Board (drag-and-drop)'),

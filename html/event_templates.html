@@ -205,6 +205,11 @@
       <button onclick="addObjective()"
         style="font-size:11px;padding:3px 10px">+ Add Objective</button>
     </div>
+    <select class="obj-library" data-placeholder="📋 Pick a common objective to add (then edit) — or type your own below"
+      onchange="if(this.value){addObjective(this.value);this.selectedIndex=0;}"
+      style="width:100%;padding:6px 9px;margin-bottom:8px;font-size:12px;
+             background:var(--input-bg,#0e1626);border:1px solid var(--line);border-radius:4px;color:var(--txt)">
+    </select>
     <div id="objectivesList"></div>
   </div>
 
@@ -316,6 +321,7 @@
 </div>
 </div><!-- /editModal -->
 
+<script src="/lib/objectives.js"></script>
 <script>
 const API     = '/svc/5050';
 const ICS_API = '/svc/5055';

@@ -1353,9 +1353,14 @@ def ch6():
 
     s.append(P('6.5.2  Objectives', H3))
     s.append(P(
-        'The incident objectives, one per line. Click <b>+ Add Objective</b> to add a line '
-        'and the × to remove one. Write them as plain-language goals; they become the '
-        'ICS-202 objectives on the activated incident.'))
+        'The incident objectives, one per line. There are two ways to add them: pick from the '
+        '<b>Common Objective Library</b> drop-down - a set of ready-made objectives grouped by '
+        'category (Life Safety, Communications, Search and Rescue, and more) - which drops the '
+        'objective in as a new line you can then edit, or click <b>+ Add Objective</b> and type '
+        'your own by hand. Use the × to remove a line. Write them as plain-language goals; they '
+        'become the ICS-202 objectives on the activated incident. The same Common Objective '
+        'Library appears on the ICS-202 form itself, so your templates and your incidents draw '
+        'from one shared list.'))
     s.append(SP(4))
 
     s.append(P('6.5.3  Safety Message', H3))

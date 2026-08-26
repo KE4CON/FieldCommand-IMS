@@ -128,136 +128,10 @@
           <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">
             Select a common objective to pre-fill the text field, then edit if needed and click <strong style="color:var(--txt)">+ Add</strong>:
           </label>
-          <select id="commonObjSel" onchange="prefillObjective(this.value)"
+          <select id="commonObjSel" class="obj-library" onchange="prefillObjective(this.value)"
             style="width:100%;padding:7px 10px;background:var(--panel2);border:1px solid var(--line);border-radius:4px;color:var(--txt);font-size:12px">
-            <option value="">— Select a common objective to pre-fill —</option>
-            <optgroup label="Life Safety">
-              <option>Ensure the life safety of all responders and the public as the first priority</option>
-              <option>Establish and maintain accountability of all incident personnel</option>
-              <option>Provide emergency medical support for all activated personnel</option>
-              <option>Identify and mitigate all safety hazards in the operational area</option>
-              <option>Establish and maintain a safe work environment for all responders</option>
-              <option>Conduct welfare checks on all isolated or vulnerable populations in the affected area</option>
-              <option>Establish decontamination procedures for all personnel exiting the hot zone</option>
-              <option>Ensure no responder works more than [hours] hours without adequate rest per the work-rest ratio</option>
-              <option>Establish a personnel rehabilitation area for rest, hydration, and medical monitoring</option>
-            </optgroup>
-            <optgroup label="Communications">
-              <option>Establish and maintain communications with all field units on the primary tactical channel</option>
-              <option>Maintain a continuous communications link with McHenry County EOC</option>
-              <option>Provide Winlink email capability for formal message traffic throughout the operational period</option>
-              <option>Establish backup communications via HF on [frequency] MHz in the event of VHF failure</option>
-              <option>Monitor all assigned radio channels and log all significant traffic in ICS-309</option>
-              <option>Establish and maintain a net control station at the Incident Command Post</option>
-              <option>Provide communications coverage for all assigned geographic sectors</option>
-              <option>Test and verify all assigned radio frequencies before the start of the operational period</option>
-              <option>Coordinate radio frequencies with all mutual aid agencies operating on the incident</option>
-            </optgroup>
-            <optgroup label="Resource Management">
-              <option>Check in all incoming resources and maintain an accurate resource status board</option>
-              <option>Coordinate logistics for food, water, fuel, and shelter for all activated personnel</option>
-              <option>Identify and request additional resources needed for the next operational period</option>
-              <option>Demobilize all resources no longer needed and document demobilization in ICS-221</option>
-              <option>Establish and maintain a staging area for incoming resources at [location]</option>
-              <option>Assign all activated personnel to a Division or Group before the start of operations</option>
-              <option>Track and report resource status changes to the Resources Unit every [interval]</option>
-            </optgroup>
-            <optgroup label="Incident Command">
-              <option>Establish a unified command structure with all agencies operating on this incident</option>
-              <option>Complete and distribute the Incident Action Plan before the start of each operational period</option>
-              <option>Conduct an operational period briefing at [time] prior to each shift change</option>
-              <option>Maintain a complete and accurate incident documentation file in accordance with ICS standards</option>
-              <option>Conduct a transition briefing with incoming personnel at each shift change</option>
-              <option>Provide situation status updates to McHenry County EOC every [interval]</option>
-              <option>Establish and maintain a clear chain of command for all incident operations</option>
-              <option>Implement the ICS span of control standard — no supervisor responsible for more than seven personnel</option>
-            </optgroup>
-            <optgroup label="Search &amp; Rescue">
-              <option>Conduct a systematic primary search of the assigned area and report results to Operations</option>
-              <option>Conduct a secondary search of all areas where primary search was interrupted or inconclusive</option>
-              <option>Maintain continuous radio contact with all search teams in the field</option>
-              <option>Coordinate with the Planning Section to update the search assignment map every [interval]</option>
-              <option>Establish and maintain a hasty team capability for rapid response to confirmed sightings</option>
-              <option>Document all search assignments and results on ICS-204 and submit to the Planning Section</option>
-              <option>Coordinate canine search resources with field teams to maximize coverage efficiency</option>
-              <option>Establish and maintain a command post at [location] to support all field search operations</option>
-              <option>Brief all search teams on last known point, travel direction, and subject profile before deployment</option>
-              <option>Ensure all field teams carry required personal protective equipment and navigation tools</option>
-            </optgroup>
-            <optgroup label="Shelter &amp; Mass Care">
-              <option>Open and staff the emergency shelter at [location] to support displaced residents</option>
-              <option>Coordinate registration of all shelter residents using the American Red Cross registration system</option>
-              <option>Provide communications link between the shelter and the Incident Command Post</option>
-              <option>Coordinate medical screening for all shelter arrivals with the Medical Unit</option>
-              <option>Establish and maintain a pet-friendly shelter area separate from the main shelter population</option>
-              <option>Coordinate meals and supply logistics for shelter population with the Logistics Section</option>
-            </optgroup>
-            <optgroup label="Weather &amp; Natural Disaster">
-              <option>Monitor and report all significant weather observations to the Situation Unit every [interval]</option>
-              <option>Provide NWS storm spotter coverage for the assigned geographic area throughout the operational period</option>
-              <option>Coordinate damage assessment operations in the affected area and report findings to the Planning Section</option>
-              <option>Establish contact with all affected jurisdictions and assess their communications needs</option>
-              <option>Coordinate utility restoration communications with [utility company] field crews</option>
-              <option>Provide ground truth confirmation of reported damage to assist NWS with warning decisions</option>
-              <option>Support door-to-door welfare check operations in areas where utilities or communications are disrupted</option>
-              <option>Monitor river and flood gauge readings at [location] and report to EOC every [interval]</option>
-            </optgroup>
-            <optgroup label="HazMat">
-              <option>Establish hot, warm, and cold zone perimeters and maintain them throughout the incident</option>
-              <option>Coordinate with HazMat team to identify the released substance and determine protective actions</option>
-              <option>Provide communications relay between the HazMat team in the hot zone and Incident Command</option>
-              <option>Coordinate public notification and evacuation with law enforcement and local government</option>
-              <option>Monitor weather conditions and adjust protective action recommendations as wind direction changes</option>
-              <option>Establish a decontamination corridor and coordinate with EMS for potential patient decontamination</option>
-            </optgroup>
-            <optgroup label="Mass Casualty">
-              <option>Establish a triage area and begin START triage of all patients at [location]</option>
-              <option>Coordinate patient distribution to receiving hospitals and maintain a patient tracking log</option>
-              <option>Establish communications with all receiving hospitals and provide patient count updates every [interval]</option>
-              <option>Coordinate with Logistics for additional medical supplies and equipment as needed</option>
-              <option>Establish a fatality management area and coordinate with the Medical Examiner</option>
-              <option>Provide communications link between EMS field units and the Medical Branch Director</option>
-            </optgroup>
-            <optgroup label="Public Information">
-              <option>Coordinate all public information releases through the designated Public Information Officer</option>
-              <option>Establish a joint information center with all participating agencies for this incident</option>
-              <option>Provide a public inquiry line and log all contacts in accordance with the communications plan</option>
-              <option>Release an initial incident information summary to the public within [time] of activation</option>
-              <option>Monitor social media for incident-related misinformation and coordinate corrections through the PIO</option>
-              <option>Provide regular situation updates to elected officials and agency administrators throughout the incident</option>
-              <option>Document all media inquiries and coordinate responses through the designated PIO</option>
-              <option>Establish a family reunification center and coordinate with law enforcement for notifications</option>
-            </optgroup>
-            <optgroup label="Finance &amp; Administration">
-              <option>Document all personnel time on ICS-211 and ICS-214 for cost recovery purposes</option>
-              <option>Track all expenditures and procurement actions for submission to the Finance Section</option>
-              <option>Obtain authorization from the Finance Section Chief before any procurement exceeding $[amount]</option>
-              <option>Complete all time reports and submit to the Finance Section before demobilization</option>
-            </optgroup>
-            <optgroup label="Demobilization">
-              <option>Develop a demobilization plan and distribute to all sections before the end of the operational period</option>
-              <option>Complete all required documentation before demobilization of any resources</option>
-              <option>Conduct an after-action review with all section chiefs before closing out the incident</option>
-              <option>Return all borrowed or shared equipment to the issuing agency before demobilization</option>
-              <option>Ensure all ICS forms are completed, compiled, and archived in the incident documentation file</option>
-              <option>Brief incoming shift or relief personnel on current status before demobilization of current shift</option>
-              <option>Compile all ICS-214 activity logs and submit a consolidated report to the Documentation Unit</option>
-              <option>Notify all served agencies of demobilization timeline at least [time] before release of resources</option>
-            </optgroup>
-            <optgroup label="MCESV/MCEMA Specific">
-              <option>Establish and maintain communications with the McHenry County EOC throughout the operational period</option>
-              <option>Coordinate K9ESV Starcom radio resources with the McHenry County Emergency Management Agency</option>
-              <option>Provide RACES/ARES communications support to all served agencies requesting assistance</option>
-              <option>Maintain an accurate activation roster in the FieldCommand system throughout the incident</option>
-              <option>Coordinate with the McHenry County ARES Emergency Coordinator for resource assignments</option>
-              <option>Provide a final incident summary to the McHenry County EMA Director before demobilization</option>
-              <option>Ensure all activated K9ESV members are logged in the FieldCommand roster before operations begin</option>
-              <option>Coordinate mutual aid communications resources with neighboring county ARES/RACES groups</option>
-              <option>Submit a completed ICS-214 activity log for each activated unit before demobilization</option>
-              <option>Provide written documentation of all significant events to the McHenry County EMA after the incident</option>
-              <option>Test all primary and backup communication paths before declaring the activation operational</option>
-            </optgroup>
-          </select>
+          <option value="">— Select a common objective to pre-fill —</option>
+        </select>
         </div>
 
         <!-- Free-text entry -->
@@ -480,5 +354,6 @@ window.addEventListener('load', init);
 </script>
 
 <script src="../lib/identity.js"></script>
+<script src="/lib/objectives.js"></script>
 </body>
 </html>

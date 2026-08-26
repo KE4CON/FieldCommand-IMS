@@ -1472,6 +1472,13 @@ def ch6():
         'overwrite a template you have customized. Not every local situation belongs in the '
         'shipped product, and that is fine: a template you never flag stays entirely on your '
         'own server.'))
+    s.append(SP(4))
+    s.append(note(
+        'For maintainers (not an operator task): the mechanics of adding a suggested template '
+        '- dropping the exported JSON into the python/seed_templates/ folder so it ships on the '
+        'next update - are covered in the FieldCommand Programming Guide, in the Data Layer '
+        'chapter under "Drop-In Template Packs" (and in python/seed_templates/README.md). If '
+        'you maintain the build, that is where to look.', 'note'))
     s.append(SP(6))
 
     s.append(P('6.8  Reference — Channel and Resource Options', H2))

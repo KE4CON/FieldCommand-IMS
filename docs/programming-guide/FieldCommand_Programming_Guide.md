@@ -2,7 +2,7 @@
 
 *How the code works, and why — plain enough to follow, deep enough to maintain.*
 
-*Generated August 13, 2026 · Markdown is the living source of truth.*
+*Generated August 26, 2026 · Markdown is the living source of truth.*
 
 
 ---
@@ -725,6 +725,39 @@ After the tables exist, `init_db()` seeds the reference data that a brand-new da
 ```
 
 > **SEEDED DATA IS EXAMPLE DATA, NOT LOCKED DATA** — The seeded channels and similar defaults are McHenry County, Illinois examples on purpose — the seeder even says so in a comment. They are all fully editable and deletable from the app. Never treat seeded rows as system-owned; an agency is expected to replace them with their own.
+
+
+## How It Works — Drop-In Template Packs
+
+Beyond the built-in incident templates that `seed_incident_templates()` installs, a maintainer can ship additional templates without editing any Python. This is how a template an operator suggested — via the Event Templates page's 'Export Update Candidates' button — reaches a future release. `load_template_packs()` runs on every boot, right after the built-in seed:
+
+```
+    seed_incident_templates(conn)
+    load_template_packs(conn)      # drop-in packs from python/seed_templates/
+    seed_fema_equipment_rates(conn)
+```
+
+It reads every `*.json` file in `python/seed_templates/`. Each file is one template object, or an array of them, in the same shape the Event Templates page exports. For each one it inserts the row only when that `id` is not already present, marks it a protected built-in, and strips the operator-only `propose_upstream` flag. A malformed file is logged and skipped — never fatal:
+
+```
+TEMPLATE_PACK_DIR = Path(__file__).resolve().parent / 'seed_templates'
+
+def load_template_packs(conn):
+    if not TEMPLATE_PACK_DIR.is_dir():
+        return
+    for f in sorted(TEMPLATE_PACK_DIR.glob('*.json')):
+        # ... parse f; skip and log if malformed ...
+        for t in items:
+            tid = str(t.get('id') or '').strip()
+            if not tid or conn.execute(
+                'SELECT 1 FROM incident_templates WHERE id=?', (tid,)).fetchone():
+                continue          # new ids only — never clobber a local edit
+            conn.execute('INSERT INTO incident_templates (...) VALUES (... is_builtin=1 ...)')
+```
+
+> **NEW IDS ONLY — WHY IT NEVER OVERWRITES** — The loader runs on every startup, not just first run, so a template file added in a new release also reaches already-deployed servers on their next update. Because it inserts only ids that are not already in the table, it can never overwrite a built-in an operator edited or a template a group customized. If you must push a corrected version of an already-shipped template, give it a NEW id — that is a deliberate change, not an accident waiting to happen.
+
+> **THE MAINTAINER WORKFLOW, END TO END** — An operator flags a template and clicks Export Update Candidates on the Event Templates page, producing a JSON file, and sends it to you. You review it, give it a clear name (for example wildland-fire.json), and drop it into python/seed_templates/. install.sh and update.sh copy that folder onto the server, and load_template_packs() seeds it on the next database init — no BUILTIN_TEMPLATES edit and no schema change. The folder's own python/seed_templates/README.md has the drop-a-file steps.
 
 
 ## How It Works — The One-Time JSON Migration

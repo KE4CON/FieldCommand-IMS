@@ -266,26 +266,35 @@ def ch1():
         'map continues to work normally.', 'note'))
     s.append(SP(6))
 
-    s.append(P('1.7  Amateur Radio Is Optional and License-Gated', H2))
+    s.append(P('1.7  Amateur Radio and FCC License Gating', H2))
     s.append(P(
-        'FieldCommand IMS serves two kinds of groups: those with licensed amateur radio '
-        'operators and those without. The amateur radio features — the net control logger, '
-        'APRS tactical map, Winlink and Pat radio email, JS8Call HF digital, the AMPRNet 44Net '
-        'gateway, and the NTS radiogram generator — are grouped under an Amateur Radio mode '
-        'that turns on only when a station callsign has been entered during setup.'))
+        'Amateur radio is central to what FieldCommand IMS is — not an add-on and not optional '
+        'to its purpose. But amateur radio may only be operated by a properly licensed operator, '
+        'so the amateur radio features are <b>license-gated</b>. The net control logger, APRS '
+        'tactical map, Winlink and Pat radio email, JS8Call HF digital, the AMPRNet 44Net '
+        'gateway, and the NTS radiogram generator are grouped under an Amateur Radio mode that '
+        'turns on only when a station callsign has been entered during setup. This gating exists '
+        'for two reasons: to keep the system legal with the Federal Communications Commission '
+        '(FCC) by not placing transmit tools in front of unlicensed users, and to let a group '
+        'that does not yet have amateur radio operators run everything else without the amateur '
+        'screens in the way.'))
     s.append(SP(4))
     s.append(P(
-        'A group with no licensed operators simply leaves the callsign blank. The Amateur '
-        'Radio mode then stays grayed out, and every other part of the system — the full ICS '
-        'platform, forms, cost tracking, roster, check-in, resource map, and the public-safety '
-        'net logger — works exactly the same. A callsign can be added later at any time to '
-        'unlock the amateur features.'))
+        'A group with no licensed operators leaves the callsign blank. The Amateur Radio mode '
+        'then stays grayed out, and every other part of the system — the full ICS platform, '
+        'forms, cost tracking, roster, check-in, resource map, and the public-safety net '
+        'logger — works exactly the same. This is not meant to be the end state, though: a core '
+        'goal of FieldCommand IMS is to promote and advance amateur radio in emergency '
+        'management, so the app is built to grow with the group. The moment a licensed operator '
+        'comes on board, a callsign can be entered — during setup or any time afterward — and '
+        'the full amateur radio capability unlocks.'))
     s.append(SP(4))
     s.append(note(
         'Amateur radio transmissions are legal only when made by a properly licensed operator '
         'with privileges on the bands and modes in use. Turning on the amateur features does '
-        'not grant that authority. If your group is not licensed, leave the callsign blank and '
-        'use the rest of the system freely.', 'warn'))
+        'not grant that authority. Until your group has a licensed operator, leave the callsign '
+        'blank; the gating keeps you compliant with the FCC while the rest of the system runs '
+        'in full.', 'warn'))
     s.append(SP(6))
 
     s.append(P('1.8  Who Uses FieldCommand IMS', H2))

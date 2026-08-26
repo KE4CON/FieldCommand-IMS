@@ -148,7 +148,7 @@ def make_sections(E):
     return [
     ('FieldCommand Server  (192.168.50.1)', [
         ('Raspberry Pi 5 — 16 GB', 'Model B, 16 GB RAM — main application server', 1, '$305', '$305'),
-        ('Pironman 5-MAX tower', 'SunFounder — dual NVMe RAID 0/1, OLED, tower cooler, RGB', 1, '$95', '$95'),
+        ('Pironman 5-MAX tower', 'SunFounder — dual NVMe RAID 0/1, OLED, tower cooler, RGB — includes a battery-backed real-time clock (RTC) so the server keeps time across power-offs', 1, '$95', '$95'),
         ('1 TB NVMe SSD', '2× M.2 2280 PCIe — RAID 1 mirror  (NAND shortage pricing — was ~$75 in 2025)', 2, '$180', '$360'),
         ('Pi 27W USB-C PSU', 'Official Raspberry Pi 27W', 1, '$14', '$14'),
         ('MicroSD 32 GB', 'Boot media / recovery', 1, '$10', '$10'),
@@ -212,7 +212,7 @@ def make_sections(E):
         ('Brother MFC-L3780CDW', 'Color laser MFP — IAP packages, ICS forms, access cards (L3770 discontinued; successor model)', 1, '$450', '$450'),
         ('LaCie Rugged 1 TB USB-C', 'LaCie Rugged USB-C 1TB (STFR1000800) — drop resistant 4 ft, crush 1 ton, rain resistant — 130 MB/s — USB-C + USB-A adapter included — Seagate Rescue data recovery service included — ideal for field deployment backup', 1, '$125', '$125'),
         ('USB flash 32 GB', 'Sneakernet transfer', 1, '$10', '$10'),
-        ('USB GPS receiver', 'u-blox — time + position for dashboard', 1, '$35', '$35'),
+        ('USB GPS receiver', 'u-blox USB GPS — the server\'s offline time source: supplies exact UTC to chrony with no internet, plus position for the dashboard. Place the antenna with a clear view of the sky (window, outdoors, or rooftop) so it can get a fix.', 1, '$35', '$35'),
     ], '$590'),
     ]
 

@@ -628,6 +628,48 @@ def ch2():
          "No. The mode is remembered per device, so each operator can be in a different mode. The "
          "underlying data is the same for everyone."],
     ], widths=[2.3*inch, CW-2.3*inch]))
+    s.append(SP(6))
+
+    s.append(P('2.11  Keeping Time — One Clock for Everyone', H2))
+    s.append(CHG('New: all devices show and stamp the server clock (GPS offline / internet online); connect a GPS with sky view.'))
+    s.append(P(
+        'The time you see on the dashboard — and the time stamped on every ICS form and every '
+        'check-in — is the <b>FieldCommand server\'s clock</b>, not your own device\'s clock. '
+        'This matters. At a busy check-in point several laptops, tablets, and phones may each '
+        'have a slightly different clock, and you never want two devices to disagree about when '
+        'someone signed in or when a form was prepared. FieldCommand avoids that by having every '
+        'connected device read one clock: the server\'s. Even if a laptop\'s own clock is wrong, '
+        'the times it writes onto forms and check-in are the server\'s.'))
+    s.append(SP(4))
+    s.append(P(
+        'The server keeps that clock accurate in two ways, and it uses whichever is available — '
+        'automatically, with nothing for you to switch:'))
+    s.append(SP(2))
+    s.append(tbl(['TIME SOURCE', 'WHEN IT IS USED'], [
+        ['Internet time',
+         "When a Wide Area Network (WAN) — cellular or satellite — is connected, the server sets "
+         "its clock from internet time servers, the same way any computer does."],
+        ['GPS time',
+         "When there is no internet — the normal field case — the server takes time from a "
+         "connected GPS receiver. GPS satellites carry atomic-clock time, so a GPS gives the "
+         "server exact Coordinated Universal Time (UTC) with no internet at all."],
+    ], widths=[1.5*inch, CW-1.5*inch]))
+    s.append(SP(4))
+    s.append(P(
+        'So that the server has accurate time even when the internet and cell service are gone, '
+        '<b>connect a USB GPS receiver to the FieldCommand server and place its antenna where it '
+        'can see the sky</b> — near a window, or better, outdoors or on a rooftop. A GPS sitting '
+        'indoors away from windows may never get a fix, and without a fix it cannot set the '
+        'clock. Give it a few minutes on first power-up to lock on; once it has a fix, the '
+        'server\'s clock is disciplined to GPS automatically. The Pironman server case also '
+        'includes a small battery-backed clock (a coin-cell), so the server remembers the time '
+        'across power-offs, and GPS or the internet then fine-tunes it at the next start-up.'))
+    s.append(SP(4))
+    s.append(note(
+        'You can see that timekeeping is healthy from the dashboard: the small service dots '
+        'include one labeled <b>Time Sync / Chrony</b>. If the clock ever looks wrong, make sure '
+        'the GPS has a clear view of the sky (or that a WAN is connected), then give it a few '
+        'minutes to correct itself.', 'tip'))
     s.append(PB())
     return s
 

@@ -67,8 +67,10 @@ def ch1():
         'with amateur radio and public-service Emergency Communications (EMCOMM) built into its '
         'core rather than bolted on. It manages the full lifecycle of any '
         'incident from initial response through demobilization using standard ICS forms and '
-        'workflows. It runs on a Raspberry Pi 5 server and broadcasts its own private Wi-Fi '
-        'access point. Any smartphone, tablet, or laptop that joins that network immediately '
+        'workflows. It runs on a Raspberry Pi 5 server. The Pi itself does <b>not</b> broadcast '
+        'Wi-Fi — a separate wireless router (an ASUS travel router) creates the private '
+        'network, named <b>EMCOMM-NET</b>, and the Pi connects to it. Any smartphone, tablet, or '
+        'laptop that joins that network immediately '
         'has access to the full suite of 48 tools through a standard web browser — no app '
         'installation, no accounts, and no per-device configuration required.'))
     s.append(SP(4))

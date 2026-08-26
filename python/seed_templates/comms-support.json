@@ -1,0 +1,48 @@
+[
+  {
+    "id": "comms-support",
+    "name": "Communications Support",
+    "icon": "📻",
+    "type": "Communications Support — Amateur Radio",
+    "sort_order": 13,
+    "is_builtin": 1,
+    "summary": "Backup and supplemental communications — nets, tactical channels, and Winlink email over radio when primary systems are degraded.",
+    "data": {
+      "objectives": [
+        "Stand up the communications plan and confirm every net and tactical channel works before operations begin.",
+        "Open and log a formal net; check in all stations and keep a current station roster.",
+        "Provide backup communications between the EOC, shelters, and field teams when primary systems are degraded.",
+        "Pass and log all formal traffic (ICS-213 messages) with times and originating and receiving stations.",
+        "Relay Winlink email over radio for stations without internet and confirm delivery.",
+        "Monitor for and relay any emergency or priority traffic immediately.",
+        "Keep a communications status board — which links are up, which are down, and the fallback for each."
+      ],
+      "safety_message": "Operate only within your license privileges and the band plan. Keep clear of antennas while transmitting and watch RF exposure; keep coax and guy lines out of walkways and traffic. Manage battery and generator power — never run a generator indoors. Rotate operators to prevent fatigue on long nets.",
+      "resources": [
+        {"name": "Net Control Operator", "type": "Personnel", "qty": 2},
+        {"name": "Field / Portable Operator", "type": "Personnel", "qty": 6},
+        {"name": "Winlink / Digital Operator", "type": "Personnel", "qty": 1},
+        {"name": "Portable Repeater / Cross-Band", "type": "Equipment", "qty": 1},
+        {"name": "Go-Kit (radio + power + antenna)", "type": "Equipment", "qty": 4},
+        {"name": "Backup Power (battery / solar / generator)", "type": "Equipment", "qty": 2}
+      ],
+      "channels": [
+        {"name": "Primary Net (local repeater, or 146.520 simplex)", "rx": "146.520", "tx": "146.520", "tone": "", "mode": "FM", "function": "Command"},
+        {"name": "Tactical / Field Ops", "rx": "146.550", "tx": "146.550", "tone": "", "mode": "FM", "function": "Tactical"},
+        {"name": "Digital / Winlink (VARA or Packet)", "rx": "145.030", "tx": "145.030", "tone": "", "mode": "DIG", "function": "Other"},
+        {"name": "Resource / EOC Liaison", "rx": "147.555", "tx": "147.555", "tone": "", "mode": "FM", "function": "Liaison"},
+        {"name": "70 cm Simplex", "rx": "446.000", "tx": "446.000", "tone": "", "mode": "FM", "function": "Tactical"}
+      ],
+      "org": {
+        "ops_section_chief": "Communications Unit Leader (COML)",
+        "safety_officer": "Safety Officer",
+        "public_info_officer": "PIO — coordinate through the EOC",
+        "branch1_label": "Communications Unit",
+        "div_a_label": "Net Control",
+        "div_b_label": "Field / Portable Teams",
+        "div_c_label": "Digital / Winlink",
+        "div_d_label": "Logistics & Power"
+      }
+    }
+  }
+]

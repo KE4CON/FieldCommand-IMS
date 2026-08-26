@@ -177,9 +177,16 @@ gather_config() {
     CALLSIGN="${CALLSIGN^^}"
     ask STATION_LAT  "Station latitude [42.3153]: " 42.3153
     ask STATION_LON  "Station longitude [-88.4473]: " -88.4473
-    ask AP_SSID      "WiFi SSID [EMCOMM-NET]: " EMCOMM-NET
-    ask AP_PASS      "WiFi password [fieldcommand2026]: " fieldcommand2026
+    # The Pi does NOT broadcast Wi-Fi — the ASUS router creates EMCOMM-NET. These
+    # are recorded for the server's display; set the SAME values on the router.
+    if [[ "${NONINTERACTIVE:-0}" != "1" ]]; then
+        log "  ${DIM}The Pi does NOT create the Wi-Fi — the ASUS router broadcasts EMCOMM-NET.${NC}"
+        log "  ${DIM}Enter the same name/password you set (or will set) on the router.${NC}"
+    fi
+    ask AP_SSID      "Wi-Fi name the ROUTER broadcasts — Pi does NOT create Wi-Fi [EMCOMM-NET]: " EMCOMM-NET
+    ask AP_PASS      "Wi-Fi password (must match the router) [fieldcommand2026]: " fieldcommand2026
     ask SERVER_IP    "Server IP [192.168.50.1]: " 192.168.50.1
+    ask INSTALL_PIRONMAN "Install SunFounder Pironman case software (power button, fan, OLED)? [y/N]: " N
     ask DO_FCC       "Download FCC amateur database? (~600MB) [y/N]: " N
     ask TILE_PRESET  "Offline map tiles [0=skip..3=full, default 1]: " 1
     ask KIWIX_TIER   "Kiwix offline library tier [0=skip..3, default 1]: " 1
@@ -192,7 +199,7 @@ gather_config() {
         log "  Callsign:    ${DIM}none — amateur radio features stay disabled${NC}"
     fi
     log "  Coordinates: ${AMBER}$STATION_LAT, $STATION_LON${NC}"
-    log "  WiFi SSID:   ${AMBER}$AP_SSID${NC}"
+    log "  WiFi name:   ${AMBER}$AP_SSID${NC} ${DIM}(broadcast by the router, not the Pi)${NC}"
     log "  Server IP:   ${AMBER}$SERVER_IP${NC}"
     log ""
 }
@@ -217,6 +224,7 @@ SERVER_IP="$SERVER_IP"
 DO_FCC="$DO_FCC"
 TILE_PRESET="$TILE_PRESET"
 KIWIX_TIER="$KIWIX_TIER"
+INSTALL_PIRONMAN="${INSTALL_PIRONMAN:-N}"
 CONF
     chmod 600 "$dest"
     ok "Wrote answers to $dest"

@@ -157,7 +157,7 @@ MANUAL_EDITIONS = {
         'org':       '',
         'served':    '',
     },
-    'ESV': {'infix': '_ESV'},   # {} → uses the ESV defaults
+    'ESV': {'infix': '_ESV'},   # {} ->uses the ESV defaults
 }
 
 for edkey, override in MANUAL_EDITIONS.items():

@@ -1,0 +1,49 @@
+[
+  {
+    "id": "wildland-fire",
+    "name": "Wildland / Interface Fire",
+    "icon": "🔥",
+    "type": "Wildfire — Wildland-Urban Interface",
+    "sort_order": 11,
+    "is_builtin": 1,
+    "summary": "Wildland or wildland-urban interface fire — evacuation, structure protection, and air/ground coordination.",
+    "data": {
+      "objectives": [
+        "Establish the Incident Command Post (ICP) in a safe, defensible location with good escape routes and clear communications.",
+        "Identify values at risk — homes, critical infrastructure — and prioritize structure protection where it can be done safely.",
+        "Order evacuations early using a zone system; support law enforcement with the notice and traffic control.",
+        "Set LCES for every assignment — Lookouts, Communications, Escape routes, and Safety zones — before crews engage.",
+        "Coordinate air and ground resources through a single Operations channel; keep a current resource status board.",
+        "Track the weather — wind shifts, humidity, and red-flag conditions — and brief Command each operational period.",
+        "Account for all personnel and confirm everyone knows the escape routes and safety zones for their division."
+      ],
+      "safety_message": "Follow LCES on every assignment: Lookouts posted, Communications working, Escape routes identified, Safety zones reachable. Never let the fire get between you and your escape route. Watch for wind shifts, spotting ahead of the fire, and rolling burning debris on slopes. If an assignment cannot be done safely, do not do it — disengage to a safety zone and report.",
+      "resources": [
+        {"name": "Type 6 Brush Engine", "type": "Engine", "qty": 3},
+        {"name": "Structure Engine", "type": "Engine", "qty": 2},
+        {"name": "Hand Crew (20)", "type": "Crew", "qty": 2},
+        {"name": "Water Tender", "type": "Vehicle", "qty": 2},
+        {"name": "Dozer", "type": "Equipment", "qty": 1},
+        {"name": "Helicopter (water drops)", "type": "Helicopter", "qty": 1},
+        {"name": "Evacuation / Traffic Control", "type": "Personnel", "qty": 6},
+        {"name": "Radio Operator", "type": "Personnel", "qty": 2}
+      ],
+      "channels": [
+        {"name": "Command (local repeater, or 146.520 simplex)", "rx": "146.520", "tx": "146.520", "tone": "", "mode": "FM", "function": "Command"},
+        {"name": "Ground Operations", "rx": "146.550", "tx": "146.550", "tone": "", "mode": "FM", "function": "Tactical"},
+        {"name": "Structure Protection", "rx": "147.420", "tx": "147.420", "tone": "", "mode": "FM", "function": "Tactical"},
+        {"name": "Evacuation / Liaison", "rx": "446.000", "tx": "446.000", "tone": "", "mode": "FM", "function": "Liaison"}
+      ],
+      "org": {
+        "ops_section_chief": "Operations Section Chief",
+        "safety_officer": "Safety Officer — issue LCES and watch-outs",
+        "public_info_officer": "PIO — issue evacuation notices and fire updates",
+        "branch1_label": "Fire Suppression",
+        "div_a_label": "Structure Protection",
+        "div_b_label": "Perimeter / Line",
+        "div_c_label": "Air Operations",
+        "div_d_label": "Evacuation & Traffic"
+      }
+    }
+  }
+]

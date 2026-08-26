@@ -71,6 +71,8 @@
       style="font-size:12px;padding:5px 12px">📥 Import JSON</button>
     <button onclick="exportAllTemplates()"
       style="font-size:12px;padding:5px 12px">📤 Export All</button>
+    <button onclick="exportUpdateCandidates()" title="Export only the templates flagged as candidates to ship in a future FieldCommand update"
+      style="font-size:12px;padding:5px 12px">⤴ Export Update Candidates</button>
     <input type="file" id="importInput" accept=".json" style="display:none"
       onchange="importTemplates(this)">
     <a href="index.html" class="back-link">← Dashboard</a>
@@ -159,7 +161,9 @@
     <div style="font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.7">
       Edit, reorder, or delete templates. Built-in templates are fully editable — changes
       are saved to the local database and not overwritten by updates.
-      Export your customized templates as JSON to share with other agencies or back up.
+      Make your own recurring-scenario template a <b>standard</b> ⭐ (in the editor) to pin it
+      with the built-ins and protect it from accidental deletion. Export your templates as JSON
+      to share with other agencies, back up, or fold into the shipped set.
     </div>
     <div id="manageList"></div>
   </div>
@@ -273,6 +277,27 @@
                    text-transform:none;letter-spacing:0;font-weight:normal">
       <input type="checkbox" id="e_scenario">
       Default to marking incidents from this template as training scenarios 🧪
+    </label>
+  </div>
+
+  <!-- Standard (built-in) flag -->
+  <div style="margin-bottom:12px">
+    <label style="display:flex;align-items:center;gap:8px;font-size:12px;
+                   text-transform:none;letter-spacing:0;font-weight:normal">
+      <input type="checkbox" id="e_builtin">
+      Mark as a <b style="margin:0 3px">standard</b> template ⭐ — pins it with the
+      built-ins and protects it from accidental deletion (it can still be edited or disabled)
+    </label>
+  </div>
+
+  <!-- Propose-for-future-updates flag -->
+  <div style="margin-bottom:16px">
+    <label style="display:flex;align-items:center;gap:8px;font-size:12px;
+                   text-transform:none;letter-spacing:0;font-weight:normal">
+      <input type="checkbox" id="e_upstream">
+      Suggest this template for <b style="margin:0 3px">future FieldCommand updates</b> ⤴ —
+      flags a local recurring scenario as a candidate to ship with the product. Use
+      “Export update candidates” to send the flagged ones to the maintainer.
     </label>
   </div>
 
@@ -595,6 +620,8 @@ function showEditModal(id) {
   inp('org_dc',    d.org?.div_c_label          || '');
   inp('org_dd',    d.org?.div_d_label          || '');
   chk('e_scenario', d.is_scenario);
+  chk('e_builtin',  t?.is_builtin);
+  chk('e_upstream', d.propose_upstream);
 
   // Objectives
   document.getElementById('objectivesList').innerHTML = '';
@@ -718,6 +745,7 @@ async function saveTemplate() {
     type:       val('e_type'),
     summary:    val('e_summary'),
     sort_order: parseInt(val('e_sort')) || 99,
+    is_builtin: checked('e_builtin'),
     data: {
       objectives,
       safety_message: document.getElementById('e_safety').value.trim(),
@@ -734,6 +762,7 @@ async function saveTemplate() {
         div_d_label:        val('org_dd'),
       },
       is_scenario: checked('e_scenario'),
+      propose_upstream: checked('e_upstream'),
     }
   };
 
@@ -782,6 +811,29 @@ function exportAllTemplates() {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = `fieldcommand-templates-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+}
+
+// Export only the templates an operator flagged as candidates to ship in a future
+// FieldCommand update (the ⤴ "Suggest for future updates" box). Pulls the full set
+// (including disabled ones) from the export endpoint so nothing is missed, then
+// downloads just the flagged ones for the maintainer to review and fold in.
+async function exportUpdateCandidates() {
+  let all = [];
+  try {
+    const r = await fetch(`${ICS_API}/api/ics/templates/export`);
+    all = await r.json();
+  } catch(e) { alert('Could not read templates: ' + e.message); return; }
+  const flagged = (all || []).filter(t => t && t.data && t.data.propose_upstream);
+  if (!flagged.length) {
+    alert('No templates are flagged for future updates yet.\n\nOpen a template, check ' +
+          '"Suggest this template for future FieldCommand updates", and save it first.');
+    return;
+  }
+  const blob = new Blob([JSON.stringify(flagged, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `fieldcommand-update-candidates-${new Date().toISOString().slice(0,10)}.json`;
   a.click();
 }
 

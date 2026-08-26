@@ -75,7 +75,7 @@ def tbl(headers_or_data, rows_or_widths, widths=None):
     """
     Two calling conventions:
     tbl(['COL1','COL2'], [[r1c1,r1c2],[r2c1,r2c2]], widths=[...])
-    tbl([['COL1','COL2'],[r1c1,r1c2]], widths=[...])   ← data already merged
+    tbl([['COL1','COL2'],[r1c1,r1c2]], widths=[...])   <-data already merged
     """
     if widths is None:
         # Called as tbl(data, widths)
@@ -117,17 +117,22 @@ def steps(items):
     return result
 
 def note(text, kind='note'):
-    """Callout box. kind: 'note', 'tip', 'warn'"""
+    """Callout box. kind: 'note', 'tip', 'warn'.
+
+    The label is plain text (not an emoji) on purpose — the base PDF fonts have
+    no emoji glyphs, so an emoji would render as an empty box.
+    """
     cfg = {
-        'note': (EOC_LT, HexColor('#eef2f7'), '📝'),
-        'tip':  (GREEN,  HexColor('#e4f5ea'), '💡'),
-        'warn': (AMBER,  HexColor('#fef3d8'), '⚠'),
+        'note': (EOC_LT, HexColor('#eef2f7'), 'NOTE'),
+        'tip':  (GREEN,  HexColor('#e4f5ea'), 'TIP'),
+        'warn': (AMBER,  HexColor('#fef3d8'), 'WARN'),
     }
-    color, bg, icon = cfg[kind]
+    color, bg, label = cfg[kind]
     t = Table([[
-        P(icon, _s('ni', fontSize=11, textColor=color, leading=13)),
+        P(label, _s('ni', fontName='Helvetica-Bold', fontSize=8, textColor=color,
+                    leading=10, spaceAfter=0, spaceBefore=0)),
         P(text, _s('nt', fontSize=9,  textColor=black, leading=13)),
-    ]], colWidths=[0.28*inch, CW-0.28*inch])
+    ]], colWidths=[0.72*inch, CW-0.72*inch])
     t.setStyle(TableStyle([
         ('BACKGROUND',  (0, 0), (-1, -1), bg),
         ('LEFTPADDING', (0, 0), (-1, -1), 8),

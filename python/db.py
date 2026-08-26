@@ -526,7 +526,9 @@ CREATE INDEX IF NOT EXISTS idx_ci_status   ON checkin_entries(status);
 -- templates, add their own, delete ones they don't use, and import/export JSON.
 -- The 'data' column holds the full template definition as JSON.
 -- Built-in templates are seeded on first run; is_builtin=1 distinguishes them
--- from agency-created ones (cosmetic only — both are fully editable/deletable).
+-- from agency-created ones. Both are fully editable and can be disabled, but
+-- built-ins cannot be deleted (the DELETE handler returns 403); only
+-- agency-created templates can be removed.
 
 CREATE TABLE IF NOT EXISTS incident_templates (
     id          TEXT PRIMARY KEY,           -- e.g. 'shelter', 'sar', or uuid for custom
@@ -903,6 +905,7 @@ def init_db():
     seed_resource_types(conn)
     seed_channel_library(conn)
     seed_incident_templates(conn)
+    load_template_packs(conn)
     seed_fema_equipment_rates(conn)
     log.info(f"Database initialised: {DB_PATH}")
 
@@ -1975,6 +1978,83 @@ def seed_incident_templates(conn):
         )
     conn.commit()
     log.info(f"Seeded {len(BUILTIN_TEMPLATES)} built-in event templates")
+
+
+# Drop-in template packs shipped with the app. A maintainer adds a template to a
+# future release simply by dropping the JSON an operator exported (the ⤴ "Export
+# Update Candidates" button on the Event Templates page) into this folder — no
+# hand-editing of BUILTIN_TEMPLATES. See python/seed_templates/README.md.
+TEMPLATE_PACK_DIR = Path(__file__).resolve().parent / "seed_templates"
+
+
+def load_template_packs(conn):
+    """Add shipped drop-in template packs (JSON) as protected built-ins.
+
+    Runs on every startup (not just first run). It inserts templates whose id is
+    NOT already present, and never overwrites an existing row — so the original
+    built-ins and any local operator edits are always left exactly as they are,
+    while brand-new shipped templates reach existing field servers on the next
+    update. Malformed files are logged and skipped, never fatal.
+    """
+    try:
+        if not TEMPLATE_PACK_DIR.is_dir():
+            return
+        files = sorted(TEMPLATE_PACK_DIR.glob("*.json"))
+    except Exception as e:
+        log.warning(f"Template pack directory unreadable: {e}")
+        return
+
+    now = datetime.utcnow().isoformat()
+    added = 0
+    for f in files:
+        try:
+            raw = json.loads(f.read_text(encoding="utf-8"))
+        except Exception as e:
+            log.warning(f"Skipping malformed template pack {f.name}: {e}")
+            continue
+
+        if isinstance(raw, list):
+            items = raw
+        elif isinstance(raw, dict):
+            items = raw.get("templates") if isinstance(raw.get("templates"), list) else [raw]
+        else:
+            items = []
+
+        for t in items:
+            if not isinstance(t, dict):
+                continue
+            tid = str(t.get("id") or "").strip()
+            if not tid:
+                continue
+            # New ids only — never clobber an existing template (built-in or a
+            # local edit an operator has made under the same id).
+            if conn.execute("SELECT 1 FROM incident_templates WHERE id=?", (tid,)).fetchone():
+                continue
+
+            data = t.get("data", {})
+            if isinstance(data, str):
+                try: data = json.loads(data)
+                except Exception: data = {}
+            if isinstance(data, dict):
+                data.pop("propose_upstream", None)  # authoring flag, not shipped state
+
+            try:
+                conn.execute(
+                    "INSERT INTO incident_templates "
+                    "(id,name,icon,type,summary,sort_order,is_builtin,enabled,data,created,updated) "
+                    "VALUES (?,?,?,?,?,?,1,1,?,?,?)",
+                    (tid, t.get("name", "Untitled"), t.get("icon", "📋"),
+                     t.get("type", ""), t.get("summary", ""),
+                     t.get("sort_order", 99), json.dumps(data), now, now),
+                )
+                added += 1
+            except Exception as e:
+                log.warning(f"Could not add template {tid} from {f.name}: {e}")
+
+    if added:
+        conn.commit()
+        log.info(f"Loaded {added} template(s) from drop-in packs")
+
 
 def seed_fema_equipment_rates(conn):
     """

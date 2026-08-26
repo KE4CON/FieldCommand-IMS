@@ -454,6 +454,7 @@ class ICSHandler(BaseHTTPRequestHandler):
         # GET  /api/ics/templates/<id>         → get single template
         # POST /api/ics/templates              → create or update template
         # POST /api/ics/templates/import       → import JSON array of templates
+        # GET  /api/ics/templates/export       → export ALL templates as JSON
         # DELETE via do_DELETE /api/ics/templates/<id>
 
         elif path == "/api/ics/templates":
@@ -465,7 +466,21 @@ class ICSHandler(BaseHTTPRequestHandler):
                 except Exception: r["data"] = {}
             return self.send_json(rows)
 
-        elif path.startswith("/api/ics/templates/") and path != "/api/ics/templates/import":
+        elif path == "/api/ics/templates/export":
+            # Every template — built-in and agency-created, enabled or not — with
+            # data as an object, in the same shape import/BUILTIN_TEMPLATES use.
+            # This is how a template built in the UI gets captured to share or to
+            # fold into the shipped seed set.
+            rows = rows_to_list(
+                c.execute("SELECT * FROM incident_templates ORDER BY sort_order,name").fetchall()
+            )
+            for r in rows:
+                try: r["data"] = json.loads(r.get("data","{}"))
+                except Exception: r["data"] = {}
+            return self.send_json(rows)
+
+        elif path.startswith("/api/ics/templates/") and path not in (
+                "/api/ics/templates/import", "/api/ics/templates/export"):
             tid = path.split("/api/ics/templates/")[1]
             row = c.execute("SELECT * FROM incident_templates WHERE id=?", (tid,)).fetchone()
             if not row:
@@ -1317,22 +1332,28 @@ class ICSHandler(BaseHTTPRequestHandler):
         elif path == "/api/ics/templates":
             tid = body.get("id") or f"tmpl-{int(time.time()*1000)}"
             data_str = json.dumps(body.get("data", {}))
-            existing = c.execute("SELECT id FROM incident_templates WHERE id=?", (tid,)).fetchone()
+            # "Standard" (built-in) templates are protected from deletion. Operators
+            # may now create one or promote their own. Coerce the flag to 0/1; on an
+            # edit that omits it, keep whatever the template already had.
+            has_bi = "is_builtin" in body
+            bi_req = 1 if body.get("is_builtin") in (1, True, "1", "true", "yes", "on") else 0
+            existing = c.execute("SELECT is_builtin FROM incident_templates WHERE id=?", (tid,)).fetchone()
             if existing:
+                bi = bi_req if has_bi else existing[0]
                 c.execute("""UPDATE incident_templates SET
-                    name=?,icon=?,type=?,summary=?,sort_order=?,enabled=?,data=?,updated=?
+                    name=?,icon=?,type=?,summary=?,sort_order=?,is_builtin=?,enabled=?,data=?,updated=?
                     WHERE id=?""",
                     (body.get("name","Untitled"), body.get("icon","📋"),
                      body.get("type",""), body.get("summary",""),
-                     body.get("sort_order",99), body.get("enabled",1),
+                     body.get("sort_order",99), bi, body.get("enabled",1),
                      data_str, now, tid))
             else:
                 c.execute("""INSERT INTO incident_templates
                     (id,name,icon,type,summary,sort_order,is_builtin,enabled,data,created,updated)
-                    VALUES (?,?,?,?,?,?,0,1,?,?,?)""",
+                    VALUES (?,?,?,?,?,?,?,1,?,?,?)""",
                     (tid, body.get("name","Untitled"), body.get("icon","📋"),
                      body.get("type",""), body.get("summary",""),
-                     body.get("sort_order",99), data_str, now, now))
+                     body.get("sort_order",99), bi_req, data_str, now, now))
             c.commit()
             return self.send_json({"ok":True,"id":tid})
 
@@ -1346,12 +1367,15 @@ class ICSHandler(BaseHTTPRequestHandler):
                 existing = c.execute("SELECT id FROM incident_templates WHERE id=?", (tid,)).fetchone()
                 if existing:
                     tid = tid + "_imported"
+                # Carry the is_builtin flag through so an exported standard template
+                # stays standard when imported on another server.
+                bi = 1 if t.get("is_builtin") in (1, True, "1", "true", "yes", "on") else 0
                 c.execute("""INSERT OR REPLACE INTO incident_templates
                     (id,name,icon,type,summary,sort_order,is_builtin,enabled,data,created,updated)
-                    VALUES (?,?,?,?,?,?,0,1,?,?,?)""",
+                    VALUES (?,?,?,?,?,?,?,1,?,?,?)""",
                     (tid, t.get("name","Imported"), t.get("icon","📋"),
                      t.get("type",""), t.get("summary",""),
-                     t.get("sort_order",99),
+                     t.get("sort_order",99), bi,
                      json.dumps(t.get("data",{})), now, now))
                 imported += 1
             c.commit()

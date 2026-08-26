@@ -1,0 +1,49 @@
+[
+  {
+    "id": "flood-water-rescue",
+    "name": "Flood Response",
+    "icon": "🌊",
+    "type": "Flood — Water Rescue",
+    "sort_order": 10,
+    "is_builtin": 1,
+    "summary": "Riverine or flash flooding — evacuation, swiftwater rescue, road closures, and shelter coordination.",
+    "data": {
+      "objectives": [
+        "Establish the Incident Command Post (ICP) on high ground, well clear of the floodplain and any rising water.",
+        "Identify life-safety threats first; order evacuations for at-risk areas before the water reaches them.",
+        "Deploy swiftwater rescue teams to reported victims — no water entry except by trained teams in proper protective equipment.",
+        "Account for every person removed from a structure and track them to a designated shelter.",
+        "Monitor river and stream gauges and the weather; brief Command on the crest forecast each operational period.",
+        "Establish and publicize road closures — keep the public out of flooded roadways (\"Turn Around, Don't Drown\").",
+        "Coordinate with utilities to de-energize flooded areas and shut off gas where needed.",
+        "Log every rescue, evacuation, and searched-but-empty area with a time and location."
+      ],
+      "safety_message": "Never drive or walk into moving water — 6 inches can knock you down and 12 inches can float a car. Water entry only by trained swiftwater teams in life jackets and helmets with throw bags. Assume all floodwater is contaminated and hides downed power lines, debris, and washed-out roadbeds. Buddy system at all times; everyone checks in and out with Base.",
+      "resources": [
+        {"name": "Swiftwater Rescue Team", "type": "Crew", "qty": 2},
+        {"name": "Rescue Boat + Operators", "type": "Crew", "qty": 3},
+        {"name": "High-Water Vehicle", "type": "Vehicle", "qty": 3},
+        {"name": "Evacuation Bus", "type": "Vehicle", "qty": 2},
+        {"name": "Sandbag / Flood-Fight Team", "type": "Personnel", "qty": 10},
+        {"name": "Shelter Manager", "type": "Personnel", "qty": 1},
+        {"name": "Radio Operator", "type": "Personnel", "qty": 2}
+      ],
+      "channels": [
+        {"name": "Command (local repeater, or 146.520 simplex)", "rx": "146.520", "tx": "146.520", "tone": "", "mode": "FM", "function": "Command"},
+        {"name": "Water Rescue Tactical", "rx": "146.550", "tx": "146.550", "tone": "", "mode": "FM", "function": "Tactical"},
+        {"name": "Evacuation & Logistics", "rx": "147.555", "tx": "147.555", "tone": "", "mode": "FM", "function": "Logistics"},
+        {"name": "Cross-Team (70 cm)", "rx": "446.000", "tx": "446.000", "tone": "", "mode": "FM", "function": "Tactical"}
+      ],
+      "org": {
+        "ops_section_chief": "Operations Section Chief",
+        "safety_officer": "Safety Officer — swiftwater qualified",
+        "public_info_officer": "PIO — issue evacuation and road-closure notices",
+        "branch1_label": "Rescue & Evacuation",
+        "div_a_label": "Swiftwater Rescue",
+        "div_b_label": "Evacuation & Transport",
+        "div_c_label": "Flood Fight / Sandbagging",
+        "div_d_label": "Shelter & Mass Care"
+      }
+    }
+  }
+]

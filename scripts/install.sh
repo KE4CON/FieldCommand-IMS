@@ -149,9 +149,19 @@ CALLSIGN="${CALLSIGN^^}"
 
 ask STATION_LAT "Station latitude [42.3153]: " 42.3153
 ask STATION_LON "Station longitude [-88.4473]: " -88.4473
-ask AP_SSID "WiFi AP SSID [EMCOMM-NET]: " EMCOMM-NET
-ask AP_PASS "WiFi AP password [fieldcommand2026]: " fieldcommand2026
+# NOTE: the Pi does NOT broadcast Wi-Fi — the ASUS router creates EMCOMM-NET.
+# These two values are only recorded for the server's own display; set the SAME
+# Wi-Fi name and password on the router itself. (See the One-Command Setup
+# Quick Start guide.)
+if [[ "$NONINTERACTIVE" != "1" ]]; then
+    echo -e "  ${DIM}The Pi does NOT create the Wi-Fi — the ASUS router broadcasts EMCOMM-NET.${NC}"
+    echo -e "  ${DIM}Enter the same name/password you set (or will set) on the router.${NC}"
+fi
+ask AP_SSID "Wi-Fi name the ROUTER broadcasts — Pi does NOT create Wi-Fi [EMCOMM-NET]: " EMCOMM-NET
+ask AP_PASS "Wi-Fi password (must match the router) [fieldcommand2026]: " fieldcommand2026
 ask SERVER_IP "Server IP address [192.168.50.1]: " 192.168.50.1
+# Optional third-party case software (only useful on a SunFounder Pironman 5 case).
+ask INSTALL_PIRONMAN "Install SunFounder Pironman case software (power button, fan, OLED)? [y/N]: " N
 
 if [[ "$PROFILE" == "1" ]]; then
     ask DO_FCC "Download FCC amateur database? (~600MB) [y/N]: " N
@@ -202,7 +212,7 @@ else
     echo -e "  Callsign:    ${DIM}none — amateur radio features stay disabled${NC}"
 fi
 echo -e "  Coordinates: ${AMBER}$STATION_LAT, $STATION_LON${NC}"
-echo -e "  WiFi SSID:   ${AMBER}$AP_SSID${NC}"
+echo -e "  WiFi name:   ${AMBER}$AP_SSID${NC} ${DIM}(broadcast by the router, not the Pi)${NC}"
 echo -e "  Server IP:   ${AMBER}$SERVER_IP${NC}"
 if [[ "${KIWIX_TIER:-0}" != "0" ]]; then
     echo -e "  Kiwix tier:  ${AMBER}Tier ${KIWIX_TIER}${NC}"
@@ -328,6 +338,14 @@ if [[ "$PROFILE" != "3" ]]; then
             warn "Not found (skipping): python/$f"
         fi
     done
+
+    # Drop-in template packs (JSON) — db.py seeds these as protected built-ins.
+    if [[ -d "$SCRIPT_DIR/../python/seed_templates" ]]; then
+        mkdir -p "$FC_PYTHON/seed_templates"
+        rsync -a "$SCRIPT_DIR/../python/seed_templates/" "$FC_PYTHON/seed_templates/" 2>>"$FC_LOG" \
+            || cp -r "$SCRIPT_DIR/../python/seed_templates/." "$FC_PYTHON/seed_templates/"
+        success "Installed: seed_templates/ (drop-in template packs)"
+    fi
 fi
 
 # ── Copy web files ─────────────────────────────────────────────────
@@ -998,6 +1016,43 @@ if [[ "$PROFILE" != "3" ]]; then
     
     systemctl start fcc-refresh.timer 2>>"$FC_LOG" && success "Started: fcc-refresh.timer"
     systemctl start repeater-refresh.timer 2>>"$FC_LOG" && success "Started: repeater-refresh.timer"
+fi
+
+# ── Optional: SunFounder Pironman case software (power button, fan, OLED) ──
+# Third-party, opt-in. Off by default. Only useful on a SunFounder Pironman 5
+# case. Runs SunFounder's own installer non-interactively (--variant max) and
+# sets the Pi 5 to fully cut power on halt. Never fatal — the FieldCommand
+# install still succeeds if this step can't complete.
+if [[ "${INSTALL_PIRONMAN:-N}" =~ ^[Yy] ]]; then
+    step "Installing Pironman case software (SunFounder, optional)"
+    info "Third-party software from SunFounder for the Pironman 5 case."
+
+    # Make a Pi 5 halt actually cut power, so shutdown and the button power it off.
+    if command -v rpi-eeprom-config >/dev/null 2>&1; then
+        _pm_tmp="$(mktemp)"
+        rpi-eeprom-config > "$_pm_tmp" 2>/dev/null || true
+        if grep -q '^POWER_OFF_ON_HALT=' "$_pm_tmp"; then
+            sed -i 's/^POWER_OFF_ON_HALT=.*/POWER_OFF_ON_HALT=1/' "$_pm_tmp"
+        else
+            echo 'POWER_OFF_ON_HALT=1' >> "$_pm_tmp"
+        fi
+        rpi-eeprom-config --apply "$_pm_tmp" >>"$FC_LOG" 2>&1 \
+            && success "Set POWER_OFF_ON_HALT=1 (full power off on shutdown)" \
+            || warn "Could not set POWER_OFF_ON_HALT — set it via: sudo raspi-config → Advanced → Shutdown Behaviour → Full Power Off"
+        rm -f "$_pm_tmp"
+    fi
+
+    _pm_cmd='curl -sSL "https://raw.githubusercontent.com/sunfounder/pironman5/v1/install.sh" | sudo bash -s -- --variant max'
+    if curl -fsSL -m 30 "https://raw.githubusercontent.com/sunfounder/pironman5/v1/install.sh" -o /tmp/pironman5_install.sh 2>>"$FC_LOG"; then
+        if timeout 900 bash /tmp/pironman5_install.sh --variant max --no-autologin </dev/null >>"$FC_LOG" 2>&1; then
+            success "Pironman software installed — reboot to activate the OLED, fan, and power button."
+        else
+            warn "Pironman auto-install did not finish. Run it by hand on the Pi: $_pm_cmd"
+        fi
+        rm -f /tmp/pironman5_install.sh
+    else
+        warn "No internet (or download failed) — skipped Pironman software. Install later: $_pm_cmd"
+    fi
 fi
 
 # ── Done ───────────────────────────────────────────────────────────

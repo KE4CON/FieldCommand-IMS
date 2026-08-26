@@ -44,6 +44,10 @@ TILE_PRESET="1"
 # Kiwix offline library: 0=skip, 1=essential(~2.5GB), 2=extended(~10GB), 3=full(~25GB)
 KIWIX_TIER="1"
 
+# Install SunFounder Pironman 5 case software (power button, fan, OLED)? y or N
+# Third-party, off by default. Needs internet. Only set y on a Pironman 5 case.
+INSTALL_PIRONMAN="N"
+
 # ── Advanced (optional) ─────────────────────────────────────────────────────
 # Force which NVMe devices are the two mirror drives. Leave commented for auto.
 #FC_SSD_A="/dev/nvme0n1"

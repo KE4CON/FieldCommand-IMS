@@ -1,0 +1,47 @@
+[
+  {
+    "id": "winter-storm-power",
+    "name": "Winter Storm / Power Outage",
+    "icon": "❄️",
+    "type": "Winter Storm — Extended Power Outage",
+    "sort_order": 12,
+    "is_builtin": 1,
+    "summary": "Severe winter weather and a long power outage — warming centers, welfare checks, and fuel/generator management.",
+    "data": {
+      "objectives": [
+        "Open and staff warming centers at pre-identified facilities that have backup power.",
+        "Conduct welfare checks on vulnerable residents — medically dependent, elderly, and isolated.",
+        "Coordinate with utilities on restoration priorities and estimated times; relay updates to the public.",
+        "Support transport of residents to warming centers and of medical patients to care.",
+        "Track fuel and generator status for every critical facility and refuel before any runs dry.",
+        "Monitor road conditions and advise the public to stay off the roads unless travel is essential.",
+        "Push carbon-monoxide and generator-safety messaging to the public throughout the outage."
+      ],
+      "safety_message": "Dress for the cold and rotate crews out of exposure — watch each other for frostbite and hypothermia. Generators and heaters make carbon monoxide: run them outdoors only, never in a garage or near a window or air intake. Drive only when necessary and slow down for ice. Report downed lines and treat every line as energized.",
+      "resources": [
+        {"name": "Warming Center Team", "type": "Personnel", "qty": 4},
+        {"name": "Welfare Check Team", "type": "Crew", "qty": 3},
+        {"name": "4x4 / High-Clearance Vehicle", "type": "Vehicle", "qty": 4},
+        {"name": "Portable Generator", "type": "Equipment", "qty": 3},
+        {"name": "Fuel Resupply Vehicle", "type": "Vehicle", "qty": 1},
+        {"name": "Radio Operator", "type": "Personnel", "qty": 2}
+      ],
+      "channels": [
+        {"name": "Command (local repeater, or 146.520 simplex)", "rx": "146.520", "tx": "146.520", "tone": "", "mode": "FM", "function": "Command"},
+        {"name": "Welfare Checks", "rx": "146.550", "tx": "146.550", "tone": "", "mode": "FM", "function": "Tactical"},
+        {"name": "Logistics / Fuel", "rx": "147.555", "tx": "147.555", "tone": "", "mode": "FM", "function": "Logistics"},
+        {"name": "Utility / EOC Liaison", "rx": "446.000", "tx": "446.000", "tone": "", "mode": "FM", "function": "Liaison"}
+      ],
+      "org": {
+        "ops_section_chief": "Operations Section Chief",
+        "safety_officer": "Safety Officer — cold and CO hazards",
+        "public_info_officer": "PIO — warming-center locations and safety messaging",
+        "branch1_label": "Mass Care & Welfare",
+        "div_a_label": "Warming Centers",
+        "div_b_label": "Welfare Checks",
+        "div_c_label": "Transport",
+        "div_d_label": "Facilities & Power"
+      }
+    }
+  }
+]

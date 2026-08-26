@@ -118,6 +118,13 @@ case "$CHOICE" in
                 PY_UPDATED=$((PY_UPDATED+1))
             fi
         done
+        # Drop-in template packs — new shipped templates reach this server on the
+        # next db init (db.py load_template_packs adds only ids not already present).
+        if [[ -d "$SCRIPT_DIR/../python/seed_templates" ]]; then
+            sudo mkdir -p "$FC_HOME/python/seed_templates"
+            sudo rsync -a "$SCRIPT_DIR/../python/seed_templates/" "$FC_HOME/python/seed_templates/" 2>/dev/null \
+                || sudo cp -r "$SCRIPT_DIR/../python/seed_templates/." "$FC_HOME/python/seed_templates/"
+        fi
         echo -e "${GREEN}Python files updated: ${PY_UPDATED} files copied to $FC_HOME/python/${NC}"
         # Restart services to pick up changes
         for svc in fcc-lookup health-monitor deadmans ics-platform fieldcommand-refs fieldcommand-tiles amprgate-poll wan-monitor; do

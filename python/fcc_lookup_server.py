@@ -590,7 +590,8 @@ class Handler(BaseHTTPRequestHandler):
                 from reportlab.platypus import (SimpleDocTemplate, Table,
                                                 TableStyle, Paragraph, Spacer)
                 members = [member_to_dict(r) for r in c.execute(
-                    "SELECT * FROM roster ORDER BY last_name, first_name, callsign").fetchall()]
+                    "SELECT * FROM roster ORDER BY last_name COLLATE NOCASE, "
+                    "first_name COLLATE NOCASE, callsign COLLATE NOCASE").fetchall()]
                 org = ""
                 try:
                     _o = c.execute("SELECT org_name FROM station_config WHERE id=1").fetchone()
@@ -608,7 +609,7 @@ class Handler(BaseHTTPRequestHandler):
                     cf = m.get("certifications") or {}
                     return ", ".join(k for k, v in cf.items() if v)
                 header = ['#', 'Name', 'Callsign', 'Radio ID', 'Member ID',
-                          'License', 'Roles', 'Certifications']
+                          'License', 'Phone', 'Email', 'Roles', 'Certifications']
                 data = [[_p(h, hcell) for h in header]]
                 for i, m in enumerate(members, 1):
                     name = ", ".join(x for x in [(m.get("last_name") or "").strip(),
@@ -617,9 +618,10 @@ class Handler(BaseHTTPRequestHandler):
                         _p(i), _p(name or "-"), _p(m.get("callsign") or ""),
                         _p(m.get("radio_id") or ""), _p(m.get("member_id") or ""),
                         _p(m.get("license_class") or ""),
+                        _p(m.get("phone") or ""), _p(m.get("email") or ""),
                         _p("; ".join(m.get("roles") or [])), _p(_certs(m)),
                     ])
-                widths = [0.35, 1.8, 0.95, 0.95, 0.95, 0.95, 2.35, 1.7]  # inches, sum ~9.6
+                widths = [0.3, 1.45, 0.75, 0.7, 0.8, 0.85, 0.95, 1.4, 1.6, 1.3]  # inches, sum ~10.1
                 t = Table(data, colWidths=[w * inch for w in widths], repeatRows=1)
                 t.setStyle(TableStyle([
                     ('BACKGROUND',    (0, 0), (-1, 0), _rc.HexColor('#1a3a6b')),
@@ -631,20 +633,21 @@ class Handler(BaseHTTPRequestHandler):
                     ('TOPPADDING',    (0, 0), (-1, -1), 3),
                     ('BOTTOMPADDING', (0, 0), (-1, -1), 3),
                 ]))
-                title = ParagraphStyle('t', fontName='Helvetica-Bold', fontSize=14,
+                title = ParagraphStyle('t', fontName='Helvetica-Bold', fontSize=15,
+                                       leading=19, spaceAfter=3,
                                        textColor=_rc.HexColor('#1a3a6b'))
-                sub = ParagraphStyle('s', fontName='Helvetica', fontSize=9,
-                                     textColor=_rc.HexColor('#4a6080'))
+                sub = ParagraphStyle('s', fontName='Helvetica', fontSize=9, leading=12,
+                                     spaceAfter=6, textColor=_rc.HexColor('#4a6080'))
                 heading = (org + " — Member Roster") if org else "Member Roster"
                 stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
                 buf = io.BytesIO()
                 doc = SimpleDocTemplate(buf, pagesize=landscape(letter),
                                         leftMargin=0.4 * inch, rightMargin=0.4 * inch,
-                                        topMargin=0.4 * inch, bottomMargin=0.5 * inch,
+                                        topMargin=0.55 * inch, bottomMargin=0.5 * inch,
                                         title="Member Roster")
                 doc.build([_p(heading, title),
                            _p(f"{len(members)} members  ·  generated {stamp}", sub),
-                           Spacer(1, 8), t])
+                           Spacer(1, 10), t])
                 return self.send_bytes(buf.getvalue(), "application/pdf",
                     extra={"Content-Disposition": "inline; filename=member_roster.pdf"})
             except Exception as e:

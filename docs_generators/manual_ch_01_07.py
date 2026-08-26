@@ -1943,10 +1943,18 @@ def ch7():
          'roster, assigning it a member ID. Shows only for stations not already on file.'],
         ['x (remove)', 'Deletes the entry from this net - use it to clear a mistaken '
          'log.'],
-        ['WALK-IN tag', 'An amber flag on a station logged by name with no FCC-verified '
-         'callsign.'],
+        ['WALK-IN tag', 'A yellow flag on an entry that is <b>not tied to an FCC-verified '
+         'amateur callsign</b>. It is an accountability prompt for Net Control, not a license: '
+         'it legitimately appears for a public-service unit that checks in by radio ID or name, '
+         'for third-party traffic a licensed control operator is relaying, or for a licensed ham '
+         'whose callsign did not match the offline FCC database (a foreign or brand-new license, '
+         'a club or special-event call, or a typo). It does <b>not</b> mean an unlicensed person '
+         'is transmitting on amateur frequencies — that is never permitted, and the flag is there '
+         'precisely so Net Control can confirm who the station is.'],
         ['ESV tag', 'A blue member-ID tag shown when the station matches your roster.'],
     ], widths=[1.5*inch, CW-1.5*inch]))
+    s.append(SP(3))
+    s.append(CHG('Clarified the WALK-IN tag: an accountability flag for unverified entries, not permission to operate unlicensed (wording).'))
     s.append(SP(4))
     s.append(note(
         'Participation duration is rounded <b>up to the nearest quarter-hour</b> - so a '

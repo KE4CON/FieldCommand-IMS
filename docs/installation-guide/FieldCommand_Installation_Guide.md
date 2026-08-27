@@ -1908,9 +1908,8 @@ APRS is the amateur network that carries short bursts of data — most usefully,
 | --- | --- | --- |
 | **Direwolf** | A **software TNC** — a **Terminal Node Controller** done in software instead of a separate box. | It listens to the radio's audio and decodes the APRS data packets (and encodes yours to transmit). It is the engine; it has no screen of its own. |
 | **A USB TNC** | A small hardware adapter (Digirig Mobile or SignaLink USB) between the Pi and the radio. | It carries audio both ways between the Pi and the transceiver and keys the radio to transmit. Direwolf needs it to hear and speak to the radio. |
-| **YAAC** | "Yet Another APRS Client" — an optional Java program that can run on the Pi. | An on-Pi APRS display, if you want one. It is optional; the tactical map is the main way FieldCommand shows APRS. |
 
-> **MOST OF THIS IS ALREADY INSTALLED** — The FieldCommand installer sets up **Direwolf** and **YAAC** for you, writes a starter **`/etc/direwolf.conf`**, and enables the Direwolf service. So in the normal case you do not install anything here — you connect the TNC and edit two lines of the config. The manual install steps exist only as a fallback if the automatic install failed.
+> **MOST OF THIS IS ALREADY INSTALLED** — The FieldCommand installer sets up **Direwolf** for you, writes a starter **`/etc/direwolf.conf`**, and enables the Direwolf service. So in the normal case you do not install anything here — you connect the TNC and edit two lines of the config. The manual install steps exist only as a fallback if the automatic install failed.
 
 
 ### Connecting the USB TNC
@@ -1951,7 +1950,7 @@ Direwolf decodes packets but does not draw the map itself. You point the map at 
 
 Once a source is feeding it, stations decoded off the air appear as markers on the tactical map and update as new packets arrive.
 
-> **THE LIVE APRS FEED IS CARRIED OVER SECURE HTTPS FOR YOU** — Because FieldCommand now serves everything over secure **HTTPS** (see the connect chapter), the tactical map's live APRS feed is passed through the web server automatically at the addresses **`/aprs-gw/`** and **`/aprs-yc/`**. You normally do nothing for this — it just works. It matters only in one case: if your **APRS gateway** (the radio-facing gateway, such as **YAAC**) runs on a **different computer** than the FieldCommand server — for example, on the operations laptop — then those two feeds need to be told where to find it. Whoever builds the server edits the two **`proxy_pass`** lines for `/aprs-gw/` and `/aprs-yc/` in the web-server (nginx) configuration so they point at that other computer's address, then restarts the web server. If the gateway runs on the FieldCommand server itself (the usual case), leave these alone.
+> **THE LIVE APRS FEED IS CARRIED OVER SECURE HTTPS FOR YOU** — Because FieldCommand now serves everything over secure **HTTPS** (see the connect chapter), the tactical map's live APRS feed is passed through the web server automatically at the address **`/aprs-gw/`**. You normally do nothing for this — it just works. It matters only in one case: if your **APRS source** (APRS Command, the radio-facing feed) runs on a **different computer** than the FieldCommand server — for example, on the operations laptop — then that feed needs to be told where to find it. Whoever builds the server edits the **`proxy_pass`** line for `/aprs-gw/` in the web-server (nginx) configuration so it points at that other computer's address, then restarts the web server. If the gateway runs on the FieldCommand server itself (the usual case), leave these alone.
 
 
 ### Verifying APRS Is Working
@@ -2167,7 +2166,7 @@ The two most common choices both plug into the Pi over a USB cable:
 
 ### The Bluetooth Option — Mobilinkd TNC4
 
-The **Mobilinkd TNC4** is a Bluetooth APRS TNC — no USB cable to the computer at all. It pairs wirelessly with the YAAC APRS program on the Pi, or with an APRSdroid app on a phone. Reach for it when a USB port is scarce, or when you want the TNC physically at the radio and the computer a short distance away without a cable run.
+The **Mobilinkd TNC4** is a Bluetooth APRS TNC — no USB cable to the computer at all. It pairs wirelessly with APRS Command, or with an APRSdroid app on a phone. Reach for it when a USB port is scarce, or when you want the TNC physically at the radio and the computer a short distance away without a cable run.
 
 
 ### The SCS PACTOR Modem — Top-Tier HF Winlink
@@ -2239,7 +2238,7 @@ udevadm info -a -n /dev/ttyUSB0 | grep -E "idVendor|idProduct|product"
 sudo udevadm control --reload-rules && sudo udevadm trigger
 ```
 
-In the APRS software (YAAC), you then simply point the serial TNC port at **`/dev/tnc0`** — because that name never changes, you set it once and it keeps working across reboots and re-plugs.
+In Direwolf's configuration (**`/etc/direwolf.conf`**), you then simply point the serial TNC device at **`/dev/tnc0`** — because that name never changes, you set it once and it keeps working across reboots and re-plugs.
 
 > **IF YOUR TNC ISN'T ONE OF THE LISTED MODELS** — The rules already cover Digirig, SignaLink, and common FTDI-chip TNCs. If you have a different TNC, run `lsusb` and the `udevadm info` command above to read its **idVendor** and **idProduct** values, then add a matching line to `/etc/udev/rules.d/99-fieldcommand-tnc.rules` that assigns `SYMLINK+="tnc0"`. Reload with the command in step 3. There's a commented example in that file to copy.
 

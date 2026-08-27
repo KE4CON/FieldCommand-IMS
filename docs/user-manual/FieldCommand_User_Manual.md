@@ -1612,7 +1612,6 @@ It pulls stations from up to three sources at once and merges them so each stati
 | Source | What it is | Needs internet? |
 | --- | --- | --- |
 | **Direwolf (RF)** | APRS heard directly off the radio, decoded by Direwolf software and served through APRS Command. This is your true off-air picture. | **No** — works fully offline |
-| **YAAC** | APRS from YAAC (Yet Another APRS Client), another program that can decode your radio's packets. An alternate or additional radio feed. | **No** — works offline |
 | **APRS-IS** | The worldwide APRS internet feed (via the aprs.fi service). Fills in stations beyond radio range. | **Yes** — internet required |
 
 > **OFFLINE CAVEAT — THE BASE MAP MAY NOT DRAW WITHOUT INTERNET** — The station markers are the offline part and always plot. The **background map image** (the streets and terrain) is a separate matter. In the current build the mapping library and default map tiles load from the internet, so with no internet the base map may come up blank while your markers still float on top. For a true no-internet map, an administrator downloads offline map tiles onto the Pi (there's a `download_tiles.sh` step for exactly this). See the Settings tab's **Map Tiles** note.
@@ -1635,7 +1634,6 @@ Down the top-left corner of the map is a stack of **layer buttons**. Each one tu
 | Button | Shows / does |
 | --- | --- |
 | **🟢 Direwolf** | Stations heard off the radio via Direwolf. |
-| **🔵 YAAC** | Stations from the YAAC feed. |
 | **🟣 APRS-IS** | Stations from the internet APRS feed. |
 | **📌 Overlays** | Your own hand-placed markers (from the Markers tab). |
 | **⬡ My Station** | Your own station's position marker. |
@@ -1652,7 +1650,7 @@ Down the top-left corner of the map is a stack of **layer buttons**. Each one tu
 Each station is drawn with its standard APRS symbol (a car, a house, a weather station, and so on — the app translates APRS symbols into easy-to-read emoji). Two things about a marker tell you its story at a glance:
 
 - *Fill color = how recently it was heard (age).* Bright green means fresh (heard within the last ~15 minutes), amber means aging (roughly 15–60 minutes), and gray means old (over an hour). A faded marker is a station you haven't heard from in a while.
-- *Border color = which source heard it.* Green border = Direwolf, blue = YAAC, purple = APRS-IS, and white = heard by more than one source. The Legend in the Settings tab spells this out.
+- *Border color = which source heard it.* Green border = Direwolf (RF), purple = APRS-IS, and white = heard by both sources. The Legend in the Settings tab spells this out.
 
 Click any marker to open its popup, which lays out everything known about the station:
 
@@ -1679,7 +1677,7 @@ On the right is a sidebar with five tabs: **Stations**, **Msgs**, **Markers**, *
 
 ### Stations Tab
 
-A searchable, sortable list of every station on the map, newest-heard first. The filter bar at the top lets you narrow it down: a **search box** (matches callsign or comment text), a **source** dropdown (All / Direwolf / YAAC / APRS-IS), and a **type** dropdown (All / Mobile / Fixed / Weather / Digi / iGate). Each list row shows the symbol, callsign, source badges, comment, how long ago it was heard, and its coordinates. Click a row to pan the map to that station.
+A searchable, sortable list of every station on the map, newest-heard first. The filter bar at the top lets you narrow it down: a **search box** (matches callsign or comment text), a **source** dropdown (All / Direwolf / APRS-IS), and a **type** dropdown (All / Mobile / Fixed / Weather / Digi / iGate). Each list row shows the symbol, callsign, source badges, comment, how long ago it was heard, and its coordinates. Click a row to pan the map to that station.
 
 
 ### Messages Tab (Msgs)
@@ -1690,7 +1688,7 @@ APRS can carry short text messages, and this tab is where you read and send them
 | --- | --- |
 | **To callsign** | The station you're messaging (example: `W8ABC`). |
 | **Message text** | Your message. APRS caps a single message at **67 characters** — the box won't let you exceed it. |
-| **Via** | Which radio path to send through — **Via Direwolf** or **Via YAAC**. |
+| **Via** | The radio path to send through — **Via Direwolf** (over the radio, via APRS Command). |
 
 Click **Send** to transmit. A small status line reports whether it went out. Note that sending an APRS message goes out over the air on amateur radio, so it requires a properly licensed station and callsign set up in the Settings tab.
 
@@ -1710,7 +1708,7 @@ Your placed markers persist on the map. **🗑 Clear All Markers** removes them 
 
 ### Sources Tab
 
-A status panel for each data feed — **Direwolf RF**, **YAAC**, and **APRS-IS** — showing whether each is connected, its address, and how many stations it's supplying. A **⟳ Poll** button on each forces an immediate check. At the bottom, the **MERGED DATASET** box summarizes how the sources combined: total unique stations, how many were seen by both radio feeds, and how many came from each source alone. For APRS-IS you can paste an optional **aprs.fi API key** to enable the internet feed (leave it blank to keep APRS-IS off).
+A status panel for each data feed — **Direwolf RF** and **APRS-IS** — showing whether each is connected, its address, and how many stations it's supplying. A **⟳ Poll** button on each forces an immediate check. At the bottom, the **MERGED DATASET** box summarizes how the sources combined: total unique stations, how many were seen by both sources, and how many came from each source alone. For APRS-IS you can paste an optional **aprs.fi API key** to enable the internet feed (leave it blank to keep APRS-IS off).
 
 
 ### Settings Tab (⚙)
@@ -1720,7 +1718,7 @@ Everything about how the map behaves and where it looks for data:
 | Section | What you set |
 | --- | --- |
 | **My Station** | Your own callsign, latitude, and longitude, plus a **Center on Station** button. If the Pi has a live Global Positioning System (GPS) fix, these fill in automatically. |
-| **APRS Sources** | The address and ports where the radio feeds live (the RF/Direwolf host and port, and the YAAC port). |
+| **APRS Sources** | The address and port where the RF feed lives (the RF/Direwolf host and port). |
 | **Display** | Auto-refresh interval (15s up to Manual only), map-tile info, the **station age threshold** (how many minutes counts as "fresh"), the range-ring radius in kilometers, whether to show emoji symbols or plain dots, and whether to show callsign labels. |
 | **Legend** | A reference key for the age colors (fresh/aging/old), your station, overlays, and the source border colors. |
 
@@ -1728,10 +1726,10 @@ Everything about how the map behaves and where it looks for data:
 ## Troubleshooting
 
 - *The map background is blank but markers still show.* That's the offline caveat: the base map tiles couldn't load from the internet. Your station data is fine. Have an administrator download offline tiles onto the Pi (the `download_tiles.sh` step), then switch to them with the map's layer control.
-- *No stations appear at all.* Check the **Sources** tab. If Direwolf and YAAC show disconnected, the radio feeds aren't reaching the map — confirm the addresses/ports in **Settings → APRS Sources** and that Direwolf/APRS Command is running. With no internet, APRS-IS will be empty by design.
+- *No stations appear at all.* Check the **Sources** tab. If Direwolf shows disconnected, the radio feed isn't reaching the map — confirm the addresses/ports in **Settings → APRS Sources** and that Direwolf/APRS Command is running. With no internet, APRS-IS will be empty by design.
 - *A station I expect isn't showing.* It may not have beaconed recently, may be out of radio range (and APRS-IS is off), or may be filtered out. Clear the filters on the **Stations** tab and click **⟳ Refresh**.
 - *Everything looks faded/gray.* Those stations simply haven't been heard recently. If they're all gray, your feeds may have stopped — check the **Sources** tab and refresh.
-- *I can't send an APRS message.* Sending needs a licensed station: set your **callsign** in **Settings → My Station**, keep messages under 67 characters, and make sure the **Via** feed (Direwolf or YAAC) is actually connected.
+- *I can't send an APRS message.* Sending needs a licensed station: set your **callsign** in **Settings → My Station**, keep messages under 67 characters, and make sure the **Via** feed (Direwolf) is actually connected.
 - *APRS-IS stays empty.* It needs internet and an **aprs.fi API key** entered on the **Sources** tab. Without both, the internet feed stays off — which is expected in a no-internet deployment.
 - *My SARTopo overlay isn't visible.* Confirm you imported it on the **SARTopo Import** page, then turn on the **🗺 SARTopo** layer button on the map.
 

@@ -161,7 +161,7 @@ Each concern is its own process listening on its own port. This is the complete 
 | 8083 | `tile_server.py` (Flask) | Offline map tiles — serves the map imagery for the tactical and resource maps with no internet. | `/tiles/` |
 | 8090 | Pat (Winlink) | Winlink backup email over radio. | `/winlink/` |
 
-Two more nginx paths, `/aprs-gw/` and `/aprs-yc/`, exist to relay the live Automatic Packet Reporting System (APRS) tactical feed — including WebSocket upgrades — from a radio gateway, so the browser can reach that feed same-origin over TLS as well. They point by default at the APRS gateway on this machine and can be repointed at another host if the gateway runs elsewhere.
+One more nginx path, `/aprs-gw/`, exists to relay the live Automatic Packet Reporting System (APRS) tactical feed — including WebSocket upgrades — from the RF source (APRS Command), so the browser can reach that feed same-origin over TLS as well. It points by default at the RF source on this machine and can be repointed at another host if that source runs elsewhere.
 
 > **DO NOT POINT ICS CALLS AT 5051** — The ICS platform is on port **5055**. Port **5051** is the health monitor. These are easy to transpose and the mistake is silent — an ICS API call sent to 5051 simply will not find its route. When you add or move an ICS endpoint, confirm the front end calls `/svc/5055/`.
 
@@ -546,7 +546,7 @@ location /aprs-gw/ {
 }
 ```
 
-There are two of these — `/aprs-gw/` to the Radio Frequency (RF) gateway on 8080 and `/aprs-yc/` to YAAC on 8082. The payoff is the same same-origin, single-front-door story as the rest of the file: the browser opens a secure `wss://` connection to nginx, nginx terminates the TLS and makes the plain, local `ws` hop to the APRS gateway itself. The config notes that if the APRS gateway runs on a different host (say the operations laptop), you change the `127.0.0.1` here to that host's address — the browser side never changes. The file also notes one thing it deliberately does **not** proxy: the 44Net gateway tunnel control on port 9001 is intentionally localhost-only on a different device and is left unexposed.
+There is one of these — `/aprs-gw/` to the Radio Frequency (RF) source (APRS Command) on 8080. The payoff is the same same-origin, single-front-door story as the rest of the file: the browser opens a secure `wss://` connection to nginx, nginx terminates the TLS and makes the plain, local `ws` hop to the APRS gateway itself. The config notes that if the APRS gateway runs on a different host (say the operations laptop), you change the `127.0.0.1` here to that host's address — the browser side never changes. The file also notes one thing it deliberately does **not** proxy: the 44Net gateway tunnel control on port 9001 is intentionally localhost-only on a different device and is left unexposed.
 
 > **JARGON, IN PLAIN WORDS** — A **WebSocket** is a network connection that stays open so a server can keep pushing new data (here, live radio positions) without the page asking again each time. The `wss://` scheme is a WebSocket over TLS — the secure version — just as `https://` is HTTP over TLS.
 

@@ -343,7 +343,7 @@ TOC = [
     ('',     '- PART 2: AMATEUR RADIO GROUP SETUP -',         ''),
     ('2A.',  'AMPRNet / 44Net Gateway Setup',                  '42'),
     ('2B.',  'FCC Amateur Database',                           '49'),
-    ('2C.',  'APRS Setup — Direwolf + YAAC',                  '50'),
+    ('2C.',  'APRS Setup — Direwolf TNC',                     '50'),
     ('2D.',  'Pat Winlink — Verify & Configure',               '55'),
     ('2E.',  'Windows Laptop — Winlink Express + JS8Call',     '57'),
     ('2F.',  'SCS PACTOR Modem Setup',                        '59'),
@@ -397,7 +397,7 @@ story.append(tbl(['COMPONENT', 'DESCRIPTION', 'COMPONENT', 'DESCRIPTION'], [
      'Pre-Flight Checklist', 'GO/CAUTION/NO-GO deployment readiness check'],
     ['ICS Platform', 'Command, Operations, Planning, Logistics, Finance sections',
      'HF Propagation', 'Solar indices, band conditions, A/K-index'],
-    ['APRS Tactical Map', 'Direwolf + YAAC merged, offline tiles, overlays',
+    ['APRS Tactical Map', 'Direwolf (RF) via APRS Command, offline tiles, overlays',
      'Repeater Database', 'RepeaterBook CSV, filter by band, mode, ARES affiliation'],
     ['Member Roster', 'your organization directory with certs, equipment, activations',
      'Reference Library', 'Upload and serve field reference docs across EMCOMM-NET'],
@@ -495,14 +495,14 @@ amr_data = [
     ['USB TNC — Digirig Mobile', 'If using APRS',
      'USB soundcard + serial CAT interface in one unit. '
      'Connects to any radio with a 3.5mm audio port. '
-     'Enables APRS transmit/receive via Direwolf and YAAC. '
+     'Enables APRS transmit/receive via Direwolf. '
      'FieldCommand assigns stable /dev/tnc0 device name via udev rule.'],
     ['USB TNC — SignaLink USB  (alternative to Digirig)', 'If using APRS',
      'Tigertronics SignaLink USB — USB audio interface, requires rig-specific '
      'audio cable. Widely used and well-supported. '
      'Same udev /dev/tnc0 assignment as Digirig.'],
     ['Mobilinkd TNC4  (Bluetooth alternative)', 'If using APRS',
-     'Bluetooth APRS TNC — pairs with YAAC on the Pi or with a phone running APRSdroid. '
+     'Bluetooth APRS TNC — pairs with APRS Command or with a phone running APRSdroid. '
      'Useful when a USB port is not available or for portable deployments.'],
     ['Rig interface cables', 'If using TNC',
      'Radio-specific audio + PTT cable connecting the TNC to the transceiver. '
@@ -535,10 +535,10 @@ hub_data = [['DEVICE', 'STABLE NAME', 'HOW ASSIGNED', 'SERVICE'],
     ['USB GPS receiver', '/dev/gps0', 'udev rule matches by USB vendor/product ID', 'gpsd → tactical map'],
     ['Digirig Mobile TNC', '/dev/tnc0\n/dev/digirig',
      'udev rule matches by vendor ID + product string "Digirig Mobile". Distinguished from GPS even though both use CP2102 chip.',
-     'YAAC / Direwolf APRS'],
+     'Direwolf APRS'],
     ['SignaLink USB TNC', '/dev/tnc0\n/dev/signalink',
      'udev rule matches by Texas Instruments PCM2904 chip. No conflict with GPS.',
-     'YAAC / Direwolf APRS'],
+     'Direwolf APRS'],
     ['LaCie / USB backup drive (labeled FIELDCOMMAND)', '/dev/sdX (auto-mounted)',
      'udev backup rule triggers on label FIELDCOMMAND. Drive letter assigned dynamically.',
      'fieldcommand-backup@.service'],
@@ -565,7 +565,7 @@ story.append(CodeBlock([
     'ls -la /dev/gps0 /dev/tnc0 2>/dev/null',
     '# Confirm GPS is outputting NMEA sentences',
     'sudo cat /dev/gps0',
-    '# Use /dev/tnc0 in YAAC → Configure → Ports → Serial TNC',
+    '# Use /dev/tnc0 as the Direwolf serial TNC device',
 ]))
 story.append(SP(8))
 
@@ -602,9 +602,9 @@ bom_rows = [
     ['Powered USB hub  (optional)', 'Anker 7-Port USB 3.0 with AC power adapter — must be powered hub, not bus-powered', 'Amazon · Best Buy'],
     ['Avery 5371 business card sheets  (operator access cards)', 'Avery 5371 — 10 cards per sheet, laser or inkjet — for printed operator access cards', 'Office Depot · Amazon · Staples'],
     cat_row('Amateur Radio Equipment  (skip if no amateur radio group)'),
-    ['USB TNC — Digirig Mobile', 'Digirig Mobile v1.x — USB soundcard + serial CAT in one compact unit — enables APRS transmit/receive via Direwolf/YAAC and Winlink VHF packet via Pat', 'digirig.net · Amazon'],
+    ['USB TNC — Digirig Mobile', 'Digirig Mobile v1.x — USB soundcard + serial CAT in one compact unit — enables APRS transmit/receive via Direwolf and Winlink VHF packet via Pat', 'digirig.net · Amazon'],
     ['USB TNC — SignaLink USB  (alternative)', 'Tigertronics SignaLink USB — USB audio interface — requires rig-specific audio cable — widely used and well-supported', 'tigertronics.com · Ham Radio Outlet · Amazon'],
-    ['Mobilinkd TNC4  (Bluetooth alternative)', 'Bluetooth APRS TNC — pairs with YAAC on the Pi or APRSdroid on a phone — useful when a USB port is not available', 'mobilinkd.com · Amazon'],
+    ['Mobilinkd TNC4  (Bluetooth alternative)', 'Bluetooth APRS TNC — pairs with APRS Command or APRSdroid on a phone — useful when a USB port is not available', 'mobilinkd.com · Amazon'],
     ['Rig interface cable  (for TNC)', 'Radio-specific audio + PTT cable connecting TNC to transceiver — Digirig: cables at digirig.net by radio model — SignaLink: Tigertronics cable for each rig', 'digirig.net · tigertronics.com · HRO'],
     ['Windows laptop  (Winlink Express + JS8Call)', 'Any Windows 10/11 laptop with USB-A port and Wi-Fi — required for Winlink Express, VARA HF, and JS8Call — see Part 2E', 'Best Buy · Amazon'],
     cat_row('Printers — Monochrome Laser  (USB via CUPS or direct Wi-Fi)'),
@@ -1411,7 +1411,7 @@ for item in [
     '<b>Does NOT configure a Wi-Fi access point</b> — Wi-Fi is handled by the ASUS RT-BE58 Go router. The Pi connects as a wired client only.',
     'Configures the Pi static IP (192.168.50.1/24) on the Ethernet interface (eth0) via NetworkManager',
     'Configures the firewall (ufw) — opens all required ports',
-    'Installs Direwolf (via apt) as the software TNC and YAAC (Java APRS client, /opt/yaac/)',
+    'Installs Direwolf (via apt) as the software TNC (KISS 8001 / AGW 8000)',
     'Installs the USB backup udev rule (plug in a USB drive labeled FIELDCOMMAND to trigger auto-backup)',
     'Downloads and installs Pat Winlink (browser-based Winlink backup client, port 8090)',
     'Runs the Kiwix ZIM downloader for the selected content tier',
@@ -1941,9 +1941,9 @@ story.append(tbl(['PART 2 SECTION', 'WHAT IT INSTALLS / CONFIGURES', 'SKIP IF...
      'Offline SQLite database of 800K+ US amateur licensees. '
      'Enables callsign lookup in net loggers, check-in, and AMPRNet auth.',
      'No amateur radio net logging or callsign validation needed'],
-    ['C — APRS Setup  (Direwolf + YAAC)',
+    ['C — APRS Setup  (Direwolf TNC)',
      'APRS receive/transmit via TNC or radio interface. '
-     'Direwolf software TNC + YAAC tactical display. '
+     'Direwolf software TNC feeding the tactical display via APRS Command. '
      'Digirig, SignaLink, or other USB TNC required.',
      'No APRS capability needed or no TNC available'],
     ['D — Pat Winlink',
@@ -2083,7 +2083,7 @@ story.append(tbl(['CAPABILITY', 'DESCRIPTION', 'REQUIRES WAN?'], [
      'Winlink sessions travel over the 44-net tunnel'],
     ['APRS-IS via AMPRNet',
      'APRS-IS network servers are reachable on 44.x.x.x addresses. '
-     'Configure Direwolf or YAAC to use the AMPRNet path instead of the public internet.',
+     'Configure Direwolf to use the AMPRNet path instead of the public internet.',
      'Yes — same tunnel dependency'],
     ['Inter-node FieldCommand',
      'Two FieldCommand systems with 44Net gateways can share net log data, '
@@ -2491,9 +2491,9 @@ story.append(tbl(['APPLICATION', 'HOW IT USES 44NET', 'ACCESS FROM EMCOMM-NET'],
      'Pat Winlink at http://192.168.50.1:8090  Add AMPRNet RMS in Pat settings'],
     ['APRS-IS via AMPRNet',
      'The APRS-IS network has servers reachable on 44.x.x.x. '
-     'Direwolf and YAAC can connect to APRS-IS via the AMPRNet path, '
+     'Direwolf can connect to APRS-IS via the AMPRNet path, '
      'keeping APRS traffic within the amateur radio network.',
-     'Configure APRS-IS server address in Direwolf or YAAC settings'],
+     'Configure APRS-IS server address in Direwolf settings'],
     ['Inter-node FieldCommand',
      'If another your organization station runs a second FieldCommand system with its own 44Net gateway, '
      'the two systems can share net data and resource boards over AMPRNet '
@@ -2590,9 +2590,9 @@ story.append(PB())
 
 # ── STEP 7 — APRS ────────────────────────────────────────────────────────────
 
-story.append(StepBox('C', 'APRS Setup — Direwolf TNC + YAAC  (Part 2C)'))
+story.append(StepBox('C', 'APRS Setup — Direwolf TNC  (Part 2C)'))
 story.append(SP(8))
-story.append(H1('Part 2C — APRS Setup (Direwolf TNC + YAAC)'))
+story.append(H1('Part 2C — APRS Setup (Direwolf TNC)'))
 story.append(HR(EOC_LT, 0.5))
 story.append(SP(4))
 story.append(P(
@@ -2600,8 +2600,7 @@ story.append(P(
     '(TCP port 8001) and an AGWPE interface (TCP port 8000) — but it has NO web or REST '
     'interface of its own. Live stations reach the Tactical APRS Map from APRS Command (on the '
     'Windows laptop), which connects to Direwolf and serves the map its station feed; a small '
-    'Pi-side KISS bridge can serve the same feed if you want the map to work without the laptop. '
-    'YAAC (port 8082) is an optional on-Pi APRS client.'))
+    'Pi-side KISS bridge can serve the same feed if you want the map to work without the laptop.'))
 story.append(SP(4))
 story.append(P(
     'APRS is entirely optional. FieldCommand runs fully without it — '
@@ -2609,19 +2608,17 @@ story.append(P(
     'If you are not planning to use a TNC or radio interface, skip this step entirely '
     'and proceed to Step 8 (Printer Setup).'))
 story.append(SP(4))
-story.append(NoteBox('The FieldCommand installer installs Direwolf (via apt) and YAAC automatically, '
+story.append(NoteBox('The FieldCommand installer installs Direwolf (via apt) automatically, '
                      'writes a starter /etc/direwolf.conf, and enables direwolf.service. '
-                     'If the installer succeeded, you only need to edit the config (Section 9.3).', 'info'))
+                     'If the installer succeeded, you only need to edit the config (Section 9.3). '
+                     'Nothing else is installed on the Pi for APRS — the tactical map is fed by '
+                     'APRS Command or a small Pi-side KISS bridge.', 'info'))
 story.append(SP(6))
 story.append(H2('9.1  Verify Automatic Installation'))
 story.append(CodeBlock([
     '# Direwolf — software TNC (no jar; installed via apt)',
     'which direwolf && direwolf -h | head -1',
     'sudo systemctl status direwolf',
-    '# YAAC — optional Java client',
-    'java -version',
-    'ls -lh /opt/yaac/YAAC.jar',
-    'sudo systemctl status yaac',
 ]))
 story.append(SP(6))
 story.append(H2('9.2  Manual Install — If Automatic Install Failed'))
@@ -2629,14 +2626,6 @@ story.append(CodeBlock([
     '# Direwolf — software TNC',
     'sudo apt install -y direwolf',
     'sudo systemctl enable --now direwolf',
-    '# YAAC (optional) — needs Java',
-    'sudo apt install -y default-jre',
-    'sudo mkdir -p /opt/yaac',
-    'cd /tmp && wget http://www.ka2ddo.org/ka2ddo/YAAC.zip',
-    'sudo unzip YAAC.zip "*.jar" -d /opt/yaac/',
-    'sudo mv /opt/yaac/YAAC*.jar /opt/yaac/YAAC.jar 2>/dev/null || true',
-    'sudo chown -R fieldcommand:fieldcommand /opt/yaac',
-    'sudo systemctl enable --now yaac',
 ]))
 story.append(SP(6))
 story.append(H2('9.3  Configure Direwolf (Required — First Run)'))
@@ -3332,7 +3321,7 @@ story.append(ref_tbl_2col(['SYMPTOM', 'LIKELY CAUSE / FIX'], [
     ['Dashboard loads but cards give errors', 'Not connected to EMCOMM-NET — device is on a different network. Check Wi-Fi — must show EMCOMM-NET.'],
     ['FCC lookup returns no results', 'FCC database not yet built. Run: sudo systemctl start fcc-refresh.service (needs internet)'],
     ['Repeater database is empty', 'No repeater data loaded yet. On any EMCOMM-NET device, open repeaters.html → Offline File tab → download a CSV from repeaterbook.com (free account, no API token needed) → drag the CSV onto the drop zone.'],
-    ['APRS map shows no stations', 'Direwolf or YAAC not running, or no RF received yet. Check Health Monitor for service status. Confirm antenna connected.'],
+    ['APRS map shows no stations', 'Direwolf (or APRS Command) not running, or no RF received yet. Check Health Monitor for service status. Confirm antenna connected.'],
     ['Winlink form import fails', 'Wrong file type — must be the XML attachment, not the message body. In Winlink Express, right-click .xml attachment → Save As → then import.'],
     ['Service dot is red on Health Monitor', 'Background service has stopped. SSH to Pi: sudo systemctl restart <service-name>'],
     ['Pat Winlink not accessible at port 8090', 'pat.service not running. Run: sudo systemctl start pat && sudo systemctl enable pat'],

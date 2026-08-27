@@ -730,7 +730,6 @@ story.append(KeepTogether([subsection('12.1  Service Status'), SP(2), rows_table
     ('nginx.service — web server running on port 80', ''),
     ('kiwix.service — Kiwix library running on port 8081', ''),
     ('pat.service — Pat Winlink running on port 8090', ''),
-    ('yaac.service — YAAC APRS client running on port 8082', 'If APRS installed'),
     ('direwolf.service — Direwolf software TNC (KISS 8001 / AGW 8000)', 'If APRS installed'),
     ('cups.service — CUPS print server running on port 631', 'If printer installed'),
     ('avahi-daemon.service — mDNS/Bonjour running', ''),

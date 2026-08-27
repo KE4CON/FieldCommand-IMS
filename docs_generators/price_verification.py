@@ -278,7 +278,7 @@ ROWS = [
    '$149.95', 'V',
    'store.mobilinkd.com/products/mobilinkd-tnc4',
    '$149.95 — verified directly at Mobilinkd store page',
-   '1200/9600 baud KISS TNC — Bluetooth 4.2 dual-mode (iOS + Android compatible) + USB-C serial — AFSK/GFSK/4-FSK modulation — high dynamic range ADC/DAC — TCXO precision oscillator — 900mAh battery (48 hr continuous) — enables APRS in KISS mode for YAAC and Direwolf directly on FieldCommand Pi — configured via Bluetooth app (iOS/Android). Cable sold separately at store.mobilinkd.com — order the Yaesu FTM mobile cable for FTM-510DR.'),
+   '1200/9600 baud KISS TNC — Bluetooth 4.2 dual-mode (iOS + Android compatible) + USB-C serial — AFSK/GFSK/4-FSK modulation — high dynamic range ADC/DAC — TCXO precision oscillator — 900mAh battery (48 hr continuous) — enables APRS in KISS mode for Direwolf / APRS Command on FieldCommand — configured via Bluetooth app (iOS/Android). Cable sold separately at store.mobilinkd.com — order the Yaesu FTM mobile cable for FTM-510DR.'),
   ('Digirig Yaesu FTM MiniDin10 cable',
    '$19.95', 'V',
    'digirig.net/product/yaesu-ftm-cable (SKU: YAESU10MOBILE)',

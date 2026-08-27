@@ -363,7 +363,7 @@ def build_story(ED):
            ['Resources', 'Resource board; ICS T-cards; NIMS resource-typing library'],
            ['Finance / recovery', 'FEMA Schedule of Equipment Rates; Public Assistance labor, equipment &amp; materials tracking'],
            ['Situational awareness', 'Tactical map with offline tiles; APRS position feeds; hospitals, repeaters &amp; channel libraries'],
-           ['Amateur radio', 'APRS (Direwolf/YAAC); Winlink (Pat &amp; Express); AMPRNet / 44Net gateway; FCC callsign lookup (offline)'],
+           ['Amateur radio', 'APRS (Direwolf / APRS Command); Winlink (Pat &amp; Express); AMPRNet / 44Net gateway; FCC callsign lookup (offline)'],
            ['Platform', 'Offline-first web server; shared network printing; Kiwix offline library; GPS; one-command installer; auto-backup'],
            ['Documentation', 'Full User Manual, Installation Guide, and Programming Guide — professional, plain-language, dual-edition'],
            ],

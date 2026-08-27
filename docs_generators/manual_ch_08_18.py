@@ -1230,9 +1230,9 @@ def ch13():
     s.append(P(
         "The Tactical Map is your live picture of who and what is on the air. It is a "
         "full-screen Leaflet map that plots every Automatic Packet Reporting System "
-        "(APRS) station it can hear, drawn from as many as three feeds at once: Direwolf "
-        "decoding signals straight off the radio, the YAAC (Yet Another APRS Client) "
-        "program, and the internet APRS-IS feed when a Wide Area Network (WAN) is "
+        "(APRS) station it can hear, drawn from two feeds: Direwolf decoding signals "
+        "straight off the radio (served to the map by APRS Command), and the internet "
+        "APRS-IS feed when a Wide Area Network (WAN) is "
         "available. It is the primary situational-awareness display for tracking field "
         "teams, vehicles, and mobile resources, and it doubles as a place to send and "
         "receive short APRS text messages and to drop your own labeled markers on the "
@@ -1265,27 +1265,25 @@ def ch13():
         ['Stations', 'The searchable, filterable list of every station on the map, newest first.'],
         ['Msgs', 'Received APRS text messages and a form to send one.'],
         ['Markers', 'Your own hand-placed map markers (EOC, shelter, command post, and so on).'],
-        ['Sources', 'The connection status and station counts for Direwolf, YAAC, and APRS-IS.'],
+        ['Sources', 'The connection status and station counts for Direwolf (RF) and APRS-IS.'],
         ['Settings (gear icon)', 'Your station location, source addresses, and all display options.'],
     ], widths=[1.7*inch, CW-1.7*inch]))
     s.append(SP(6))
 
-    s.append(P('13.2  The Three Data Sources', H2))
+    s.append(P('13.2  The Two Data Sources', H2))
+    s.append(CHG('YAAC removed — the map now has two sources: Direwolf (RF) via APRS Command, and APRS-IS.'))
     s.append(P(
-        "The map can listen to three feeds at once and merges them into one deduplicated "
-        "list, so a station heard by more than one source appears only once. Open the "
+        "The map can listen to two feeds and merges them into one deduplicated "
+        "list, so a station heard by both sources appears only once. Open the "
         "<b>Sources</b> tab to see each feed, its address, and how many stations it is "
         "contributing right now. Each source has its own color, used for the marker "
         "border and the list badges."))
     s.append(SP(4))
     s.append(tbl(['SOURCE', 'COLOR', 'WHERE IT COMES FROM', 'NEEDS WAN?'], [
         ['Direwolf (RF)', 'Green',
-         'Live APRS off the radio. Direwolf decodes it; APRS Command serves it to the '
-         'map. Always available with no internet.',
-         'No'],
-        ['YAAC', 'Blue',
-         'The YAAC program running on the network, offering its own station feed over a '
-         'local port.',
+         'Live APRS off the radio. Direwolf decodes it; APRS Command (on a laptop) or a '
+         'small KISS bridge serves those stations to the map. Always available with no '
+         'internet.',
          'No'],
         ['APRS-IS', 'Purple',
          'The worldwide internet APRS feed by way of the aprs.fi service.',
@@ -1294,10 +1292,9 @@ def ch13():
     s.append(SP(4))
     s.append(P(
         "At the bottom of the Sources tab a <b>Merged Dataset</b> box tallies the total "
-        "unique stations and how many came from each source alone or from more than one. "
-        "Each source panel has a <b>Poll</b> button to fetch it on demand; the YAAC "
-        "panel also has <b>Open UI</b> and a <b>Setup</b> guide. To use APRS-IS, paste "
-        "an aprs.fi Application Programming Interface (API) key into the key box; leave "
+        "unique stations and how many came from each source alone or from both. "
+        "Each source panel has a <b>Poll</b> button to fetch it on demand. To use APRS-IS, "
+        "paste an aprs.fi Application Programming Interface (API) key into the key box; leave "
         "it blank to keep that feed off."))
     s.append(SP(6))
 
@@ -1309,8 +1306,7 @@ def ch13():
         "on the radio."))
     s.append(SP(4))
     s.append(tbl(['BUTTON', 'WHAT IT TOGGLES'], [
-        ['Direwolf', 'The green RF stations decoded off the radio.'],
-        ['YAAC', 'The blue stations from the YAAC feed.'],
+        ['Direwolf', 'The green RF stations decoded off the radio (via APRS Command).'],
         ['APRS-IS', 'The purple stations from the internet feed.'],
         ['Overlays', 'Your own hand-placed markers from the Markers tab.'],
         ['My Station', 'The marker for your own location.'],
@@ -1337,9 +1333,9 @@ def ch13():
     ], widths=[1.3*inch, CW-1.3*inch]))
     s.append(SP(4))
     s.append(P(
-        "The border color repeats the source scheme: green for Direwolf, blue for YAAC, "
-        "purple for APRS-IS, and white when the same station was seen by more than one "
-        "source. Click any marker to open a popup listing its symbol, type, comment, "
+        "The border color repeats the source scheme: green for Direwolf (RF), "
+        "purple for APRS-IS, and white when a station was seen by both "
+        "sources. Click any marker to open a popup listing its symbol, type, comment, "
         "speed, course, altitude, path, frequency (when reported), and when it was last "
         "heard. The popup also has a <b>Track</b> button and a <b>Message</b> button for "
         "that station."))
@@ -1352,7 +1348,7 @@ def ch13():
         "comment. Two drop-downs narrow the list further:"))
     s.append(SP(4))
     s.append(tbl(['FILTER', 'CHOICES'], [
-        ['Source', 'All sources, Direwolf, YAAC, or APRS-IS.'],
+        ['Source', 'All sources, Direwolf (RF), or APRS-IS.'],
         ['Type', 'All types, Mobile, Fixed, Weather, Digi (digipeater), or iGate.'],
     ], widths=[1.4*inch, CW-1.4*inch]))
     s.append(SP(4))
@@ -1394,8 +1390,8 @@ def ch13():
         "team's radio callsign).",
         "Type your message in the text box. APRS limits a message to <b>67 characters</b>, "
         "so keep it short.",
-        "Choose how to send it in the <b>Via</b> drop-down: <b>Via Direwolf</b> (over the "
-        "radio) or <b>Via YAAC</b>.",
+        "Confirm the <b>Via</b> drop-down is set to <b>Via Direwolf</b> — the message goes "
+        "out over the radio through Direwolf / APRS Command.",
         "Click <b>Send</b>. The status line below the form confirms the result.",
     ])
     s.append(note(
@@ -1422,7 +1418,6 @@ def ch13():
          'stations. Use "localhost" for a Pi-side bridge, or the laptop\'s Internet '
          'Protocol (IP) address, for example 192.168.50.42.'],
         ['RF source port', 'The port that feed listens on. Default 8080.'],
-        ['YAAC port', 'The port the YAAC feed listens on. Default 8082.'],
     ], widths=[1.6*inch, CW-1.6*inch]))
     s.append(SP(4))
     s.append(P('13.8.3  Display', H3))
@@ -1490,8 +1485,8 @@ def ch13():
          'device clock is wrong -- age is measured against the clock, so a bad clock '
          'ages every station. Check the UTC clock in the top bar.'],
         ['A sent message never confirms',
-         'The message must go out over a live source. Make sure the Via source (Direwolf '
-         'or YAAC) is connected on the Sources tab, keep the text to 67 characters, and '
+         'The message must go out over a live source. Make sure the Direwolf (RF) source '
+         'is connected on the Sources tab, keep the text to 67 characters, and '
          'watch the status line under the Send button for the result.'],
         ['My placed markers disappeared',
          'Markers are saved in this browser only. Opening the map on a different device '

@@ -108,7 +108,7 @@ story += feat_section('📻  Amateur Radio Mode', EOC, [
     ('Net Control Logger — multi-net, FCC auto-fill, ICS-309 export', 'Callsign Lookup — full FCC database (~800K licensees) offline'),
     ('Observer Mode — read-only live net view for served agencies', 'HF Propagation — band conditions, MUF/LUF, solar indices'),
     ('Repeater Database — RepeaterBook data, band/ARES/mode filters', "Dead Man's Switch — inactivity alert per armed net"),
-    ('NTS Radiogram — formatted ARRL traffic with log', 'APRS Tactical Map — live Direwolf + YAAC stations on Leaflet'),
+    ('NTS Radiogram — formatted ARRL traffic with log', 'APRS Tactical Map — live Direwolf / APRS Command stations on Leaflet'),
 ])
 story += feat_section('🚔  Starcom / Public Safety Mode', SGREEN, [
     ('Starcom Net Logger — Radio ID / unit-based public safety nets', 'Weather Net — quick-launch storm spotter check-in net'),

@@ -194,7 +194,7 @@ def make_sections(E):
         ('Comet CM-5NMO mag mount', '3.25" heavy-duty magnetic base, NMO connector, RG-58 coax tail — vehicle roof or equipment case lid mount', 1, '$35', '$35'),
         ('RG-8X coax jumper', 'Short jumper: CM-5NMO coax tail to FTM-510DR SO-239 antenna port', 1, '$15', '$15'),
         ('Digirig Mobile', 'Rev 1.11 — USB digital modes interface — combines audio codec, serial CAT and PTT — single USB-C connection — works with Windows/Mac/Linux — enables FT8, JS8Call, SSTV, VARA FM, packet on VHF/UHF via the FTM-510DR', 1, '$50', '$50'),
-        ('Mobilinkd TNC4', '1200/9600 baud KISS TNC — Bluetooth 4.2 (iOS + Android) + USB-C — AFSK/GFSK/4-FSK — DSP modem — TCXO precision timing — 900mAh battery (48 hr) — enables APRS KISS mode for YAAC/Direwolf on FieldCommand', 1, '$150', '$150'),
+        ('Mobilinkd TNC4', '1200/9600 baud KISS TNC — Bluetooth 4.2 (iOS + Android) + USB-C — AFSK/GFSK/4-FSK — DSP modem — TCXO precision timing — 900mAh battery (48 hr) — enables APRS KISS mode for Direwolf / APRS Command on FieldCommand', 1, '$150', '$150'),
         ('Digirig Yaesu FTM MiniDin10 cable', 'digirig.net SKU YAESU10MOBILE — 10-pin MiniDin to Digirig audio socket — explicitly listed for FTM-510DR — audio + PTT — enables VARA FM, Winlink, JS8Call, SSTV, APRS via laptop', 1, '$20', '$20'),
         ('Mobilinkd Yaesu FTM modem cable', 'store.mobilinkd.com — 10-pin MiniDIN, 1.5m — fits FTM-510DR (same connector as FTM-100/200/300/400/500 series) — connects TNC4 to radio for APRS KISS mode', 1, '$25', '$25'),
         ('USB-C data cable for Digirig', 'Standard USB-C cable supporting both power and data — NOT included with Digirig — required to connect Digirig to laptop', 1, '$10', '$10'),

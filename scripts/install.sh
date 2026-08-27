@@ -427,7 +427,6 @@ if command -v ufw &>/dev/null; then
     ufw allow 8000/tcp  comment "Direwolf AGWPE TNC"  2>>"$FC_LOG" || true
     ufw allow 8001/tcp  comment "Direwolf KISS TNC"   2>>"$FC_LOG" || true
     ufw allow 8081/tcp  comment "Kiwix Library"     2>>"$FC_LOG" || true
-    ufw allow 8082/tcp  comment "YAAC APRS"         2>>"$FC_LOG" || true
     ufw allow 8083/tcp  comment "Tile Server"       2>>"$FC_LOG" || true
     ufw allow 8090/tcp  comment "Pat Winlink"       2>>"$FC_LOG" || true
     ufw --force enable  2>>"$FC_LOG" && success "Firewall configured (80/443 web; core APIs localhost-only)" || warn "ufw enable failed"
@@ -851,61 +850,12 @@ else
     info "Install manually: sudo apt install cups cups-bsd printer-driver-gutenprint avahi-daemon"
 fi
 
-# ── APRS — YAAC client + Direwolf TNC ─────────────────────────────────────
+# ── APRS — Direwolf TNC (RF) → APRS Command ───────────────────────────────
 if [[ "${SKIP_APRS:-0}" != "1" ]]; then
-    step "Installing APRS (YAAC client + Direwolf TNC)"
-    info "Both are optional — skip with SKIP_APRS=1 if APRS is not needed"
-
-    # ── Java runtime (required by YAAC; Direwolf does NOT need Java) ────────
-    info "Installing Java runtime (required by YAAC)..."
-    if apt-get install -y default-jre 2>>"$FC_LOG"; then
-        success "Java installed: $(java -version 2>&1 | head -1)"
-    else
-        warn "Java install failed — YAAC will not run without it"
-    fi
-
-    # ── YAAC — Yet Another APRS Client ─────────────────────────────────────
-    YAAC_DIR="/opt/yaac"
-    YAAC_JAR="$YAAC_DIR/YAAC.jar"
-    YAAC_URL="http://www.ka2ddo.org/ka2ddo/YAAC.zip"
-
-    if [[ ! -f "$YAAC_JAR" ]]; then
-        info "Downloading YAAC from ka2ddo.org..."
-        mkdir -p "$YAAC_DIR"
-        YAAC_TMP="/tmp/YAAC.zip"
-        if wget -q --show-progress -O "$YAAC_TMP" "$YAAC_URL" 2>>"$FC_LOG"; then
-            if unzip -q "$YAAC_TMP" "*.jar" -d "$YAAC_DIR" 2>>"$FC_LOG"; then
-                # YAAC.jar may be nested — find and move it
-                find "$YAAC_DIR" -name "YAAC.jar" ! -path "$YAAC_JAR" -exec mv {} "$YAAC_JAR" \; 2>/dev/null
-                chown -R "$FC_USER:$FC_USER" "$YAAC_DIR"
-                rm -f "$YAAC_TMP"
-                success "YAAC installed: $YAAC_JAR"
-            else
-                warn "YAAC unzip failed — install manually: unzip YAAC.zip to /opt/yaac/"
-            fi
-        else
-            warn "Could not download YAAC — install manually after deployment:"
-            warn "  wget $YAAC_URL && sudo unzip YAAC.zip -d /opt/yaac/"
-        fi
-    else
-        info "YAAC already installed — skipping"
-    fi
-
-    # Install and enable yaac.service
-    if [[ -f "$YAAC_JAR" && -f "$SCRIPT_DIR/../systemd/yaac.service" ]]; then
-        cp "$SCRIPT_DIR/../systemd/yaac.service" /etc/systemd/system/yaac.service
-        systemctl daemon-reload
-        systemctl enable yaac.service 2>>"$FC_LOG" \
-            && success "yaac.service enabled" \
-            || warn "yaac.service enable failed — enable manually: systemctl enable yaac"
-    fi
-
-    # ── YAAC Post-install note ──────────────────────────────────────────────
-    info "YAAC requires manual port configuration before first use:"
-    info "  Run YAAC once on a desktop: java -jar /opt/yaac/YAAC.jar"
-    info "  File → Configure → Web Server tab"
-    info "  Set port to 8082 · Enable REST API · Enable WebSocket · Save"
-    info "  After saving config, yaac.service will use these settings headlessly"
+    step "Installing APRS (Direwolf TNC)"
+    info "Optional — skip with SKIP_APRS=1 if APRS is not needed"
+    info "The tactical map's RF stations are served by APRS Command (run on a"
+    info "laptop) or a small KISS bridge reading Direwolf — no on-Pi APRS client."
 
     # ── Direwolf — RF KISS/AGW TNC ──────────────────────────────────────────
     # Direwolf is a software TNC that decodes APRS off the radio and exposes a
@@ -980,8 +930,7 @@ else
     info "Skipping APRS installation (SKIP_APRS=1)"
     info "Install manually later:"
     info "  Direwolf TNC:  sudo apt install direwolf   (edit /etc/direwolf.conf, then systemctl enable direwolf)"
-    info "  YAAC client:   sudo apt install default-jre && sudo mkdir /opt/yaac"
-    info "                 wget http://www.ka2ddo.org/ka2ddo/YAAC.zip && sudo unzip YAAC.zip -d /opt/yaac/"
+    info "  APRS stations reach the tactical map from APRS Command (laptop) or a KISS bridge — nothing to install on the Pi."
 fi
 
 # ── Set permissions ────────────────────────────────────────────────

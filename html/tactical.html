@@ -49,7 +49,6 @@ body { display:flex; flex-direction:column; }
 .map-btn:hover { border-color: var(--eoc-lt); color:var(--eoc); }
 .map-btn.active { border-color: var(--eoc-lt); color: var(--eoc); background:rgba(245,166,35,0.1); }
 .map-btn.layer-gw.active { border-color:#39ff14; color:#39ff14; background:rgba(26,122,58,0.06); }
-.map-btn.layer-yc.active { border-color:#60aaff; color:#60aaff; background:rgba(96,170,255,0.08); }
 .map-btn.layer-is.active { border-color:#c850ff; color:#c850ff; background:rgba(91,45,140,0.06); }
 
 .tab-content { flex:1; overflow-y:auto; display:none; }
@@ -70,7 +69,6 @@ body { display:flex; flex-direction:column; }
   margin-left:4px; vertical-align:middle;
 }
 .src-gw { background:rgba(26,122,58,0.10); color:#39ff14; border:1px solid rgba(57,255,20,0.3); }
-.src-yc { background:rgba(96,170,255,0.15); color:#60aaff; border:1px solid rgba(96,170,255,0.3); }
 .src-is { background:rgba(91,45,140,0.10); color:#c850ff; border:1px solid rgba(200,80,255,0.3); }
 .src-ms { background:rgba(26,58,107,0.10); color:var(--eoc); border:1px solid rgba(245,166,35,0.3); }
 .src-both { background:rgba(255,255,255,0.08); color:var(--txt); border:1px solid var(--line); }
@@ -155,7 +153,7 @@ body.picking #map { cursor:crosshair !important; }
 <div class="top-bar">
   <a href="index.html" style="color:var(--muted);text-decoration:none;font-size:12px">⌂</a>
   <h1>📡 TACTICAL MAP</h1>
-  <div style="font-size:11px;color:var(--muted)">APRS · Direwolf + YAAC · Auto-refresh</div>
+  <div style="font-size:11px;color:var(--muted)">APRS · Direwolf / APRS Command · Auto-refresh</div>
   <div style="flex:1"></div>
   <div style="font-family:var(--font-hd);font-size:12px;color:var(--green)">
     Stations: <span id="stn-count" style="color:var(--green)">0</span>
@@ -173,7 +171,6 @@ body.picking #map { cursor:crosshair !important; }
   <!-- Layer toggles -->
   <div class="map-controls">
     <button class="map-btn layer-gw active" id="btn-gw" onclick="toggleLayer('gw')" title="Direwolf APRS">🟢 Direwolf</button>
-    <button class="map-btn layer-yc active" id="btn-yc" onclick="toggleLayer('yc')" title="YAAC APRS">🔵 YAAC</button>
     <button class="map-btn layer-is active" id="btn-is" onclick="toggleLayer('is')" title="APRS-IS (internet)">🟣 APRS-IS</button>
     <button class="map-btn active" id="btn-ov" onclick="toggleLayer('ov')" title="Manual overlays">📌 Overlays</button>
     <button class="map-btn active" id="btn-me" onclick="toggleLayer('me')" title="My station">⬡ My Station</button>
@@ -200,7 +197,6 @@ body.picking #map { cursor:crosshair !important; }
         <select id="stn-filter-src" onchange="renderStationList()">
           <option value="">All sources</option>
           <option value="gw">Direwolf</option>
-          <option value="yc">YAAC</option>
           <option value="is">APRS-IS</option>
         </select>
         <select id="stn-filter-type" onchange="renderStationList()">
@@ -229,7 +225,6 @@ body.picking #map { cursor:crosshair !important; }
         <div style="display:flex;gap:6px;margin-top:4px">
           <select id="msg-via" style="background:var(--input-bg);border:1px solid var(--line);border-radius:4px;color:var(--txt);padding:5px;font-size:11px;flex:1">
             <option value="gw">Via Direwolf</option>
-            <option value="yc">Via YAAC</option>
           </select>
           <button class="btn" onclick="sendMessage()" style="font-size:11px">Send</button>
         </div>
@@ -307,34 +302,6 @@ body.picking #map { cursor:crosshair !important; }
           </div>
         </div>
 
-        <!-- YAAC -->
-        <div class="settings-section" style="padding:0;margin-top:12px;margin-bottom:0">
-          <div style="padding:8px 10px;background:rgba(96,170,255,0.06);border-bottom:1px solid rgba(96,170,255,0.2)">
-            <div style="font-family:var(--font-hd);font-size:11px;color:#60aaff;letter-spacing:0.1em">🔵 YAAC (Yet Another APRS Client)</div>
-          </div>
-          <div class="port-row">
-            <div class="port-dot" id="yc-dot" style="background:var(--muted)"></div>
-            <div style="flex:1">
-              <div style="font-size:11px;color:var(--txt)">REST API</div>
-              <div style="font-size:10px;color:var(--muted)" id="yc-url">http://localhost:8082/api/stations</div>
-            </div>
-            <div style="font-family:var(--font-hd);font-size:12px;color:#60aaff" id="yc-count">—</div>
-          </div>
-          <div class="port-row">
-            <div class="port-dot" id="yc-ws-dot" style="background:var(--muted)"></div>
-            <div style="flex:1">
-              <div style="font-size:11px;color:var(--txt)">WebSocket (live)</div>
-              <div style="font-size:10px;color:var(--muted)" id="yc-ws-url">ws://localhost:8082/ws/aprs</div>
-            </div>
-            <div style="font-size:10px;color:var(--muted)" id="yc-ws-status">—</div>
-          </div>
-          <div style="padding:6px 10px;display:flex;gap:6px">
-            <button class="btn btn-sm" onclick="openYAAC()" style="background:rgba(96,170,255,0.08);border-color:#60aaff;color:#60aaff;font-size:10px">Open UI ↗</button>
-            <button class="btn btn-sm" onclick="pollYAAC()" style="font-size:10px;background:var(--panel2)">⟳ Poll</button>
-            <button class="btn btn-sm" onclick="showYAACSetup()" style="font-size:10px;background:var(--panel2)">? Setup</button>
-          </div>
-        </div>
-
         <!-- APRS-IS -->
         <div class="settings-section" style="padding:0;margin-top:12px;margin-bottom:0">
           <div style="padding:8px 10px;background:rgba(91,45,140,0.05);border-bottom:1px solid rgba(200,80,255,0.2)">
@@ -359,9 +326,8 @@ body.picking #map { cursor:crosshair !important; }
           <div style="font-family:var(--font-hd);font-size:10px;color:var(--eoc);letter-spacing:0.1em;margin-bottom:6px">MERGED DATASET</div>
           <div style="font-size:11px;color:var(--muted);line-height:2">
             Total unique stations: <span style="color:var(--txt);font-family:var(--font-hd)" id="merge-total">0</span><br>
-            Seen by both GW+YC: <span style="color:var(--txt);font-family:var(--font-hd)" id="merge-both">0</span><br>
-            Direwolf only: <span style="color:#39ff14;font-family:var(--font-hd)" id="merge-gw-only">0</span><br>
-            YAAC only: <span style="color:#60aaff;font-family:var(--font-hd)" id="merge-yc-only">0</span><br>
+            Seen by both RF + APRS-IS: <span style="color:var(--txt);font-family:var(--font-hd)" id="merge-both">0</span><br>
+            Direwolf (RF) only: <span style="color:#39ff14;font-family:var(--font-hd)" id="merge-gw-only">0</span><br>
             APRS-IS only: <span style="color:#c850ff;font-family:var(--font-hd)" id="merge-is-only">0</span>
           </div>
         </div>
@@ -382,7 +348,6 @@ body.picking #map { cursor:crosshair !important; }
         <div class="setting-row"><label>RF source host</label><input type="text" id="s-gw-host" value="localhost" placeholder="APRS Command laptop IP" oninput="saveSettings()"></div>
         <div class="setting-row"><label>RF source port</label><input type="number" id="s-gw-port" value="8080" oninput="saveSettings()"></div>
         <div style="font-size:9px;color:var(--muted);padding:2px 0 6px">RF (Direwolf) stations are served by APRS Command — set its IP here (or a Pi-side KISS bridge on localhost).</div>
-        <div class="setting-row"><label>YAAC port</label><input type="number" id="s-yc-port" value="8082" oninput="saveSettings()"></div>
       </div>
       <div class="settings-section">
         <div class="settings-title">Display</div>
@@ -436,7 +401,6 @@ body.picking #map { cursor:crosshair !important; }
         <div class="legend-row"><div class="leg-dot" style="background:#e040fb"></div>Manual overlay</div>
         <div style="margin-top:6px;font-size:10px;color:var(--muted)">Border color = data source</div>
         <div class="legend-row"><div style="width:10px;height:10px;border-radius:50%;background:var(--panel);border:2px solid #39ff14;flex-shrink:0"></div>Direwolf</div>
-        <div class="legend-row"><div style="width:10px;height:10px;border-radius:50%;background:var(--panel);border:2px solid #60aaff;flex-shrink:0"></div>YAAC</div>
         <div class="legend-row"><div style="width:10px;height:10px;border-radius:50%;background:var(--panel);border:2px solid #c850ff;flex-shrink:0"></div>APRS-IS</div>
         <div class="legend-row"><div style="width:10px;height:10px;border-radius:50%;background:var(--panel);border:2px solid #fff;flex-shrink:0"></div>Multiple sources</div>
       </div>
@@ -450,10 +414,6 @@ body.picking #map { cursor:crosshair !important; }
       <div class="src-dot" id="strip-gw-dot" style="background:#39ff14"></div>
       GW: <span id="strip-gw-n">—</span>
     </div>
-    <div class="src-pill yc" id="strip-yc" onclick="toggleLayer('yc')" title="Toggle YAAC layer">
-      <div class="src-dot" id="strip-yc-dot" style="background:#60aaff"></div>
-      YC: <span id="strip-yc-n">—</span>
-    </div>
     <div class="src-pill is" id="strip-is" onclick="toggleLayer('is')" title="Toggle APRS-IS layer">
       <div class="src-dot" id="strip-is-dot" style="background:var(--muted)"></div>
       IS: <span id="strip-is-n">—</span>
@@ -466,54 +426,6 @@ body.picking #map { cursor:crosshair !important; }
 
 </div>
 
-<!-- YAAC Setup Modal -->
-<div id="yaac-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.2);z-index:2000;align-items:center;justify-content:center">
-  <div style="background:var(--panel);border:2px solid #60aaff;border-radius:10px;width:min(580px,95vw);padding:24px;max-height:85vh;overflow-y:auto">
-    <div style="font-family:var(--font-hd);font-size:16px;color:#60aaff;margin-bottom:16px">🔵 YAAC Setup Guide</div>
-    <div style="font-size:12px;color:var(--txt);line-height:1.8">
-      <p><strong style="color:var(--eoc)">1. Install YAAC</strong><br>
-      Download from <a href="http://www.ka2ddo.org/ka2ddo/YAAC.html" target="_blank" style="color:#60aaff">ka2ddo.org/ka2ddo/YAAC.html</a><br>
-      Requires Java 8+: <code style="background: var(--bg);padding:1px 4px;border-radius:3px">sudo apt install default-jre</code></p>
-
-      <p><strong style="color:var(--eoc)">2. Configure YAAC web server port</strong><br>
-      In YAAC: <em>File → Configure</em> → <em>Web Server</em> tab<br>
-      Set port to <strong style="color:#60aaff">8082</strong><br>
-      Enable: <em>Enable REST API</em> ✓ &nbsp; <em>Enable WebSocket</em> ✓</p>
-
-      <p><strong style="color:var(--eoc)">3. Connect your TNC / radio</strong><br>
-      YAAC → Configure → Ports → Add Port<br>
-      • <em>Serial TNC</em>: select COM port, baud 9600<br>
-      • <em>KISS TNC</em>: uses TCP, e.g. Dire Wolf on port 8001<br>
-      • <em>APRS-IS</em>: internet gateway (server: noam.aprs2.net:14580)<br>
-      • <em>AGW</em>: for AGWpe / sound card TNC</p>
-
-      <p><strong style="color:var(--eoc)">4. Run as a service (optional)</strong><br>
-      Create <code>/etc/systemd/system/yaac.service</code>:<br>
-      <pre style="background: var(--bg);padding:8px;border-radius:4px;font-size:11px;overflow-x:auto">[Unit]
-Description=YAAC APRS Client
-After=network.target
-
-[Service]
-Type=simple
-User=fieldcommand
-WorkingDirectory=/opt/yaac
-ExecStart=/usr/bin/java -jar /opt/yaac/YAAC.jar -nogui
-Restart=always
-
-[Install]
-WantedBy=multi-user.target</pre>
-      Then: <code>sudo systemctl enable --now yaac</code></p>
-
-      <p><strong style="color:var(--eoc)">5. Verify connection</strong><br>
-      This page will show 🔵 YAAC as connected when it responds on port 8082.<br>
-      Click <em>⟳ Poll</em> on the Sources tab after YAAC is running.</p>
-    </div>
-    <div style="margin-top:16px;text-align:right">
-      <button class="btn" onclick="document.getElementById('yaac-modal').style.display='none'">Close</button>
-    </div>
-  </div>
-</div>
-
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script src="/lib/tiles.js"></script>
 <script>
@@ -523,7 +435,7 @@ WantedBy=multi-user.target</pre>
 const FC_API = '/svc/5050';
 
 // Raw data per source
-let rawGW = [], rawYC = [], rawIS = [];
+let rawGW = [], rawIS = [];
 
 // Merged + deduped station map: callsign → merged station object
 let stationMap = new Map();
@@ -540,7 +452,7 @@ let pickingMode = false;
 
 // Map layers
 let map, layers = {}, tileLayer, rangeCircle;
-let wsGW = null, wsYC = null;
+let wsGW = null;
 let refreshTimer = null;
 let settings = {};
 let messages = [];
@@ -565,7 +477,6 @@ function loadSettings() {
   loadGPSPosition();
   d('s-gw-host', 'localhost');
   d('s-gw-port', 8080);
-  d('s-yc-port', 8082);
   d('s-refresh', 30);
   d('s-tiles', 'osm');
   d('s-age-fresh', 15);
@@ -583,7 +494,6 @@ function saveSettings() {
     's-lon': g('s-lon'),
     's-gw-host': g('s-gw-host'),
     's-gw-port': g('s-gw-port'),
-    's-yc-port': g('s-yc-port'),
     's-refresh': g('s-refresh'),
     's-tiles': g('s-tiles'),
     's-age-fresh': g('s-age-fresh'),
@@ -598,24 +508,19 @@ function saveSettings() {
 
 function gwPort() { return parseInt(document.getElementById('s-gw-port')?.value) || 8080; }
 function gwHost() { return (document.getElementById('s-gw-host')?.value || '').trim() || 'localhost'; }
-function ycPort() { return parseInt(document.getElementById('s-yc-port')?.value) || 8082; }
 
 // APRS feed URLs. Over HTTPS we route through the server's nginx reverse proxy
 // (same-origin, wss) so there's no mixed-content / blocked-ws problem; over plain
 // http we talk to the configured host:port directly (dev / legacy). The nginx
-// /aprs-gw/ and /aprs-yc/ upstreams default to the APRS gateway on this server.
+// /aprs-gw/ upstream defaults to the RF feed (APRS Command) on this server.
 function _secure()        { return location.protocol === 'https:'; }
 function _wsOrigin(path)   { return (_secure() ? 'wss' : 'ws') + '://' + location.host + path; }
 function gwStationsUrl()  { return _secure() ? '/aprs-gw/api/stations' : `http://${gwHost()}:${gwPort()}/api/stations`; }
 function gwWsUrl()        { return _secure() ? _wsOrigin('/aprs-gw/ws')  : `ws://${gwHost()}:${gwPort()}/ws`; }
-function ycStationsUrl()  { return _secure() ? '/aprs-yc/api/stations' : `http://localhost:${ycPort()}/api/stations`; }
-function ycWsUrl()        { return _secure() ? _wsOrigin('/aprs-yc/ws/aprs') : `ws://localhost:${ycPort()}/ws/aprs`; }
 
 function updateSourceURLs() {
   document.getElementById('gw-url').textContent   = gwStationsUrl();
   document.getElementById('gw-ws-url').textContent= gwWsUrl();
-  document.getElementById('yc-url').textContent   = ycStationsUrl();
-  document.getElementById('yc-ws-url').textContent= ycWsUrl();
 }
 
 // ══════════════════════════════════════════════════
@@ -658,8 +563,7 @@ function initMap() {
   map = L.map('map', { zoomControl:true }).setView([lat, lon], 11);
 
   // Create named layer groups
-  layers.gw    = L.layerGroup().addTo(map);  // Direwolf stations
-  layers.yc    = L.layerGroup().addTo(map);  // YAAC stations
+  layers.gw    = L.layerGroup().addTo(map);  // Direwolf / APRS Command stations
   layers.is    = L.layerGroup().addTo(map);  // APRS-IS stations
   layers.ov    = L.layerGroup().addTo(map);  // Manual overlays
   layers.me    = L.layerGroup().addTo(map);  // My station
@@ -783,31 +687,6 @@ function normalizeGW(r) {
   };
 }
 
-function normalizeYC(r) {
-  // YAAC uses: callsign, latitude, longitude, symbolTable, symbolCode, course, speed(knots), altitude(ft), comment, lastHeard, type, path
-  const speedKts = parseFloat(r.speed || 0);
-  return {
-    callsign:    r.callsign || '?',
-    lat:         parseFloat(r.latitude || r.lat || 0),
-    lon:         parseFloat(r.longitude || r.lon || 0),
-    comment:     r.comment || r.status || '',
-    lastHeard:   r.lastHeard || r.last_seen || null,
-    speed:       speedKts ? Math.round(speedKts * 1.15078) : null,  // knots → mph
-    course:      r.course || null,
-    altitude:    r.altitude || null,
-    symbolTable: r.symbolTable || r.symbol_table || '/',
-    symbolCode:  r.symbolCode  || r.symbol_code  || '>',
-    path:        r.path || '',
-    type:        r.type || stationTypeFromSymbol(r.symbolTable, r.symbolCode),
-    power:       r.power || null,
-    freq:        r.freq || null,
-    height:      r.height || null,
-    gain:        r.gain || null,
-    source:      'yc',
-    _sources:    new Set(['yc']),
-  };
-}
-
 function normalizeIS(r) {
   // aprs.fi format
   return {
@@ -852,7 +731,7 @@ function mergeStations() {
         }
         // Merge comments
         if (!existing.comment && n.comment) existing.comment = n.comment;
-        // Merge symbol from YAAC if GW has blank
+        // Merge symbol if the existing record has a blank one
         if (!existing.symbolCode && n.symbolCode) {
           existing.symbolTable = n.symbolTable;
           existing.symbolCode  = n.symbolCode;
@@ -864,22 +743,19 @@ function mergeStations() {
   };
 
   addAll(rawGW, normalizeGW);
-  addAll(rawYC, normalizeYC);
   addAll(rawIS, normalizeIS);
 
   // Update merge stats
-  let both=0, gwOnly=0, ycOnly=0, isOnly=0;
+  let both=0, gwOnly=0, isOnly=0;
   for (const s of stationMap.values()) {
     const srcs = s._sources;
-    if (srcs.has('gw') && srcs.has('yc')) both++;
-    else if (srcs.has('gw') && !srcs.has('yc') && !srcs.has('is')) gwOnly++;
-    else if (srcs.has('yc') && !srcs.has('gw') && !srcs.has('is')) ycOnly++;
-    else if (srcs.has('is') && !srcs.has('gw') && !srcs.has('yc')) isOnly++;
+    if (srcs.has('gw') && srcs.has('is')) both++;
+    else if (srcs.has('gw')) gwOnly++;
+    else if (srcs.has('is')) isOnly++;
   }
   document.getElementById('merge-total').textContent = stationMap.size;
   document.getElementById('merge-both').textContent  = both;
   document.getElementById('merge-gw-only').textContent = gwOnly;
-  document.getElementById('merge-yc-only').textContent = ycOnly;
   document.getElementById('merge-is-only').textContent = isOnly;
   document.getElementById('stn-count').textContent = stationMap.size;
   updateBadge('stn-badge', stationMap.size);
@@ -904,7 +780,6 @@ function ageColor(lastHeard) {
 function srcBorderColor(sources) {
   if (sources.size > 1) return '#ffffff';
   if (sources.has('gw')) return '#39ff14';
-  if (sources.has('yc')) return '#60aaff';
   if (sources.has('is')) return '#c850ff';
   return '#888';
 }
@@ -915,7 +790,6 @@ function srcBorderColor(sources) {
 function renderAPRS() {
   // Clear per-source layers
   layers.gw.clearLayers();
-  layers.yc.clearLayers();
   layers.is.clearLayers();
 
   const showSymbols = (document.getElementById('s-symbols')?.value || '1') === '1';
@@ -944,7 +818,7 @@ function renderAPRS() {
 
     // Build popup
     const srcLabels = [...s._sources].map(src =>
-      `<span style="background:${src==='gw'?'rgba(26,122,58,0.10)':src==='yc'?'rgba(96,170,255,0.15)':'rgba(91,45,140,0.10)'};color:${src==='gw'?'#39ff14':src==='yc'?'#60aaff':'#c850ff'};border:1px solid;border-radius:3px;padding:1px 5px;font-family:var(--font-hd);font-size:9px">${src.toUpperCase()}</span>`
+      `<span style="background:${src==='gw'?'rgba(26,122,58,0.10)':'rgba(91,45,140,0.10)'};color:${src==='gw'?'#39ff14':'#c850ff'};border:1px solid;border-radius:3px;padding:1px 5px;font-family:var(--font-hd);font-size:9px">${src.toUpperCase()}</span>`
     ).join(' ');
 
     const age = ageMins(s.lastHeard);
@@ -970,7 +844,7 @@ function renderAPRS() {
     </div>`;
 
     // Place on the correct layer (primary source)
-    const targetLayer = s._sources.has('gw') ? layers.gw : s._sources.has('yc') ? layers.yc : layers.is;
+    const targetLayer = s._sources.has('gw') ? layers.gw : layers.is;
     L.marker([s.lat, s.lon], {icon}).addTo(targetLayer).bindPopup(popup);
   }
 }
@@ -1067,7 +941,6 @@ function updateTrackHistory() {
 // ══════════════════════════════════════════════════
 function connectWebSockets() {
   connectWS('gw', gwWsUrl(), 'gw-ws-dot', 'gw-ws-status');
-  connectWS('yc', ycWsUrl(), 'yc-ws-dot', 'yc-ws-status');
 }
 
 function connectWS(name, url, dotId, statusId) {
@@ -1082,7 +955,7 @@ function connectWS(name, url, dotId, statusId) {
       try {
         const pkt = JSON.parse(evt.data);
         // Live update — normalize and merge single packet
-        const normFn = name === 'gw' ? normalizeGW : normalizeYC;
+        const normFn = normalizeGW;
         const n = normFn(pkt);
         if (n.lat && n.lon && n.callsign !== '?') {
           if (stationMap.has(n.callsign)) {
@@ -1152,35 +1025,6 @@ async function pollDirewolf() {
 }
 
 // ══════════════════════════════════════════════════
-// REST poll — YAAC
-// ══════════════════════════════════════════════════
-async function pollYAAC() {
-  const url = ycStationsUrl();
-  try {
-    const r = await fetch(url, { signal: AbortSignal.timeout(5000) });
-    if (!r.ok) throw new Error('HTTP ' + r.status);
-    const data = await r.json();
-    rawYC = Array.isArray(data) ? data : (data.stations || data.results || []);
-    document.getElementById('yc-dot').style.background = '#60aaff';
-    document.getElementById('yc-count').textContent = rawYC.length;
-    document.getElementById('strip-yc-dot').style.background = '#60aaff';
-    document.getElementById('strip-yc-n').textContent = rawYC.length;
-
-    // YAAC messages
-    try {
-      const mr = await fetch(`http://localhost:${ycPort()}/api/messages`, { signal: AbortSignal.timeout(3000) });
-      if (mr.ok) { const md = await mr.json(); (md.messages || md || []).forEach(m => ingestMessage(m, 'yc')); }
-    } catch(e) {}
-
-  } catch(e) {
-    document.getElementById('yc-dot').style.background = 'var(--muted)';
-    document.getElementById('strip-yc-dot').style.background = 'var(--muted)';
-    document.getElementById('strip-yc-n').textContent = '—';
-    rawYC = [];
-  }
-}
-
-// ══════════════════════════════════════════════════
 // APRS-IS poll via aprs.fi
 // ══════════════════════════════════════════════════
 async function pollAPRSIS() {
@@ -1214,7 +1058,7 @@ async function pollAPRSIS() {
 // Main refresh
 // ══════════════════════════════════════════════════
 async function refreshAll() {
-  await Promise.allSettled([pollDirewolf(), pollYAAC(), pollAPRSIS()]);
+  await Promise.allSettled([pollDirewolf(), pollAPRSIS()]);
   mergeStations();
   renderAPRS();
   renderStationList();
@@ -1276,8 +1120,8 @@ async function sendMessage() {
   const to   = document.getElementById('msg-to').value.trim().toUpperCase();
   const body = document.getElementById('msg-body').value.trim();
   const via  = document.getElementById('msg-via').value;
-  const host = via === 'gw' ? gwHost() : 'localhost';
-  const port = via === 'gw' ? gwPort() : ycPort();
+  const host = gwHost();
+  const port = gwPort();
   const stat = document.getElementById('msg-status');
 
   if (!to || !body) { stat.textContent = 'To callsign and message required'; return; }
@@ -1292,7 +1136,7 @@ async function sendMessage() {
       signal: AbortSignal.timeout(5000),
     });
     if (r.ok) {
-      stat.textContent = `✓ Sent via ${via === 'gw' ? 'Direwolf' : 'YAAC'}`;
+      stat.textContent = '✓ Sent via Direwolf';
       document.getElementById('msg-body').value = '';
       // Echo in our messages list
       ingestMessage({ from: document.getElementById('s-callsign').value || 'LOCAL', to, body, time: new Date().toISOString(), src: via }, via);
@@ -1300,7 +1144,7 @@ async function sendMessage() {
       stat.textContent = `Send failed (HTTP ${r.status})`;
     }
   } catch(e) {
-    stat.textContent = `Send error — is ${via === 'gw' ? 'Direwolf' : 'YAAC'} running?`;
+    stat.textContent = 'Send error — is Direwolf / APRS Command running?';
   }
 }
 
@@ -1449,8 +1293,6 @@ function updateBadge(id, count) {
 
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
-function openYAAC()     { window.open(`http://localhost:${ycPort()}`, '_blank'); }
-function showYAACSetup(){ document.getElementById('yaac-modal').style.display='flex'; }
 
 initMap();
 </script>

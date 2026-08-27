@@ -11,161 +11,242 @@
     "Design takeaways and the maintainer's rule"
   ],
   "blocks": [
-    {"callout": {"kind": "tip", "label": "IN ONE SENTENCE",
-      "text": "`scripts/preflight_check.py` is the __developer gate__ that must pass before code is done, `update.sh` is the __field maintenance menu__ that keeps a deployed Raspberry Pi running, and `preflight.html` is the __operator's readiness check__ that returns a GO / CAUTION / NO-GO verdict before an activation — three tools, three audiences, one word."}},
-
-    {"h1": "What This Is / What It Is For"},
-    {"p": "The word 'preflight' shows up twice in FieldCommand, meaning two completely different things, and confusing them is a real trap. One is a __developer gate__: `scripts/preflight_check.py`, an automated check that a code change has not broken the source before it ships. The other is a __field-readiness check__: `preflight.html`, the operator-facing checklist that produces a GO / CAUTION / NO-GO verdict before a team activates. This chapter covers both, plus `update.sh`, the maintenance menu that keeps an already-installed system healthy between releases."},
-    {"p": "The reason the developer gate exists at all comes down to how FieldCommand is built. It is a browser-loaded application: the Python back end is run directly by the interpreter, and the front end is HTML with JavaScript loaded straight into a browser. Nothing is ever compiled ahead of time. That is wonderful for a field appliance — there is no build step to fail in a shelter — but it removes the safety net a compiled language gives you. A stray syntax error in a Python service, a broken brace in a shell script, a malformed JavaScript block, or a corrupted JSON file will not be caught by a compiler, because there is no compiler. It will simply fail at runtime, in the field, possibly during an incident. `preflight_check.py` puts that safety net back."},
-    {"callout": {"kind": "note", "label": "JARGON, IN PLAIN WORDS",
-      "text": "A __compiled__ language is checked and translated to machine code before it runs, so many mistakes are caught early. FieldCommand's Python and JavaScript are __interpreted__ — read and run on the spot — so those same mistakes stay hidden until the line actually executes. A __gate__ is a check that must pass before work is allowed to proceed. A __static check__ inspects the source text without running it."}},
-
-    {"h1": "preflight_check.py — The Developer Gate"},
-    {"p": "The gate's own docstring states exactly the class of breakage it is built to catch — the failures a never-compiled app hides:"},
-    {"code": [
-      "\"\"\"FieldCommand IMS — source integrity preflight.",
-      "",
-      "Catches the class of breakage a browser-loaded, never-compiled app hides:",
-      "Python/shell syntax errors, invalid JSON, duplicated-file corruption, and",
-      "JavaScript syntax errors inside HTML <script> blocks.",
-      "",
-      "Exits non-zero if any check fails. Used by .github/workflows/ci.yml.",
-      "\"\"\""
-    ]},
-    {"p": "It runs five independent checks, each a small function returning a list of failures. __Python compile__ walks `python/` and `docs_generators/` and asks Python itself to byte-compile every file, so a syntax error is reported without running the code:"},
-    {"code": [
-      "def py_compile_all():",
-      "    import py_compile",
-      "    fails = []",
-      "    for base in (\"python\", \"docs_generators\"):",
-      "        for f in glob.glob(os.path.join(ROOT, base, \"**\", \"*.py\"), recursive=True):",
-      "            try:",
-      "                py_compile.compile(f, doraise=True)",
-      "            except py_compile.PyCompileError as e:",
-      "                fails.append((rel(f), str(e).splitlines()[-1]))",
-      "    return fails"
-    ]},
-    {"p": "__Shell syntax__ runs `bash -n` (parse, do not execute) on every script under `scripts/`. __JSON valid__ opens and parses every `.json` file in the tree — which is exactly what protects the per-chapter guide files this document is written in. Both are the same tiny pattern: glob the files, run the check, collect failures. Notice that the shell and JavaScript checks degrade gracefully when their tool is missing locally, printing a note and returning no failures, because Continuous Integration (CI) will run them anyway:"},
-    {"code": [
-      "def shell_all():",
-      "    if not shutil.which(\"bash\"):",
-      "        print(\"       (bash not found — shell check skipped locally; CI runs it)\"); return []",
-      "    fails = []",
-      "    for f in glob.glob(os.path.join(ROOT, \"scripts\", \"**\", \"*.sh\"), recursive=True):",
-      "        r = subprocess.run([\"bash\", \"-n\", f], capture_output=True, text=True)",
-      "        if r.returncode:",
-      "            fails.append((rel(f), r.stderr.strip()))",
-      "    return fails"
-    ]},
-    {"p": "__Corruption / duplication__ is the check unique to this project, and it exists because the most common way a hand-edited or tool-merged file breaks here is accidental duplication — a file pasted into itself, two `__main__` guards, two license headers, two top-level `<!DOCTYPE>` lines. It scans source files for those tell-tale signs, and for whole-file duplication it looks for an early chunk of the file recurring later:"},
-    {"code": [
-      "        if ext == \".py\":",
-      "            if len(re.findall(r'(?m)^if __name__ ?== ?[\"\\']__main__[\"\\']', c)) > 1:",
-      "                flags.append(\"2+ __main__ guards\")",
-      "            if c.count(\"SPDX-License-Identifier\") > 1:",
-      "                flags.append(\"2+ SPDX headers\")",
-      "        if ext in (\".html\", \".htm\"):",
-      "            if len(re.findall(r'(?mi)^<!doctype', c)) > 1:",
-      "                flags.append(\"2+ top-level <!DOCTYPE>\")",
-      "        s = c.strip()",
-      "        if len(s) > 800 and s.count(s[:180]) > 1:",
-      "            flags.append(\"early-content chunk recurs (possible whole-file duplication)\")"
-    ]},
-    {"p": "__JavaScript syntax__ is the cleverest check, because the app's JavaScript is not in tidy `.js` files — most of it lives inside `<script>` blocks in HTML pages. The check extracts every script block with a regular expression, writes each to a temporary file, and runs `node --check` (Node's parse-only mode) on it, reporting the page and the block number on failure:"},
-    {"code": [
-      "        blocks = [c] if f.endswith(\".js\") else re.findall(r'<script\\b[^>]*>(.*?)</script>', c, re.S | re.I)",
-      "        for i, b in enumerate(blocks):",
-      "            if not b.strip():",
-      "                continue",
-      "            with tempfile.NamedTemporaryFile(\"w\", suffix=\".js\", delete=False, encoding=\"utf-8\") as tf:",
-      "                tf.write(b); name = tf.name",
-      "            r = subprocess.run([\"node\", \"--check\", name], capture_output=True, text=True)",
-      "            os.unlink(name)",
-      "            if r.returncode:",
-      "                msg = (r.stderr.strip().splitlines() or [\"syntax error\"])[0]",
-      "                fails.append((f\"{rel(f)} [script #{i}]\", msg))"
-    ]},
-    {"p": "`main()` ties them together. A normal run does all five; the `--js-only` and `--corruption-only` flags run just one for a fast focused pass. The result is boiled down to a single line and a single exit code — the thing CI and a maintainer both read:"},
-    {"code": [
-      "    ok &= report(\"Python compile\", py_compile_all())",
-      "    ok &= report(\"Shell syntax\", shell_all())",
-      "    ok &= report(\"JSON valid\", json_all())",
-      "    ok &= report(\"Corruption / duplication\", corruption())",
-      "    ok &= report(\"JavaScript syntax\", js_all())",
-      "    print(\"\\nPREFLIGHT:\", \"PASS\" if ok else \"FAIL\")",
-      "    sys.exit(0 if ok else 1)"
-    ]},
-    {"callout": {"kind": "important", "label": "THE ONE RULE",
-      "text": "`preflight_check.py` must print __PREFLIGHT: PASS__ before any change is considered done. It runs locally before a push and again in `.github/workflows/ci.yml`, and it exits non-zero on any failure so CI turns red. This is the project's single hard gate: green preflight is the definition of 'the source is not broken.' Do not merge, deploy, or call a task finished while it is FAIL."}},
-
-    {"h1": "update.sh — Maintaining a Live Deployment"},
-    {"p": "Where `preflight_check.py` guards the source before it ships, `update.sh` operates on a system that is already installed and running in the field. It is a single interactive menu — the one command an operator or maintainer runs to do routine upkeep without touching the full installer. It opens with a numbered list and reads one choice:"},
-    {"code": [
-      "echo -e \"${BOLD}${AMBER}FieldCommand Maintenance Menu${NC}\"",
-      "echo \"  1) Restart all services\"",
-      "echo \"  2) Stop all services\"",
-      "echo \"  3) Check service status\"",
-      "echo \"  5) Refresh FCC database\"",
-      "echo \"  6) Fetch repeater data\"",
-      "echo \"  7) Update web files from current directory\"",
-      "echo \"  8) Backup data to /tmp\"",
-      "echo \"  t) Apply theme consistency check\"",
-      "read -rp \"Select [0-9]: \" CHOICE"
-    ]},
-    {"p": "The script is written defensively — `set -euo pipefail` at the top means it stops on the first unhandled error rather than blundering onward. Several menu items tie directly to tools covered elsewhere in this guide: option 6 runs `fetch_repeaters.py` (Chapter 18) and even prompts for the RepeaterBook token if none is saved yet; option `t` runs `apply_theme.py` (Chapter 18) in check mode and offers to apply fixes. The most substantial item is option 7, __Update web files__, which is how a code change actually reaches a running box. It copies the HTML across, then copies a fixed list of Python files, then restarts the services so they pick up the new code:"},
-    {"code": [
-      "        # Also update Python files so servers stay in sync with HTML",
-      "        PY_FILES=(",
-      "            db.py",
-      "            fcc_lookup_server.py",
-      "            health_monitor.py",
-      "            fetch_repeaters.py",
-      "            ics_platform_server.py",
-      "            apply_theme.py",
-      "            nims_definitions.py",
-      "            nims_resource_types.py",
-      "        )",
-      "        for f in \"${PY_FILES[@]}\"; do",
-      "            SRC=\"$SCRIPT_DIR/../python/$f\"",
-      "            if [[ -f \"$SRC\" ]]; then",
-      "                sudo cp \"$SRC\" \"$FC_HOME/python/$f\"",
-      "                sudo chmod 755 \"$FC_HOME/python/$f\"",
-      "            fi",
-      "        done",
-      "        # Restart services to pick up changes",
-      "        for svc in fcc-lookup health-monitor deadmans ics-platform ...; do",
-      "            sudo systemctl restart \"$svc.service\" 2>/dev/null && ...",
-      "        done"
-    ]},
-    {"p": "The rest of the menu is day-to-day operations: restart, stop, or status-check the systemd services; stream live logs with `journalctl`; rebuild the Federal Communications Commission (FCC) license database; back up the data directory with `rsync`; and show disk usage. Each item is a short, self-contained `case` branch that prints colored success or failure so a maintainer can see at a glance whether it worked. This is deliberately a maintenance tool, not a deployment pipeline — it assumes the code it is copying already passed the developer gate."},
-    {"callout": {"kind": "warning", "label": "update.sh TRUSTS THE SOURCE — preflight_check.py IS WHAT EARNS THAT TRUST",
-      "text": "Option 7 copies whatever is in the working directory onto a live field system and restarts services. It performs no syntax checking of its own. That is safe __only because__ `preflight_check.py` is supposed to have passed first. The two tools are a pair: the gate proves the source is sound, the menu deploys it. Running `update.sh` on un-checked source is how a broken file reaches the field."}},
-
-    {"h1": "preflight.html — The Field-Readiness Check"},
-    {"p": "The third 'preflight' has nothing to do with source code. `preflight.html` is the operator's pre-activation checklist, and its output is an operational verdict, not a build result. It walks the team through categories — Data Readiness, Power Systems, Communications Equipment, Computing, Personnel, Logistics, Safety, and Agency Coordination — and each item is marked GO, CAUTION, or NO-GO. The verdict logic is unforgiving in the right way: any NO-GO, or any required item left unconfirmed, forces an overall NO-GO:"},
-    {"code": [
-      "  } else if(nogoCount>0) {",
-      "    verdict='nogo'; sub=`${nogoCount} NO-GO item${nogoCount!==1?'s':''} identified — do not activate`;",
-      "  } else if(requiredFail>0) {",
-      "    verdict='nogo'; sub=`${requiredFail} required item${requiredFail!==1?'s':''} not confirmed — cannot activate`;",
-      "  } else if(cautionCount>0) {",
-      "    verdict='caution'; sub=`${cautionCount} item${cautionCount!==1?'s':''} require attention before activation`;",
-      "  } else {",
-      "    verdict='go'; sub='All checklist items confirmed — cleared for activation';",
-      "  }"
-    ]},
-    {"p": "The Data Readiness section is partly automatic: it calls the server's `/api/preflight` endpoint and pre-marks items like the FCC database and member roster based on what the system actually reports, which the operator can then override. The whole thing runs in the browser, saves progress to local storage, and can print or export a JavaScript Object Notation (JSON) report for the incident record. It is a decision aid for a human team, evaluated fresh every activation."},
-    {"callout": {"kind": "note", "label": "TWO PREFLIGHTS, SIDE BY SIDE",
-      "text": "__`preflight_check.py`__ — audience: developers/CI. Question: 'is the source broken?' Output: PASS / FAIL exit code. When: before every change ships.  __`preflight.html`__ — audience: field operators. Question: 'are we ready to activate?' Output: GO / CAUTION / NO-GO verdict. When: before every activation. They share a name and nothing else; never let a green code gate be mistaken for field readiness, or vice versa."}},
-
-    {"h1": "Why It Matters / Design Takeaways"},
-    {"bullets": [
-      "__A never-compiled app needs a static gate.__ `preflight_check.py` restores the safety net a compiler would give: it catches Python, shell, JSON, corruption, and in-HTML JavaScript errors before they reach a field system.",
-      "__One rule, one signal.__ Everything collapses to `PREFLIGHT: PASS` / `FAIL` and an exit code, so the same check guards a local push and a CI run identically.",
-      "__Maintenance and deployment are separated from the gate.__ `update.sh` keeps a live box healthy and copies checked source onto it, but trusts that the gate already ran — the two form a pair, not a substitute.",
-      "__Same word, different jobs.__ The developer gate and the field-readiness checklist both say 'preflight,' but one asks 'is the code sound?' and the other asks 'are we ready to activate?' — never conflate them."
-    ]},
-    {"callout": {"kind": "important", "label": "MAINTAINER'S RULE",
-      "text": "No change is done until `python scripts/preflight_check.py` prints __PREFLIGHT: PASS__ — run it locally before you push, and never merge while CI's copy is red. When you add a new file type or a new duplication footgun, add a check for it here so the gate keeps pace with the codebase. And keep the three tools straight: `preflight_check.py` gates the source, `update.sh` maintains the deployment, `preflight.html` clears the field team — do not let one stand in for another."}}
+    {
+      "callout": {
+        "kind": "tip",
+        "label": "IN ONE SENTENCE",
+        "text": "`scripts/preflight_check.py` is the __developer gate__ that must pass before code is done, `update.sh` is the __field maintenance menu__ that keeps a deployed Raspberry Pi running, and `preflight.html` is the __operator's readiness check__ that returns a GO / CAUTION / NO-GO verdict before an activation — three tools, three audiences, one word."
+      }
+    },
+    {
+      "h1": "What This Is / What It Is For"
+    },
+    {
+      "p": "The word 'preflight' shows up twice in FieldCommand, meaning two completely different things, and confusing them is a real trap. One is a __developer gate__: `scripts/preflight_check.py`, an automated check that a code change has not broken the source before it ships. The other is a __field-readiness check__: `preflight.html`, the operator-facing checklist that produces a GO / CAUTION / NO-GO verdict before a team activates. This chapter covers both, plus `update.sh`, the maintenance menu that keeps an already-installed system healthy between releases."
+    },
+    {
+      "p": "The reason the developer gate exists at all comes down to how FieldCommand is built. It is a browser-loaded application: the Python back end is run directly by the interpreter, and the front end is HTML with JavaScript loaded straight into a browser. Nothing is ever compiled ahead of time. That is wonderful for a field appliance — there is no build step to fail in a shelter — but it removes the safety net a compiled language gives you. A stray syntax error in a Python service, a broken brace in a shell script, a malformed JavaScript block, or a corrupted JSON file will not be caught by a compiler, because there is no compiler. It will simply fail at runtime, in the field, possibly during an incident. `preflight_check.py` puts that safety net back."
+    },
+    {
+      "callout": {
+        "kind": "note",
+        "label": "JARGON, IN PLAIN WORDS",
+        "text": "A __compiled__ language is checked and translated to machine code before it runs, so many mistakes are caught early. FieldCommand's Python and JavaScript are __interpreted__ — read and run on the spot — so those same mistakes stay hidden until the line actually executes. A __gate__ is a check that must pass before work is allowed to proceed. A __static check__ inspects the source text without running it."
+      }
+    },
+    {
+      "h1": "preflight_check.py — The Developer Gate"
+    },
+    {
+      "p": "The gate's own docstring states exactly the class of breakage it is built to catch — the failures a never-compiled app hides:"
+    },
+    {
+      "code": [
+        "\"\"\"FieldCommand IMS — source integrity preflight.",
+        "",
+        "Catches the class of breakage a browser-loaded, never-compiled app hides:",
+        "Python/shell syntax errors, invalid JSON, duplicated-file corruption, and",
+        "JavaScript syntax errors inside HTML <script> blocks.",
+        "",
+        "Exits non-zero if any check fails. Used by .github/workflows/ci.yml.",
+        "\"\"\""
+      ]
+    },
+    {
+      "p": "It runs five independent checks, each a small function returning a list of failures. __Python compile__ walks `python/` and `docs_generators/` and asks Python itself to byte-compile every file, so a syntax error is reported without running the code:"
+    },
+    {
+      "code": [
+        "def py_compile_all():",
+        "    import py_compile",
+        "    fails = []",
+        "    for base in (\"python\", \"docs_generators\"):",
+        "        for f in glob.glob(os.path.join(ROOT, base, \"**\", \"*.py\"), recursive=True):",
+        "            try:",
+        "                py_compile.compile(f, doraise=True)",
+        "            except py_compile.PyCompileError as e:",
+        "                fails.append((rel(f), str(e).splitlines()[-1]))",
+        "    return fails"
+      ]
+    },
+    {
+      "p": "__Shell syntax__ runs `bash -n` (parse, do not execute) on every script under `scripts/`. __JSON valid__ opens and parses every `.json` file in the tree — which is exactly what protects the per-chapter guide files this document is written in. Both are the same tiny pattern: glob the files, run the check, collect failures. Notice that the shell and JavaScript checks degrade gracefully when their tool is missing locally, printing a note and returning no failures, because Continuous Integration (CI) will run them anyway:"
+    },
+    {
+      "code": [
+        "def shell_all():",
+        "    if not shutil.which(\"bash\"):",
+        "        print(\"       (bash not found — shell check skipped locally; CI runs it)\"); return []",
+        "    fails = []",
+        "    for f in glob.glob(os.path.join(ROOT, \"scripts\", \"**\", \"*.sh\"), recursive=True):",
+        "        r = subprocess.run([\"bash\", \"-n\", f], capture_output=True, text=True)",
+        "        if r.returncode:",
+        "            fails.append((rel(f), r.stderr.strip()))",
+        "    return fails"
+      ]
+    },
+    {
+      "p": "__Corruption / duplication__ is the check unique to this project, and it exists because the most common way a hand-edited or tool-merged file breaks here is accidental duplication — a file pasted into itself, two `__main__` guards, two license headers, two top-level `<!DOCTYPE>` lines. It scans source files for those tell-tale signs, and for whole-file duplication it looks for an early chunk of the file recurring later:"
+    },
+    {
+      "code": [
+        "        if ext == \".py\":",
+        "            if len(re.findall(r'(?m)^if __name__ ?== ?[\"\\']__main__[\"\\']', c)) > 1:",
+        "                flags.append(\"2+ __main__ guards\")",
+        "            if c.count(\"SPDX-License-Identifier\") > 1:",
+        "                flags.append(\"2+ SPDX headers\")",
+        "        if ext in (\".html\", \".htm\"):",
+        "            if len(re.findall(r'(?mi)^<!doctype', c)) > 1:",
+        "                flags.append(\"2+ top-level <!DOCTYPE>\")",
+        "        s = c.strip()",
+        "        if len(s) > 800 and s.count(s[:180]) > 1:",
+        "            flags.append(\"early-content chunk recurs (possible whole-file duplication)\")"
+      ]
+    },
+    {
+      "p": "__JavaScript syntax__ is the cleverest check, because the app's JavaScript is not in tidy `.js` files — most of it lives inside `<script>` blocks in HTML pages. The check extracts every script block with a regular expression, writes each to a temporary file, and runs `node --check` (Node's parse-only mode) on it, reporting the page and the block number on failure:"
+    },
+    {
+      "code": [
+        "        blocks = [c] if f.endswith(\".js\") else re.findall(r'<script\\b[^>]*>(.*?)</script>', c, re.S | re.I)",
+        "        for i, b in enumerate(blocks):",
+        "            if not b.strip():",
+        "                continue",
+        "            with tempfile.NamedTemporaryFile(\"w\", suffix=\".js\", delete=False, encoding=\"utf-8\") as tf:",
+        "                tf.write(b); name = tf.name",
+        "            r = subprocess.run([\"node\", \"--check\", name], capture_output=True, text=True)",
+        "            os.unlink(name)",
+        "            if r.returncode:",
+        "                msg = (r.stderr.strip().splitlines() or [\"syntax error\"])[0]",
+        "                fails.append((f\"{rel(f)} [script #{i}]\", msg))"
+      ]
+    },
+    {
+      "p": "`main()` ties them together. A normal run does all five; the `--js-only` and `--corruption-only` flags run just one for a fast focused pass. The result is boiled down to a single line and a single exit code — the thing CI and a maintainer both read:"
+    },
+    {
+      "code": [
+        "    ok &= report(\"Python compile\", py_compile_all())",
+        "    ok &= report(\"Shell syntax\", shell_all())",
+        "    ok &= report(\"JSON valid\", json_all())",
+        "    ok &= report(\"Corruption / duplication\", corruption())",
+        "    ok &= report(\"JavaScript syntax\", js_all())",
+        "    print(\"\\nPREFLIGHT:\", \"PASS\" if ok else \"FAIL\")",
+        "    sys.exit(0 if ok else 1)"
+      ]
+    },
+    {
+      "callout": {
+        "kind": "important",
+        "label": "THE ONE RULE",
+        "text": "`preflight_check.py` must print __PREFLIGHT: PASS__ before any change is considered done. It runs locally before a push and again in `.github/workflows/ci.yml`, and it exits non-zero on any failure so CI turns red. This is the project's single hard gate: green preflight is the definition of 'the source is not broken.' Do not merge, deploy, or call a task finished while it is FAIL."
+      }
+    },
+    {
+      "h1": "update.sh — Maintaining a Live Deployment"
+    },
+    {
+      "p": "Where `preflight_check.py` guards the source before it ships, `update.sh` operates on a system that is already installed and running in the field. It is a single interactive menu — the one command an operator or maintainer runs to do routine upkeep without touching the full installer. It opens with a numbered list and reads one choice:"
+    },
+    {
+      "code": [
+        "echo -e \"${BOLD}${AMBER}FieldCommand Maintenance Menu${NC}\"",
+        "echo \"  1) Restart all services\"",
+        "echo \"  2) Stop all services\"",
+        "echo \"  3) Check service status\"",
+        "echo \"  5) Refresh FCC database\"",
+        "echo \"  6) Fetch repeater data\"",
+        "echo \"  7) Update web files from current directory\"",
+        "echo \"  8) Backup data to /tmp\"",
+        "echo \"  t) Apply theme consistency check\"",
+        "read -rp \"Select [0-9]: \" CHOICE"
+      ]
+    },
+    {
+      "p": "The script is written defensively — `set -euo pipefail` at the top means it stops on the first unhandled error rather than blundering onward. Several menu items tie directly to tools covered elsewhere in this guide: option 6 explains how to load the repeater database by importing a RepeaterBook CSV (Chapter 18); option `t` runs `apply_theme.py` (Chapter 18) in check mode and offers to apply fixes. The most substantial item is option 7, __Update web files__, which is how a code change actually reaches a running box. It copies the HTML across, then copies a fixed list of Python files, then restarts the services so they pick up the new code:"
+    },
+    {
+      "code": [
+        "        # Also update Python files so servers stay in sync with HTML",
+        "        PY_FILES=(",
+        "            db.py",
+        "            fcc_lookup_server.py",
+        "            health_monitor.py",
+        "",
+        "            ics_platform_server.py",
+        "            apply_theme.py",
+        "            nims_definitions.py",
+        "            nims_resource_types.py",
+        "        )",
+        "        for f in \"${PY_FILES[@]}\"; do",
+        "            SRC=\"$SCRIPT_DIR/../python/$f\"",
+        "            if [[ -f \"$SRC\" ]]; then",
+        "                sudo cp \"$SRC\" \"$FC_HOME/python/$f\"",
+        "                sudo chmod 755 \"$FC_HOME/python/$f\"",
+        "            fi",
+        "        done",
+        "        # Restart services to pick up changes",
+        "        for svc in fcc-lookup health-monitor deadmans ics-platform ...; do",
+        "            sudo systemctl restart \"$svc.service\" 2>/dev/null && ...",
+        "        done"
+      ]
+    },
+    {
+      "p": "The rest of the menu is day-to-day operations: restart, stop, or status-check the systemd services; stream live logs with `journalctl`; rebuild the Federal Communications Commission (FCC) license database; back up the data directory with `rsync`; and show disk usage. Each item is a short, self-contained `case` branch that prints colored success or failure so a maintainer can see at a glance whether it worked. This is deliberately a maintenance tool, not a deployment pipeline — it assumes the code it is copying already passed the developer gate."
+    },
+    {
+      "callout": {
+        "kind": "warning",
+        "label": "update.sh TRUSTS THE SOURCE — preflight_check.py IS WHAT EARNS THAT TRUST",
+        "text": "Option 7 copies whatever is in the working directory onto a live field system and restarts services. It performs no syntax checking of its own. That is safe __only because__ `preflight_check.py` is supposed to have passed first. The two tools are a pair: the gate proves the source is sound, the menu deploys it. Running `update.sh` on un-checked source is how a broken file reaches the field."
+      }
+    },
+    {
+      "h1": "preflight.html — The Field-Readiness Check"
+    },
+    {
+      "p": "The third 'preflight' has nothing to do with source code. `preflight.html` is the operator's pre-activation checklist, and its output is an operational verdict, not a build result. It walks the team through categories — Data Readiness, Power Systems, Communications Equipment, Computing, Personnel, Logistics, Safety, and Agency Coordination — and each item is marked GO, CAUTION, or NO-GO. The verdict logic is unforgiving in the right way: any NO-GO, or any required item left unconfirmed, forces an overall NO-GO:"
+    },
+    {
+      "code": [
+        "  } else if(nogoCount>0) {",
+        "    verdict='nogo'; sub=`${nogoCount} NO-GO item${nogoCount!==1?'s':''} identified — do not activate`;",
+        "  } else if(requiredFail>0) {",
+        "    verdict='nogo'; sub=`${requiredFail} required item${requiredFail!==1?'s':''} not confirmed — cannot activate`;",
+        "  } else if(cautionCount>0) {",
+        "    verdict='caution'; sub=`${cautionCount} item${cautionCount!==1?'s':''} require attention before activation`;",
+        "  } else {",
+        "    verdict='go'; sub='All checklist items confirmed — cleared for activation';",
+        "  }"
+      ]
+    },
+    {
+      "p": "The Data Readiness section is partly automatic: it calls the server's `/api/preflight` endpoint and pre-marks items like the FCC database and member roster based on what the system actually reports, which the operator can then override. The whole thing runs in the browser, saves progress to local storage, and can print or export a JavaScript Object Notation (JSON) report for the incident record. It is a decision aid for a human team, evaluated fresh every activation."
+    },
+    {
+      "callout": {
+        "kind": "note",
+        "label": "TWO PREFLIGHTS, SIDE BY SIDE",
+        "text": "__`preflight_check.py`__ — audience: developers/CI. Question: 'is the source broken?' Output: PASS / FAIL exit code. When: before every change ships.  __`preflight.html`__ — audience: field operators. Question: 'are we ready to activate?' Output: GO / CAUTION / NO-GO verdict. When: before every activation. They share a name and nothing else; never let a green code gate be mistaken for field readiness, or vice versa."
+      }
+    },
+    {
+      "h1": "Why It Matters / Design Takeaways"
+    },
+    {
+      "bullets": [
+        "__A never-compiled app needs a static gate.__ `preflight_check.py` restores the safety net a compiler would give: it catches Python, shell, JSON, corruption, and in-HTML JavaScript errors before they reach a field system.",
+        "__One rule, one signal.__ Everything collapses to `PREFLIGHT: PASS` / `FAIL` and an exit code, so the same check guards a local push and a CI run identically.",
+        "__Maintenance and deployment are separated from the gate.__ `update.sh` keeps a live box healthy and copies checked source onto it, but trusts that the gate already ran — the two form a pair, not a substitute.",
+        "__Same word, different jobs.__ The developer gate and the field-readiness checklist both say 'preflight,' but one asks 'is the code sound?' and the other asks 'are we ready to activate?' — never conflate them."
+      ]
+    },
+    {
+      "callout": {
+        "kind": "important",
+        "label": "MAINTAINER'S RULE",
+        "text": "No change is done until `python scripts/preflight_check.py` prints __PREFLIGHT: PASS__ — run it locally before you push, and never merge while CI's copy is red. When you add a new file type or a new duplication footgun, add a check for it here so the gate keeps pace with the codebase. And keep the three tools straight: `preflight_check.py` gates the source, `update.sh` maintains the deployment, `preflight.html` clears the field team — do not let one stand in for another."
+      }
+    }
   ]
 }

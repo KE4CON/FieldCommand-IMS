@@ -1,185 +1,249 @@
 {
   "order": 18,
   "title": "Reference Data and Theming — RepeaterBook, NIMS, and the Theme",
-  "subtitle": "Four support files that never handle a live incident but decide what the app knows and how it looks: fetch_repeaters.py pulls repeater data in from RepeaterBook, nims_resource_types.py and nims_definitions.py carry the offline National Incident Management System (NIMS) resource-typing library that db.py seeds into the database, and apply_theme.py keeps every page on one dark color scheme.",
+  "subtitle": "Support files and paths that never handle a live incident but decide what the app knows and how it looks: the Repeater Database page imports a RepeaterBook Comma-Separated Values (CSV) export into the server (POST /api/repeaters), nims_resource_types.py and nims_definitions.py carry the offline National Incident Management System (NIMS) resource-typing library that db.py seeds into the database, and apply_theme.py keeps every page on one dark color scheme.",
   "in_this_chapter": [
-    "What 'reference data' means here and why it lives in plain Python and scripts",
-    "How fetch_repeaters.py downloads, normalizes, and writes RepeaterBook data",
-    "Why RepeaterBook rows are replaced by source, so hand-entered repeaters survive",
+    "What 'reference data' means here and why it lives in plain Python and one import endpoint",
+    "How the Repeater Database page imports a RepeaterBook CSV into the server (POST /api/repeaters)",
+    "Why the import replaces only RepeaterBook-sourced rows, so hand-entered repeaters survive",
     "How the two NIMS files are shaped and how db.py seeds them together",
     "How apply_theme.py enforces one canonical set of theme variables across the web pages",
     "Design takeaways and the maintainer's rule for reference data"
   ],
   "blocks": [
-    {"callout": {"kind": "tip", "label": "IN ONE SENTENCE",
-      "text": "These four files are FieldCommand's __reference layer__: `fetch_repeaters.py` imports repeater data, `nims_resource_types.py` + `nims_definitions.py` supply the offline NIMS resource-typing library that `db.py` seeds once, and `apply_theme.py` makes every Hyper Text Markup Language (HTML) page share one color theme."}},
-
-    {"h1": "What This Is / What It Is For"},
-    {"p": "Most of FieldCommand is about the live incident — nets, check-ins, forms, resources. This chapter is about the __reference data__ that sits underneath all of that: the facts the app needs to know before anyone starts an incident, and the look it wears while doing it. None of these four files touches a running net. They populate lookup tables and enforce a visual standard, then get out of the way."},
-    {"p": "Three of them feed the database. `fetch_repeaters.py` downloads amateur radio repeater listings from RepeaterBook and writes them into the `repeaters` table. `nims_resource_types.py` and `nims_definitions.py` are a matched pair of plain Python data files that together form the National Incident Management System (NIMS) resource-typing library — the standard catalog of typed emergency resources (a Type I engine, a Type II hand crew, a heavy Urban Search and Rescue task force) — which `db.py` seeds into the `resource_types` table on a fresh install. The fourth, `apply_theme.py`, feeds the web front end instead of the database: it scans the HTML pages and makes sure every one of them defines the same set of Cascading Style Sheets (CSS) color variables, so the whole application looks like one product."},
-    {"callout": {"kind": "note", "label": "JARGON, IN PLAIN WORDS",
-      "text": "__Reference data__ is background information the app looks things up in, as opposed to data the app creates during an incident. __RepeaterBook__ is a public online directory of amateur radio repeaters. __NIMS resource typing__ is a federal standard that describes emergency resources by kind and capability so that a 'Type II ambulance' means the same thing everywhere. __Seeding__ is loading starter rows into a table the first time the database is created."}},
-
-    {"h1": "fetch_repeaters.py — Bringing Repeater Data In"},
-    {"p": "A repeater extends the range of a handheld or mobile radio, so knowing which repeaters cover the incident area — and their frequencies, tones, and whether they serve emergency groups — is genuinely useful field information. `fetch_repeaters.py` is a standalone command-line script (run by hand or from the maintenance menu) that pulls that data from RepeaterBook's export Application Programming Interface (API) and lands it in the database the web interface reads."},
-    {"p": "The whole job is three steps: __fetch__, __normalize__, __write__. Fetching is one Hyper Text Transfer Protocol (HTTP) request per state-and-band combination. The important detail is that RepeaterBook changed its rules in 2026 and now requires an approved token; the script sends it as a request header and warns loudly if it is missing:"},
-    {"code": [
-      "def fetch_repeaters(state, band_code, token):",
-      "    \"\"\"Fetch repeaters for a given state and band from RepeaterBook.\"\"\"",
-      "    params = {",
-      "        \"state_id\": state,",
-      "        \"band\": band_code,",
-      "        \"status_id\": \"1\",  # On-air only",
-      "        \"type\": \"json\",",
-      "    }",
-      "    url = REPEATERBOOK_URL + \"?\" + urllib.parse.urlencode(params)",
-      "    headers = {",
-      "        \"User-Agent\": \"FieldCommand-IMS/1.0 EmComm (https://github.com/KE4CON/FieldCommand-IMS)\",",
-      "        \"Accept\": \"application/json\",",
-      "    }",
-      "    # New (2026+) token authentication. Without this, expect HTTP 403.",
-      "    if token:",
-      "        headers[\"X-RB-App-Token\"] = token",
-      "    req = urllib.request.Request(url, headers=headers)",
-      "    with urllib.request.urlopen(req, timeout=30) as resp:",
-      "        data = json.loads(resp.read())",
-      "    return data.get(\"results\", [])"
-    ]},
-    {"p": "The token is resolved from three places in priority order — the `--token` flag, then the `REPEATERBOOK_TOKEN` environment variable, then a token file on disk — by `get_token()`. That layering is deliberate: an operator can paste a token once into `/opt/fieldcommand/data/repeaterbook_token.txt` and never think about it again, while a developer can override it for a one-off run. If none is found, the script prints a full explanation (apply for a token, or use the offline Comma-Separated Values export instead) and continues anyway so the failure is visible rather than silent."},
-    {"p": "__Normalizing__ is the step that protects the rest of the app from RepeaterBook's field names. The API returns keys like `Callsign`, `Input Freq`, and `Operational Status`; the database uses lowercase columns like `callsign`, `input_freq`, and `status`. `normalize_repeater()` is the single translation layer, and it also does small cleanups — defaulting a blank digital mode to plain `FM`, and turning yes/no fields into 1/0 integers:"},
-    {"code": [
-      "def normalize_repeater(r):",
-      "    \"\"\"Normalize a RepeaterBook result into the FieldCommand 'repeaters' table schema.\"\"\"",
-      "    def yn(v): return 1 if str(v).strip().lower() in (\"yes\", \"1\", \"true\") else 0",
-      "    digital = r.get(\"Digital\", \"\") or \"\"",
-      "    mode = digital if digital and digital.lower() not in (\"\", \"no\", \"none\") else \"FM\"",
-      "    return {",
-      "        \"callsign\":    r.get(\"Callsign\", \"\"),",
-      "        \"output_freq\": str(r.get(\"Frequency\", \"\") or \"\"),",
-      "        \"tone\":        r.get(\"PL\", \"\") or \"\",",
-      "        \"ares\":        yn(r.get(\"ARES\", \"\")),",
-      "        \"races\":       yn(r.get(\"RACES\", \"\")),",
-      "        \"skywarn\":     yn(r.get(\"SKYWARN\", \"\")),",
-      "        \"source\":      \"RepeaterBook\",",
-      "        # ... more fields ...",
-      "    }"
-    ]},
-    {"p": "Notice the last field: every normalized row is stamped `\"source\": \"RepeaterBook\"`. That stamp is what makes the __write__ step safe. `write_to_db()` does not empty the table — it deletes only the rows this script owns, then re-inserts the fresh download, so any repeaters an operator typed in by hand are never touched:"},
-    {"code": [
-      "def write_to_db(repeaters, db_path):",
-      "    \"\"\"Replace the repeaters table contents with the freshly fetched data.\"\"\"",
-      "    conn = sqlite3.connect(str(db_path))",
-      "    now = datetime.datetime.utcnow().isoformat(timespec=\"seconds\") + \"Z\"",
-      "    try:",
-      "        # Clear only RepeaterBook-sourced rows so any manual entries survive.",
-      "        conn.execute(\"DELETE FROM repeaters WHERE source = 'RepeaterBook'\")",
-      "        placeholders = \",\".join(\"?\" * len(REP_COLS))",
-      "        sql = f\"INSERT INTO repeaters ({','.join(REP_COLS)}) VALUES ({placeholders})\"",
-      "        for rep in repeaters:",
-      "            row = [rep.get(c, \"\") for c in REP_COLS[:-1]] + [now]",
-      "            conn.execute(sql, row)",
-      "        conn.commit()"
-    ]},
-    {"p": "Two more touches make it field-friendly: results are de-duplicated on `(callsign, output frequency)` because RepeaterBook no longer returns a stable identifier, and there is a polite `time.sleep(args.rate_limit)` (default three seconds) between calls so the download never hammers RepeaterBook's server. A 403 with no data at all exits with a clear message pointing at the token."},
-    {"callout": {"kind": "important", "label": "WHY THE source COLUMN MATTERS",
-      "text": "The `source` column is not decoration — it is the boundary between machine-owned and human-owned rows. `write_to_db` only ever deletes `WHERE source = 'RepeaterBook'`. If you add another importer, give it its own `source` value and delete only that value; never `DELETE FROM repeaters` with no `WHERE`, or you will erase an operator's hand-entered repeaters on the next refresh."}},
-
-    {"h1": "The NIMS Library — Two Files, One Table"},
-    {"p": "The NIMS resource-typing library is split across two files on purpose, because it answers two different questions. `nims_resource_types.py` answers __what exists and by what numbers__: it is one long Python list where every entry is a fixed nine-field tuple. The file's own docstring documents the shape, which is the contract every row must honor:"},
-    {"code": [
-      "Format: (nims_id, kind, type_level, category, mission_area,",
-      "         description, min_personnel, capabilities, metric_notes)",
-      "",
-      "NIMS_RESOURCE_TYPES = [",
-      "    ('1-508-1001','Engine','Type I','Fire','Fire/Hazardous Materials',",
-      "     'Engine – Type I (Structure)',4,",
-      "     'Structure fire suppression; 1000 GPM pump; 400 gal tank; hose, SCBA, tools',",
-      "     '1000 GPM pump, 400 gal tank, 1200 ft 2.5\" hose, 4 personnel'),"
-    ]},
-    {"p": "`nims_definitions.py` answers __what it means in plain language__: it is a dictionary keyed by the same `nims_id`, where each value carries four explanatory paragraphs — `what_it_is`, `minimum_standards`, `ordering_guidance`, and `common_confusion`. This is the part that makes the library genuinely useful to a volunteer who is not a career fire officer; it explains, for example, that a Type VI 'engine' is really a small patrol unit whose 150 gallons 'runs out in 5 minutes at full flow':"},
-    {"code": [
-      "NIMS_DEFINITIONS = {",
-      "'1-508-1001': {",
-      "    'what_it_is': (",
-      "        \"A Type I engine is a full-size structural fire suppression apparatus — what most \"",
-      "        \"people think of as a 'fire truck.' ...\"",
-      "    ),",
-      "    'minimum_standards': (",
-      "        \"1,000 GPM or greater pump capacity. 400-gallon minimum water tank. ...\"",
-      "    ),",
-      "    'ordering_guidance': ( \"Order Type I when you need maximum water flow ...\" ),",
-      "    'common_confusion': ( \"Confusion: People sometimes call any fire truck a 'Type I.' ...\" ),",
-      "},"
-    ]},
-    {"p": "Keeping the two apart means the terse catalog stays easy to scan and extend, while the prose lives in its own file where it can grow long without cluttering the numbers. The `nims_id` (the Federal Emergency Management Agency's Resource Typing Library Tool identifier, for example `1-508-1001`) is the shared key that joins them. Both files are pure data with a tiny `__main__` block that just prints a count — they do no input/output of their own, which is exactly why they are safe to `import`."},
-    {"callout": {"kind": "note", "label": "JARGON, IN PLAIN WORDS",
-      "text": "A __tuple__ is a fixed-length, fixed-order group of values in Python; because the order is fixed, position 0 is always the `nims_id`, position 3 is always the `category`, and so on. A __dictionary__ is a set of named lookups; here the name (the `nims_id`) points at the four definition paragraphs. Splitting the data this way lets one file stay a compact table and the other hold the long explanations."}},
-    {"p": "The join happens in `db.py`, inside the check-first seeder `seed_resource_types()`. It runs on every boot but does its work only when the table is empty, then loops the list, looks up the matching definition by `nims_id`, and inserts them together in one row. The `(*rt, ...)` unpacks the nine-field tuple straight into the first nine columns, and the four definition strings follow:"},
-    {"code": [
-      "def seed_resource_types(conn):",
-      "    try:",
-      "        existing = conn.execute(\"SELECT COUNT(*) FROM resource_types\").fetchone()[0]",
-      "        if existing == 0:",
-      "            from nims_resource_types import NIMS_RESOURCE_TYPES",
-      "            from nims_definitions import NIMS_DEFINITIONS",
-      "            for rt in NIMS_RESOURCE_TYPES:",
-      "                nims_id = rt[0]",
-      "                defn = NIMS_DEFINITIONS.get(nims_id, {})",
-      "                conn.execute(\"\"\"INSERT INTO resource_types",
-      "                    (nims_id,kind,type_level,category,mission_area,description,",
-      "                     min_personnel,capabilities,metric_notes,",
-      "                     definition_what,definition_std,definition_order,definition_conf,",
-      "                     custom)",
-      "                    VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,0)\"\"\",",
-      "                    (*rt,",
-      "                     defn.get('what_it_is',''),",
-      "                     defn.get('minimum_standards',''),",
-      "                     defn.get('ordering_guidance',''),",
-      "                     defn.get('common_confusion','')))",
-      "            conn.commit()"
-    ]},
-    {"p": "Two design choices are worth naming. First, `NIMS_DEFINITIONS.get(nims_id, {})` means a resource type with no written definition still seeds cleanly — the four definition columns just come out as empty strings — so the catalog and the prose do not have to stay in perfect lockstep. Second, every seeded row is inserted with `custom=0`, marking it as a NIMS standard the app ships. Rows an agency adds later carry `custom=1`, so the interface can tell 'this is the federal standard' from 'this is ours' — the same owned-versus-added distinction the `source` column draws for repeaters. The whole seed is wrapped in `try/except` that only logs, so a seeding hiccup can never stop the database from initializing."},
-
-    {"h1": "apply_theme.py — One Look, Enforced"},
-    {"p": "FieldCommand's web front end is many separate HTML files, each with its own inline `<style>`. Left alone, they would drift — one page a slightly different blue, another missing the alert amber. `apply_theme.py` prevents that drift. It is not a stylesheet; it is a __consistency tool__ that treats one canonical block of CSS variables as the single source of truth and makes every page conform. The canonical block and the list of variables every page must define are both constants at the top of the file:"},
-    {"code": [
-      "THEME_VARS = \"\"\":root {",
-      "  --bg:#0d1117;      /* page background */",
-      "  --panel:#161b22;   /* card / panel background */",
-      "  --txt:#c9d1d9;     /* primary text */",
-      "  --eoc:#1a3a6b;     /* EOC blue — primary brand */",
-      "  --amber:#e3b341;   /* amber — warnings / alerts */",
-      "  --green:#3fb950;   /* green — success / online */",
-      "  --red:#f85149;     /* red — error / danger */",
-      "  --font-hd:'Courier New',monospace;",
-      "}\"\"\"",
-      "",
-      "REQUIRED_VARS = [",
-      "    '--bg', '--panel', '--panel2', '--txt', '--muted', '--line',",
-      "    '--eoc', '--eoc-lt', '--amber', '--green', '--red', '--blue',",
-      "    '--purple', '--font-hd',",
-      "]"
-    ]},
-    {"p": "The tool works in two directions. To check, it parses each page's `:root` blocks with a regular expression, collects the variable names actually defined, and reports any of the `REQUIRED_VARS` that are missing. To fix, `apply_theme()` either replaces an existing `:root` block with the canonical one or, if the page has none, inserts it inside the first `<style>` tag (or ahead of `</head>` as a fallback). The logic is small and readable on purpose:"},
-    {"code": [
-      "def apply_theme(html: str) -> str:",
-      "    \"\"\"Apply canonical theme to HTML string. Returns modified string.\"\"\"",
-      "    if has_root_block(html):",
-      "        return replace_root_block(html)",
-      "    return insert_root_block(html)"
-    ]},
-    {"p": "The command-line interface exposes four safe modes — `--check` (report only), `--missing` (list offenders), `--diff` (show the change without writing), and `--apply` (write, with a `--dry-run` option). `--check` even sets the process exit code to non-zero when anything is wrong, which is why it can be dropped into automation. Individual pages still link a shared `theme.css` for the rest of their styling; `apply_theme.py`'s job is narrowly the color-and-font variable contract that every page must satisfy so the buttons, banners, and status colors mean the same thing everywhere. Because those color names carry meaning — green is online, red is danger, amber is a warning — keeping them identical across pages is a correctness concern, not just an aesthetic one."},
-    {"callout": {"kind": "note", "label": "WHERE THE VERDICT COLORS COME FROM",
-      "text": "The Preflight page's GO / CAUTION / NO-GO banner is a live example of the theme in action: its green, amber, and red are `var(--green)`, `var(--amber)`, and `var(--red)` from this exact variable set. Change a value in `THEME_VARS` and re-apply, and every status color across the app moves together."}},
-
-    {"h1": "Why It Matters / Design Takeaways"},
-    {"bullets": [
-      "__Reference data is separated from live data.__ Repeaters, NIMS types, and the theme are loaded before any incident and never entangled with net or form logic — so they can be refreshed, reseeded, or restyled without risk to incident records.",
-      "__Owned rows are protected by a marker.__ The `source` column for repeaters and the `custom` flag for resource types both draw the same line: machine-imported/standard rows can be replaced freely, hand-entered rows never are.",
-      "__Data files stay dumb; loaders stay smart.__ `nims_resource_types.py` and `nims_definitions.py` are pure Python data with no input/output, joined by `db.py`'s seeder on a shared key — easy to read, easy to extend, safe to import.",
-      "__Consistency is enforced by a tool, not by discipline.__ `apply_theme.py` makes 'every page uses the same colors' a checkable, fixable fact instead of a hope, and its `--check` exit code lets automation guard it."
-    ]},
-    {"callout": {"kind": "important", "label": "MAINTAINER'S RULE",
-      "text": "Add reference data through its established door and keep the markers intact. New repeater importers get their own `source` value and delete only that value. New NIMS types get a nine-field tuple in `nims_resource_types.py` (and, ideally, a matching `nims_id` entry in `nims_definitions.py`), and seed with `custom=0`; the seeder tolerates a missing definition, so never break the tuple's field order to force one in. New theme colors get added to both `THEME_VARS` and `REQUIRED_VARS` in `apply_theme.py`, then rolled out with `--apply` — never hand-edit one page's `:root` and leave the rest behind."}}
+    {
+      "callout": {
+        "kind": "tip",
+        "label": "IN ONE SENTENCE",
+        "text": "These are FieldCommand's __reference layer__: the Repeater Database page imports RepeaterBook data into the server, `nims_resource_types.py` + `nims_definitions.py` supply the offline NIMS resource-typing library that `db.py` seeds once, and `apply_theme.py` makes every Hyper Text Markup Language (HTML) page share one color theme."
+      }
+    },
+    {
+      "h1": "What This Is / What It Is For"
+    },
+    {
+      "p": "Most of FieldCommand is about the live incident — nets, check-ins, forms, resources. This chapter is about the __reference data__ that sits underneath all of that: the facts the app needs to know before anyone starts an incident, and the look it wears while doing it. None of these four files touches a running net. They populate lookup tables and enforce a visual standard, then get out of the way."
+    },
+    {
+      "p": "Three things feed the database. The __Repeater Database page__ (`repeaters.html`) imports amateur radio repeater listings from a RepeaterBook export and writes them into the `repeaters` table through the server. `nims_resource_types.py` and `nims_definitions.py` are a matched pair of plain Python data files that together form the National Incident Management System (NIMS) resource-typing library — the standard catalog of typed emergency resources (a Type I engine, a Type II hand crew, a heavy Urban Search and Rescue task force) — which `db.py` seeds into the `resource_types` table on a fresh install. The fourth, `apply_theme.py`, feeds the web front end instead of the database: it scans the HTML pages and makes sure every one of them defines the same set of Cascading Style Sheets (CSS) color variables, so the whole application looks like one product."
+    },
+    {
+      "callout": {
+        "kind": "note",
+        "label": "JARGON, IN PLAIN WORDS",
+        "text": "__Reference data__ is background information the app looks things up in, as opposed to data the app creates during an incident. __RepeaterBook__ is a public online directory of amateur radio repeaters. __NIMS resource typing__ is a federal standard that describes emergency resources by kind and capability so that a 'Type II ambulance' means the same thing everywhere. __Seeding__ is loading starter rows into a table the first time the database is created."
+      }
+    },
+    {
+      "h1": "Loading Repeaters — a RepeaterBook CSV into the Server"
+    },
+    {
+      "p": "A repeater extends the range of a handheld or mobile radio, so knowing which repeaters cover the incident area — their frequencies, tones, and whether they serve emergency groups — is genuinely useful field information. FieldCommand gets that data from __RepeaterBook__, the public repeater directory, with __no Application Programming Interface (API) token__: the operator exports a plain Comma-Separated Values (CSV) file from a free RepeaterBook account and imports it on the Repeater Database page. There is no server-side downloader; the browser parses the file and hands the rows to the server."
+    },
+    {
+      "callout": {
+        "kind": "note",
+        "label": "WHY THERE IS NO TOKEN OR AUTO-FETCH",
+        "text": "RepeaterBook's export API began requiring an approved token in 2026 (a separate application, not a normal login). Rather than gate repeaters behind an approval most groups will never get, FieldCommand dropped the server-side auto-fetch entirely — there is no `fetch_repeaters.py` and no refresh timer any more. The CSV export needs only a free account, works offline once downloaded, and fits the field-first design: you refresh it by re-importing, not by a background job."
+      }
+    },
+    {
+      "p": "The flow is three steps that straddle the browser and the server: the page __parses__ the CSV, __posts__ the rows, and the server __writes__ them. Parsing lives in `repeaters.html`. `normalizeRecord()` is the single translation layer between RepeaterBook's field names (`Callsign`, `Input Freq`, `Operational Status`) and the app's lowercase schema (`callsign`, `input_freq`, `status`), accepting the several header spellings RepeaterBook has used over the years and defaulting a blank digital mode to plain `FM`."
+    },
+    {
+      "p": "Where the parsed rows go matters for more than the page in front of you. The old design stored the file only in that one browser's `localStorage`, but the tactical map overlay and the Incident Command System (ICS)-205 channel picker both read the __server__ database — so a browser-only import never reached them. `saveRepeatersToServer()` closes that gap by posting the normalized rows to the server, so every device and both of those readers see the same set:"
+    },
+    {
+      "code": [
+        "async function saveRepeatersToServer(reps, filename) {",
+        "  const res = await fetch('/svc/5050/api/repeaters', {",
+        "    method: 'POST', headers: { 'Content-Type': 'application/json' },",
+        "    body: JSON.stringify({",
+        "      replace: true,",
+        "      source: 'RepeaterBook CSV (' + (filename || 'import') + ')',",
+        "      repeaters: reps,",
+        "    }),",
+        "  });",
+        "  // ... a green status line reports how many the server saved ...",
+        "}"
+      ]
+    },
+    {
+      "p": "The __write__ step is a single endpoint, `POST /api/repeaters` in `fcc_lookup_server.py`. It coerces every field defensively — strings stay strings, latitude and longitude parse to floats or `None`, yes/no fields collapse to 1/0, and a node number becomes a present/absent 1/0 — so a malformed row can never break the insert. When `replace` is set it deletes only the RepeaterBook-sourced rows before re-inserting, so any repeater an operator typed in by hand (a different `source`) survives a re-import:"
+    },
+    {
+      "code": [
+        "if path == \"/api/repeaters\":",
+        "    reps = body.get(\"repeaters\") or []",
+        "    if not isinstance(reps, list):",
+        "        return self.send_json({\"error\": \"repeaters must be a list\"}, 400)",
+        "    replace = bool(body.get(\"replace\"))",
+        "    src = str(body.get(\"source\", \"import\"))[:80]",
+        "    # ... _s / _f / _b / _node coercion helpers ...",
+        "    if replace:",
+        "        # Replace only imported rows; hand-entered repeaters survive.",
+        "        c.execute(\"DELETE FROM repeaters WHERE source LIKE 'RepeaterBook%' \"",
+        "                  \"OR source IS NULL OR source=''\")",
+        "    for r in reps:",
+        "        if not isinstance(r, dict): continue",
+        "        c.execute(ins, [ _s(r.get(\"callsign\")).upper(), ..., src ])",
+        "    c.commit()",
+        "    return self.send_json({\"ok\": True, \"imported\": n, \"total\": total})"
+      ]
+    },
+    {
+      "p": "Two things make this field-safe. The endpoint is parameterized end to end — every value goes in through a `?` placeholder, never string-formatted into the SQL — and the loop tolerates junk: a non-dict row is skipped, not fatal. And because the tactical map and the ICS-205 picker read this same table over `GET /api/repeaters`, one import puts the repeaters everywhere they are needed at once. On a device that has not imported anything, the page falls back to a plain `GET` of the stored set — no token, just whatever a prior import saved."
+    },
+    {
+      "callout": {
+        "kind": "important",
+        "label": "WHY THE source COLUMN MATTERS",
+        "text": "The `source` column is the boundary between machine-imported and human-owned rows. The import only ever deletes `WHERE source LIKE 'RepeaterBook%'` (plus legacy blank/null rows). If you add another importer, give it its own `source` value and delete only that value; never `DELETE FROM repeaters` with no `WHERE`, or you will erase an operator's hand-entered repeaters on the next import."
+      }
+    },
+    {
+      "h1": "The NIMS Library — Two Files, One Table"
+    },
+    {
+      "p": "The NIMS resource-typing library is split across two files on purpose, because it answers two different questions. `nims_resource_types.py` answers __what exists and by what numbers__: it is one long Python list where every entry is a fixed nine-field tuple. The file's own docstring documents the shape, which is the contract every row must honor:"
+    },
+    {
+      "code": [
+        "Format: (nims_id, kind, type_level, category, mission_area,",
+        "         description, min_personnel, capabilities, metric_notes)",
+        "",
+        "NIMS_RESOURCE_TYPES = [",
+        "    ('1-508-1001','Engine','Type I','Fire','Fire/Hazardous Materials',",
+        "     'Engine – Type I (Structure)',4,",
+        "     'Structure fire suppression; 1000 GPM pump; 400 gal tank; hose, SCBA, tools',",
+        "     '1000 GPM pump, 400 gal tank, 1200 ft 2.5\" hose, 4 personnel'),"
+      ]
+    },
+    {
+      "p": "`nims_definitions.py` answers __what it means in plain language__: it is a dictionary keyed by the same `nims_id`, where each value carries four explanatory paragraphs — `what_it_is`, `minimum_standards`, `ordering_guidance`, and `common_confusion`. This is the part that makes the library genuinely useful to a volunteer who is not a career fire officer; it explains, for example, that a Type VI 'engine' is really a small patrol unit whose 150 gallons 'runs out in 5 minutes at full flow':"
+    },
+    {
+      "code": [
+        "NIMS_DEFINITIONS = {",
+        "'1-508-1001': {",
+        "    'what_it_is': (",
+        "        \"A Type I engine is a full-size structural fire suppression apparatus — what most \"",
+        "        \"people think of as a 'fire truck.' ...\"",
+        "    ),",
+        "    'minimum_standards': (",
+        "        \"1,000 GPM or greater pump capacity. 400-gallon minimum water tank. ...\"",
+        "    ),",
+        "    'ordering_guidance': ( \"Order Type I when you need maximum water flow ...\" ),",
+        "    'common_confusion': ( \"Confusion: People sometimes call any fire truck a 'Type I.' ...\" ),",
+        "},"
+      ]
+    },
+    {
+      "p": "Keeping the two apart means the terse catalog stays easy to scan and extend, while the prose lives in its own file where it can grow long without cluttering the numbers. The `nims_id` (the Federal Emergency Management Agency's Resource Typing Library Tool identifier, for example `1-508-1001`) is the shared key that joins them. Both files are pure data with a tiny `__main__` block that just prints a count — they do no input/output of their own, which is exactly why they are safe to `import`."
+    },
+    {
+      "callout": {
+        "kind": "note",
+        "label": "JARGON, IN PLAIN WORDS",
+        "text": "A __tuple__ is a fixed-length, fixed-order group of values in Python; because the order is fixed, position 0 is always the `nims_id`, position 3 is always the `category`, and so on. A __dictionary__ is a set of named lookups; here the name (the `nims_id`) points at the four definition paragraphs. Splitting the data this way lets one file stay a compact table and the other hold the long explanations."
+      }
+    },
+    {
+      "p": "The join happens in `db.py`, inside the check-first seeder `seed_resource_types()`. It runs on every boot but does its work only when the table is empty, then loops the list, looks up the matching definition by `nims_id`, and inserts them together in one row. The `(*rt, ...)` unpacks the nine-field tuple straight into the first nine columns, and the four definition strings follow:"
+    },
+    {
+      "code": [
+        "def seed_resource_types(conn):",
+        "    try:",
+        "        existing = conn.execute(\"SELECT COUNT(*) FROM resource_types\").fetchone()[0]",
+        "        if existing == 0:",
+        "            from nims_resource_types import NIMS_RESOURCE_TYPES",
+        "            from nims_definitions import NIMS_DEFINITIONS",
+        "            for rt in NIMS_RESOURCE_TYPES:",
+        "                nims_id = rt[0]",
+        "                defn = NIMS_DEFINITIONS.get(nims_id, {})",
+        "                conn.execute(\"\"\"INSERT INTO resource_types",
+        "                    (nims_id,kind,type_level,category,mission_area,description,",
+        "                     min_personnel,capabilities,metric_notes,",
+        "                     definition_what,definition_std,definition_order,definition_conf,",
+        "                     custom)",
+        "                    VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,0)\"\"\",",
+        "                    (*rt,",
+        "                     defn.get('what_it_is',''),",
+        "                     defn.get('minimum_standards',''),",
+        "                     defn.get('ordering_guidance',''),",
+        "                     defn.get('common_confusion','')))",
+        "            conn.commit()"
+      ]
+    },
+    {
+      "p": "Two design choices are worth naming. First, `NIMS_DEFINITIONS.get(nims_id, {})` means a resource type with no written definition still seeds cleanly — the four definition columns just come out as empty strings — so the catalog and the prose do not have to stay in perfect lockstep. Second, every seeded row is inserted with `custom=0`, marking it as a NIMS standard the app ships. Rows an agency adds later carry `custom=1`, so the interface can tell 'this is the federal standard' from 'this is ours' — the same owned-versus-added distinction the `source` column draws for repeaters. The whole seed is wrapped in `try/except` that only logs, so a seeding hiccup can never stop the database from initializing."
+    },
+    {
+      "h1": "apply_theme.py — One Look, Enforced"
+    },
+    {
+      "p": "FieldCommand's web front end is many separate HTML files, each with its own inline `<style>`. Left alone, they would drift — one page a slightly different blue, another missing the alert amber. `apply_theme.py` prevents that drift. It is not a stylesheet; it is a __consistency tool__ that treats one canonical block of CSS variables as the single source of truth and makes every page conform. The canonical block and the list of variables every page must define are both constants at the top of the file:"
+    },
+    {
+      "code": [
+        "THEME_VARS = \"\"\":root {",
+        "  --bg:#0d1117;      /* page background */",
+        "  --panel:#161b22;   /* card / panel background */",
+        "  --txt:#c9d1d9;     /* primary text */",
+        "  --eoc:#1a3a6b;     /* EOC blue — primary brand */",
+        "  --amber:#e3b341;   /* amber — warnings / alerts */",
+        "  --green:#3fb950;   /* green — success / online */",
+        "  --red:#f85149;     /* red — error / danger */",
+        "  --font-hd:'Courier New',monospace;",
+        "}\"\"\"",
+        "",
+        "REQUIRED_VARS = [",
+        "    '--bg', '--panel', '--panel2', '--txt', '--muted', '--line',",
+        "    '--eoc', '--eoc-lt', '--amber', '--green', '--red', '--blue',",
+        "    '--purple', '--font-hd',",
+        "]"
+      ]
+    },
+    {
+      "p": "The tool works in two directions. To check, it parses each page's `:root` blocks with a regular expression, collects the variable names actually defined, and reports any of the `REQUIRED_VARS` that are missing. To fix, `apply_theme()` either replaces an existing `:root` block with the canonical one or, if the page has none, inserts it inside the first `<style>` tag (or ahead of `</head>` as a fallback). The logic is small and readable on purpose:"
+    },
+    {
+      "code": [
+        "def apply_theme(html: str) -> str:",
+        "    \"\"\"Apply canonical theme to HTML string. Returns modified string.\"\"\"",
+        "    if has_root_block(html):",
+        "        return replace_root_block(html)",
+        "    return insert_root_block(html)"
+      ]
+    },
+    {
+      "p": "The command-line interface exposes four safe modes — `--check` (report only), `--missing` (list offenders), `--diff` (show the change without writing), and `--apply` (write, with a `--dry-run` option). `--check` even sets the process exit code to non-zero when anything is wrong, which is why it can be dropped into automation. Individual pages still link a shared `theme.css` for the rest of their styling; `apply_theme.py`'s job is narrowly the color-and-font variable contract that every page must satisfy so the buttons, banners, and status colors mean the same thing everywhere. Because those color names carry meaning — green is online, red is danger, amber is a warning — keeping them identical across pages is a correctness concern, not just an aesthetic one."
+    },
+    {
+      "callout": {
+        "kind": "note",
+        "label": "WHERE THE VERDICT COLORS COME FROM",
+        "text": "The Preflight page's GO / CAUTION / NO-GO banner is a live example of the theme in action: its green, amber, and red are `var(--green)`, `var(--amber)`, and `var(--red)` from this exact variable set. Change a value in `THEME_VARS` and re-apply, and every status color across the app moves together."
+      }
+    },
+    {
+      "h1": "Why It Matters / Design Takeaways"
+    },
+    {
+      "bullets": [
+        "__Reference data is separated from live data.__ Repeaters, NIMS types, and the theme are loaded before any incident and never entangled with net or form logic — so they can be refreshed, reseeded, or restyled without risk to incident records.",
+        "__Owned rows are protected by a marker.__ The `source` column for repeaters and the `custom` flag for resource types both draw the same line: machine-imported/standard rows can be replaced freely, hand-entered rows never are.",
+        "__Data files stay dumb; loaders stay smart.__ `nims_resource_types.py` and `nims_definitions.py` are pure Python data with no input/output, joined by `db.py`'s seeder on a shared key — easy to read, easy to extend, safe to import.",
+        "__Consistency is enforced by a tool, not by discipline.__ `apply_theme.py` makes 'every page uses the same colors' a checkable, fixable fact instead of a hope, and its `--check` exit code lets automation guard it."
+      ]
+    },
+    {
+      "callout": {
+        "kind": "important",
+        "label": "MAINTAINER'S RULE",
+        "text": "Add reference data through its established door and keep the markers intact. New repeater importers get their own `source` value and delete only that value. New NIMS types get a nine-field tuple in `nims_resource_types.py` (and, ideally, a matching `nims_id` entry in `nims_definitions.py`), and seed with `custom=0`; the seeder tolerates a missing definition, so never break the tuple's field order to force one in. New theme colors get added to both `THEME_VARS` and `REQUIRED_VARS` in `apply_theme.py`, then rolled out with `--apply` — never hand-edit one page's `:root` and leave the rest behind."
+      }
+    }
   ]
 }

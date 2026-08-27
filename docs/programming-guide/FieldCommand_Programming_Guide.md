@@ -161,7 +161,7 @@ Each concern is its own process listening on its own port. This is the complete 
 | 8083 | `tile_server.py` (Flask) | Offline map tiles — serves the map imagery for the tactical and resource maps with no internet. | `/tiles/` |
 | 8090 | Pat (Winlink) | Winlink backup email over radio. | `/winlink/` |
 
-One more nginx path, `/aprs-gw/`, exists to relay the live Automatic Packet Reporting System (APRS) tactical feed — including WebSocket upgrades — from the RF source (APRS Command), so the browser can reach that feed same-origin over TLS as well. It points by default at the RF source on this machine and can be repointed at another host if that source runs elsewhere.
+Two more nginx paths, `/aprs-gw/` and `/aprs-yc/`, exist to relay the live Automatic Packet Reporting System (APRS) tactical feed — including WebSocket upgrades — from a radio gateway, so the browser can reach that feed same-origin over TLS as well. They point by default at the APRS gateway on this machine and can be repointed at another host if the gateway runs elsewhere.
 
 > **DO NOT POINT ICS CALLS AT 5051** — The ICS platform is on port **5055**. Port **5051** is the health monitor. These are easy to transpose and the mistake is silent — an ICS API call sent to 5051 simply will not find its route. When you add or move an ICS endpoint, confirm the front end calls `/svc/5055/`.
 
@@ -546,7 +546,7 @@ location /aprs-gw/ {
 }
 ```
 
-There is one of these — `/aprs-gw/` to the Radio Frequency (RF) source (APRS Command) on 8080. The payoff is the same same-origin, single-front-door story as the rest of the file: the browser opens a secure `wss://` connection to nginx, nginx terminates the TLS and makes the plain, local `ws` hop to the APRS gateway itself. The config notes that if the APRS gateway runs on a different host (say the operations laptop), you change the `127.0.0.1` here to that host's address — the browser side never changes. The file also notes one thing it deliberately does **not** proxy: the 44Net gateway tunnel control on port 9001 is intentionally localhost-only on a different device and is left unexposed.
+There are two of these — `/aprs-gw/` to the Radio Frequency (RF) gateway on 8080 and `/aprs-yc/` to YAAC on 8082. The payoff is the same same-origin, single-front-door story as the rest of the file: the browser opens a secure `wss://` connection to nginx, nginx terminates the TLS and makes the plain, local `ws` hop to the APRS gateway itself. The config notes that if the APRS gateway runs on a different host (say the operations laptop), you change the `127.0.0.1` here to that host's address — the browser side never changes. The file also notes one thing it deliberately does **not** proxy: the 44Net gateway tunnel control on port 9001 is intentionally localhost-only on a different device and is left unexposed.
 
 > **JARGON, IN PLAIN WORDS** — A **WebSocket** is a network connection that stays open so a server can keep pushing new data (here, live radio positions) without the page asking again each time. The `wss://` scheme is a WebSocket over TLS — the secure version — just as `https://` is HTTP over TLS.
 
@@ -3361,92 +3361,68 @@ Two details make this a good field citizen. `download_file` verifies it actually
 
 # 18. Reference Data and Theming — RepeaterBook, NIMS, and the Theme
 
-*Four support files that never handle a live incident but decide what the app knows and how it looks: fetch_repeaters.py pulls repeater data in from RepeaterBook, nims_resource_types.py and nims_definitions.py carry the offline National Incident Management System (NIMS) resource-typing library that db.py seeds into the database, and apply_theme.py keeps every page on one dark color scheme.*
+*Support files and paths that never handle a live incident but decide what the app knows and how it looks: the Repeater Database page imports a RepeaterBook Comma-Separated Values (CSV) export into the server (POST /api/repeaters), nims_resource_types.py and nims_definitions.py carry the offline National Incident Management System (NIMS) resource-typing library that db.py seeds into the database, and apply_theme.py keeps every page on one dark color scheme.*
 
-> **IN ONE SENTENCE** — These four files are FieldCommand's *reference layer*: `fetch_repeaters.py` imports repeater data, `nims_resource_types.py` + `nims_definitions.py` supply the offline NIMS resource-typing library that `db.py` seeds once, and `apply_theme.py` makes every Hyper Text Markup Language (HTML) page share one color theme.
+> **IN ONE SENTENCE** — These are FieldCommand's *reference layer*: the Repeater Database page imports RepeaterBook data into the server, `nims_resource_types.py` + `nims_definitions.py` supply the offline NIMS resource-typing library that `db.py` seeds once, and `apply_theme.py` makes every Hyper Text Markup Language (HTML) page share one color theme.
 
 
 ## What This Is / What It Is For
 
 Most of FieldCommand is about the live incident — nets, check-ins, forms, resources. This chapter is about the *reference data* that sits underneath all of that: the facts the app needs to know before anyone starts an incident, and the look it wears while doing it. None of these four files touches a running net. They populate lookup tables and enforce a visual standard, then get out of the way.
 
-Three of them feed the database. `fetch_repeaters.py` downloads amateur radio repeater listings from RepeaterBook and writes them into the `repeaters` table. `nims_resource_types.py` and `nims_definitions.py` are a matched pair of plain Python data files that together form the National Incident Management System (NIMS) resource-typing library — the standard catalog of typed emergency resources (a Type I engine, a Type II hand crew, a heavy Urban Search and Rescue task force) — which `db.py` seeds into the `resource_types` table on a fresh install. The fourth, `apply_theme.py`, feeds the web front end instead of the database: it scans the HTML pages and makes sure every one of them defines the same set of Cascading Style Sheets (CSS) color variables, so the whole application looks like one product.
+Three things feed the database. The *Repeater Database page* (`repeaters.html`) imports amateur radio repeater listings from a RepeaterBook export and writes them into the `repeaters` table through the server. `nims_resource_types.py` and `nims_definitions.py` are a matched pair of plain Python data files that together form the National Incident Management System (NIMS) resource-typing library — the standard catalog of typed emergency resources (a Type I engine, a Type II hand crew, a heavy Urban Search and Rescue task force) — which `db.py` seeds into the `resource_types` table on a fresh install. The fourth, `apply_theme.py`, feeds the web front end instead of the database: it scans the HTML pages and makes sure every one of them defines the same set of Cascading Style Sheets (CSS) color variables, so the whole application looks like one product.
 
 > **JARGON, IN PLAIN WORDS** — *Reference data* is background information the app looks things up in, as opposed to data the app creates during an incident. *RepeaterBook* is a public online directory of amateur radio repeaters. *NIMS resource typing* is a federal standard that describes emergency resources by kind and capability so that a 'Type II ambulance' means the same thing everywhere. *Seeding* is loading starter rows into a table the first time the database is created.
 
 
-## fetch_repeaters.py — Bringing Repeater Data In
+## Loading Repeaters — a RepeaterBook CSV into the Server
 
-A repeater extends the range of a handheld or mobile radio, so knowing which repeaters cover the incident area — and their frequencies, tones, and whether they serve emergency groups — is genuinely useful field information. `fetch_repeaters.py` is a standalone command-line script (run by hand or from the maintenance menu) that pulls that data from RepeaterBook's export Application Programming Interface (API) and lands it in the database the web interface reads.
+A repeater extends the range of a handheld or mobile radio, so knowing which repeaters cover the incident area — their frequencies, tones, and whether they serve emergency groups — is genuinely useful field information. FieldCommand gets that data from *RepeaterBook*, the public repeater directory, with *no Application Programming Interface (API) token*: the operator exports a plain Comma-Separated Values (CSV) file from a free RepeaterBook account and imports it on the Repeater Database page. There is no server-side downloader; the browser parses the file and hands the rows to the server.
 
-The whole job is three steps: *fetch*, *normalize*, *write*. Fetching is one Hyper Text Transfer Protocol (HTTP) request per state-and-band combination. The important detail is that RepeaterBook changed its rules in 2026 and now requires an approved token; the script sends it as a request header and warns loudly if it is missing:
+> **WHY THERE IS NO TOKEN OR AUTO-FETCH** — RepeaterBook's export API began requiring an approved token in 2026 (a separate application, not a normal login). Rather than gate repeaters behind an approval most groups will never get, FieldCommand dropped the server-side auto-fetch entirely — there is no `fetch_repeaters.py` and no refresh timer any more. The CSV export needs only a free account, works offline once downloaded, and fits the field-first design: you refresh it by re-importing, not by a background job.
 
-```
-def fetch_repeaters(state, band_code, token):
-    """Fetch repeaters for a given state and band from RepeaterBook."""
-    params = {
-        "state_id": state,
-        "band": band_code,
-        "status_id": "1",  # On-air only
-        "type": "json",
-    }
-    url = REPEATERBOOK_URL + "?" + urllib.parse.urlencode(params)
-    headers = {
-        "User-Agent": "FieldCommand-IMS/1.0 EmComm (https://github.com/KE4CON/FieldCommand-IMS)",
-        "Accept": "application/json",
-    }
-    # New (2026+) token authentication. Without this, expect HTTP 403.
-    if token:
-        headers["X-RB-App-Token"] = token
-    req = urllib.request.Request(url, headers=headers)
-    with urllib.request.urlopen(req, timeout=30) as resp:
-        data = json.loads(resp.read())
-    return data.get("results", [])
-```
+The flow is three steps that straddle the browser and the server: the page *parses* the CSV, *posts* the rows, and the server *writes* them. Parsing lives in `repeaters.html`. `normalizeRecord()` is the single translation layer between RepeaterBook's field names (`Callsign`, `Input Freq`, `Operational Status`) and the app's lowercase schema (`callsign`, `input_freq`, `status`), accepting the several header spellings RepeaterBook has used over the years and defaulting a blank digital mode to plain `FM`.
 
-The token is resolved from three places in priority order — the `--token` flag, then the `REPEATERBOOK_TOKEN` environment variable, then a token file on disk — by `get_token()`. That layering is deliberate: an operator can paste a token once into `/opt/fieldcommand/data/repeaterbook_token.txt` and never think about it again, while a developer can override it for a one-off run. If none is found, the script prints a full explanation (apply for a token, or use the offline Comma-Separated Values export instead) and continues anyway so the failure is visible rather than silent.
-
-*Normalizing* is the step that protects the rest of the app from RepeaterBook's field names. The API returns keys like `Callsign`, `Input Freq`, and `Operational Status`; the database uses lowercase columns like `callsign`, `input_freq`, and `status`. `normalize_repeater()` is the single translation layer, and it also does small cleanups — defaulting a blank digital mode to plain `FM`, and turning yes/no fields into 1/0 integers:
+Where the parsed rows go matters for more than the page in front of you. The old design stored the file only in that one browser's `localStorage`, but the tactical map overlay and the Incident Command System (ICS)-205 channel picker both read the *server* database — so a browser-only import never reached them. `saveRepeatersToServer()` closes that gap by posting the normalized rows to the server, so every device and both of those readers see the same set:
 
 ```
-def normalize_repeater(r):
-    """Normalize a RepeaterBook result into the FieldCommand 'repeaters' table schema."""
-    def yn(v): return 1 if str(v).strip().lower() in ("yes", "1", "true") else 0
-    digital = r.get("Digital", "") or ""
-    mode = digital if digital and digital.lower() not in ("", "no", "none") else "FM"
-    return {
-        "callsign":    r.get("Callsign", ""),
-        "output_freq": str(r.get("Frequency", "") or ""),
-        "tone":        r.get("PL", "") or "",
-        "ares":        yn(r.get("ARES", "")),
-        "races":       yn(r.get("RACES", "")),
-        "skywarn":     yn(r.get("SKYWARN", "")),
-        "source":      "RepeaterBook",
-        # ... more fields ...
-    }
+async function saveRepeatersToServer(reps, filename) {
+  const res = await fetch('/svc/5050/api/repeaters', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      replace: true,
+      source: 'RepeaterBook CSV (' + (filename || 'import') + ')',
+      repeaters: reps,
+    }),
+  });
+  // ... a green status line reports how many the server saved ...
+}
 ```
 
-Notice the last field: every normalized row is stamped `"source": "RepeaterBook"`. That stamp is what makes the *write* step safe. `write_to_db()` does not empty the table — it deletes only the rows this script owns, then re-inserts the fresh download, so any repeaters an operator typed in by hand are never touched:
+The *write* step is a single endpoint, `POST /api/repeaters` in `fcc_lookup_server.py`. It coerces every field defensively — strings stay strings, latitude and longitude parse to floats or `None`, yes/no fields collapse to 1/0, and a node number becomes a present/absent 1/0 — so a malformed row can never break the insert. When `replace` is set it deletes only the RepeaterBook-sourced rows before re-inserting, so any repeater an operator typed in by hand (a different `source`) survives a re-import:
 
 ```
-def write_to_db(repeaters, db_path):
-    """Replace the repeaters table contents with the freshly fetched data."""
-    conn = sqlite3.connect(str(db_path))
-    now = datetime.datetime.utcnow().isoformat(timespec="seconds") + "Z"
-    try:
-        # Clear only RepeaterBook-sourced rows so any manual entries survive.
-        conn.execute("DELETE FROM repeaters WHERE source = 'RepeaterBook'")
-        placeholders = ",".join("?" * len(REP_COLS))
-        sql = f"INSERT INTO repeaters ({','.join(REP_COLS)}) VALUES ({placeholders})"
-        for rep in repeaters:
-            row = [rep.get(c, "") for c in REP_COLS[:-1]] + [now]
-            conn.execute(sql, row)
-        conn.commit()
+if path == "/api/repeaters":
+    reps = body.get("repeaters") or []
+    if not isinstance(reps, list):
+        return self.send_json({"error": "repeaters must be a list"}, 400)
+    replace = bool(body.get("replace"))
+    src = str(body.get("source", "import"))[:80]
+    # ... _s / _f / _b / _node coercion helpers ...
+    if replace:
+        # Replace only imported rows; hand-entered repeaters survive.
+        c.execute("DELETE FROM repeaters WHERE source LIKE 'RepeaterBook%' "
+                  "OR source IS NULL OR source=''")
+    for r in reps:
+        if not isinstance(r, dict): continue
+        c.execute(ins, [ _s(r.get("callsign")).upper(), ..., src ])
+    c.commit()
+    return self.send_json({"ok": True, "imported": n, "total": total})
 ```
 
-Two more touches make it field-friendly: results are de-duplicated on `(callsign, output frequency)` because RepeaterBook no longer returns a stable identifier, and there is a polite `time.sleep(args.rate_limit)` (default three seconds) between calls so the download never hammers RepeaterBook's server. A 403 with no data at all exits with a clear message pointing at the token.
+Two things make this field-safe. The endpoint is parameterized end to end — every value goes in through a `?` placeholder, never string-formatted into the SQL — and the loop tolerates junk: a non-dict row is skipped, not fatal. And because the tactical map and the ICS-205 picker read this same table over `GET /api/repeaters`, one import puts the repeaters everywhere they are needed at once. On a device that has not imported anything, the page falls back to a plain `GET` of the stored set — no token, just whatever a prior import saved.
 
-> **WHY THE source COLUMN MATTERS** — The `source` column is not decoration — it is the boundary between machine-owned and human-owned rows. `write_to_db` only ever deletes `WHERE source = 'RepeaterBook'`. If you add another importer, give it its own `source` value and delete only that value; never `DELETE FROM repeaters` with no `WHERE`, or you will erase an operator's hand-entered repeaters on the next refresh.
+> **WHY THE source COLUMN MATTERS** — The `source` column is the boundary between machine-imported and human-owned rows. The import only ever deletes `WHERE source LIKE 'RepeaterBook%'` (plus legacy blank/null rows). If you add another importer, give it its own `source` value and delete only that value; never `DELETE FROM repeaters` with no `WHERE`, or you will erase an operator's hand-entered repeaters on the next import.
 
 
 ## The NIMS Library — Two Files, One Table
@@ -3958,7 +3934,7 @@ echo "  t) Apply theme consistency check"
 read -rp "Select [0-9]: " CHOICE
 ```
 
-The script is written defensively — `set -euo pipefail` at the top means it stops on the first unhandled error rather than blundering onward. Several menu items tie directly to tools covered elsewhere in this guide: option 6 runs `fetch_repeaters.py` (Chapter 18) and even prompts for the RepeaterBook token if none is saved yet; option `t` runs `apply_theme.py` (Chapter 18) in check mode and offers to apply fixes. The most substantial item is option 7, *Update web files*, which is how a code change actually reaches a running box. It copies the HTML across, then copies a fixed list of Python files, then restarts the services so they pick up the new code:
+The script is written defensively — `set -euo pipefail` at the top means it stops on the first unhandled error rather than blundering onward. Several menu items tie directly to tools covered elsewhere in this guide: option 6 explains how to load the repeater database by importing a RepeaterBook CSV (Chapter 18); option `t` runs `apply_theme.py` (Chapter 18) in check mode and offers to apply fixes. The most substantial item is option 7, *Update web files*, which is how a code change actually reaches a running box. It copies the HTML across, then copies a fixed list of Python files, then restarts the services so they pick up the new code:
 
 ```
         # Also update Python files so servers stay in sync with HTML
@@ -3966,7 +3942,7 @@ The script is written defensively — `set -euo pipefail` at the top means it st
             db.py
             fcc_lookup_server.py
             health_monitor.py
-            fetch_repeaters.py
+
             ics_platform_server.py
             apply_theme.py
             nims_definitions.py

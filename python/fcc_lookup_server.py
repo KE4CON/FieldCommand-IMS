@@ -840,7 +840,9 @@ class Handler(BaseHTTPRequestHandler):
             ins = f"INSERT INTO repeaters ({','.join(cols)}) VALUES ({','.join(['?']*len(cols))})"
             try:
                 if replace:
-                    c.execute("DELETE FROM repeaters")
+                    # Replace only the imported (RepeaterBook) rows so any repeaters an
+                    # operator typed in by hand (a different source) survive a re-import.
+                    c.execute("DELETE FROM repeaters WHERE source LIKE 'RepeaterBook%' OR source IS NULL OR source=''")
                 n = 0
                 for r in reps:
                     if not isinstance(r, dict):

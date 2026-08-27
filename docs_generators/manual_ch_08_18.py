@@ -1293,9 +1293,28 @@ def ch13():
     s.append(P(
         "At the bottom of the Sources tab a <b>Merged Dataset</b> box tallies the total "
         "unique stations and how many came from each source alone or from both. "
-        "Each source panel has a <b>Poll</b> button to fetch it on demand. To use APRS-IS, "
-        "paste an aprs.fi Application Programming Interface (API) key into the key box; leave "
-        "it blank to keep that feed off."))
+        "Each source panel has a <b>Poll</b> button to fetch it on demand."))
+    s.append(SP(4))
+    s.append(CHG('Expanded the APRS-IS explanation: how to get the free aprs.fi API key, and what it does (wording).'))
+    s.append(P(
+        "<b>Turning on APRS-IS (the internet feed).</b> APRS-IS is off by default, and it "
+        "needs two things: a working internet connection and a free <b>key</b> from the "
+        "<b>aprs.fi</b> website. FieldCommand pulls the internet stations from aprs.fi's "
+        "service, and that service will only answer if you give it your own key. You set this "
+        "up once:"))
+    s += steps([
+        "On any device that has internet, open a web browser and go to <b>aprs.fi</b>.",
+        "Create a free account (top-right <b>Login / Register</b>), then sign in.",
+        "Open your account settings — <b>My account</b> — and find <b>API key</b>. Click to "
+        "generate one if it is not already there. It is a long string of letters and numbers.",
+        "Copy that key, come back to the Tactical Map's <b>Sources</b> tab, and paste it into "
+        "the <b>aprs.fi API key</b> box. It saves by itself — there is no Save button.",
+    ])
+    s.append(P(
+        "From then on, whenever the FieldCommand server has internet, the map adds every APRS "
+        "station within about <b>100 kilometers (roughly 60 miles)</b> of your location, drawn "
+        "in purple. Leave the key box blank (the default) to keep APRS-IS off — the map still "
+        "works fully on the radio feed with no internet, which is the normal field case."))
     s.append(SP(6))
 
     s.append(P('13.3  Map Layer Toggles', H2))

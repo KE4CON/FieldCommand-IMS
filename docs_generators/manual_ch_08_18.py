@@ -1478,6 +1478,45 @@ def ch13():
         "refreshes until you clear it.", Bullet))
     s.append(SP(6))
 
+    s.append(P('13.9.1  Loading the Repeater Database', H3))
+    s.append(CHG('New: repeaters load by importing a RepeaterBook CSV (no API token); the import saves to the server so the map + ICS-205 get it.'))
+    s.append(P(
+        "The <b>Repeaters</b> layer above, and the <b>RPT</b> channels in the net logger's and "
+        "ICS-205 channel picker, both come from the <b>Repeater Database</b>. You fill it by "
+        "importing a <b>RepeaterBook</b> export — a plain file you download from the free "
+        "repeaterbook.com website. <b>No special API token is needed</b> (RepeaterBook's API "
+        "token is a separate thing you do not need for this). The database starts empty, so this "
+        "is a real setup step before any repeaters show up on the map or in the picker."))
+    s.append(SP(4))
+    s.append(P('<b>To load your local repeaters:</b>'))
+    s += steps([
+        "On any device that has internet, open a web browser and go to <b>repeaterbook.com</b>. "
+        "Create a free account and sign in — a normal login, <b>not</b> an API token.",
+        "Search your area: your county and state, plus any neighboring counties you want for "
+        "mutual-aid coverage.",
+        "Choose <b>Export</b> and download the list as a <b>CSV</b> file. (The RepeaterBook "
+        "phone app can also do this: <b>Export</b> then <b>Share file</b>.)",
+        "On the FieldCommand dashboard, open <b>Repeater Database</b> (the repeaters page). It "
+        "opens on the <b>Offline File</b> tab.",
+        "Drag the CSV file onto the drop zone (\"Load RepeaterBook Offline Export\"), or click "
+        "<b>Load file</b> and choose it.",
+        "The page imports the repeaters and <b>saves them to the FieldCommand server</b>. A "
+        "green status line confirms how many were saved.",
+    ])
+    s.append(note(
+        "Because the import saves to the server, the repeaters appear right away on the Tactical "
+        "Map's <b>Repeaters</b> layer and in the net-logger / ICS-205 channel picker (tagged "
+        "<b>RPT</b>) — on every device, not just the one you imported from. To update the list "
+        "later, download a fresh CSV from RepeaterBook and import it again; the new file replaces "
+        "the old set.", 'tip'))
+    s.append(SP(4))
+    s.append(P(
+        "The page also has a <b>Demo Data</b> tab, but those are clearly-marked sample "
+        "placeholders — not real repeaters. Always load a real RepeaterBook CSV for operations. "
+        "You can also add a single repeater by hand for a local machine that is not listed in "
+        "RepeaterBook."))
+    s.append(SP(6))
+
     s.append(P('13.10  Exporting to KML', H2))
     s.append(P(
         "Click <b>KML</b> in the top bar to download every station currently on the map "

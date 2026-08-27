@@ -816,6 +816,56 @@ class Handler(BaseHTTPRequestHandler):
                 new_id = c.execute("SELECT last_insert_rowid()").fetchone()[0]
                 return self.send_json({"ok":True,"id":new_id})
 
+        # ── Repeater import (RepeaterBook CSV → server DB) ────────────────────
+        # The Repeater Database page parses a RepeaterBook CSV/JSON in the browser
+        # and POSTs the rows here so they live on the server — which is what the
+        # tactical map overlay and the ICS-205 channel picker read. No API token
+        # is involved; this is the offline-CSV path. replace=true clears the table
+        # first (a fresh import replaces the old set); replace=false appends.
+        if path == "/api/repeaters":
+            reps = body.get("repeaters") or []
+            if not isinstance(reps, list):
+                return self.send_json({"error":"repeaters must be a list"}, 400)
+            replace = bool(body.get("replace"))
+            src = str(body.get("source", "import"))[:80]
+            def _s(v):  return "" if v is None else str(v)
+            def _f(v):
+                try:    return float(v)
+                except (TypeError, ValueError): return None
+            def _b(v):  return 1 if (v is True or _s(v).strip().lower() in ("1","true","yes","y")) else 0
+            def _node(v): return 1 if _s(v).strip() and _s(v).strip() not in ("0","no","false") else 0
+            cols = ["callsign","output_freq","input_freq","tone","tone_input","mode",
+                    "digital_code","city","state","county","lat","lon","status","use_type",
+                    "ares","races","skywarn","echolink","allstar","sponsor","notes","updated","source"]
+            ins = f"INSERT INTO repeaters ({','.join(cols)}) VALUES ({','.join(['?']*len(cols))})"
+            try:
+                if replace:
+                    c.execute("DELETE FROM repeaters")
+                n = 0
+                for r in reps:
+                    if not isinstance(r, dict):
+                        continue
+                    c.execute(ins, [
+                        _s(r.get("callsign")).upper(),
+                        _s(r.get("output_freq")), _s(r.get("input_freq")),
+                        _s(r.get("tone")), _s(r.get("tone_input")),
+                        _s(r.get("mode") or "FM"), _s(r.get("digital_code")),
+                        _s(r.get("city")), _s(r.get("state")), _s(r.get("county")),
+                        _f(r.get("lat")), _f(r.get("lon")),
+                        _s(r.get("status") or "On-Air"),
+                        _s(r.get("use") or r.get("use_type") or "Open"),
+                        _b(r.get("ares")), _b(r.get("races")), _b(r.get("skywarn")),
+                        _node(r.get("echolink")), _node(r.get("allstar")),
+                        _s(r.get("sponsor")), _s(r.get("notes")), _s(r.get("updated")),
+                        src,
+                    ])
+                    n += 1
+                c.commit()
+                total = c.execute("SELECT COUNT(*) FROM repeaters").fetchone()[0]
+                return self.send_json({"ok": True, "imported": n, "total": total})
+            except Exception as e:
+                return self.send_json({"error": str(e)}, 500)
+
         # ── CMS Hospital Database Import ────────────────────────────────────
         # Fetches from CMS Provider Data Catalog — public, no account required.
         # Returns name/address/phone/type. Does NOT include lat/lon or trauma level.

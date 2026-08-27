@@ -311,7 +311,6 @@ if [[ "$PROFILE" != "3" ]]; then
         build_fcc_db.py
         health_monitor.py
         deadmans.py
-        fetch_repeaters.py
         ics_platform_server.py
         reference_server.py
         gen_operator_cards.py
@@ -386,8 +385,6 @@ if [[ "$PROFILE" != "3" ]]; then
         ics-platform.service
         fcc-refresh.service
         fcc-refresh.timer
-        repeater-refresh.service
-        repeater-refresh.timer
         fieldcommand-backup@.service
         fieldcommand-refs.service
         pat.service
@@ -411,7 +408,6 @@ if [[ "$PROFILE" != "3" ]]; then
     done
     
     systemctl enable fcc-refresh.timer 2>>"$FC_LOG" && success "Enabled: fcc-refresh.timer"
-    systemctl enable repeater-refresh.timer 2>>"$FC_LOG" && success "Enabled: repeater-refresh.timer"
 fi
 
 # ── nginx configuration ────────────────────────────────────────────
@@ -998,7 +994,6 @@ if [[ "$PROFILE" != "3" ]]; then
     done
     
     systemctl start fcc-refresh.timer 2>>"$FC_LOG" && success "Started: fcc-refresh.timer"
-    systemctl start repeater-refresh.timer 2>>"$FC_LOG" && success "Started: repeater-refresh.timer"
 fi
 
 # ── Optional: SunFounder Pironman case software (power button, fan, OLED) ──

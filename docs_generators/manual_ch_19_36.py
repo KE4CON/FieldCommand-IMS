@@ -3002,28 +3002,22 @@ def ch31():
     s.append(SP(6))
 
     s.append(P('31.2  Loading Repeater Data', H2))
+    s.append(CHG('Updated: repeaters load from a RepeaterBook CSV (no API token); the import now saves to the server so the map + ICS-205 get it. Removed the old Server API / token path.'))
     s.append(P(
-        "The three source tabs are three different ways to get repeater data onto "
-        "the page. For almost every deployment the <b>Offline File</b> tab is the "
-        "right one - it needs only a free RepeaterBook account and no internet at "
-        "the Pi."))
+        "You load repeaters by importing a <b>RepeaterBook</b> export on the <b>Offline "
+        "File</b> tab. It needs only a free RepeaterBook account and <b>no API token</b>, and "
+        "the import saves to the FieldCommand server, so the repeaters also appear on the "
+        "tactical map and in the ICS-205 channel picker."))
     s.append(SP(4))
     s.append(tbl(['SOURCE TAB', 'HOW TO USE IT', 'WHAT IT NEEDS'], [
-        ['Offline File  (recommended)',
+        ['Offline File  (the way to load real data)',
          'Log in at repeaterbook.com, search your county or area, and click '
          'Export then CSV. Drag the downloaded file onto the drop zone, or click '
-         'the drop zone (or the "Load file" box) to browse for it.',
+         'the "Load file" box to browse for it. The import saves to the FieldCommand '
+         'server, so the tactical map and the ICS-205 picker get the repeaters too.',
          'A free repeaterbook.com account. No API token - any logged-in user can '
          'download a CSV. RepeaterBook CSV, RepeaterBook JSON, and a FieldCommand '
          'repeaters.json file are all accepted.'],
-        ['Server API  (optional)',
-         'Switching to this tab calls the FieldCommand server, which serves '
-         'whatever fetch_repeaters.py last downloaded. Place your token in '
-         '/opt/fieldcommand/data/repeaterbook_token.txt, then run '
-         'python3 scripts/fetch_repeaters.py on the Pi.',
-         'An approved RepeaterBook API token - a separate application and approval, '
-         'NOT the same as an account login. Apply at '
-         'repeaterbook.com/api/token_request.php and allow several weeks.'],
         ['Demo Data',
          'Shows a handful of clearly-labeled SAMPLE placeholder entries so you can '
          'see how the page looks and behaves before real data is loaded.',
@@ -3276,10 +3270,6 @@ def ch31():
          'The file is probably not a RepeaterBook export. Re-download it from '
          'repeaterbook.com as an Export - CSV, or use a RepeaterBook JSON file. The '
          'page accepts .csv, .json, and .txt.'],
-        ['The Server API tab shows "unreachable" or is empty',
-         'That tab needs an approved RepeaterBook API token and fetch_repeaters.py to '
-         'have been run on the Pi. Use the Offline File tab instead - download a CSV '
-         'and drag it in.'],
         ['Map View is grayed out or says "No repeaters with coordinates"',
          'The loaded repeaters have no latitude and longitude, or your filters hid '
          'them all. A RepeaterBook CSV includes coordinates; a hand-added repeater '
@@ -3288,9 +3278,10 @@ def ch31():
          'Manual entries are added to the list, not saved on their own. Export the '
          'list to CSV, or click + Channel Lib to save it to the server as a channel.'],
         ['Another operator device does not see my imported repeaters',
-         'An imported file is stored in that one browser. Either import the CSV on '
-         'each device, or run fetch_repeaters.py and use the Server API tab so all '
-         'devices share one server copy.'],
+         'Importing a CSV saves the repeaters to the FieldCommand server, so every '
+         'device should see them once the map or the repeaters page reloads. If it '
+         'does not, the server was unreachable at import time - re-import the CSV with '
+         'the server running.'],
         ['Distances look wrong or are all blank',
          'Distance is measured from the station location built into the page, and '
          'needs each repeater to have coordinates. Turn on "Sort by distance" to '

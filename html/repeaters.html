@@ -220,9 +220,6 @@
   <button class="src-tab active" id="tab-offline" onclick="switchSource('offline')">
     📁 Offline File <span class="src-count zero" id="cnt-offline">0</span>
   </button>
-  <button class="src-tab" id="tab-server" onclick="switchSource('server')" title="Requires an approved RepeaterBook API token — separate from a regular account login">
-    🖥 Server API <span class="src-count zero" id="cnt-server">0</span>
-  </button>
   <button class="src-tab" id="tab-demo" onclick="switchSource('demo')">
     🔬 Demo Data <span class="src-count zero" id="cnt-demo">8</span>
   </button>
@@ -256,22 +253,6 @@
   <div style="text-align:center;margin-top:12px">
     <button class="btn btn-sm" onclick="openAddRepeater()" style="border-color:var(--green);color:var(--green)">➕ Add a Repeater Manually</button>
     <div style="font-size:11px;color:var(--muted);margin-top:4px">No file? Enter a repeater by hand — useful for a single local machine or a repeater not in RepeaterBook.</div>
-  </div>
-</div>
-
-<div id="panel-server" style="display:none">
-  <div class="source-banner server">
-    🖥 Loaded from local server API (fetch_repeaters.py)
-    <button class="btn btn-sm" onclick="loadFromServer()" style="margin-left:auto;border-color:var(--blue);color:var(--blue)">⟳ Refresh</button>
-  </div>
-  <div style="padding:10px 14px;font-size:12px;color:var(--muted);border-bottom:1px solid var(--line)">
-    ⚠ The Server API requires an <strong>approved RepeaterBook API token</strong> — this is a separate application process
-    from a regular repeaterbook.com account login. Most deployments should use the
-    <strong>Offline File</strong> tab instead: download a CSV export from repeaterbook.com (any logged-in account)
-    and drag it here. If you have an approved token, place it in
-    <code style="background:var(--bg);padding:1px 4px;border-radius:3px">/opt/fieldcommand/data/repeaterbook_token.txt</code>
-    and run <code style="background:var(--bg);padding:1px 4px;border-radius:3px">python3 scripts/fetch_repeaters.py</code>
-    on the Pi.
   </div>
 </div>
 
@@ -437,7 +418,6 @@ const STORE_KEY   = 'fieldcommand_repeaters_offline';
 
 // ── State ──────────────────────────────────────────────────────────
 let allRepeaters   = [];   // current active dataset
-let serverData     = [];
 let offlineData    = [];
 let filtered       = [];
 let sortCol        = 'output_freq';
@@ -645,10 +625,14 @@ function importFile(file) {
             imported: new Date().toLocaleString()
           };
 
-          // Persist to localStorage (up to ~4MB)
+          // Persist to localStorage (a per-device cache) AND to the server DB.
+          // The server copy is what the tactical map overlay and the ICS-205
+          // channel picker read, so importing here also puts the repeaters on
+          // the map — no API token involved.
           try {
             localStorage.setItem(STORE_KEY, JSON.stringify({ meta: offlineMeta, data: reps }));
           } catch(e2) {}
+          saveRepeatersToServer(reps, file.name);
 
           document.getElementById('importFill').style.width = '100%';
           document.getElementById('importMsg').textContent = `Loaded ${reps.length} repeaters!`;
@@ -667,35 +651,53 @@ function importFile(file) {
   reader.readAsText(file);
 }
 
+// Save an imported set to the server DB so the tactical map + ICS-205 see it.
+// replace:true means a fresh CSV replaces the previous set. No token needed.
+async function saveRepeatersToServer(reps, filename) {
+  try {
+    const res = await fetch('/svc/5050/api/repeaters', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        replace: true,
+        source: 'RepeaterBook CSV (' + (filename || 'import') + ')',
+        repeaters: reps,
+      }),
+    });
+    const j = res.ok ? await res.json() : null;
+    document.getElementById('statusLeft').textContent = j
+      ? `Saved ${(j.imported || reps.length).toLocaleString()} repeaters to the FieldCommand server — now on the tactical map and in the ICS-205 picker.`
+      : 'Imported to this browser, but the server did not accept the save (map may not update).';
+  } catch (e) {
+    document.getElementById('statusLeft').textContent =
+      'Imported to this browser, but could not reach the server — repeaters will not appear on the tactical map until the server is available and you re-import.';
+  }
+}
+
 // ── SOURCE SWITCHING ───────────────────────────────────────────────
 function switchSource(src) {
   currentSource = src;
-  ['offline','server','demo'].forEach(s => {
+  ['offline','demo'].forEach(s => {
     document.getElementById(`tab-${s}`).classList.toggle('active', s === src);
-    const p = document.getElementById(`panel-${src}`);
   });
 
   if (src === 'offline') {
     if (offlineData.length) {
       showData(offlineData, 'offline', offlineMeta);
-    } else {
-      // Try localStorage
-      try {
-        const stored = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
-        if (stored && stored.data && stored.data.length) {
-          offlineData = stored.data;
-          offlineMeta = stored.meta;
-          addDistances(offlineData);
-          showData(offlineData, 'offline', offlineMeta);
-          return;
-        }
-      } catch(e) {}
-      // Show drop zone
-      hideTableUI();
-      document.getElementById('dropZone').style.display = '';
+      return;
     }
-  } else if (src === 'server') {
-    loadFromServer();
+    // Try this device's localStorage cache first
+    try {
+      const stored = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
+      if (stored && stored.data && stored.data.length) {
+        offlineData = stored.data;
+        offlineMeta = stored.meta;
+        addDistances(offlineData);
+        showData(offlineData, 'offline', offlineMeta);
+        return;
+      }
+    } catch(e) {}
+    // Nothing cached here — try the shared server DB (a prior import from any device)
+    loadStoredRepeaters();
   } else if (src === 'demo') {
     showData(demoData(), 'demo', null);
   }
@@ -716,9 +718,6 @@ function showData(reps, src, meta) {
   if (src === 'offline' && meta) {
     bannerText.innerHTML = `📁 <strong>${meta.filename}</strong> — ${meta.count.toLocaleString()} repeaters imported ${meta.imported}`;
     bannerRight.innerHTML = `<button class="btn btn-sm" onclick="document.getElementById('fileInput').click()" style="border-color:var(--green);color:var(--green)">⬆ Load different file</button>`;
-  } else if (src === 'server') {
-    bannerText.innerHTML = `🖥 Loaded from server API — ${reps.length.toLocaleString()} repeaters`;
-    bannerRight.innerHTML = `<button class="btn btn-sm" onclick="loadFromServer()" style="border-color:var(--blue);color:var(--blue)">⟳ Refresh</button>`;
   } else {
     bannerText.innerHTML = `⚠ SAMPLE DATA — ${reps.length} placeholders, NOT real repeaters. Load real data via Offline File tab.`;
     bannerRight.innerHTML = ``;
@@ -749,31 +748,29 @@ function hideTableUI() {
 }
 
 // ── SERVER LOAD ────────────────────────────────────────────────────
-async function loadFromServer() {
-  document.getElementById('statusLeft').textContent = 'Connecting to server…';
-  document.getElementById('panel-server').style.display = '';
+// Load whatever repeaters are stored on the server (from a prior CSV import on
+// any device). This is a plain GET of the server DB — no API token needed. If
+// the server has none yet, show the import drop zone.
+async function loadStoredRepeaters() {
+  document.getElementById('statusLeft').textContent = 'Checking the server for stored repeaters…';
   try {
     const res = await fetch('/svc/5050/api/repeaters', { signal: AbortSignal.timeout(5000) });
     if (!res.ok) throw new Error('HTTP ' + res.status);
     const data = await res.json();
-    const reps = Array.isArray(data) ? data : (data.repeaters || []);
-    const normalized = reps.map(normalizeRecord);
-    addDistances(normalized);
-    serverData = normalized;
-    document.getElementById('cnt-server').textContent = serverData.length;
-    document.getElementById('cnt-server').className = serverData.length ? 'src-count' : 'src-count zero';
-    showData(serverData, 'server', null);
-  } catch(e) {
-    document.getElementById('statusLeft').textContent = 'Server unavailable — use Offline File or Demo';
-    if (currentSource === 'server') {
-      document.getElementById('panel-server').innerHTML = `
-        <div class="source-banner" style="color:var(--red);border-color:rgba(255,80,80,0.3)">
-          ⚠ Server API unreachable — no repeater data loaded via this method. Use the <strong>Offline File</strong> tab instead: download a CSV from repeaterbook.com and drag it here. The Server API requires a separately-approved RepeaterBook API token.
-          <button class="btn btn-sm" onclick="loadFromServer()" style="margin-left:auto">⟳ Retry</button>
-        </div>`;
-      hideTableUI();
+    const reps = (Array.isArray(data) ? data : (data.repeaters || [])).map(normalizeRecord);
+    if (reps.length) {
+      addDistances(reps);
+      offlineData = reps;
+      offlineMeta = { filename: 'server database', count: reps.length,
+                      imported: 'stored on the FieldCommand server' };
+      showData(reps, 'offline', offlineMeta);
+      return;
     }
-  }
+  } catch(e) {}
+  // Nothing stored yet — show the import drop zone
+  hideTableUI();
+  document.getElementById('dropZone').style.display = '';
+  document.getElementById('statusLeft').textContent = 'Load a RepeaterBook CSV export to begin';
 }
 
 // ── FILTERS & SORT ─────────────────────────────────────────────────
@@ -1022,11 +1019,12 @@ function demoData() {
   // you load real data. The callsigns, frequencies, and tones below are
   // illustrative placeholders and must NOT be used for actual operations.
   //
-  // To load REAL McHenry County / Northern Illinois repeaters:
-  //   • Go to repeaterbook.com → search McHenry County, IL (and neighbors)
-  //   • Export → CSV, then load it on the "Offline File" tab of this page, OR
-  //   • Have the net manager run fetch_repeaters.py with a RepeaterBook API
-  //     token (see the User Manual, Repeater Database chapter).
+  // To load REAL repeaters (no API token needed):
+  //   • Log in free at repeaterbook.com → search your area (and neighbors)
+  //   • Export → CSV, then drag it onto the "Offline File" tab of this page.
+  //   • The import saves to the server, so the repeaters also appear on the
+  //     tactical map and in the ICS-205 picker (see the User Manual,
+  //     Repeater Database chapter).
   // ─────────────────────────────────────────────────────────────────────
   const raw = [
     {Callsign:'SAMPLE-1',Frequency:'147.000','Input Freq':'147.600',PL:'107.2',Digital:'',State:'IL','Nearest City':'(sample — load real data)','Operational Status':'On Air',Use:'OPEN',ARES:'Yes',RACES:'Yes',SKYWARN:'Yes',Sponsor:'PLACEHOLDER — not a real repeater',Lat:'42.31',Long:'-88.45','EchoLink Node':'',Notes:'SAMPLE DATA ONLY. Load a RepeaterBook CSV on the Offline File tab for real McHenry County data.','Last Update':''},

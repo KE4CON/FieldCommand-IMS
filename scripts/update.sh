@@ -20,7 +20,7 @@ echo "  2) Stop all services"
 echo "  3) Check service status"
 echo "  4) View logs (live)"
 echo "  5) Refresh FCC database"
-echo "  6) Fetch repeater data"
+echo "  6) Repeater database (how to load it)"
 echo "  7) Update web files from current directory"
 echo "  8) Backup data to /tmp"
 echo "  9) Show disk usage"
@@ -63,22 +63,12 @@ case "$CHOICE" in
         echo -e "${GREEN}Done.${NC}"
         ;;
     6)
-        echo -e "${CYAN}Fetching repeater data from RepeaterBook...${NC}"
-        TOKEN_FILE="$FC_HOME/data/repeaterbook_token.txt"
-        ENV_FILE="$FC_HOME/data/repeaterbook.env"
-        if [[ ! -f "$TOKEN_FILE" && ! -f "$ENV_FILE" ]]; then
-            echo -e "${CYAN}RepeaterBook now requires an API token.${NC}"
-            echo "  Apply at: https://www.repeaterbook.com/api/token_request.php"
-            read -rp "Paste your RepeaterBook API token (or leave blank to skip): " RBTOKEN
-            if [[ -n "$RBTOKEN" ]]; then
-                echo "$RBTOKEN" | sudo -u fieldcommand tee "$TOKEN_FILE" >/dev/null
-                echo -e "${GREEN}Token saved to $TOKEN_FILE${NC}"
-            fi
-        fi
-        read -rp "State codes (default IL,WI,IN,IA): " STATES
-        STATES="${STATES:-IL,WI,IN,IA}"
-        sudo -u fieldcommand "$FC_VENV/bin/python" "$FC_HOME/python/fetch_repeaters.py" --states "$STATES" --bands 2m,70cm
-        echo -e "${GREEN}Done. Reload the Repeater Database page (Server API tab) to see the data.${NC}"
+        echo -e "${CYAN}Repeater database — loaded by importing a RepeaterBook CSV (no API token):${NC}"
+        echo "  1. On any device, log in free at repeaterbook.com and Export your area as CSV."
+        echo "  2. Open  http://192.168.50.1/repeaters.html  ->  Offline File tab."
+        echo "  3. Drag the CSV onto the drop zone."
+        echo -e "${GREEN}The import saves to the FieldCommand server, so the repeaters appear on the${NC}"
+        echo -e "${GREEN}tactical map and in the ICS-205 channel picker. Re-import a fresh CSV to update.${NC}"
         ;;
     7)
         SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -96,7 +86,6 @@ case "$CHOICE" in
             build_fcc_db.py
             health_monitor.py
             deadmans.py
-            fetch_repeaters.py
             ics_platform_server.py
             reference_server.py
             gen_operator_cards.py

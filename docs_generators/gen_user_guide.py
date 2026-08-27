@@ -699,8 +699,7 @@ def build_story():
     # Section 23 — Repeater Database
     story += [SB(23,'Repeater Database','http://192.168.50.1/repeaters.html'), SP(8)]
     story.append(tbl([['SOURCE TAB','HOW TO USE'],
-        ['Offline File (recommended)','Load a RepeaterBook CSV or JSON export. Drag-and-drop or Browse. Data persists in the browser after first load.'],
-        ['Server API','Pulls from FieldCommand server if fetch_repeaters.py has been run. Requires RepeaterBook API token.'],
+        ['Offline File (load real data here)','Log in free at repeaterbook.com (no API token), Export your area as CSV, and drag it in. The import saves to the FieldCommand server, so the tactical map and ICS-205 picker get the repeaters too. Re-import a fresh CSV to update.'],
         ['Sample Data','Demo repeaters for testing the interface. Not real — do not use for operations.'],
         ], [1.5*inch, CW-1.5*inch]))
     story.append(SP(4))

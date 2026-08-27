@@ -1858,8 +1858,9 @@ story.append(tbl(['DATA', 'HOW TO LOAD', 'WHERE TO VERIFY', 'IMPACT IF MISSING']
      'Check-in forms will not auto-populate names; EMA ID lookup will not work'],
     ['Repeater Database',
      'http://192.168.50.1/repeaters.html → Offline File tab → '
-     'log in at repeaterbook.com (free account) → search area → Export → CSV → '
-     'drag CSV onto the drop zone. RepeaterBook CSV includes GPS coordinates.',
+     'log in at repeaterbook.com (free account, no API token) → search area → Export → CSV → '
+     'drag CSV onto the drop zone. Includes GPS coordinates; the import saves to the server, '
+     'so the repeaters appear on the tactical map and in the ICS-205 picker (re-import a fresh CSV to update).',
      'Preflight → Data Readiness → Repeater Database shows count and how many have coordinates',
      'ICS-205 channel picker will be empty; repeater map overlay will show no pins'],
     ['Channel Library',
@@ -3265,7 +3266,7 @@ story.append(CodeBlock([
     '#  3) Check service status',
     '#  4) View live logs',
     '#  5) Refresh FCC database',
-    '#  6) Fetch repeater data',
+    '#  6) Repeater database (how to load it)',
     '#  7) Update web files from current directory',
     '#  8) Backup data to /tmp',
     '#  9) Show disk usage',
@@ -3292,11 +3293,11 @@ story.append(steps([
 ]))
 story.append(SP(4))
 story.append(NoteBox(
-    'The CSV export from repeaterbook.com requires only a free account login — '
-    'it is not the same as the RepeaterBook API token. '
-    'The API token is a separate application process (repeaterbook.com/api/token_request.php) '
-    'and is only needed if you want the Pi to fetch data automatically via fetch_repeaters.py. '
-    'For most deployments, refreshing the CSV before each activation is the practical approach.',
+    'The CSV export from repeaterbook.com requires only a free account login — no API '
+    'token. Importing the CSV on the Repeater Database page saves the repeaters to the '
+    'FieldCommand server, so they appear on the tactical map and in the ICS-205 picker. '
+    'There is no automatic online refresh; download a fresh CSV and re-import it before '
+    'each activation (or whenever the local repeater list changes).',
     'tip'))
 story.append(SP(8))
 

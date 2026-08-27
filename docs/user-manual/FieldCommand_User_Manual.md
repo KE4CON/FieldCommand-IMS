@@ -3633,10 +3633,8 @@ Open a browser on the FieldCommand Wi-Fi and go to **http://192.168.50.1/repeate
 | Source tab | What it does | When to use it |
 | --- | --- | --- |
 | **📁 Offline File** | Loads repeaters from a file you export from RepeaterBook and drop onto the page. This is the normal, recommended way. | Almost always. It works with any free account and needs no internet after the download. |
-| **🖥 Server API** | Pulls repeaters automatically from a program running on the FieldCommand Pi (`fetch_repeaters.py`). Needs an approved RepeaterBook API token. | Only if your group has gone through RepeaterBook's separate token-approval process. Optional and advanced. |
 | **🔬 Demo Data** | Shows a handful of fake sample repeaters so you can see how the page looks and behaves. | Just for practice. These are clearly-marked placeholders — never use them on the air. |
 
-> **THE API TOKEN IS NOT THE SAME AS A LOGIN** — The **Server API** tab needs an **approved RepeaterBook API token**, which is a separate application you file with RepeaterBook staff and can take several weeks to be granted. It is *not* your normal repeaterbook.com password. You do **not** need it for everyday use — the **Offline File** method below gives you the exact same data with just a free account.
 
 
 ## Loading a RepeaterBook CSV (the Normal Way)
@@ -3758,7 +3756,6 @@ Pins are colored by mode, matching the legend across the top: green FM, blue D-S
 
 - *I opened the page and there's no table, just a drop box.* That's the normal empty state — no data is loaded yet. Follow *Loading a RepeaterBook CSV* above to drop in an export file.
 - *The import failed with an error.* Make sure the file is a genuine **RepeaterBook CSV or JSON export**, not a spreadsheet you re-saved in another format. Re-download the export and drop it again.
-- *The Server API tab shows 'unreachable' or 'unavailable'.* That's expected unless your group has an approved RepeaterBook API token and has run `fetch_repeaters.py` on the Pi. Use the **Offline File** tab instead — it needs only a free account.
 - *Map View says 'No repeaters with coordinates'.* The repeaters currently shown have no latitude/longitude. Clear your filters, or load a RepeaterBook CSV (which includes coordinates for every entry).
 - *My hand-added repeater disappeared.* Manually-added repeaters aren't saved permanently. Click **⬇ CSV** to export the list, then re-import that file to keep them.
 - *The Dist column is missing.* It only appears when **Sort by distance** is set to *Nearest first* or *Farthest first*. Turn that on and the column appears.

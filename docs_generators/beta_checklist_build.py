@@ -735,7 +735,6 @@ story.append(KeepTogether([subsection('12.1  Service Status'), SP(2), rows_table
     ('avahi-daemon.service — mDNS/Bonjour running', ''),
     ('gpsd.service — GPS daemon running (if USB GPS connected)', 'If GPS installed'),
     ('fcc-refresh.timer — weekly FCC database refresh timer active', ''),
-    ('repeater-refresh.timer — monthly repeater database refresh timer active', ''),
     ('Firewall (ufw) enabled — ports 80, 631, 5050-5056, 8080-8090 open', ''),
 ])])); story.append(SP(6))
 

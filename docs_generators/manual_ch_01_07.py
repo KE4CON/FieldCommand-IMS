@@ -585,6 +585,58 @@ def ch2():
         "tools, forms, net loggers, roster, and local maps run normally offline.", 'note'))
     s.append(SP(6))
 
+    s.append(P('2.8.1  Turning On the Internet (Optional) and What It Enables', H3))
+    s.append(CHG('New: operator steps for connecting a WAN (cellular/satellite) and what lights up, incl. the two features that need a one-time key.'))
+    s.append(P(
+        "FieldCommand runs fully offline — you never need the internet to run an incident. But if "
+        "you have a connection (a cellular modem/antenna, or a satellite dish), it adds a handful "
+        "of live features. The important part: <b>there is nothing to switch on inside "
+        "FieldCommand</b> — the features turn themselves on when a connection appears and turn "
+        "themselves off when it is gone."))
+    s.append(SP(4))
+    s.append(P('<b>To connect the internet:</b>'))
+    s += steps([
+        "Connect your internet source to the <b>ASUS router</b> (the box that makes EMCOMM-NET), "
+        "not to the Pi. A cellular modem/antenna plugs into the router's internet (WAN) port; a "
+        "satellite dish connects through its adapter into the router's USB internet port. The "
+        "exact ports and cabling are in the Installation Guide.",
+        "That's all — the router shares the connection to every device on EMCOMM-NET on its own, "
+        "and if you have both sources it uses cellular first and falls back to satellite "
+        "automatically. There is nothing to configure in FieldCommand.",
+        "Confirm it worked: watch the <b>WAN Status</b> card (see 2.8). Within about 30 seconds "
+        "it turns <b>green</b> (cellular) or <b>blue</b> (satellite). If it stays <b>red</b>, the "
+        "internet is not reaching the router yet — check the cable/dish and that the source "
+        "itself is online.",
+    ])
+    s.append(SP(4))
+    s.append(P('<b>What lights up by itself</b> (no action needed once the WAN card is green or blue):'))
+    s.append(SP(2))
+    s.append(tbl(['FEATURE', 'WHERE YOU SEE IT'], [
+        ['NWS weather alerts & NEXRAD radar', 'The Weather / Radar row (2.7) and the Radar page.'],
+        ['HF radio propagation data',         'The propagation tool (Amateur Radio mode).'],
+        ['Online map backgrounds (streets / aerial)',
+         'Any map — used automatically when offline tiles are not loaded.'],
+        ['Hospital directory online lookup',  'The Hospitals page.'],
+        ['Reaching outside websites',
+         'RepeaterBook (to download a repeater CSV), CalTopo / SARTopo (to export a GeoJSON), '
+         'and aprs.fi / RadioReference (below) all become reachable.'],
+    ], widths=[2.3*inch, CW-2.3*inch]))
+    s.append(SP(4))
+    s.append(P('<b>Two live features need a one-time key or login</b> before they will show data:'))
+    s += steps([
+        "<b>APRS-IS — internet APRS stations on the Tactical Map (the purple layer).</b> Paste a "
+        "free aprs.fi key on the Tactical Map's Sources tab. Full step-by-step (make the free "
+        "account, copy the key, paste it) is in 13.2. Leave it blank to keep APRS-IS off.",
+        "<b>RadioReference — importing public-service channels into the Channel Library.</b> Enter "
+        "your RadioReference username and password when you use Import from RadioReference "
+        "(see 7.2.2). That one needs a paid RadioReference account.",
+    ])
+    s.append(note(
+        "If the internet drops mid-incident, all of the above simply pauses and the <b>WAN "
+        "Status</b> card turns red — everything else in FieldCommand keeps running exactly as "
+        "before. Nothing you do to run the incident depends on having a connection.", 'tip'))
+    s.append(SP(6))
+
     s.append(P('2.9  Using It on a Phone or Tablet', H2))
     s.append(P(
         "FieldCommand is built to be used from whatever device an operator already carries. A "

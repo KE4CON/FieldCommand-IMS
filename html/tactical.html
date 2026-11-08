@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Tactical Map — Incident Management</title>
 <link rel="stylesheet" href="theme.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+<link rel="stylesheet" href="/lib/leaflet/leaflet.css">
 <style>
 html, body { height:100%; margin:0; overflow:hidden; }
 body { display:flex; flex-direction:column; }
@@ -426,7 +426,7 @@ body.picking #map { cursor:crosshair !important; }
 
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="/lib/leaflet/leaflet.js"></script>
 <script src="/lib/tiles.js"></script>
 <script>
 // ══════════════════════════════════════════════════
@@ -1388,10 +1388,29 @@ async function toggleRepeaters() {
 }
 
 // ── CalTopo / SARTopo GeoJSON overlay ─────────────────────────────
-// Renders the FeatureCollection imported on caltopo_import.html (saved to
-// localStorage as fc_sartopo_overlay). Toggle on/off from the toolbar.
+// Renders the FeatureCollection imported on caltopo_import.html. The overlay is
+// stored on the FieldCommand server (shared across every device), with this
+// device's localStorage as an offline cache. Toggle on/off from the toolbar.
 let sartopoLoaded = false;
-function toggleSartopo() {
+async function loadSartopoFC() {
+  // Prefer the shared server copy; fall back to this device's localStorage cache.
+  try {
+    const r = await fetch('/svc/5050/api/sartopo_overlay', { signal: AbortSignal.timeout(4000) });
+    if (r.ok) {
+      const d = await r.json();
+      if (d && d.geojson && Array.isArray(d.geojson.features) && d.geojson.features.length) {
+        try { localStorage.setItem('fc_sartopo_overlay', JSON.stringify({ name: d.filename || 'server', saved_at: d.updated || '', data: d.geojson })); } catch(e) {}
+        return d.geojson;
+      }
+    }
+  } catch(e) {}
+  try {
+    const saved = JSON.parse(localStorage.getItem('fc_sartopo_overlay') || 'null');
+    if (saved && saved.data && Array.isArray(saved.data.features) && saved.data.features.length) return saved.data;
+  } catch(e) {}
+  return null;
+}
+async function toggleSartopo() {
   const btn = document.getElementById('btn-sartopo');
   if (map.hasLayer(layers.sartopo)) {
     map.removeLayer(layers.sartopo);
@@ -1399,10 +1418,8 @@ function toggleSartopo() {
     return;
   }
   if (!sartopoLoaded) {
-    let saved = null;
-    try { saved = JSON.parse(localStorage.getItem('fc_sartopo_overlay') || 'null'); } catch(e) {}
-    const fc = saved && saved.data;
-    if (!fc || !Array.isArray(fc.features) || !fc.features.length) {
+    const fc = await loadSartopoFC();
+    if (!fc) {
       alert('No CalTopo / SARTopo overlay found.\n\nImport a GeoJSON file on the CalTopo / SARTopo Import page first — it will then appear here.');
       return;
     }

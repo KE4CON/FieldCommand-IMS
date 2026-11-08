@@ -290,7 +290,8 @@ function processGeoJSON(parsed, filename) {
   geoData = parsed;
   const count = parsed.features.length;
 
-  // Persist the raw overlay so the tactical map can render it (Ch 13 CalTopo / SARTopo overlay).
+  // Cache on this device AND save to the FieldCommand server, so the tactical
+  // map overlay (Ch 13) shows on EVERY device and survives a browser clear.
   try {
     localStorage.setItem('fc_sartopo_overlay', JSON.stringify({
       name: filename, saved_at: new Date().toISOString(), data: parsed
@@ -307,10 +308,35 @@ function processGeoJSON(parsed, filename) {
     <div style="font-size:11px;color:var(--muted);margin-top:4px">
       ${count} feature${count!==1?'s':''} loaded
     </div>
+    <div id="serverStatus" style="font-size:10px;color:var(--amber);margin-top:6px">Saving to the server…</div>
     <div style="font-size:10px;color:var(--dim);margin-top:6px">Click to load different file</div>`;
 
+  saveOverlayToServer(parsed, filename);
   loadIncidents();
   goStep(2);
+}
+
+// Save the overlay to the FieldCommand server so every device's tactical map sees
+// it (and it survives a browser clear). localStorage above is just a local cache.
+async function saveOverlayToServer(parsed, filename) {
+  const el = () => document.getElementById('serverStatus');
+  try {
+    const r = await fetch('/svc/5050/api/sartopo_overlay', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ geojson: parsed, filename: filename || '' })
+    });
+    if (el()) {
+      el().textContent = r.ok
+        ? '✓ Saved to the server — this overlay now shows on the tactical map on every device.'
+        : 'Saved on this device only — the server rejected it, so other devices will not see it.';
+      el().style.color = r.ok ? 'var(--green)' : 'var(--red)';
+    }
+  } catch(e) {
+    if (el()) {
+      el().textContent = 'Saved on this device only — server unreachable. Re-import when it is up to share it.';
+      el().style.color = 'var(--red)';
+    }
+  }
 }
 
 // ── Load incidents for selector ────────────────────────────────────

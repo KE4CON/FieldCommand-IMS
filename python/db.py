@@ -659,6 +659,15 @@ CREATE TABLE IF NOT EXISTS resmap_state (
     markers TEXT NOT NULL DEFAULT '[]',
     updated TEXT
 );
+
+-- CalTopo / SARTopo GeoJSON overlay for the tactical map (single shared document,
+-- imported on caltopo_import.html; read by tactical.html so every device sees it).
+CREATE TABLE IF NOT EXISTS sartopo_overlay (
+    id       INTEGER PRIMARY KEY DEFAULT 1,
+    geojson  TEXT NOT NULL DEFAULT '',
+    filename TEXT DEFAULT '',
+    updated  TEXT
+);
 INSERT OR IGNORE INTO resmap_state(id) VALUES(1);
 
 -- ── T-Card Personnel Roster ────────────────────────────────────────────────────

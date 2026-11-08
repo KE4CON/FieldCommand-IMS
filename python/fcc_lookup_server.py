@@ -471,6 +471,17 @@ class Handler(BaseHTTPRequestHandler):
             row = c.execute("SELECT * FROM resmap_state WHERE id=1").fetchone()
             return self.send_json({"markers":jload(row["markers"],[]) if row else []})
 
+        elif path == "/api/sartopo_overlay":
+            # The shared CalTopo / SARTopo GeoJSON overlay (imported on
+            # caltopo_import.html, drawn on the tactical map). No internet needed.
+            row = c.execute("SELECT geojson,filename,updated FROM sartopo_overlay WHERE id=1").fetchone()
+            if row and row["geojson"]:
+                gj = jload(row["geojson"], None)
+                n  = len(gj.get("features", [])) if isinstance(gj, dict) else 0
+                return self.send_json({"geojson":gj, "filename":row["filename"] or "",
+                                       "updated":row["updated"] or "", "features":n})
+            return self.send_json({"geojson":None})
+
 
         # ── Barcode / QR Check-In Lookup ────────────────────────────────────
         # GET /api/barcode_lookup?code=XXXX
@@ -1262,6 +1273,20 @@ class Handler(BaseHTTPRequestHandler):
             c.execute("UPDATE resmap_state SET markers=?,updated=? WHERE id=1",
                       (jdump(body.get("markers",[])),now))
             c.commit(); return self.send_json({"ok":True})
+
+        elif path == "/api/sartopo_overlay":
+            gj = body.get("geojson")
+            if gj in (None, "", {}):     # clear the overlay for everyone
+                c.execute("INSERT OR REPLACE INTO sartopo_overlay (id,geojson,filename,updated) VALUES (1,'','',?)", (now,))
+                c.commit(); return self.send_json({"ok":True,"cleared":True})
+            if (not isinstance(gj, dict) or gj.get("type") != "FeatureCollection"
+                    or not isinstance(gj.get("features"), list)):
+                return self.send_json({"error":"geojson must be a FeatureCollection"}, 400)
+            fn = str(body.get("filename",""))[:120]
+            c.execute("INSERT OR REPLACE INTO sartopo_overlay (id,geojson,filename,updated) VALUES (1,?,?,?)",
+                      (jdump(gj), fn, now))
+            c.commit()
+            return self.send_json({"ok":True,"features":len(gj.get("features",[]))})
 
         elif path == "/api/forms":
             fid = body.get("id") or f"f-{int(time.time()*1000)}"

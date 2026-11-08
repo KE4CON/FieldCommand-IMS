@@ -1243,13 +1243,14 @@ def ch13():
         "map of stations, color-coded by how recently each one was heard.", 'tip'))
     s.append(SP(6))
 
+    s.append(CHG('Updated: the map library (Leaflet) is now served from the Pi (map works with no internet; only tiles must be pre-downloaded); and the CalTopo/SARTopo overlay is now saved on the server, shared across devices.'))
     s.append(note(
-        "Offline caveat: the map is fully offline only when the Leaflet map library and "
-        "the base map tiles are served locally from the Pi. In the current build, "
-        "Leaflet and the default base tiles load from the internet (a Content Delivery "
-        "Network), so without a WAN the base map may not draw. Station markers and your "
-        "overlays still plot on whatever base is available. Pre-download tiles with "
-        "<b>sudo bash download_tiles.sh</b> for a true no-internet map.", 'warn'))
+        "Offline note: the map library itself (Leaflet) is now served from the Pi, so the "
+        "Tactical Map, the station markers, and your CalTopo / SARTopo overlay all work with "
+        "<b>no internet</b>. The one thing that still needs preparing for a true no-internet map "
+        "is the <b>base map tiles</b> (the background terrain/streets): pre-download them with "
+        "<b>sudo bash download_tiles.sh</b> on the Pi. Without pre-downloaded tiles the markers "
+        "and overlays still plot, but on a blank or online-only background.", 'note'))
     s.append(SP(6))
 
     s.append(P('13.1  Reading the Screen at a Glance', H2))
@@ -1474,8 +1475,9 @@ def ch13():
     s.append(P(
         "<b>CalTopo / SARTopo</b> -- shows search sectors, assignments, and zones you imported "
         "from CalTopo / SARTopo. Export your map as GeoJSON, import it on the CalTopo / SARTopo "
-        "Import page, then turn on the CalTopo / SARTopo layer here. The overlay stays put across "
-        "refreshes until you clear it.", Bullet))
+        "Import page, then turn on the CalTopo / SARTopo layer here. The import is saved on the "
+        "FieldCommand server, so the overlay appears on every operator's map, and it stays put "
+        "across refreshes until you clear it.", Bullet))
     s.append(SP(6))
 
     s.append(P('13.9.1  Loading the Repeater Database', H3))
